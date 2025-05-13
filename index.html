@@ -37,14 +37,14 @@
 </head>
 <body>
 
- <script>
-  const courseSelect = document.getElementById('course-select');
-  const selectedCourse = document.getElementById('selected-course');
-
-  courseSelect.addEventListener('change', function() {
-    selectedCourse.textContent = courseSelect.value;
-  });
-</script>
+<label for="course-select"><strong>Course:</strong></label>
+<select id="course-select">
+  <option value="BSMarketing">BSMarketing</option>
+  <option value="BSIT">BSIT</option>
+  <option value="BSBA">BSBA</option>
+  <option value="BSEducation">BSEducation</option>
+  <option value="BSNursing">BSNursing</option>
+</select>
 
   <h3>Year: 3 | Section: B</h3>
 
