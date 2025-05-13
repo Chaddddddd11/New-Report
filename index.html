@@ -6,9 +6,6 @@
     body {
       font-family: Arial, sans-serif;
     }
-    h2, h3 {
-      margin: 0;
-    }
     table {
       border-collapse: collapse;
       width: 100%;
@@ -37,8 +34,9 @@
 </head>
 <body>
 
-<label for="course-select"><strong>Course:</strong></label>
-<select id="course-select">
+<!-- Dropdowns -->
+<label><strong>Course:</strong></label>
+<select id="course">
   <option value="BSA">BSA</option>
   <option value="BSAIS">BSAIS</option>
   <option value="BSMarketing" selected>BSMarketing</option>
@@ -46,93 +44,68 @@
   <option value="BSPublicAdministration">BSPublicAdministration</option>
 </select>
 
-<h2>Selected: <span id="display-selection">BSMarketing-3B</span></h2>
-
-<script>
-  const courseSelect = document.getElementById('course-select');
-  const yearSelect = document.getElementById('year-select');
-  const sectionSelect = document.getElementById('section-select');
-  const displaySelection = document.getElementById('display-selection');
-
-  function updateDisplay() {
-    const course = courseSelect.value;
-    const year = yearSelect.value;
-    const section = sectionSelect.value;
-    displaySelection.textContent = `${course}-${year}${section}`;
-  }
-
-  courseSelect.addEventListener('change', updateDisplay);
-  yearSelect.addEventListener('change', updateDisplay);
-  sectionSelect.addEventListener('change', updateDisplay);
-
-  // Initialize display on page load
-  updateDisplay();
-</script>
-
-  
-<label for="year-select"><strong>Year:</strong></label>
-<select id="year-select">
+<label><strong>Year:</strong></label>
+<select id="year">
   <option value="1">1</option>
   <option value="2">2</option>
   <option value="3" selected>3</option>
 </select>
 
-<label for="section-select"><strong>Section:</strong></label>
-<select id="section-select">
+<label><strong>Section:</strong></label>
+<select id="section">
   <option value="A">A</option>
   <option value="B" selected>B</option>
   <option value="C">C</option>
 </select>
 
-  <table>
-    <thead>
-      <tr>
-        <th>Time</th>
-        <th>Monday</th>
-        <th>Tuesday</th>
-        <th>Wednesday</th>
-        <th>Thursday</th>
-        <th>Friday</th>
-        <th>Saturday</th>
-        <th>Sunday</th>
-      </tr>
-    </thead>
-    <tbody id="schedule-body">
-      <!-- Rows will be inserted here by JavaScript -->
-    </tbody>
-  </table>
+<!-- Display Result -->
+<h2>Selected: <span id="result">BSMarketing-3B</span></h2>
 
-  <script>
-    const scheduleBody = document.getElementById('schedule-body');
-    const startHour = 7;
-    const endHour = 17;
+<!-- Script for live update -->
+<script>
+  const course = document.getElementById('course');
+  const year = document.getElementById('year');
+  const section = document.getElementById('section');
+  const result = document.getElementById('result');
 
-    for (let hour = startHour; hour <= endHour; hour++) {
-      const nextHour = hour + 1;
-      const row = document.createElement('tr');
+  function updateResult() {
+    result.textContent = `${course.value}-${year.value}${section.value}`;
+  }
 
-      // Format time (e.g., 7:00-8:00)
-      const timeCell = document.createElement('td');
-      timeCell.textContent = `${hour}:00-${nextHour}:00`;
-      row.appendChild(timeCell);
+  course.onchange = year.onchange = section.onchange = updateResult;
+  updateResult(); // initialize on load
+</script>
 
-      // Create cells for each day
-      for (let i = 0; i < 7; i++) {
-        const cell = document.createElement('td');
-        cell.classList.add('cell-box');
+<!-- Schedule Table -->
+<table>
+  <thead>
+    <tr>
+      <th>Time</th>
+      <th>Monday</th>
+      <th>Tuesday</th>
+      <th>Wednesday</th>
+      <th>Thursday</th>
+      <th>Friday</th>
+      <th>Saturday</th>
+      <th>Sunday</th>
+    </tr>
+  </thead>
+  <tbody id="schedule-body"></tbody>
+</table>
 
-        cell.innerHTML = `
-          <label>Instructor:</label><input type="text">
-          <label>Subject:</label><input type="text">
-          <label>Room:</label><input type="text">
-        `;
-
-        row.appendChild(cell);
-      }
-
-      scheduleBody.appendChild(row);
-    }
-  </script>
+<script>
+  const scheduleBody = document.getElementById('schedule-body');
+  for (let hour = 7; hour <= 17; hour++) {
+    const row = document.createElement('tr');
+    row.innerHTML = `<td>${hour}:00-${hour + 1}:00</td>` + 
+      '<td class="cell-box">'.repeat(7).replace(/<\/td>/g, `
+        <label>Instructor:</label><input type="text">
+        <label>Subject:</label><input type="text">
+        <label>Room:</label><input type="text">
+      </td>`);
+    scheduleBody.appendChild(row);
+  }
+</script>
 
 </body>
 </html>
