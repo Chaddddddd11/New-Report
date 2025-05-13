@@ -61,7 +61,6 @@
 <!-- Display Result -->
 <h2>Selected: <span id="result">BSMarketing-3B</span></h2>
 
-<!-- Script for live update -->
 <script>
   const course = document.getElementById('course');
   const year = document.getElementById('year');
@@ -95,14 +94,27 @@
 
 <script>
   const scheduleBody = document.getElementById('schedule-body');
+
   for (let hour = 7; hour <= 17; hour++) {
     const row = document.createElement('tr');
-    row.innerHTML = `<td>${hour}:00-${hour + 1}:00</td>` + 
-      '<td class="cell-box">'.repeat(7).replace(/<\/td>/g, `
+
+    // Time column
+    const timeCell = document.createElement('td');
+    timeCell.textContent = `${hour}:00-${hour + 1}:00`;
+    row.appendChild(timeCell);
+
+    // 7 columns for each day
+    for (let i = 0; i < 7; i++) {
+      const cell = document.createElement('td');
+      cell.className = 'cell-box';
+      cell.innerHTML = `
         <label>Instructor:</label><input type="text">
         <label>Subject:</label><input type="text">
         <label>Room:</label><input type="text">
-      </td>`);
+      `;
+      row.appendChild(cell);
+    }
+
     scheduleBody.appendChild(row);
   }
 </script>
