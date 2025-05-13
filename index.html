@@ -1,135 +1,128 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>DHVSU Scheduling System</title>
+  <title>Instructor Enrollment</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
     body {
       font-family: Arial, sans-serif;
       padding: 20px;
+      max-width: 600px;
+      margin: auto;
     }
-    table {
-      border-collapse: collapse;
+    input, select, button {
       width: 100%;
-      margin-top: 10px;
-      overflow-x: auto;
-    }
-    th, td {
-      border: 1px solid #aaa;
-      padding: 8px;
-      text-align: left;
-      vertical-align: top;
-    }
-    th {
-      background-color: #f2f2f2;
-    }
-    .cell-box label {
-      display: block;
-      font-size: 12px;
-    }
-    .cell-box input {
-      width: 100%;
-      font-size: 12px;
-      margin-bottom: 4px;
+      padding: 10px;
+      margin-top: 8px;
       box-sizing: border-box;
     }
-    select {
+    h1 {
+      text-align: center;
+    }
+    .instructor-list {
+      margin-top: 20px;
+    }
+    .instructor-card {
+      padding: 10px;
+      border: 1px solid #ccc;
       margin-bottom: 10px;
+      border-radius: 5px;
     }
   </style>
 </head>
 <body>
 
-<!-- Dropdowns -->
+<h1>Instructor Enrollment</h1>
+
+<!-- Form -->
+<label><strong>Instructor Name:</strong></label>
+<input type="text" id="name" placeholder="e.g. Prof. Juan Dela Cruz">
+
 <label><strong>Course:</strong></label>
 <select id="course">
   <option value="BSA">BSA</option>
   <option value="BSAIS">BSAIS</option>
-  <option value="BSMarketing" selected>BSMarketing</option>
+  <option value="BSMarketing">BSMarketing</option>
   <option value="BSE">BSE</option>
   <option value="BSPublicAdministration">BSPublicAdministration</option>
 </select>
 
-<label><strong>Year:</strong></label>
+<label><strong>Year Level:</strong></label>
 <select id="year">
   <option value="1">1</option>
   <option value="2">2</option>
   <option value="3">3</option>
-  <option value="4" selected>4</option>
+  <option value="4">4</option>
 </select>
 
 <label><strong>Section:</strong></label>
 <select id="section">
   <option value="A">A</option>
-  <option value="B" selected>B</option>
+  <option value="B">B</option>
   <option value="C">C</option>
   <option value="D">D</option>
-  <option value="E">E</option>
-  <option value="F">F</option>
-  <option value="G">G</option>
-  <option value="H">H</option>
 </select>
 
-<!-- Display Result -->
-<h2>Selected: <span id="result">BSMarketing-4B</span></h2>
+<label><strong>Day:</strong></label>
+<select id="day">
+  <option>Monday</option>
+  <option>Tuesday</option>
+  <option>Wednesday</option>
+  <option>Thursday</option>
+  <option>Friday</option>
+  <option>Saturday</option>
+  <option>Sunday</option>
+</select>
 
-<!-- Schedule Table -->
-<div style="overflow-x: auto;">
-  <table>
-    <thead>
-      <tr>
-        <th>Time</th>
-        <th>Monday</th>
-        <th>Tuesday</th>
-        <th>Wednesday</th>
-        <th>Thursday</th>
-        <th>Friday</th>
-        <th>Saturday</th>
-        <th>Sunday</th>
-      </tr>
-    </thead>
-    <tbody id="schedule-body"></tbody>
-  </table>
+<label><strong>Time Slot:</strong></label>
+<select id="time">
+  <option>7:00-8:00</option>
+  <option>8:00-9:00</option>
+  <option>9:00-10:00</option>
+  <option>10:00-11:00</option>
+  <option>11:00-12:00</option>
+  <option>12:00-13:00</option>
+  <option>13:00-14:00</option>
+  <option>14:00-15:00</option>
+  <option>15:00-16:00</option>
+  <option>16:00-17:00</option>
+</select>
+
+<button onclick="addInstructor()">Enroll Instructor</button>
+
+<!-- List -->
+<div class="instructor-list" id="instructor-list">
+  <h2>Enrolled Instructors</h2>
 </div>
 
-<!-- Scripts -->
 <script>
-  const course = document.getElementById('course');
-  const year = document.getElementById('year');
-  const section = document.getElementById('section');
-  const result = document.getElementById('result');
+  const instructorList = document.getElementById('instructor-list');
 
-  function updateResult() {
-    result.textContent = `${course.value}-${year.value}${section.value}`;
-  }
+  function addInstructor() {
+    const name = document.getElementById('name').value.trim();
+    const course = document.getElementById('course').value;
+    const year = document.getElementById('year').value;
+    const section = document.getElementById('section').value;
+    const day = document.getElementById('day').value;
+    const time = document.getElementById('time').value;
 
-  course.onchange = year.onchange = section.onchange = updateResult;
-  updateResult(); // Initialize on load
-
-  const scheduleBody = document.getElementById('schedule-body');
-
-  // Generate the time slots in the schedule table
-  for (let hour = 7; hour <= 17; hour++) {
-    const row = document.createElement('tr');
-
-    // Time column
-    const timeCell = document.createElement('td');
-    timeCell.textContent = `${hour}:00-${hour + 1}:00`;
-    row.appendChild(timeCell);
-
-    // 7 columns for each day
-    for (let i = 0; i < 7; i++) {
-      const cell = document.createElement('td');
-      cell.className = 'cell-box';
-      cell.innerHTML = `
-        <label>Instructor:</label><input type="text">
-        <label>Subject:</label><input type="text">
-        <label>Room:</label><input type="text">
-      `;
-      row.appendChild(cell);
+    if (name === '') {
+      alert("Please enter the instructor's name.");
+      return;
     }
 
-    scheduleBody.appendChild(row);
+    const div = document.createElement('div');
+    div.className = 'instructor-card';
+    div.innerHTML = `
+      <strong>${name}</strong><br>
+      ${course}-${year}${section}<br>
+      ${day} | ${time}
+    `;
+
+    instructorList.appendChild(div);
+
+    // Clear inputs
+    document.getElementById('name').value = '';
   }
 </script>
 
