@@ -75,16 +75,16 @@
   course.onchange = year.onchange = section.onchange = updateResult;
   updateResult(); // Initialize on load
 
-  // Fetch and use the instructor data from the JSON file
-  let instructorData = [];
+// Fetch and use the instructor data from the JSON file
+let instructorData = [];
 
-  fetch('instructors.json')
-    .then(response => response.json())
-    .then(data => {
-      instructorData = data;
-      populateSchedule(); // Call populateSchedule once JSON is loaded
-    })
-    .catch(error => console.error('Error loading JSON:', error));
+fetch('Instructors.json')  // <-- Make sure "I" is capitalized to match the file name
+  .then(response => response.json())
+  .then(data => {
+    instructorData = data;
+    populateSchedule(); // Call populateSchedule once JSON is loaded
+  })
+  .catch(error => console.error('Error loading JSON:', error));
 
   function populateSchedule() {
     const selectedCourse = course.value;
