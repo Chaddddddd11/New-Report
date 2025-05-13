@@ -111,16 +111,16 @@
           entry.Time === timeRange
         );
 
-        // If a match is found, fill in the fields
+        // If a match is found, fill in the Instructor field, leave Subject and Room empty
         if (match) {
           inputs[0].value = match.Instructor;  // Set Instructor
-          inputs[1].value = match.Subject;     // Set Subject
-          inputs[2].value = match.Room;        // Set Room
+          inputs[1].value = '';                // Leave Subject empty or set a default
+          inputs[2].value = '';                // Leave Room empty or set a default
         } else {
-          // If no match, clear the fields
+          // If no match, clear the Instructor field
           inputs[0].value = '';
-          inputs[1].value = '';
-          inputs[2].value = '';
+          inputs[1].value = '';  // Leave Subject empty
+          inputs[2].value = '';  // Leave Room empty
         }
       }
     }
@@ -174,3 +174,4 @@
 
 </body>
 </html>
+
