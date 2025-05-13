@@ -1,24 +1,94 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8">
-  <title>NewWeb</title>
+  <title>DHVSU Scheduling System</title>
   <style>
     body {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      margin: 0;
       font-family: Arial, sans-serif;
-      background-color: #f4f4f4;
     }
-    h1 {
-      color: #333;
+    h2, h3 {
+      margin: 0;
+    }
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      margin-top: 10px;
+    }
+    th, td {
+      border: 1px solid #aaa;
+      padding: 8px;
+      text-align: left;
+      vertical-align: top;
+    }
+    th {
+      background-color: #f2f2f2;
+    }
+    .cell-box label {
+      display: block;
+      font-size: 12px;
+    }
+    .cell-box input {
+      width: 100%;
+      font-size: 12px;
+      margin-bottom: 4px;
+      box-sizing: border-box;
     }
   </style>
 </head>
 <body>
-  <h1>Hello World</h1>
+
+  <h2>Course: BSMarketing</h2>
+  <h3>Year: 3 | Section: B</h3>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Time</th>
+        <th>Monday</th>
+        <th>Tuesday</th>
+        <th>Wednesday</th>
+        <th>Thursday</th>
+        <th>Friday</th>
+        <th>Saturday</th>
+        <th>Sunday</th>
+      </tr>
+    </thead>
+    <tbody id="schedule-body">
+      <!-- Rows will be inserted here by JavaScript -->
+    </tbody>
+  </table>
+
+  <script>
+    const scheduleBody = document.getElementById('schedule-body');
+    const startHour = 7;
+    const endHour = 17;
+
+    for (let hour = startHour; hour <= endHour; hour++) {
+      const nextHour = hour + 1;
+      const row = document.createElement('tr');
+
+      // Format time (e.g., 7:00-8:00)
+      const timeCell = document.createElement('td');
+      timeCell.textContent = `${hour}:00-${nextHour}:00`;
+      row.appendChild(timeCell);
+
+      // Create cells for each day
+      for (let i = 0; i < 7; i++) {
+        const cell = document.createElement('td');
+        cell.classList.add('cell-box');
+
+        cell.innerHTML = `
+          <label>Instructor:</label><input type="text">
+          <label>Subject:</label><input type="text">
+          <label>Room:</label><input type="text">
+        `;
+
+        row.appendChild(cell);
+      }
+
+      scheduleBody.appendChild(row);
+    }
+  </script>
+
 </body>
 </html>
