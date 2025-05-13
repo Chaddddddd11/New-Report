@@ -4862,3 +4862,69 @@
   "Time Slot": "12:00-13:00"
  }
 ]
+<script>
+  const course = document.getElementById('course');
+  const year = document.getElementById('year');
+  const section = document.getElementById('section');
+  const result = document.getElementById('result');
+
+  function updateResult() {
+    result.textContent = `${course.value}-${year.value}${section.value}`;
+    populateSchedule(); // Update schedule when selections change
+  }
+
+  course.onchange = year.onchange = section.onchange = updateResult;
+  updateResult(); // Initialize on load
+
+  // Fetch and use the instructor data from the JSON file
+  let instructorData = [];
+
+  fetch('instructors.json')
+    .then(response => response.json())
+    .then(data => {
+      instructorData = data;
+      populateSchedule(); // Call populateSchedule once JSON is loaded
+    })
+    .catch(error => console.error('Error loading JSON:', error));
+
+  function populateSchedule() {
+    const selectedCourse = course.value;
+    const selectedYear = year.value;
+    const selectedSection = section.value;
+
+    const rows = document.getElementById('schedule-body').rows;
+
+    // Loop through all time slots in the schedule table
+    for (let i = 0; i < rows.length; i++) {
+        const timeRange = rows[i].cells[0].textContent; // Get the time range (e.g., "7:00-8:00")
+
+        // Loop through each day of the week (Monday to Sunday)
+        for (let dayIndex = 0; dayIndex < 7; dayIndex++) {
+            const day = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"][dayIndex];
+            const cell = rows[i].cells[dayIndex + 1]; // Skip the time column, so use +1
+            const inputs = cell.querySelectorAll('input'); // Get the input fields for Instructor, Subject, Room
+
+            // Find a match in the JSON for Course, Year, Section, Day, and Time Slot
+            const match = instructorData.find(entry =>
+                entry.Course === selectedCourse &&
+                entry.YEAR === parseInt(selectedYear) && // Ensure the year is a number to compare
+                entry.Section === `${selectedCourse}-${selectedYear}${selectedSection}` &&  // Correctly format the section
+                entry.Day === day &&
+                entry["Time Slot"] === timeRange
+            );
+
+            // If a match is found, fill in the Instructor field, leave Subject and Room empty
+            if (match) {
+                inputs[0].value = match.Instructor;  // Set Instructor
+                inputs[1].value = '';                // Leave Subject empty or set a default
+                inputs[2].value = '';                // Leave Room empty or set a default
+            } else {
+                // If no match, clear the Instructor field
+                inputs[0].value = '';
+                inputs[1].value = '';  // Leave Subject empty
+                inputs[2].value = '';  // Leave Room empty
+            }
+        }
+    }
+}
+</script>
