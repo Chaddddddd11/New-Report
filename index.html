@@ -1,68 +1,14 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Excel Viewer</title>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-  <style>
-    table {
-      border-collapse: collapse;
-      width: 100%;
-      max-width: 900px;
-      margin: 20px auto;
-      font-family: Arial, sans-serif;
-    }
-    th, td {
-      border: 1px solid #999;
-      padding: 8px 12px;
-      text-align: left;
-    }
-    th {
-      background-color: #f2f2f2;
-    }
-    caption {
-      caption-side: top;
-      font-weight: bold;
-      font-size: 1.2em;
-      margin-bottom: 10px;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <title>Combined Excel Data</title>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+    <script src="js/processExcel.js" defer></script>
 </head>
 <body>
-  <h1 style="text-align:center;">Excel File Viewer</h1>
-  <div id="excelData" style="display: flex; justify-content: center;"></div>
-
-  <script>
-    async function loadExcel() {
-      const response = await fetch('Book1.xlsx');
-      const arrayBuffer = await response.arrayBuffer();
-      const data = new Uint8Array(arrayBuffer);
-      const workbook = XLSX.read(data, { type: 'array' });
-
-      const firstSheetName = workbook.SheetNames[0];
-      const worksheet = workbook.Sheets[firstSheetName];
-      const sheetData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
-
-      const table = document.createElement('table');
-      const caption = document.createElement('caption');
-      caption.innerText = `Sheet: ${firstSheetName}`;
-      table.appendChild(caption);
-
-      sheetData.forEach((row, rowIndex) => {
-        const tr = document.createElement('tr');
-        row.forEach(cell => {
-          const cellElement = document.createElement(rowIndex === 0 ? 'th' : 'td');
-          cellElement.textContent = cell ?? '';  // Replace undefined with empty string
-          tr.appendChild(cellElement);
-        });
-        table.appendChild(tr);
-      });
-
-      document.getElementById('excelData').appendChild(table);
-    }
-
-    loadExcel();
-  </script>
+    <h2>Combined Excel Data</h2>
+    <input type="file" id="upload" multiple accept=".xlsx" />
+    <div id="output"></div>
 </body>
 </html>
