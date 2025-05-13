@@ -37,7 +37,15 @@
 </head>
 <body>
 
-  <h2>Course: BSMarketing</h2>
+ <script>
+  const courseSelect = document.getElementById('course-select');
+  const selectedCourse = document.getElementById('selected-course');
+
+  courseSelect.addEventListener('change', function() {
+    selectedCourse.textContent = courseSelect.value;
+  });
+</script>
+
   <h3>Year: 3 | Section: B</h3>
 
   <table>
