@@ -1,68 +1,94 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Excel Viewer</title>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <title>DHVSU Scheduling System</title>
   <style>
+    body {
+      font-family: Arial, sans-serif;
+    }
+    h2, h3 {
+      margin: 0;
+    }
     table {
       border-collapse: collapse;
       width: 100%;
-      max-width: 900px;
-      margin: 20px auto;
-      font-family: Arial, sans-serif;
+      margin-top: 10px;
     }
     th, td {
-      border: 1px solid #999;
-      padding: 8px 12px;
+      border: 1px solid #aaa;
+      padding: 8px;
       text-align: left;
+      vertical-align: top;
     }
     th {
       background-color: #f2f2f2;
     }
-    caption {
-      caption-side: top;
-      font-weight: bold;
-      font-size: 1.2em;
-      margin-bottom: 10px;
+    .cell-box label {
+      display: block;
+      font-size: 12px;
+    }
+    .cell-box input {
+      width: 100%;
+      font-size: 12px;
+      margin-bottom: 4px;
+      box-sizing: border-box;
     }
   </style>
 </head>
 <body>
-  <h1 style="text-align:center;">Excel File Viewer</h1>
-  <div id="excelData" style="display: flex; justify-content: center;"></div>
+
+  <h2>Course: BSMarketing</h2>
+  <h3>Year: 3 | Section: B</h3>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Time</th>
+        <th>Monday</th>
+        <th>Tuesday</th>
+        <th>Wednesday</th>
+        <th>Thursday</th>
+        <th>Friday</th>
+        <th>Saturday</th>
+        <th>Sunday</th>
+      </tr>
+    </thead>
+    <tbody id="schedule-body">
+      <!-- Rows will be inserted here by JavaScript -->
+    </tbody>
+  </table>
 
   <script>
-    async function loadExcel() {
-      const response = await fetch('Book1.xlsx');
-      const arrayBuffer = await response.arrayBuffer();
-      const data = new Uint8Array(arrayBuffer);
-      const workbook = XLSX.read(data, { type: 'array' });
+    const scheduleBody = document.getElementById('schedule-body');
+    const startHour = 7;
+    const endHour = 17;
 
-      const firstSheetName = workbook.SheetNames[0];
-      const worksheet = workbook.Sheets[firstSheetName];
-      const sheetData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+    for (let hour = startHour; hour <= endHour; hour++) {
+      const nextHour = hour + 1;
+      const row = document.createElement('tr');
 
-      const table = document.createElement('table');
-      const caption = document.createElement('caption');
-      caption.innerText = `Sheet: ${firstSheetName}`;
-      table.appendChild(caption);
+      // Format time (e.g., 7:00-8:00)
+      const timeCell = document.createElement('td');
+      timeCell.textContent = `${hour}:00-${nextHour}:00`;
+      row.appendChild(timeCell);
 
-      sheetData.forEach((row, rowIndex) => {
-        const tr = document.createElement('tr');
-        row.forEach(cell => {
-          const cellElement = document.createElement(rowIndex === 0 ? 'th' : 'td');
-          cellElement.textContent = cell ?? '';  // Replace undefined with empty string
-          tr.appendChild(cellElement);
-        });
-        table.appendChild(tr);
-      });
+      // Create cells for each day
+      for (let i = 0; i < 7; i++) {
+        const cell = document.createElement('td');
+        cell.classList.add('cell-box');
 
-      document.getElementById('excelData').appendChild(table);
+        cell.innerHTML = `
+          <label>Instructor:</label><input type="text">
+          <label>Subject:</label><input type="text">
+          <label>Room:</label><input type="text">
+        `;
+
+        row.appendChild(cell);
+      }
+
+      scheduleBody.appendChild(row);
     }
-
-    loadExcel();
   </script>
+
 </body>
 </html>
