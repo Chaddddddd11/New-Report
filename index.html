@@ -2,14 +2,17 @@
 <html>
 <head>
   <title>DHVSU Scheduling System</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
     body {
       font-family: Arial, sans-serif;
+      padding: 20px;
     }
     table {
       border-collapse: collapse;
       width: 100%;
       margin-top: 10px;
+      overflow-x: auto;
     }
     th, td {
       border: 1px solid #aaa;
@@ -29,6 +32,9 @@
       font-size: 12px;
       margin-bottom: 4px;
       box-sizing: border-box;
+    }
+    select {
+      margin-bottom: 10px;
     }
   </style>
 </head>
@@ -65,8 +71,28 @@
 </select>
 
 <!-- Display Result -->
-<h2>Selected: <span id="result">BSMarketing-3B</span></h2>
+<h2>Selected: <span id="result">BSMarketing-4B</span></h2>
 
+<!-- Schedule Table -->
+<div style="overflow-x: auto;">
+  <table>
+    <thead>
+      <tr>
+        <th>Time</th>
+        <th>Monday</th>
+        <th>Tuesday</th>
+        <th>Wednesday</th>
+        <th>Thursday</th>
+        <th>Friday</th>
+        <th>Saturday</th>
+        <th>Sunday</th>
+      </tr>
+    </thead>
+    <tbody id="schedule-body"></tbody>
+  </table>
+</div>
+
+<!-- Scripts -->
 <script>
   const course = document.getElementById('course');
   const year = document.getElementById('year');
@@ -75,83 +101,11 @@
 
   function updateResult() {
     result.textContent = `${course.value}-${year.value}${section.value}`;
-    populateSchedule(); // Update schedule when selections change
   }
 
   course.onchange = year.onchange = section.onchange = updateResult;
   updateResult(); // Initialize on load
 
-// Fetch and use the instructor data from the JSON file
-let instructorData = [];
-
-fetch('Instructors.json')  // <-- Make sure "I" is capitalized to match the file name
-  .then(response => response.json())
-  .then(data => {
-    instructorData = data;
-    populateSchedule(); // Call populateSchedule once JSON is loaded
-  })
-  .catch(error => console.error('Error loading JSON:', error));
-
-  function populateSchedule() {
-    const selectedCourse = course.value;
-    const selectedYear = year.value;
-    const selectedSection = section.value;
-
-    const rows = document.getElementById('schedule-body').rows;
-
-    // Loop through all time slots in the schedule table
-    for (let i = 0; i < rows.length; i++) {
-      const timeRange = rows[i].cells[0].textContent; // Get the time range (e.g., "7:00-8:00")
-
-      // Loop through each day of the week (Monday to Sunday)
-      for (let dayIndex = 0; dayIndex < 7; dayIndex++) {
-        const day = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"][dayIndex];
-        const cell = rows[i].cells[dayIndex + 1]; // Skip the time column, so use +1
-        const inputs = cell.querySelectorAll('input'); // Get the input fields for Instructor, Subject, Room
-
-        // Find a match in the JSON for Course, Year, Section, Day, and Time
-        const match = instructorData.find(entry =>
-          entry.Course === selectedCourse &&
-          entry.Year === selectedYear &&
-          entry.Section === selectedSection &&
-          entry.Day === day &&
-          entry.Time === timeRange
-        );
-
-        // If a match is found, fill in the Instructor field, leave Subject and Room empty
-        if (match) {
-          inputs[0].value = match.Instructor;  // Set Instructor
-          inputs[1].value = '';                // Leave Subject empty or set a default
-          inputs[2].value = '';                // Leave Room empty or set a default
-        } else {
-          // If no match, clear the Instructor field
-          inputs[0].value = '';
-          inputs[1].value = '';  // Leave Subject empty
-          inputs[2].value = '';  // Leave Room empty
-        }
-      }
-    }
-  }
-</script>
-
-<!-- Schedule Table -->
-<table>
-  <thead>
-    <tr>
-      <th>Time</th>
-      <th>Monday</th>
-      <th>Tuesday</th>
-      <th>Wednesday</th>
-      <th>Thursday</th>
-      <th>Friday</th>
-      <th>Saturday</th>
-      <th>Sunday</th>
-    </tr>
-  </thead>
-  <tbody id="schedule-body"></tbody>
-</table>
-
-<script>
   const scheduleBody = document.getElementById('schedule-body');
 
   // Generate the time slots in the schedule table
@@ -181,4 +135,3 @@ fetch('Instructors.json')  // <-- Make sure "I" is capitalized to match the file
 
 </body>
 </html>
-
