@@ -69,10 +69,62 @@
 
   function updateResult() {
     result.textContent = `${course.value}-${year.value}${section.value}`;
+    populateSchedule(); // Update schedule when selections change
   }
 
   course.onchange = year.onchange = section.onchange = updateResult;
-  updateResult(); // initialize on load
+  updateResult(); // Initialize on load
+
+  // Fetch and use the instructor data from the JSON file
+  let instructorData = [];
+
+  fetch('instructors.json')
+    .then(response => response.json())
+    .then(data => {
+      instructorData = data;
+      populateSchedule(); // Call populateSchedule once JSON is loaded
+    });
+
+  function populateSchedule() {
+    const selectedCourse = course.value;
+    const selectedYear = year.value;
+    const selectedSection = section.value;
+
+    const rows = document.getElementById('schedule-body').rows;
+
+    // Loop through all time slots in the schedule table
+    for (let i = 0; i < rows.length; i++) {
+      const timeRange = rows[i].cells[0].textContent; // Get the time range (e.g., "7:00-8:00")
+
+      // Loop through each day of the week (Monday to Sunday)
+      for (let dayIndex = 0; dayIndex < 7; dayIndex++) {
+        const day = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"][dayIndex];
+        const cell = rows[i].cells[dayIndex + 1]; // Skip the time column, so use +1
+        const inputs = cell.querySelectorAll('input'); // Get the input fields for Instructor, Subject, Room
+
+        // Find a match in the JSON for Course, Year, Section, Day, and Time
+        const match = instructorData.find(entry =>
+          entry.Course === selectedCourse &&
+          entry.Year === selectedYear &&
+          entry.Section === selectedSection &&
+          entry.Day === day &&
+          entry.Time === timeRange
+        );
+
+        // If a match is found, fill in the fields
+        if (match) {
+          inputs[0].value = match.Instructor;  // Set Instructor
+          inputs[1].value = match.Subject;     // Set Subject
+          inputs[2].value = match.Room;        // Set Room
+        } else {
+          // If no match, clear the fields
+          inputs[0].value = '';
+          inputs[1].value = '';
+          inputs[2].value = '';
+        }
+      }
+    }
+  }
 </script>
 
 <!-- Schedule Table -->
@@ -95,6 +147,7 @@
 <script>
   const scheduleBody = document.getElementById('schedule-body');
 
+  // Generate the time slots in the schedule table
   for (let hour = 7; hour <= 17; hour++) {
     const row = document.createElement('tr');
 
