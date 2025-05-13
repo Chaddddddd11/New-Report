@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Instructor Enrollment</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+    }
+
+    label {
+      display: block;
+      margin-top: 10px;
+    }
+
+    input, select, button {
+      padding: 6px;
+      margin-top: 5px;
+      width: 200px;
+      font-size: 14px;
+    }
+
+    .instructor-card {
+      border: 1px solid #ccc;
+      padding: 10px;
+      margin-top: 10px;
+      background: #f9f9f9;
+      border-radius: 5px;
+    }
+
+    .instructor-card button {
+      margin-right: 5px;
+      margin-top: 5px;
+    }
+
+    .back-button {
+      margin-top: 20px;
+      padding: 8px 16px;
+      font-size: 14px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    .back-button:hover {
+      background-color: #0056b3;
+    }
+
+    h2 {
+      margin-top: 30px;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Instructor Enrollment</h1>
+
+  <label for="name">Instructor Name:</label>
+  <input type="text" id="name" placeholder="e.g., John Doe">
+
+  <label for="subject">Subject:</label>
+  <input type="text" id="subject" placeholder="e.g., Marketing 101">
+
+  <label for="course">Course:</label>
+  <select id="course">
+    <option value="BSA">BSA</option>
+    <option value="BSAIS">BSAIS</option>
+    <option value="BSMarketing" selected>BSMarketing</option>
+    <option value="BSE">BSE</option>
+    <option value="BSPublicAdministration">BSPublicAdministration</option>
+  </select>
+
+  <label for="year">Year:</label>
+  <select id="year">
+    <option value="1">1</option>
+    <option value="2">2</option>
+    <option value="3">3</option>
+    <option value="4" selected>4</option>
+  </select>
+
+  <label for="section">Section:</label>
+  <select id="section">
+    <option value="A">A</option>
+    <option value="B" selected>B</option>
+    <option value="C">C</option>
+    <option value="D">D</option>
+  </select>
+
+  <label for="day">Day:</label>
+  <select id="day">
+    <option value="Monday">Monday</option>
+    <option value="Tuesday">Tuesday</option>
+    <option value="Wednesday">Wednesday</option>
+    <option value="Thursday">Thursday</option>
+    <option value="Friday">Friday</option>
+    <option value="Saturday">Saturday</option>
+    <option value="Sunday">Sunday</option>
+  </select>
+
+  <label for="time">Time:</label>
+  <select id="time">
+    <option value="7:00-8:00">7:00-8:00</option>
+    <option value="8:00-9:00">8:00-9:00</option>
+    <option value="9:00-10:00">9:00-10:00</option>
+    <option value="10:00-11:00">10:00-11:00</option>
+    <option value="11:00-12:00">11:00-12:00</option>
+    <option value="12:00-13:00">12:00-13:00</option>
+    <option value="13:00-14:00">13:00-14:00</option>
+    <option value="14:00-15:00">14:00-15:00</option>
+    <option value="15:00-16:00">15:00-16:00</option>
+    <option value="16:00-17:00">16:00-17:00</option>
+  </select>
+
+  <button onclick="addInstructor()">Enroll Instructor</button>
+
+  <div id="instructor-list">
+    <h2>Enrolled Instructors</h2>
+  </div>
+
+  <button class="back-button" onclick="goBack()">← Back to Schedule</button>
+  <button class="back-button" style="background-color: red;" onclick="clearAll()">🗑 Clear All Instructors</button>
+
+  <script>
+    const instructorList = document.getElementById('instructor-list');
+    let editingId = null;
+
+    window.onload = function () {
+      renderAllInstructors();
+    };
+
+    function getStoredInstructors() {
+      return JSON.parse(localStorage.getItem('instructors')) || [];
+    }
+
+    function saveInstructors(data) {
+      localStorage.setItem('instructors', JSON.stringify(data));
+    }
+
+    function addInstructor() {
+      const name = document.getElementById('name').value.trim();
+      const subject = document.getElementById('subject').value.trim();
+      const course = document.getElementById('course').value;
+      const year = document.getElementById('year').value;
+      const section = document.getElementById('section').value;
+      const day = document.getElementById('day').value;
+      const time = document.getElementById('time').value;
+
+      if (!name || !subject) {
+        alert("Please enter both the instructor's name and subject.");
+        return;
+      }
+
+      const instructors = getStoredInstructors();
+
+      if (editingId !== null) {
+        // Update existing
+        const index = instructors.findIndex(i => i.id === editingId);
+        if (index !== -1) {
+          instructors[index] = { id: editingId, name, subject, course, year, section, day, time };
+        }
+        editingId = null;
+        document.querySelector("button[onclick='addInstructor()']").textContent = "Enroll Instructor";
+      } else {
+        // Add new
+        const newInstructor = {
+          id: Date.now(),
+          name,
+          subject,
+          course,
+          year,
+          section,
+          day,
+          time
+        };
+        instructors.push(newInstructor);
+      }
+
+      saveInstructors(instructors);
+      renderAllInstructors();
+      clearForm();
+    }
+
+    function renderAllInstructors() {
+      instructorList.innerHTML = '<h2>Enrolled Instructors</h2>';
+      const instructors = getStoredInstructors();
+      instructors.forEach(displayInstructor);
+    }
+
+    function displayInstructor(instructor) {
+      const div = document.createElement('div');
+      div.className = 'instructor-card';
+      div.innerHTML = `
+        <strong>${instructor.name}</strong> - ${instructor.subject}<br>
+        ${instructor.course}-${instructor.year}${instructor.section}<br>
+        ${instructor.day} | ${instructor.time}
+        <br>
+        <button onclick="editInstructor(${instructor.id})">✏ Edit</button>
+        <button onclick="deleteInstructor(${instructor.id})">🗑 Delete</button>
+      `;
+      instructorList.appendChild(div);
+    }
+
+    function deleteInstructor(id) {
+      const instructors = getStoredInstructors().filter(i => i.id !== id);
+      saveInstructors(instructors);
+      renderAllInstructors();
+    }
+
+    function editInstructor(id) {
+      const instructor = getStoredInstructors().find(i => i.id === id);
+      if (!instructor) return;
+
+      document.getElementById('name').value = instructor.name;
+      document.getElementById('subject').value = instructor.subject;
+      document.getElementById('course').value = instructor.course;
+      document.getElementById('year').value = instructor.year;
+      document.getElementById('section').value = instructor.section;
+      document.getElementById('day').value = instructor.day;
+      document.getElementById('time').value = instructor.time;
+
+      editingId = id;
+      document.querySelector("button[onclick='addInstructor()']").textContent = "Update Instructor";
+    }
+
+    function clearForm() {
+      document.getElementById('name').value = '';
+      document.getElementById('subject').value = '';
+      editingId = null;
+    }
+
+    function clearAll() {
+      if (confirm("Are you sure you want to delete all instructors?")) {
+        localStorage.removeItem('instructors');
+        renderAllInstructors();
+      }
+    }
+
+    function goBack() {
+      window.location.href = "index.html"; // Replace with actual schedule page if different
+    }
+  </script>
+
+</body>
+</html>
