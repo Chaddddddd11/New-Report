@@ -46,14 +46,29 @@
   <option value="BSPublicAdministration">BSPublicAdministration</option>
 </select>
 
+<h2>Selected: <span id="display-selection">BSMarketing-3B</span></h2>
+
 <script>
   const courseSelect = document.getElementById('course-select');
-  const selectedCourse = document.getElementById('selected-course');
+  const yearSelect = document.getElementById('year-select');
+  const sectionSelect = document.getElementById('section-select');
+  const displaySelection = document.getElementById('display-selection');
 
-  courseSelect.addEventListener('change', function () {
-    selectedCourse.textContent = courseSelect.value;
-  });
+  function updateDisplay() {
+    const course = courseSelect.value;
+    const year = yearSelect.value;
+    const section = sectionSelect.value;
+    displaySelection.textContent = `${course}-${year}${section}`;
+  }
+
+  courseSelect.addEventListener('change', updateDisplay);
+  yearSelect.addEventListener('change', updateDisplay);
+  sectionSelect.addEventListener('change', updateDisplay);
+
+  // Initialize display on page load
+  updateDisplay();
 </script>
+
   
 <label for="year-select"><strong>Year:</strong></label>
 <select id="year-select">
@@ -68,24 +83,6 @@
   <option value="B" selected>B</option>
   <option value="C">C</option>
 </select>
-
-<h3>Selected: Year <span id="selected-year">3</span> | Section <span id="selected-section">B</span></h3>
-
-  <script>
-  // Year and Section selection handling
-  const yearSelect = document.getElementById('year-select');
-  const sectionSelect = document.getElementById('section-select');
-  const selectedYear = document.getElementById('selected-year');
-  const selectedSection = document.getElementById('selected-section');
-
-  yearSelect.addEventListener('change', function () {
-    selectedYear.textContent = yearSelect.value;
-  });
-
-  sectionSelect.addEventListener('change', function () {
-    selectedSection.textContent = sectionSelect.value;
-  });
-</script>
 
   <table>
     <thead>
