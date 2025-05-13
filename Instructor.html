@@ -161,6 +161,12 @@
       const day = document.getElementById('day').value;
       const time = document.getElementById('time').value;
 
+      // Form validation
+      if (!name || !subject || !course || !year || !section || !day || !time) {
+        alert("Please fill in all fields.");
+        return;
+      }
+
       const instructor = { name, subject, course, year, section, day, time };
       instructors.push(instructor);
       localStorage.setItem('instructors', JSON.stringify(instructors));
@@ -177,6 +183,7 @@
       document.getElementById('section').value = instructor.section;
       document.getElementById('day').value = instructor.day;
       document.getElementById('time').value = instructor.time;
+
       // Remove instructor from the list after editing
       removeInstructor(index);
     }
@@ -199,4 +206,3 @@
 
 </body>
 </html>
-
