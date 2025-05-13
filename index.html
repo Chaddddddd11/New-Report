@@ -16,7 +16,7 @@
       margin-top: 8px;
       box-sizing: border-box;
     }
-    h1 {
+    h1, h2 {
       text-align: center;
     }
     .instructor-list {
@@ -28,6 +28,11 @@
       margin-bottom: 10px;
       border-radius: 5px;
     }
+    .back-button {
+      background-color: #555;
+      color: white;
+      margin-top: 20px;
+    }
   </style>
 </head>
 <body>
@@ -37,6 +42,9 @@
 <!-- Form -->
 <label><strong>Instructor Name:</strong></label>
 <input type="text" id="name" placeholder="e.g. Prof. Juan Dela Cruz">
+
+<label><strong>Subject:</strong></label>
+<input type="text" id="subject" placeholder="e.g. Marketing 101">
 
 <label><strong>Course:</strong></label>
 <select id="course">
@@ -90,7 +98,10 @@
 
 <button onclick="addInstructor()">Enroll Instructor</button>
 
-<!-- List -->
+<!-- Back to Schedule Page Button -->
+<button class="back-button" onclick="location.href='index.html'">⬅ Back to Schedule</button>
+
+<!-- Instructor List -->
 <div class="instructor-list" id="instructor-list">
   <h2>Enrolled Instructors</h2>
 </div>
@@ -100,29 +111,31 @@
 
   function addInstructor() {
     const name = document.getElementById('name').value.trim();
+    const subject = document.getElementById('subject').value.trim();
     const course = document.getElementById('course').value;
     const year = document.getElementById('year').value;
     const section = document.getElementById('section').value;
     const day = document.getElementById('day').value;
     const time = document.getElementById('time').value;
 
-    if (name === '') {
-      alert("Please enter the instructor's name.");
+    if (!name || !subject) {
+      alert("Please enter both the instructor's name and subject.");
       return;
     }
 
     const div = document.createElement('div');
     div.className = 'instructor-card';
     div.innerHTML = `
-      <strong>${name}</strong><br>
+      <strong>${name}</strong> - ${subject}<br>
       ${course}-${year}${section}<br>
       ${day} | ${time}
     `;
 
     instructorList.appendChild(div);
 
-    // Clear inputs
+    // Clear fields
     document.getElementById('name').value = '';
+    document.getElementById('subject').value = '';
   }
 </script>
 
