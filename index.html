@@ -46,10 +46,46 @@
   <option value="BSPublicAdministration">BSPublicAdministration</option>
 </select>
 
-<h2>Selected Course: <span id="selected-course">BSMarketing</span></h2>
+<script>
+  const courseSelect = document.getElementById('course-select');
+  const selectedCourse = document.getElementById('selected-course');
 
+  courseSelect.addEventListener('change', function () {
+    selectedCourse.textContent = courseSelect.value;
+  });
+</script>
+  
+<label for="year-select"><strong>Year:</strong></label>
+<select id="year-select">
+  <option value="1">1</option>
+  <option value="2">2</option>
+  <option value="3" selected>3</option>
+</select>
 
-  <h3>Year: 3 | Section: B</h3>
+<label for="section-select"><strong>Section:</strong></label>
+<select id="section-select">
+  <option value="A">A</option>
+  <option value="B" selected>B</option>
+  <option value="C">C</option>
+</select>
+
+<h3>Selected: Year <span id="selected-year">3</span> | Section <span id="selected-section">B</span></h3>
+
+  <script>
+  // Year and Section selection handling
+  const yearSelect = document.getElementById('year-select');
+  const sectionSelect = document.getElementById('section-select');
+  const selectedYear = document.getElementById('selected-year');
+  const selectedSection = document.getElementById('selected-section');
+
+  yearSelect.addEventListener('change', function () {
+    selectedYear.textContent = yearSelect.value;
+  });
+
+  sectionSelect.addEventListener('change', function () {
+    selectedSection.textContent = sectionSelect.value;
+  });
+</script>
 
   <table>
     <thead>
