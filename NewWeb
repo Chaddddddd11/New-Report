@@ -6,7 +6,10 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <h1>Welcome to NewWeb</h1>
+  <div class="center-container">
+    <h1>Hello World</h1>
+  </div>
+
   <p>Created by Chaddddddd11</p>
 
   <h2>Schedule Upload</h2>
