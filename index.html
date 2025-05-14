@@ -72,15 +72,14 @@
       border: 1px solid #ffa07a;
     }
 
-    .bottom-button {
-      margin-top: 50px;
+    .bottom-link {
+      margin-top: 40px;
       text-align: center;
     }
   </style>
 </head>
 <body>
 
-<!-- Dropdowns -->
 <label><strong>Course:</strong></label>
 <select id="course">
   <option value="BSA">BSA</option>
@@ -106,38 +105,8 @@
   <option value="D">D</option>
 </select>
 
-<h2>Selected: <span id="result">BSMarketing-3B</span></h2>
+<h2>Selected: <span id="result">BSMarketing-4B</span></h2>
 
-<button onclick="location.href='Instructor.html'">Go to Instructor Enrollment</button>
-
-<!-- JavaScript Logic -->
-<script>
-  const course = document.getElementById('course');
-  const year = document.getElementById('year');
-  const section = document.getElementById('section');
-  const result = document.getElementById('result');
-
-  function updateResult() {
-    result.textContent = `${course.value}-${year.value}${section.value}`;
-    populateSchedule();
-  }
-
-  course.onchange = year.onchange = section.onchange = updateResult;
-  updateResult();
-
-  function populateSchedule() {
-    const rows = document.getElementById('schedule-body').rows;
-    for (let i = 0; i < rows.length; i++) {
-      for (let j = 1; j < 8; j++) {
-        const cell = rows[i].cells[j];
-        const inputs = cell.querySelectorAll('input');
-        // populate inputs if needed
-      }
-    }
-  }
-</script>
-
-<!-- Schedule Table -->
 <table>
   <thead>
     <tr>
@@ -154,11 +123,71 @@
   <tbody id="schedule-body"></tbody>
 </table>
 
+<div class="bottom-link">
+  <button onclick="location.href='InstructorList.html'">View Instructor List</button>
+</div>
+
 <script>
+  const course = document.getElementById('course');
+  const year = document.getElementById('year');
+  const section = document.getElementById('section');
+  const result = document.getElementById('result');
   const scheduleBody = document.getElementById('schedule-body');
+
+  function updateResult() {
+    result.textContent = `${course.value}-${year.value}${section.value}`;
+    populateSchedule();
+  }
+
+  course.onchange = year.onchange = section.onchange = updateResult;
+
+  function getDayIndex(day) {
+    const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+    return days.indexOf(day) + 1;
+  }
+
+  function getTimeIndex(time) {
+    const hour = parseInt(time.split(':')[0]);
+    return hour - 7;
+  }
+
+  function populateSchedule() {
+    const instructors = JSON.parse(localStorage.getItem("instructors")) || [];
+    const selectedCourse = course.value;
+    const selectedYear = year.value;
+    const selectedSection = section.value;
+
+    const rows = scheduleBody.rows;
+    for (let i = 0; i < rows.length; i++) {
+      for (let j = 1; j < 8; j++) {
+        const inputs = rows[i].cells[j].querySelectorAll('input');
+        inputs.forEach(input => input.value = '');
+      }
+    }
+
+    instructors.forEach(instructor => {
+      if (
+        instructor.course === selectedCourse &&
+        instructor.year === selectedYear &&
+        instructor.section === selectedSection
+      ) {
+        const rowIndex = getTimeIndex(instructor.time);
+        const colIndex = getDayIndex(instructor.day);
+        if (rowIndex >= 0 && colIndex >= 1) {
+          const targetCell = rows[rowIndex].cells[colIndex];
+          const inputs = targetCell.querySelectorAll('input');
+          if (inputs.length === 3) {
+            inputs[0].value = instructor.name;
+            inputs[1].value = instructor.subject;
+            inputs[2].value = instructor.room || '';
+          }
+        }
+      }
+    });
+  }
+
   for (let hour = 7; hour <= 17; hour++) {
     const row = document.createElement('tr');
-
     const timeCell = document.createElement('td');
     timeCell.textContent = `${hour}:00-${hour + 1}:00`;
     row.appendChild(timeCell);
@@ -176,12 +205,9 @@
 
     scheduleBody.appendChild(row);
   }
-</script>
 
-<!-- Bottom Button -->
-<div class="bottom-button">
-  <button onclick="location.href='InstructorList.html'">Go to Instructor List</button>
-</div>
+  updateResult();
+</script>
 
 </body>
 </html>
