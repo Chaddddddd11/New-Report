@@ -73,6 +73,7 @@
 
   <h1>Instructor Enrollment</h1>
 
+  <!-- Instructor Enrollment Form -->
   <label>Name:</label>
   <input type="text" id="name" placeholder="Instructor Name">
 
@@ -81,28 +82,34 @@
     <option value="Accounting">Accounting</option>
     <option value="English">English</option>
     <option value="Math">Math</option>
+    <option value="Science">Science</option>
   </select>
 
   <label>Course:</label>
   <select id="course">
     <option value="BSA">BSA</option>
     <option value="BSMarketing">BSMarketing</option>
+    <option value="BSIT">BSIT</option>
   </select>
 
   <label>Year:</label>
   <select id="year">
     <option value="1">1</option>
     <option value="2">2</option>
+    <option value="3">3</option>
+    <option value="4">4</option>
   </select>
 
   <label>Section:</label>
   <select id="section">
     <option value="A">A</option>
     <option value="B">B</option>
+    <option value="C">C</option>
+    <option value="D">D</option>
   </select>
 
-  <label>Day:</label>
-  <select id="day">
+  <label>Day(s):</label>
+  <select id="day" multiple>
     <option value="Monday">Monday</option>
     <option value="Tuesday">Tuesday</option>
     <option value="Wednesday">Wednesday</option>
@@ -112,7 +119,7 @@
     <option value="Sunday">Sunday</option>
   </select>
 
-  <label>Time:</label>
+  <label>Time(s):</label>
   <select id="time" multiple>
     <option value="9:00-10:00">9:00-10:00</option>
     <option value="10:00-11:00">10:00-11:00</option>
@@ -133,20 +140,24 @@
     let instructors = JSON.parse(localStorage.getItem('instructors')) || [];
 
     // Pre-fill Prof. Garcia schedule
-    instructors.push({
-      name: "Prof. Garcia",
-      subject: "Accounting",
-      course: "BSA",
-      year: "1",
-      section: "A",
-      schedule: [
-        { day: "Sunday", time: ["15:00-16:00", "9:00-10:00", "13:00-14:00", "16:00-17:00"] },
-        { day: "Tuesday", time: ["15:00-16:00", "9:00-10:00", "13:00-14:00", "16:00-17:00"] },
-        { day: "Saturday", time: ["15:00-16:00", "9:00-10:00", "13:00-14:00", "16:00-17:00"] },
-        { day: "Friday", time: ["15:00-16:00", "9:00-10:00", "13:00-14:00", "16:00-17:00"] }
-      ]
-    });
+    if (instructors.length === 0) {
+      instructors.push({
+        name: "Prof. Garcia",
+        subject: "Accounting",
+        course: "BSA",
+        year: "1",
+        section: "A",
+        schedule: [
+          { day: "Sunday", time: ["15:00-16:00", "9:00-10:00", "13:00-14:00", "16:00-17:00"] },
+          { day: "Tuesday", time: ["15:00-16:00", "9:00-10:00", "13:00-14:00", "16:00-17:00"] },
+          { day: "Saturday", time: ["15:00-16:00", "9:00-10:00", "13:00-14:00", "16:00-17:00"] },
+          { day: "Friday", time: ["15:00-16:00", "9:00-10:00", "13:00-14:00", "16:00-17:00"] }
+        ]
+      });
+      localStorage.setItem('instructors', JSON.stringify(instructors));
+    }
 
+    // Function to display the instructors list
     function displayInstructors() {
       instructorList.innerHTML = '';
       instructors.forEach((instructor, index) => {
@@ -179,26 +190,30 @@
       });
     }
 
+    // Register a new instructor
     function registerInstructor() {
       const name = document.getElementById('name').value;
       const subject = document.getElementById('subject').value;
       const course = document.getElementById('course').value;
       const year = document.getElementById('year').value;
       const section = document.getElementById('section').value;
-      const day = document.getElementById('day').value;
-      const time = Array.from(document.getElementById('time').selectedOptions).map(option => option.value);
+      const days = Array.from(document.getElementById('day').selectedOptions).map(option => option.value);
+      const times = Array.from(document.getElementById('time').selectedOptions).map(option => option.value);
 
       if (!name) {
         alert("Please enter the instructor's name.");
         return;
       }
 
-      const instructor = { name, subject, course, year, section, schedule: [{ day, time }] };
+      const schedule = days.map(day => ({ day, time: times }));
+      const instructor = { name, subject, course, year, section, schedule };
+
       instructors.push(instructor);
       localStorage.setItem('instructors', JSON.stringify(instructors));
       displayInstructors();
     }
 
+    // Edit an instructor's data
     function editInstructor(index) {
       const instructor = instructors[index];
       document.getElementById('name').value = instructor.name;
@@ -206,21 +221,32 @@
       document.getElementById('course').value = instructor.course;
       document.getElementById('year').value = instructor.year;
       document.getElementById('section').value = instructor.section;
-      document.getElementById('day').value = instructor.schedule[0].day;
-      document.getElementById('time').value = instructor.schedule[0].time;
+      
+      // Select the correct days and times
+      Array.from(document.getElementById('day').options).forEach(option => {
+        option.selected = instructor.schedule.some(schedule => schedule.day === option.value);
+      });
+      
+      Array.from(document.getElementById('time').options).forEach(option => {
+        option.selected = instructor.schedule.some(schedule => schedule.time.includes(option.value));
+      });
+      
       removeInstructor(index);
     }
 
+    // Remove an instructor
     function removeInstructor(index) {
       instructors.splice(index, 1);
       localStorage.setItem('instructors', JSON.stringify(instructors));
       displayInstructors();
     }
 
+    // Go back to the schedule page
     function goBack() {
       window.location.href = "index.html";
     }
 
+    // Display instructors on page load
     displayInstructors();
   </script>
 
