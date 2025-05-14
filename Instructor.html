@@ -60,55 +60,7 @@
   <label for="instructor">Instructor:</label>
   <select id="instructor">
     <option value="">Select an Instructor</option>
-    <option value="Prof. Aquino">Prof. Aquino</option>
-    <option value="Prof. Bautista">Prof. Bautista</option>
-    <option value="Prof. Calma">Prof. Calma</option>
-    <option value="Prof. Carbonell">Prof. Carbonell</option>
-    <option value="Prof. Castro">Prof. Castro</option>
-    <option value="Prof. Chua">Prof. Chua</option>
-    <option value="Prof. Cruz">Prof. Cruz</option>
-    <option value="Prof. Cunanan">Prof. Cunanan</option>
-    <option value="Prof. De Leon">Prof. De Leon</option>
-    <option value="Prof. Delos Santos">Prof. Delos Santos</option>
-    <option value="Prof. Dizon">Prof. Dizon</option>
-    <option value="Prof. Domingo">Prof. Domingo</option>
-    <option value="Prof. Espino">Prof. Espino</option>
-    <option value="Prof. Fernandez">Prof. Fernandez</option>
-    <option value="Prof. Flores">Prof. Flores</option>
-    <option value="Prof. Galang">Prof. Galang</option>
-    <option value="Prof. Garcia">Prof. Garcia</option>
-    <option value="Prof. Go">Prof. Go</option>
-    <option value="Prof. Gomez">Prof. Gomez</option>
-    <option value="Prof. Gonzales">Prof. Gonzales</option>
-    <option value="Prof. Jimenez">Prof. Jimenez</option>
-    <option value="Prof. Lagman">Prof. Lagman</option>
-    <option value="Prof. Lim">Prof. Lim</option>
-    <option value="Prof. Lopez">Prof. Lopez</option>
-    <option value="Prof. Martinez">Prof. Martinez</option>
-    <option value="Prof. Mendoza">Prof. Mendoza</option>
-    <option value="Prof. Navarro">Prof. Navarro</option>
-    <option value="Prof. Ong">Prof. Ong</option>
-    <option value="Prof. Padilla">Prof. Padilla</option>
-    <option value="Prof. Panganiban">Prof. Panganiban</option>
-    <option value="Prof. Perez">Prof. Perez</option>
-    <option value="Prof. Quiambao">Prof. Quiambao</option>
-    <option value="Prof. Ramos">Prof. Ramos</option>
-    <option value="Prof. Reyes">Prof. Reyes</option>
-    <option value="Prof. Rivera">Prof. Rivera</option>
-    <option value="Prof. Rosales">Prof. Rosales</option>
-    <option value="Prof. Roxas">Prof. Roxas</option>
-    <option value="Prof. Salazar">Prof. Salazar</option>
-    <option value="Prof. Santos">Prof. Santos</option>
-    <option value="Prof. Silva">Prof. Silva</option>
-    <option value="Prof. Soriano">Prof. Soriano</option>
-    <option value="Prof. Sy">Prof. Sy</option>
-    <option value="Prof. Tan">Prof. Tan</option>
-    <option value="Prof. Torres">Prof. Torres</option>
-    <option value="Prof. Valdez">Prof. Valdez</option>
-    <option value="Prof. Velasco">Prof. Velasco</option>
-    <option value="Prof. Villanueva">Prof. Villanueva</option>
-    <option value="Prof. Yap">Prof. Yap</option>
-    <option value="Prof. Mercado">Prof. Mercado</option>
+    <!-- Instructor options will be dynamically added here -->
   </select>
 
   <label>Subject:</label>
@@ -156,12 +108,32 @@
   <button class="back-button" onclick="goBack()">Back to Schedule</button>
 
   <script>
+    const instructors = [
+      "Prof. Aquino", "Prof. Bautista", "Prof. Calma", "Prof. Carbonell", "Prof. Castro", "Prof. Chua", "Prof. Cruz", "Prof. Cunanan",
+      "Prof. De Leon", "Prof. Delos Santos", "Prof. Dizon", "Prof. Domingo", "Prof. Espino", "Prof. Fernandez", "Prof. Flores", "Prof. Galang",
+      "Prof. Garcia", "Prof. Go", "Prof. Gomez", "Prof. Gonzales", "Prof. Jimenez", "Prof. Lagman", "Prof. Lim", "Prof. Lopez", "Prof. Martinez",
+      "Prof. Mendoza", "Prof. Navarro", "Prof. Ong", "Prof. Padilla", "Prof. Panganiban", "Prof. Perez", "Prof. Quiambao", "Prof. Ramos",
+      "Prof. Reyes", "Prof. Rivera", "Prof. Rosales", "Prof. Roxas", "Prof. Salazar", "Prof. Santos", "Prof. Silva", "Prof. Soriano", "Prof. Sy",
+      "Prof. Tan", "Prof. Torres", "Prof. Valdez", "Prof. Velasco", "Prof. Villanueva", "Prof. Yap", "Prof. Mercado"
+    ];
+
+    const instructorSelect = document.getElementById('instructor');
     const instructorList = document.getElementById('instructor-list');
-    let instructors = JSON.parse(localStorage.getItem('instructors')) || [];
+
+    // Add instructors to the dropdown
+    instructors.forEach(name => {
+      const option = document.createElement('option');
+      option.value = name;
+      option.textContent = name;
+      instructorSelect.appendChild(option);
+    });
+
+    // Save and display registered instructors
+    let registeredInstructors = JSON.parse(localStorage.getItem('instructors')) || [];
 
     function displayInstructors() {
       instructorList.innerHTML = '';
-      instructors.forEach((instructor, index) => {
+      registeredInstructors.forEach((instructor, index) => {
         const div = document.createElement('div');
         div.className = 'instructor-card';
         div.innerHTML = `
@@ -172,7 +144,6 @@
           Section: ${instructor.section}<br>
           Day: ${instructor.day}<br>
           Time: ${instructor.time}<br>
-          <button onclick="editInstructor(${index})">Edit</button>
           <button onclick="removeInstructor(${index})">Remove</button>
         `;
         instructorList.appendChild(div);
@@ -180,7 +151,7 @@
     }
 
     function registerInstructor() {
-      const name = document.getElementById('instructor').value;
+      const name = instructorSelect.value;
       const subject = document.getElementById('subject').value;
       const course = document.getElementById('course').value;
       const year = document.getElementById('year').value;
@@ -194,26 +165,14 @@
       }
 
       const instructor = { name, subject, course, year, section, day, time };
-      instructors.push(instructor);
-      localStorage.setItem('instructors', JSON.stringify(instructors));
+      registeredInstructors.push(instructor);
+      localStorage.setItem('instructors', JSON.stringify(registeredInstructors));
       displayInstructors();
     }
 
-    function editInstructor(index) {
-      const instructor = instructors[index];
-      document.getElementById('instructor').value = instructor.name;
-      document.getElementById('subject').value = instructor.subject;
-      document.getElementById('course').value = instructor.course;
-      document.getElementById('year').value = instructor.year;
-      document.getElementById('section').value = instructor.section;
-      document.getElementById('day').value = instructor.day;
-      document.getElementById('time').value = instructor.time;
-      removeInstructor(index);
-    }
-
     function removeInstructor(index) {
-      instructors.splice(index, 1);
-      localStorage.setItem('instructors', JSON.stringify(instructors));
+      registeredInstructors.splice(index, 1);
+      localStorage.setItem('instructors', JSON.stringify(registeredInstructors));
       displayInstructors();
     }
 
