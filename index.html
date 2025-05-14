@@ -1,6 +1,7 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+  <meta charset="UTF-8">
   <title>DHVSU Scheduling System</title>
   <style>
     body {
@@ -12,56 +13,35 @@
     h2 {
       color: #cc5500;
     }
-    label {
-      font-weight: bold;
-      margin-top: 10px;
-      display: block;
-      color: #b22222;
-    }
-    select {
-      margin-bottom: 10px;
-      padding: 5px;
-      background-color: #ffe4b5;
-      color: #800000;
-    }
     table {
       width: 100%;
       border-collapse: collapse;
+      margin-top: 20px;
     }
     th, td {
-      border: 1px solid #b22222;
+      border: 1px solid #d2691e;
       padding: 10px;
       text-align: center;
+    }
+    th {
+      background-color: #ffdead;
+    }
+    td {
+      background-color: #fff8dc;
     }
     button {
       background-color: #ff4500;
       color: white;
-      padding: 8px 12px;
-      margin: 5px;
       border: none;
+      padding: 10px 15px;
+      margin: 5px;
+      cursor: pointer;
     }
   </style>
 </head>
 <body>
-  <h2>Student Scheduling</h2>
 
-  <label>Course:</label>
-  <select id="course" onchange="autoFillSchedule()">
-    <option value="">Select Course</option>
-    <option value="BSIT">BSIT</option>
-  </select>
-
-  <label>Year:</label>
-  <select id="year" onchange="autoFillSchedule()">
-    <option value="">Select Year</option>
-    <option value="1">1st Year</option>
-  </select>
-
-  <label>Section:</label>
-  <select id="section" onchange="autoFillSchedule()">
-    <option value="">Select Section</option>
-    <option value="A">A</option>
-  </select>
+  <h2>Weekly Schedule</h2>
 
   <table>
     <thead>
@@ -69,55 +49,34 @@
         <th>Time</th>
         <th>Monday</th>
         <th>Tuesday</th>
+        <th>Wednesday</th>
+        <th>Thursday</th>
+        <th>Friday</th>
       </tr>
     </thead>
-    <tbody id="schedule-table">
+    <tbody>
       <tr>
-        <td>8:00 AM</td>
-        <td data-day="Monday" data-time="8:00 AM"></td>
-        <td data-day="Tuesday" data-time="8:00 AM"></td>
+        <td>8:00 - 9:00 AM</td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
       </tr>
-      <!-- Add more rows as needed -->
+      <tr>
+        <td>9:00 - 10:00 AM</td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
+      </tr>
+      <!-- Add more time slots as needed -->
     </tbody>
   </table>
 
-  <br>
-  <button onclick="goToEnrollment()">Enroll Instructor</button>
-  <button onclick="goToInstructorList()">View Instructors</button>
+  <button onclick="window.location.href='Instructor.html'">Enroll Instructor</button>
+  <button onclick="window.location.href='InstructorList.html'">View Instructors</button>
 
-  <script>
-    function goToEnrollment() {
-      window.location.href = 'Instructor.html';
-    }
-
-    function goToInstructorList() {
-      window.location.href = 'InstructorList.html';
-    }
-
-    function autoFillSchedule() {
-      const course = document.getElementById('course').value;
-      const year = document.getElementById('year').value;
-      const section = document.getElementById('section').value;
-      const scheduleTable = document.getElementById('schedule-table');
-      const instructors = JSON.parse(localStorage.getItem('instructors')) || [];
-
-      const rows = scheduleTable.querySelectorAll('tr');
-      rows.forEach(row => {
-        const tds = row.querySelectorAll('td');
-        tds.forEach(cell => {
-          if (cell.dataset.day) cell.textContent = ''; // clear cell
-        });
-      });
-
-      instructors.forEach(inst => {
-        if (inst.course === course && inst.year === year && inst.section === section) {
-          const cell = document.querySelector(`td[data-day="${inst.day}"][data-time="${inst.time}"]`);
-          if (cell) {
-            cell.innerHTML = `${inst.name}<br>${inst.subject}`;
-          }
-        }
-      });
-    }
-  </script>
 </body>
 </html>
