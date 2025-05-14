@@ -40,16 +40,32 @@
       cursor: pointer;
     }
 
+    .back-button {
+      margin-top: 20px;
+      background-color: #003366;
+    }
+
+    table {
+      width: 100%;
+      margin-top: 20px;
+      border-collapse: collapse;
+    }
+
+    th, td {
+      padding: 8px;
+      border: 1px solid #444;
+      text-align: center;
+    }
+
+    th {
+      background-color: #2c3e50;
+    }
+
     .instructor-card {
       margin-top: 10px;
       padding: 10px;
       border: 1px solid #444;
       background-color: #1c1c3c;
-    }
-
-    .back-button {
-      margin-top: 20px;
-      background-color: #003366;
     }
   </style>
 </head>
@@ -57,129 +73,169 @@
 
   <h1>Instructor Enrollment</h1>
 
-  <label for="instructor">Instructor:</label>
-  <select id="instructor">
-    <option value="">Select an Instructor</option>
-    <!-- Instructor options will be dynamically added here -->
-  </select>
+  <h2>Enrolled Instructors</h2>
+  <table id="instructor-table">
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Subject</th>
+        <th>Course</th>
+        <th>Year</th>
+        <th>Section</th>
+        <th>Day</th>
+        <th>Time</th>
+      </tr>
+    </thead>
+    <tbody id="instructor-list"></tbody>
+  </table>
 
-  <label>Subject:</label>
-  <select id="subject">
+  <h3>Assign Schedules</h3>
+
+  <label>Subject (Select multiple):</label>
+  <select id="subject" multiple>
     <option value="Accounting">Accounting</option>
     <option value="English">English</option>
     <option value="Math">Math</option>
   </select>
 
-  <label>Course:</label>
-  <select id="course">
+  <label>Course (Select multiple):</label>
+  <select id="course" multiple>
     <option value="BSA">BSA</option>
     <option value="BSMarketing">BSMarketing</option>
   </select>
 
-  <label>Year:</label>
-  <select id="year">
+  <label>Year (Select multiple):</label>
+  <select id="year" multiple>
     <option value="1">1</option>
     <option value="2">2</option>
   </select>
 
-  <label>Section:</label>
-  <select id="section">
+  <label>Section (Select multiple):</label>
+  <select id="section" multiple>
     <option value="A">A</option>
     <option value="B">B</option>
   </select>
 
-  <label>Day:</label>
-  <select id="day">
+  <label>Day (Select multiple):</label>
+  <select id="day" multiple>
     <option value="Monday">Monday</option>
     <option value="Tuesday">Tuesday</option>
   </select>
 
-  <label>Time:</label>
-  <select id="time">
+  <label>Time (Select multiple):</label>
+  <select id="time" multiple>
     <option value="9:00-10:00">9:00-10:00</option>
     <option value="10:00-11:00">10:00-11:00</option>
   </select>
 
-  <button onclick="registerInstructor()">Register Instructor</button>
-
-  <h2>Registered Instructors</h2>
-  <div id="instructor-list"></div>
+  <button onclick="assignDetails()">Assign Details</button>
 
   <button class="back-button" onclick="goBack()">Back to Schedule</button>
 
   <script>
+    const instructorList = document.getElementById('instructor-list');
     const instructors = [
-      "Prof. Aquino", "Prof. Bautista", "Prof. Calma", "Prof. Carbonell", "Prof. Castro", "Prof. Chua", "Prof. Cruz", "Prof. Cunanan",
-      "Prof. De Leon", "Prof. Delos Santos", "Prof. Dizon", "Prof. Domingo", "Prof. Espino", "Prof. Fernandez", "Prof. Flores", "Prof. Galang",
-      "Prof. Garcia", "Prof. Go", "Prof. Gomez", "Prof. Gonzales", "Prof. Jimenez", "Prof. Lagman", "Prof. Lim", "Prof. Lopez", "Prof. Martinez",
-      "Prof. Mendoza", "Prof. Navarro", "Prof. Ong", "Prof. Padilla", "Prof. Panganiban", "Prof. Perez", "Prof. Quiambao", "Prof. Ramos",
-      "Prof. Reyes", "Prof. Rivera", "Prof. Rosales", "Prof. Roxas", "Prof. Salazar", "Prof. Santos", "Prof. Silva", "Prof. Soriano", "Prof. Sy",
-      "Prof. Tan", "Prof. Torres", "Prof. Valdez", "Prof. Velasco", "Prof. Villanueva", "Prof. Yap", "Prof. Mercado"
+      { name: "Prof. Aquino" },
+      { name: "Prof. Bautista" },
+      { name: "Prof. Calma" },
+      { name: "Prof. Carbonell" },
+      { name: "Prof. Castro" },
+      { name: "Prof. Chua" },
+      { name: "Prof. Cruz" },
+      { name: "Prof. Cunanan" },
+      { name: "Prof. De Leon" },
+      { name: "Prof. Delos Santos" },
+      { name: "Prof. Dizon" },
+      { name: "Prof. Domingo" },
+      { name: "Prof. Espino" },
+      { name: "Prof. Fernandez" },
+      { name: "Prof. Flores" },
+      { name: "Prof. Galang" },
+      { name: "Prof. Garcia" },
+      { name: "Prof. Go" },
+      { name: "Prof. Gomez" },
+      { name: "Prof. Gonzales" },
+      { name: "Prof. Jimenez" },
+      { name: "Prof. Lagman" },
+      { name: "Prof. Lim" },
+      { name: "Prof. Lopez" },
+      { name: "Prof. Martinez" },
+      { name: "Prof. Mendoza" },
+      { name: "Prof. Navarro" },
+      { name: "Prof. Ong" },
+      { name: "Prof. Padilla" },
+      { name: "Prof. Panganiban" },
+      { name: "Prof. Perez" },
+      { name: "Prof. Quiambao" },
+      { name: "Prof. Ramos" },
+      { name: "Prof. Reyes" },
+      { name: "Prof. Rivera" },
+      { name: "Prof. Rosales" },
+      { name: "Prof. Roxas" },
+      { name: "Prof. Salazar" },
+      { name: "Prof. Santos" },
+      { name: "Prof. Silva" },
+      { name: "Prof. Soriano" },
+      { name: "Prof. Sy" },
+      { name: "Prof. Tan" },
+      { name: "Prof. Torres" },
+      { name: "Prof. Valdez" },
+      { name: "Prof. Velasco" },
+      { name: "Prof. Villanueva" },
+      { name: "Prof. Yap" },
+      { name: "Prof. Mercado" }
     ];
 
-    const instructorSelect = document.getElementById('instructor');
-    const instructorList = document.getElementById('instructor-list');
-
-    // Add instructors to the dropdown
-    instructors.forEach(name => {
-      const option = document.createElement('option');
-      option.value = name;
-      option.textContent = name;
-      instructorSelect.appendChild(option);
-    });
-
-    // Save and display registered instructors
-    let registeredInstructors = JSON.parse(localStorage.getItem('instructors')) || [];
-
+    // Function to display instructors in a table
     function displayInstructors() {
       instructorList.innerHTML = '';
-      registeredInstructors.forEach((instructor, index) => {
-        const div = document.createElement('div');
-        div.className = 'instructor-card';
-        div.innerHTML = `
-          <strong>${instructor.name}</strong><br>
-          Subject: ${instructor.subject}<br>
-          Course: ${instructor.course}<br>
-          Year: ${instructor.year}<br>
-          Section: ${instructor.section}<br>
-          Day: ${instructor.day}<br>
-          Time: ${instructor.time}<br>
-          <button onclick="removeInstructor(${index})">Remove</button>
+      instructors.forEach((instructor) => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>${instructor.name}</td>
+          <td>${instructor.subject ? instructor.subject.join(', ') : 'Not Assigned'}</td>
+          <td>${instructor.course ? instructor.course.join(', ') : 'Not Assigned'}</td>
+          <td>${instructor.year ? instructor.year.join(', ') : 'Not Assigned'}</td>
+          <td>${instructor.section ? instructor.section.join(', ') : 'Not Assigned'}</td>
+          <td>${instructor.day ? instructor.day.join(', ') : 'Not Assigned'}</td>
+          <td>${instructor.time ? instructor.time.join(', ') : 'Not Assigned'}</td>
         `;
-        instructorList.appendChild(div);
+        instructorList.appendChild(row);
       });
     }
 
-    function registerInstructor() {
-      const name = instructorSelect.value;
-      const subject = document.getElementById('subject').value;
-      const course = document.getElementById('course').value;
-      const year = document.getElementById('year').value;
-      const section = document.getElementById('section').value;
-      const day = document.getElementById('day').value;
-      const time = document.getElementById('time').value;
+    // Function to assign details to instructors
+    function assignDetails() {
+      const subject = Array.from(document.getElementById('subject').selectedOptions).map(option => option.value);
+      const course = Array.from(document.getElementById('course').selectedOptions).map(option => option.value);
+      const year = Array.from(document.getElementById('year').selectedOptions).map(option => option.value);
+      const section = Array.from(document.getElementById('section').selectedOptions).map(option => option.value);
+      const day = Array.from(document.getElementById('day').selectedOptions).map(option => option.value);
+      const time = Array.from(document.getElementById('time').selectedOptions).map(option => option.value);
 
-      if (!name) {
-        alert("Please select an instructor.");
+      if (!subject.length || !course.length || !year.length || !section.length || !day.length || !time.length) {
+        alert("Please select all the fields.");
         return;
       }
 
-      const instructor = { name, subject, course, year, section, day, time };
-      registeredInstructors.push(instructor);
-      localStorage.setItem('instructors', JSON.stringify(registeredInstructors));
+      instructors.forEach(instructor => {
+        instructor.subject = subject;
+        instructor.course = course;
+        instructor.year = year;
+        instructor.section = section;
+        instructor.day = day;
+        instructor.time = time;
+      });
+
       displayInstructors();
     }
 
-    function removeInstructor(index) {
-      registeredInstructors.splice(index, 1);
-      localStorage.setItem('instructors', JSON.stringify(registeredInstructors));
-      displayInstructors();
-    }
-
+    // Go back to schedule page
     function goBack() {
       window.location.href = "index.html";
     }
 
+    // Display the instructors when the page loads
     displayInstructors();
   </script>
 
