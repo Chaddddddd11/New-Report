@@ -10,7 +10,9 @@
       color: #f0f0f0;
       padding: 20px;
     }
-    h1, h2 { color: #66ccff; }
+    h1, h2 {
+      color: #66ccff;
+    }
     label {
       display: block;
       margin-top: 10px;
@@ -80,6 +82,7 @@
   <button onclick="registerInstructor()">Register Instructor</button>
 
   <h2>Registered Instructors</h2>
+
   <table>
     <thead>
       <tr>
@@ -100,59 +103,70 @@
   <button class="back-button" onclick="goToInstructorList()">View All Instructors</button>
 
   <script>
+    const instructorList = document.getElementById('instructor-list');
     let instructors = JSON.parse(localStorage.getItem('instructors')) || [];
 
     function displayInstructors() {
-      const list = document.getElementById('instructor-list');
-      list.innerHTML = '';
+      instructorList.innerHTML = '';
       if (instructors.length === 0) {
-        list.innerHTML = '<tr><td colspan="8">No instructors registered.</td></tr>';
-        return;
-      }
-      instructors.forEach((inst, i) => {
-        list.innerHTML += `
-          <tr>
-            <td>${inst.name}</td>
-            <td>${inst.subject}</td>
-            <td>${inst.course}</td>
-            <td>${inst.year}</td>
-            <td>${inst.section}</td>
-            <td>${inst.day}</td>
-            <td>${inst.time}</td>
+        const emptyMessage = document.createElement('tr');
+        emptyMessage.innerHTML = `<td colspan="8" style="text-align:center;">No instructors registered.</td>`;
+        instructorList.appendChild(emptyMessage);
+      } else {
+        instructors.forEach((instructor, index) => {
+          const row = document.createElement('tr');
+          row.innerHTML = `
+            <td>${instructor.name}</td>
+            <td>${instructor.subject}</td>
+            <td>${instructor.course}</td>
+            <td>${instructor.year}</td>
+            <td>${instructor.section}</td>
+            <td>${instructor.day}</td>
+            <td>${instructor.time}</td>
             <td>
-              <button onclick="editInstructor(${i})">Edit</button>
-              <button onclick="removeInstructor(${i})">Remove</button>
+              <button onclick="editInstructor(${index})">Edit</button>
+              <button onclick="removeInstructor(${index})">Remove</button>
             </td>
-          </tr>`;
-      });
+          `;
+          instructorList.appendChild(row);
+        });
+      }
     }
 
     function registerInstructor() {
-      const instructor = {
-        name: document.getElementById('name').value,
-        subject: document.getElementById('subject').value,
-        course: document.getElementById('course').value,
-        year: document.getElementById('year').value,
-        section: document.getElementById('section').value,
-        day: document.getElementById('day').value,
-        time: document.getElementById('time').value,
-      };
+      const name = document.getElementById('name').value;
+      const subject = document.getElementById('subject').value || 'N/A';
+      const course = document.getElementById('course').value || 'N/A';
+      const year = document.getElementById('year').value || 'N/A';
+      const section = document.getElementById('section').value || 'N/A';
+      const day = document.getElementById('day').value || 'N/A';
+      const time = document.getElementById('time').value || 'N/A';
+
+      if (!name) {
+        alert("Please enter the instructor's name.");
+        return;
+      }
+
+      const instructor = { name, subject, course, year, section, day, time };
       instructors.push(instructor);
       localStorage.setItem('instructors', JSON.stringify(instructors));
       displayInstructors();
     }
 
     function editInstructor(index) {
-      const inst = instructors[index];
-      document.getElementById('name').value = inst.name;
-      document.getElementById('subject').value = inst.subject;
-      document.getElementById('course').value = inst.course;
-      document.getElementById('year').value = inst.year;
-      document.getElementById('section').value = inst.section;
-      document.getElementById('day').value = inst.day;
-      document.getElementById('time').value = inst.time;
-      instructors.splice(index, 1);
-      displayInstructors();
+      const instructor = instructors[index];
+      document.getElementById('name').value = instructor.name;
+      document.getElementById('subject').value = instructor.subject;
+      document.getElementById('course').value = instructor.course;
+      document.getElementById('year').value = instructor.year;
+      document.getElementById('section').value = instructor.section;
+      document.getElementById('day').value = instructor.day;
+      document.getElementById('time').value = instructor.time;
+
+      const registerButton = document.querySelector('button');
+      registerButton.textContent = 'Save Changes';
+
+      removeInstructor(index);
     }
 
     function removeInstructor(index) {
@@ -162,14 +176,15 @@
     }
 
     function goBack() {
-      window.location.href = 'index.html';
+      window.location.href = "index.html";
     }
 
     function goToInstructorList() {
-      window.location.href = 'InstructorList.html';
+      window.location.href = "InstructorList.html";
     }
 
     displayInstructors();
   </script>
+
 </body>
 </html>
