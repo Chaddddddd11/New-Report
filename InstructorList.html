@@ -63,9 +63,33 @@
 
   <script>
     const instructorProfiles = document.getElementById('instructor-profiles');
-    let instructors = JSON.parse(localStorage.getItem('instructors')) || [];
 
-    // Function to display instructors in boxes
+    // Dummy instructor data
+    const instructors = [
+      {
+        name: "Prof. Juan",
+        subject: "Marketing 101",
+        course: "BSMarketing",
+        year: "4",
+        section: "B",
+        day: "Monday",
+        time: "8:00",
+        room: "Room 101"
+      },
+      {
+        name: "Prof. Maria",
+        subject: "Marketing Strategy",
+        course: "BSMarketing",
+        year: "4",
+        section: "B",
+        day: "Wednesday",
+        time: "10:00",
+        room: "Room 202"
+      }
+    ];
+
+    localStorage.setItem("instructors", JSON.stringify(instructors)); // Save to localStorage
+
     function displayInstructorProfiles() {
       if (instructors.length === 0) {
         instructorProfiles.innerHTML = '<p class="no-instructors">No instructors registered.</p>';
@@ -81,18 +105,17 @@
             <p><strong>Section:</strong> ${instructor.section}</p>
             <p><strong>Day:</strong> ${instructor.day}</p>
             <p><strong>Time:</strong> ${instructor.time}</p>
+            <p><strong>Room:</strong> ${instructor.room}</p>
           `;
           instructorProfiles.appendChild(box);
         });
       }
     }
 
-    // Function to go back to the enrollment page
     function goBack() {
-      window.location.href = "Instructor.html";
+      window.location.href = "index.html";
     }
 
-    // Display profiles on page load
     displayInstructorProfiles();
   </script>
 
