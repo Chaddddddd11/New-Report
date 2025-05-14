@@ -51,6 +51,22 @@
       margin-top: 20px;
       background-color: #003366;
     }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+
+    th, td {
+      border: 1px solid #444;
+      padding: 8px;
+      text-align: left;
+    }
+
+    th {
+      background-color: #003366;
+    }
   </style>
 </head>
 <body>
@@ -61,98 +77,90 @@
   <input type="text" id="name" placeholder="Instructor Name">
 
   <label>Subject:</label>
-  <select id="subject">
-    <option value="">Select Subject</option>
-    <option value="Accounting">Accounting</option>
-    <option value="English">English</option>
-    <option value="Math">Math</option>
-  </select>
+  <input type="text" id="subject" placeholder="Subject">
 
   <label>Course:</label>
-  <select id="course">
-    <option value="">Select Course</option>
-    <option value="BSA">BSA</option>
-    <option value="BSMarketing">BSMarketing</option>
-  </select>
+  <input type="text" id="course" placeholder="Course">
 
   <label>Year:</label>
-  <select id="year">
-    <option value="">Select Year</option>
-    <option value="1">1</option>
-    <option value="2">2</option>
-  </select>
+  <input type="text" id="year" placeholder="Year">
 
   <label>Section:</label>
-  <select id="section">
-    <option value="">Select Section</option>
-    <option value="A">A</option>
-    <option value="B">B</option>
-  </select>
+  <input type="text" id="section" placeholder="Section">
 
   <label>Day:</label>
-  <select id="day">
-    <option value="">Select Day</option>
-    <option>Monday</option>
-    <option>Tuesday</option>
-    <option>Wednesday</option>
-    <option>Thursday</option>
-    <option>Friday</option>
-    <option>Saturday</option>
-    <option>Sunday</option>
-  </select>
+  <input type="text" id="day" placeholder="Day">
 
   <label>Time:</label>
-  <select id="time">
-    <option value="">Select Time</option>
-    <option>7:00-8:00</option>
-    <option>9:00-10:00</option>
-    <option>10:00-11:00</option>
-    <option>13:00-14:00</option>
-    <option>14:00-15:00</option>
-    <option>15:00-16:00</option>
-    <option>16:00-17:00</option>
-    <option>17:00-18:00</option>
-  </select>
+  <input type="text" id="time" placeholder="Time">
 
   <button onclick="registerInstructor()">Register Instructor</button>
 
   <h2>Registered Instructors</h2>
-  <div id="instructor-list"></div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Subject</th>
+        <th>Course</th>
+        <th>Year</th>
+        <th>Section</th>
+        <th>Day</th>
+        <th>Time</th>
+        <th>Action</th>
+      </tr>
+    </thead>
+    <tbody id="instructor-list"></tbody>
+  </table>
 
   <button class="back-button" onclick="goBack()">Back to Schedule</button>
 
   <script>
     const instructorList = document.getElementById('instructor-list');
-    let instructors = JSON.parse(localStorage.getItem('instructors')) || [];
+    let instructors = JSON.parse(localStorage.getItem('instructors')) || [
+      { name: "Prof. Garcia", subject: "N/A", course: "N/A", year: "N/A", section: "N/A", day: "Sunday", time: "15:00-16:00" },
+      { name: "Prof. Garcia", subject: "N/A", course: "N/A", year: "N/A", section: "N/A", day: "Sunday", time: "9:00-10:00" },
+      { name: "Prof. Garcia", subject: "N/A", course: "N/A", year: "N/A", section: "N/A", day: "Sunday", time: "13:00-14:00" },
+      { name: "Prof. Garcia", subject: "N/A", course: "N/A", year: "N/A", section: "N/A", day: "Sunday", time: "16:00-17:00" },
+      { name: "Prof. Garcia", subject: "N/A", course: "N/A", year: "N/A", section: "N/A", day: "Tuesday", time: "15:00-16:00" },
+      { name: "Prof. Garcia", subject: "N/A", course: "N/A", year: "N/A", section: "N/A", day: "Tuesday", time: "9:00-10:00" },
+      { name: "Prof. Garcia", subject: "N/A", course: "N/A", year: "N/A", section: "N/A", day: "Tuesday", time: "13:00-14:00" },
+      { name: "Prof. Garcia", subject: "N/A", course: "N/A", year: "N/A", section: "N/A", day: "Tuesday", time: "16:00-17:00" },
+      { name: "Prof. Garcia", subject: "N/A", course: "N/A", year: "N/A", section: "N/A", day: "Saturday", time: "15:00-16:00" },
+      { name: "Prof. Garcia", subject: "N/A", course: "N/A", year: "N/A", section: "N/A", day: "Saturday", time: "9:00-10:00" }
+      // Add more pre-enrolled instructors here following the same format
+    ];
 
     function displayInstructors() {
       instructorList.innerHTML = '';
       instructors.forEach((instructor, index) => {
-        const div = document.createElement('div');
-        div.className = 'instructor-card';
-        div.innerHTML = `
-          <strong>${instructor.name}</strong><br>
-          Subject: ${instructor.subject}<br>
-          Course: ${instructor.course}<br>
-          Year: ${instructor.year}<br>
-          Section: ${instructor.section}<br>
-          Day: ${instructor.day}<br>
-          Time: ${instructor.time}<br>
-          <button onclick="editInstructor(${index})">Edit</button>
-          <button onclick="removeInstructor(${index})">Remove</button>
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>${instructor.name}</td>
+          <td>${instructor.subject}</td>
+          <td>${instructor.course}</td>
+          <td>${instructor.year}</td>
+          <td>${instructor.section}</td>
+          <td>${instructor.day}</td>
+          <td>${instructor.time}</td>
+          <td>
+            <button onclick="editInstructor(${index})">Edit</button>
+            <button onclick="removeInstructor(${index})">Remove</button>
+          </td>
         `;
-        instructorList.appendChild(div);
+        instructorList.appendChild(row);
       });
     }
 
     function registerInstructor() {
-      const name = document.getElementById('name').value || "N/A";
-      const subject = document.getElementById('subject').value || "N/A";
-      const course = document.getElementById('course').value || "N/A";
-      const year = document.getElementById('year').value || "N/A";
-      const section = document.getElementById('section').value || "N/A";
-      const day = document.getElementById('day').value || "N/A";
-      const time = document.getElementById('time').value || "N/A";
+      const name = document.getElementById('name').value;
+      const subject = document.getElementById('subject').value || 'N/A';
+      const course = document.getElementById('course').value || 'N/A';
+      const year = document.getElementById('year').value || 'N/A';
+      const section = document.getElementById('section').value || 'N/A';
+      const day = document.getElementById('day').value || 'N/A';
+      const time = document.getElementById('time').value || 'N/A';
 
       if (!name) {
         alert("Please enter the instructor's name.");
@@ -163,15 +171,6 @@
       instructors.push(instructor);
       localStorage.setItem('instructors', JSON.stringify(instructors));
       displayInstructors();
-
-      // Reset form
-      document.getElementById('name').value = "";
-      document.getElementById('subject').value = "";
-      document.getElementById('course').value = "";
-      document.getElementById('year').value = "";
-      document.getElementById('section').value = "";
-      document.getElementById('day').value = "";
-      document.getElementById('time').value = "";
     }
 
     function editInstructor(index) {
