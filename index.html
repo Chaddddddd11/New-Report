@@ -68,7 +68,8 @@
 <h2>Selected: <span id="result">BSMarketing-3B</span></h2>
 
 <!-- Go to Instructor Enrollment -->
-<button onclick="location.href='instructor.html'">Go to Instructor Enrollment</button>
+<!-- ✅ Corrected filename case -->
+<button onclick="location.href='Instructor.html'">Go to Instructor Enrollment</button>
 
 <script>
   const course = document.getElementById('course');
@@ -78,31 +79,20 @@
 
   function updateResult() {
     result.textContent = `${course.value}-${year.value}${section.value}`;
-    populateSchedule(); // Update schedule when selections change
+    populateSchedule();
   }
 
   course.onchange = year.onchange = section.onchange = updateResult;
-  updateResult(); // Initialize on load
+  updateResult();
 
   function populateSchedule() {
-    const selectedCourse = course.value;
-    const selectedYear = year.value;
-    const selectedSection = section.value;
-
     const rows = document.getElementById('schedule-body').rows;
-
-    // Loop through all time slots in the schedule table
     for (let i = 0; i < rows.length; i++) {
-      const timeRange = rows[i].cells[0].textContent; // Get the time range (e.g., "7:00-8:00")
-
-      // Loop through each day of the week (Monday to Sunday)
+      const timeRange = rows[i].cells[0].textContent;
       for (let dayIndex = 0; dayIndex < 7; dayIndex++) {
-        const day = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"][dayIndex];
-        const cell = rows[i].cells[dayIndex + 1]; // Skip the time column, so use +1
-        const inputs = cell.querySelectorAll('input'); // Get the input fields for Instructor, Subject, Room
-
-        // Find a match in the instructor data (for simplicity, you can match using the course, year, and section)
-        // You can populate it with your instructor data here.
+        const cell = rows[i].cells[dayIndex + 1];
+        const inputs = cell.querySelectorAll('input');
+        // You can populate these fields with instructor data from localStorage here
       }
     }
   }
@@ -127,17 +117,13 @@
 
 <script>
   const scheduleBody = document.getElementById('schedule-body');
-
-  // Generate the time slots in the schedule table
   for (let hour = 7; hour <= 17; hour++) {
     const row = document.createElement('tr');
 
-    // Time column
     const timeCell = document.createElement('td');
     timeCell.textContent = `${hour}:00-${hour + 1}:00`;
     row.appendChild(timeCell);
 
-    // 7 columns for each day
     for (let i = 0; i < 7; i++) {
       const cell = document.createElement('td');
       cell.className = 'cell-box';
