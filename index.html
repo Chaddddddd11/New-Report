@@ -72,14 +72,14 @@
       border: 1px solid #ffa07a;
     }
 
-    .bottom-link {
+    .bottom-buttons {
       margin-top: 40px;
-      text-align: center;
     }
   </style>
 </head>
 <body>
 
+<!-- Dropdowns -->
 <label><strong>Course:</strong></label>
 <select id="course">
   <option value="BSA">BSA</option>
@@ -105,8 +105,9 @@
   <option value="D">D</option>
 </select>
 
-<h2>Selected: <span id="result">BSMarketing-4B</span></h2>
+<h2>Selected: <span id="result"></span></h2>
 
+<!-- Schedule Table -->
 <table>
   <thead>
     <tr>
@@ -123,10 +124,12 @@
   <tbody id="schedule-body"></tbody>
 </table>
 
-<div class="bottom-link">
-  <button onclick="location.href='InstructorList.html'">View Instructor List</button>
+<div class="bottom-buttons">
+  <button onclick="window.location.href='Instructor.html'">Enroll Instructor</button>
+  <button onclick="window.location.href='InstructorList.html'">View Instructor List</button>
 </div>
 
+<!-- JavaScript -->
 <script>
   const course = document.getElementById('course');
   const year = document.getElementById('year');
@@ -134,60 +137,12 @@
   const result = document.getElementById('result');
   const scheduleBody = document.getElementById('schedule-body');
 
-  function updateResult() {
-    result.textContent = `${course.value}-${year.value}${section.value}`;
-    populateSchedule();
-  }
+  const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
-  course.onchange = year.onchange = section.onchange = updateResult;
-
-  function getDayIndex(day) {
-    const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
-    return days.indexOf(day) + 1;
-  }
-
-  function getTimeIndex(time) {
-    const hour = parseInt(time.split(':')[0]);
-    return hour - 7;
-  }
-
-  function populateSchedule() {
-    const instructors = JSON.parse(localStorage.getItem("instructors")) || [];
-    const selectedCourse = course.value;
-    const selectedYear = year.value;
-    const selectedSection = section.value;
-
-    const rows = scheduleBody.rows;
-    for (let i = 0; i < rows.length; i++) {
-      for (let j = 1; j < 8; j++) {
-        const inputs = rows[i].cells[j].querySelectorAll('input');
-        inputs.forEach(input => input.value = '');
-      }
-    }
-
-    instructors.forEach(instructor => {
-      if (
-        instructor.course === selectedCourse &&
-        instructor.year === selectedYear &&
-        instructor.section === selectedSection
-      ) {
-        const rowIndex = getTimeIndex(instructor.time);
-        const colIndex = getDayIndex(instructor.day);
-        if (rowIndex >= 0 && colIndex >= 1) {
-          const targetCell = rows[rowIndex].cells[colIndex];
-          const inputs = targetCell.querySelectorAll('input');
-          if (inputs.length === 3) {
-            inputs[0].value = instructor.name;
-            inputs[1].value = instructor.subject;
-            inputs[2].value = instructor.room || '';
-          }
-        }
-      }
-    });
-  }
-
+  // Create table
   for (let hour = 7; hour <= 17; hour++) {
     const row = document.createElement('tr');
+
     const timeCell = document.createElement('td');
     timeCell.textContent = `${hour}:00-${hour + 1}:00`;
     row.appendChild(timeCell);
@@ -196,9 +151,9 @@
       const cell = document.createElement('td');
       cell.className = 'cell-box';
       cell.innerHTML = `
-        <label>Instructor:</label><input type="text">
-        <label>Subject:</label><input type="text">
-        <label>Room:</label><input type="text">
+        <label>Instructor:</label><input type="text" class="instructor">
+        <label>Subject:</label><input type="text" class="subject">
+        <label>Room:</label><input type="text" class="room">
       `;
       row.appendChild(cell);
     }
@@ -206,7 +161,38 @@
     scheduleBody.appendChild(row);
   }
 
-  updateResult();
+  function updateResult() {
+    const selectedKey = `${course.value}-${year.value}-${section.value}`;
+    result.textContent = selectedKey;
+    populateScheduleFromInstructors(selectedKey);
+  }
+
+  function populateScheduleFromInstructors(selectedKey) {
+    const instructors = JSON.parse(localStorage.getItem('instructors')) || [];
+    
+    // Clear current table values
+    document.querySelectorAll('.cell-box').forEach(cell => {
+      cell.querySelector('.instructor').value = '';
+      cell.querySelector('.subject').value = '';
+    });
+
+    instructors.forEach(instructor => {
+      const instructorKey = `${instructor.course}-${instructor.year}-${instructor.section}`;
+      if (instructorKey === selectedKey) {
+        const rowIndex = parseInt(instructor.time) - 7; // Assuming time is "7", "8", ...
+        const colIndex = days.indexOf(instructor.day);
+        if (rowIndex >= 0 && rowIndex < 11 && colIndex >= 0) {
+          const row = scheduleBody.rows[rowIndex];
+          const cell = row.cells[colIndex + 1]; // +1 to skip time column
+          cell.querySelector('.instructor').value = instructor.name;
+          cell.querySelector('.subject').value = instructor.subject;
+        }
+      }
+    });
+  }
+
+  course.onchange = year.onchange = section.onchange = updateResult;
+  updateResult(); // Initial load
 </script>
 
 </body>
