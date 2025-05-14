@@ -2,70 +2,98 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Instructor Profiles</title>
+  <title>Instructor List</title>
   <style>
     body {
       font-family: Arial, sans-serif;
-      background-color: #0a0a23;
-      color: #f0f0f0;
+      background-color: #f0f8ff;
+      color: #000080;
       padding: 20px;
     }
-    h1 { color: #66ccff; }
-    .instructor-box {
-      background-color: #1c1c3c;
-      border: 1px solid #444;
-      margin-bottom: 15px;
-      padding: 15px;
+    h1 {
+      color: #000080;
     }
-    .instructor-box h2 { color: #66ccff; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+    th, td {
+      border: 1px solid #000080;
+      padding: 8px;
+      text-align: left;
+    }
+    th {
+      background-color: #add8e6;
+    }
     button {
-      background-color: #004080;
+      background-color: #000080;
       color: white;
       padding: 8px 16px;
       border: none;
-      margin-top: 10px;
+      margin-top: 20px;
       cursor: pointer;
-    }
-    .back-button {
-      background-color: #003366;
     }
   </style>
 </head>
 <body>
-  <h1>Instructor Profiles</h1>
-  <div id="instructor-profiles"></div>
-  <button class="back-button" onclick="goBack()">Back to Enrollment Page</button>
+
+  <h1>Registered Instructors</h1>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Subject</th>
+        <th>Course</th>
+        <th>Year</th>
+        <th>Section</th>
+        <th>Day</th>
+        <th>Time</th>
+      </tr>
+    </thead>
+    <tbody id="instructorTableBody">
+      <!-- Instructor data will be inserted here -->
+    </tbody>
+  </table>
+
+  <button onclick="goBack()">Back to Schedule</button>
 
   <script>
-    const instructorProfiles = document.getElementById('instructor-profiles');
-    const instructors = JSON.parse(localStorage.getItem('instructors')) || [];
+    function displayInstructors() {
+      const tableBody = document.getElementById('instructorTableBody');
+      const instructors = JSON.parse(localStorage.getItem('instructors')) || [];
 
-    function displayInstructorProfiles() {
-      instructorProfiles.innerHTML = '';
+      tableBody.innerHTML = '';
+
       if (instructors.length === 0) {
-        instructorProfiles.innerHTML = '<p>No instructors registered.</p>';
+        const row = document.createElement('tr');
+        row.innerHTML = `<td colspan="7" style="text-align:center;">No instructors found.</td>`;
+        tableBody.appendChild(row);
         return;
       }
-      instructors.forEach(inst => {
-        const box = document.createElement('div');
-        box.classList.add('instructor-box');
-        box.innerHTML = `
-          <h2>${inst.name}</h2>
-          <p><strong>Subject:</strong> ${inst.subject}</p>
-          <p><strong>Course:</strong> ${inst.course}</p>
-          <p><strong>Year:</strong> ${inst.year}</p>
-          <p><strong>Section:</strong> ${inst.section}</p>
-          <p><strong>Day:</strong> ${inst.day}</p>
-          <p><strong>Time:</strong> ${inst.time}</p>`;
-        instructorProfiles.appendChild(box);
+
+      instructors.forEach(instructor => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>${instructor.name}</td>
+          <td>${instructor.subject}</td>
+          <td>${instructor.course}</td>
+          <td>${instructor.year}</td>
+          <td>${instructor.section}</td>
+          <td>${instructor.day}</td>
+          <td>${instructor.time}</td>
+        `;
+        tableBody.appendChild(row);
       });
     }
 
     function goBack() {
-      window.location.href = 'Instructor.html';
+      window.location.href = 'index.html';
     }
 
-    displayInstructorProfiles();
+    displayInstructors();
   </script>
+
 </body>
 </html>
