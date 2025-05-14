@@ -118,41 +118,37 @@
 
   <script>
     const instructorList = document.getElementById('instructor-list');
-    let instructors = JSON.parse(localStorage.getItem('instructors')) || [
-      { name: "Prof. Garcia", subject: "N/A", course: "N/A", year: "N/A", section: "N/A", day: "Sunday", time: "15:00-16:00" },
-      { name: "Prof. Garcia", subject: "N/A", course: "N/A", year: "N/A", section: "N/A", day: "Sunday", time: "9:00-10:00" },
-      { name: "Prof. Garcia", subject: "N/A", course: "N/A", year: "N/A", section: "N/A", day: "Sunday", time: "13:00-14:00" },
-      { name: "Prof. Garcia", subject: "N/A", course: "N/A", year: "N/A", section: "N/A", day: "Sunday", time: "16:00-17:00" },
-      { name: "Prof. Garcia", subject: "N/A", course: "N/A", year: "N/A", section: "N/A", day: "Tuesday", time: "15:00-16:00" },
-      { name: "Prof. Garcia", subject: "N/A", course: "N/A", year: "N/A", section: "N/A", day: "Tuesday", time: "9:00-10:00" },
-      { name: "Prof. Garcia", subject: "N/A", course: "N/A", year: "N/A", section: "N/A", day: "Tuesday", time: "13:00-14:00" },
-      { name: "Prof. Garcia", subject: "N/A", course: "N/A", year: "N/A", section: "N/A", day: "Tuesday", time: "16:00-17:00" },
-      { name: "Prof. Garcia", subject: "N/A", course: "N/A", year: "N/A", section: "N/A", day: "Saturday", time: "15:00-16:00" },
-      { name: "Prof. Garcia", subject: "N/A", course: "N/A", year: "N/A", section: "N/A", day: "Saturday", time: "9:00-10:00" }
-      // Add more pre-enrolled instructors here following the same format
-    ];
+    let instructors = JSON.parse(localStorage.getItem('instructors')) || [];
 
+    // Function to display instructors in the table
     function displayInstructors() {
       instructorList.innerHTML = '';
-      instructors.forEach((instructor, index) => {
-        const row = document.createElement('tr');
-        row.innerHTML = `
-          <td>${instructor.name}</td>
-          <td>${instructor.subject}</td>
-          <td>${instructor.course}</td>
-          <td>${instructor.year}</td>
-          <td>${instructor.section}</td>
-          <td>${instructor.day}</td>
-          <td>${instructor.time}</td>
-          <td>
-            <button onclick="editInstructor(${index})">Edit</button>
-            <button onclick="removeInstructor(${index})">Remove</button>
-          </td>
-        `;
-        instructorList.appendChild(row);
-      });
+      if (instructors.length === 0) {
+        const emptyMessage = document.createElement('tr');
+        emptyMessage.innerHTML = `<td colspan="8" style="text-align:center;">No instructors registered.</td>`;
+        instructorList.appendChild(emptyMessage);
+      } else {
+        instructors.forEach((instructor, index) => {
+          const row = document.createElement('tr');
+          row.innerHTML = `
+            <td>${instructor.name}</td>
+            <td>${instructor.subject}</td>
+            <td>${instructor.course}</td>
+            <td>${instructor.year}</td>
+            <td>${instructor.section}</td>
+            <td>${instructor.day}</td>
+            <td>${instructor.time}</td>
+            <td>
+              <button onclick="editInstructor(${index})">Edit</button>
+              <button onclick="removeInstructor(${index})">Remove</button>
+            </td>
+          `;
+          instructorList.appendChild(row);
+        });
+      }
     }
 
+    // Function to register a new instructor
     function registerInstructor() {
       const name = document.getElementById('name').value;
       const subject = document.getElementById('subject').value || 'N/A';
@@ -167,12 +163,18 @@
         return;
       }
 
+      // Add the new instructor to the list
       const instructor = { name, subject, course, year, section, day, time };
       instructors.push(instructor);
+
+      // Save the updated list to localStorage
       localStorage.setItem('instructors', JSON.stringify(instructors));
+
+      // Refresh the display
       displayInstructors();
     }
 
+    // Function to edit an existing instructor
     function editInstructor(index) {
       const instructor = instructors[index];
       document.getElementById('name').value = instructor.name;
@@ -182,19 +184,33 @@
       document.getElementById('section').value = instructor.section;
       document.getElementById('day').value = instructor.day;
       document.getElementById('time').value = instructor.time;
+
+      // Change button to save changes
+      const registerButton = document.querySelector('button');
+      registerButton.textContent = 'Save Changes';
+
+      // Remove the instructor from the list temporarily
       removeInstructor(index);
     }
 
+    // Function to remove an instructor
     function removeInstructor(index) {
+      // Remove the instructor from the array
       instructors.splice(index, 1);
+
+      // Save the updated list to localStorage
       localStorage.setItem('instructors', JSON.stringify(instructors));
+
+      // Refresh the display
       displayInstructors();
     }
 
+    // Function to go back to the schedule page
     function goBack() {
       window.location.href = "index.html";
     }
 
+    // Display instructors on page load
     displayInstructors();
   </script>
 
