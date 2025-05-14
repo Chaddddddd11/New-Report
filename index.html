@@ -5,30 +5,71 @@
   <style>
     body {
       font-family: Arial, sans-serif;
+      background-color: #fff5e6;
+      color: #800000;
+      padding: 20px;
     }
+
+    h2 {
+      color: #cc5500;
+    }
+
+    label {
+      font-weight: bold;
+      margin-top: 10px;
+      display: block;
+      color: #b22222;
+    }
+
+    select {
+      margin-bottom: 10px;
+      padding: 5px;
+      border: 1px solid #d2691e;
+      background-color: #ffe4b5;
+      color: #800000;
+    }
+
+    button {
+      background-color: #ff4500;
+      color: white;
+      border: none;
+      padding: 10px 15px;
+      margin-top: 10px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
     table {
       border-collapse: collapse;
       width: 100%;
-      margin-top: 10px;
+      margin-top: 20px;
+      background-color: #fffaf0;
     }
+
     th, td {
-      border: 1px solid #aaa;
+      border: 1px solid #ff7f50;
       padding: 8px;
       text-align: left;
       vertical-align: top;
     }
+
     th {
-      background-color: #f2f2f2;
+      background-color: #ffcc00;
+      color: #800000;
     }
+
     .cell-box label {
       display: block;
       font-size: 12px;
+      color: #b22222;
     }
+
     .cell-box input {
       width: 100%;
       font-size: 12px;
       margin-bottom: 4px;
       box-sizing: border-box;
+      border: 1px solid #ffa07a;
     }
   </style>
 </head>
@@ -58,19 +99,13 @@
   <option value="B" selected>B</option>
   <option value="C">C</option>
   <option value="D">D</option>
-  <option value="E">E</option>
-  <option value="F">F</option>
-  <option value="G">G</option>
-  <option value="H">H</option>
 </select>
 
-<!-- Display Result -->
 <h2>Selected: <span id="result">BSMarketing-3B</span></h2>
 
-<!-- Go to Instructor Enrollment -->
-<!-- ✅ Corrected filename case -->
 <button onclick="location.href='Instructor.html'">Go to Instructor Enrollment</button>
 
+<!-- JavaScript Logic -->
 <script>
   const course = document.getElementById('course');
   const year = document.getElementById('year');
@@ -88,11 +123,10 @@
   function populateSchedule() {
     const rows = document.getElementById('schedule-body').rows;
     for (let i = 0; i < rows.length; i++) {
-      const timeRange = rows[i].cells[0].textContent;
-      for (let dayIndex = 0; dayIndex < 7; dayIndex++) {
-        const cell = rows[i].cells[dayIndex + 1];
+      for (let j = 1; j < 8; j++) {
+        const cell = rows[i].cells[j];
         const inputs = cell.querySelectorAll('input');
-        // You can populate these fields with instructor data from localStorage here
+        // populate inputs if needed
       }
     }
   }
