@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Instructor Profiles</title>
+  <title>Instructor Enrollment</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -10,67 +10,166 @@
       color: #f0f0f0;
       padding: 20px;
     }
-
-    h1 {
-      color: #66ccff;
+    h1, h2 { color: #66ccff; }
+    label {
+      display: block;
+      margin-top: 10px;
+      font-weight: bold;
     }
-
-    .instructor-box {
-      background-color: #1c1c3c;
+    select, input {
+      width: 100%;
+      padding: 6px;
+      margin-top: 5px;
+      margin-bottom: 10px;
+      background-color: #1e1e3f;
+      color: white;
       border: 1px solid #444;
-      margin-bottom: 15px;
-      padding: 15px;
     }
-
-    .instructor-box h2 {
-      color: #66ccff;
-      margin: 0 0 5px 0;
-    }
-
-    .instructor-box p {
-      margin: 5px 0;
-    }
-
     button {
-      background-color: #003366;
+      background-color: #004080;
       color: white;
       padding: 8px 16px;
       border: none;
-      margin-top: 20px;
+      margin-top: 10px;
       cursor: pointer;
+    }
+    .back-button {
+      margin-top: 20px;
+      background-color: #003366;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+    th, td {
+      border: 1px solid #444;
+      padding: 8px;
+      text-align: left;
+    }
+    th {
+      background-color: #003366;
     }
   </style>
 </head>
 <body>
 
-  <h1>Instructor Profiles</h1>
-  <div id="instructor-profiles"></div>
+  <h1>Instructor Enrollment</h1>
 
-  <button onclick="window.location.href='Instructor.html'">Back to Enrollment Page</button>
+  <label>Name:</label>
+  <input type="text" id="name" placeholder="Instructor Name">
+
+  <label>Subject:</label>
+  <input type="text" id="subject" placeholder="Subject">
+
+  <label>Course:</label>
+  <input type="text" id="course" placeholder="Course">
+
+  <label>Year:</label>
+  <input type="text" id="year" placeholder="Year">
+
+  <label>Section:</label>
+  <input type="text" id="section" placeholder="Section">
+
+  <label>Day:</label>
+  <input type="text" id="day" placeholder="Day">
+
+  <label>Time:</label>
+  <input type="text" id="time" placeholder="Time">
+
+  <button onclick="registerInstructor()">Register Instructor</button>
+
+  <h2>Registered Instructors</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Subject</th>
+        <th>Course</th>
+        <th>Year</th>
+        <th>Section</th>
+        <th>Day</th>
+        <th>Time</th>
+        <th>Action</th>
+      </tr>
+    </thead>
+    <tbody id="instructor-list"></tbody>
+  </table>
+
+  <button class="back-button" onclick="goBack()">Back to Schedule</button>
+  <button class="back-button" onclick="goToInstructorList()">View All Instructors</button>
 
   <script>
-    const instructorProfiles = document.getElementById('instructor-profiles');
-    const instructors = JSON.parse(localStorage.getItem('instructors')) || [];
+    let instructors = JSON.parse(localStorage.getItem('instructors')) || [];
 
-    if (instructors.length === 0) {
-      instructorProfiles.innerHTML = '<p>No instructors registered.</p>';
-    } else {
-      instructors.forEach(instructor => {
-        const box = document.createElement('div');
-        box.classList.add('instructor-box');
-        box.innerHTML = `
-          <h2>${instructor.name}</h2>
-          <p><strong>Subject:</strong> ${instructor.subject}</p>
-          <p><strong>Course:</strong> ${instructor.course}</p>
-          <p><strong>Year:</strong> ${instructor.year}</p>
-          <p><strong>Section:</strong> ${instructor.section}</p>
-          <p><strong>Day:</strong> ${instructor.day}</p>
-          <p><strong>Time:</strong> ${instructor.time}</p>
-        `;
-        instructorProfiles.appendChild(box);
+    function displayInstructors() {
+      const list = document.getElementById('instructor-list');
+      list.innerHTML = '';
+      if (instructors.length === 0) {
+        list.innerHTML = '<tr><td colspan="8">No instructors registered.</td></tr>';
+        return;
+      }
+      instructors.forEach((inst, i) => {
+        list.innerHTML += `
+          <tr>
+            <td>${inst.name}</td>
+            <td>${inst.subject}</td>
+            <td>${inst.course}</td>
+            <td>${inst.year}</td>
+            <td>${inst.section}</td>
+            <td>${inst.day}</td>
+            <td>${inst.time}</td>
+            <td>
+              <button onclick="editInstructor(${i})">Edit</button>
+              <button onclick="removeInstructor(${i})">Remove</button>
+            </td>
+          </tr>`;
       });
     }
-  </script>
 
+    function registerInstructor() {
+      const instructor = {
+        name: document.getElementById('name').value,
+        subject: document.getElementById('subject').value,
+        course: document.getElementById('course').value,
+        year: document.getElementById('year').value,
+        section: document.getElementById('section').value,
+        day: document.getElementById('day').value,
+        time: document.getElementById('time').value,
+      };
+      instructors.push(instructor);
+      localStorage.setItem('instructors', JSON.stringify(instructors));
+      displayInstructors();
+    }
+
+    function editInstructor(index) {
+      const inst = instructors[index];
+      document.getElementById('name').value = inst.name;
+      document.getElementById('subject').value = inst.subject;
+      document.getElementById('course').value = inst.course;
+      document.getElementById('year').value = inst.year;
+      document.getElementById('section').value = inst.section;
+      document.getElementById('day').value = inst.day;
+      document.getElementById('time').value = inst.time;
+      instructors.splice(index, 1);
+      displayInstructors();
+    }
+
+    function removeInstructor(index) {
+      instructors.splice(index, 1);
+      localStorage.setItem('instructors', JSON.stringify(instructors));
+      displayInstructors();
+    }
+
+    function goBack() {
+      window.location.href = 'index.html';
+    }
+
+    function goToInstructorList() {
+      window.location.href = 'InstructorList.html';
+    }
+
+    displayInstructors();
+  </script>
 </body>
 </html>
