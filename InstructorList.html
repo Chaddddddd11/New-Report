@@ -10,29 +10,14 @@
       color: #f0f0f0;
       padding: 20px;
     }
-
-    h1 {
-      color: #66ccff;
-    }
-
+    h1 { color: #66ccff; }
     .instructor-box {
       background-color: #1c1c3c;
       border: 1px solid #444;
       margin-bottom: 15px;
       padding: 15px;
-      display: flex;
-      flex-direction: column;
     }
-
-    .instructor-box h2 {
-      margin-top: 0;
-      color: #66ccff;
-    }
-
-    .instructor-box p {
-      margin: 5px 0;
-    }
-
+    .instructor-box h2 { color: #66ccff; }
     button {
       background-color: #004080;
       color: white;
@@ -41,83 +26,46 @@
       margin-top: 10px;
       cursor: pointer;
     }
-
     .back-button {
-      margin-top: 20px;
       background-color: #003366;
-    }
-
-    .no-instructors {
-      text-align: center;
-      color: #f0f0f0;
     }
   </style>
 </head>
 <body>
-
   <h1>Instructor Profiles</h1>
-
   <div id="instructor-profiles"></div>
-
   <button class="back-button" onclick="goBack()">Back to Enrollment Page</button>
 
   <script>
     const instructorProfiles = document.getElementById('instructor-profiles');
-
-    // Dummy instructor data
-    const instructors = [
-      {
-        name: "Prof. Juan",
-        subject: "Marketing 101",
-        course: "BSMarketing",
-        year: "4",
-        section: "B",
-        day: "Monday",
-        time: "8:00",
-        room: "Room 101"
-      },
-      {
-        name: "Prof. Maria",
-        subject: "Marketing Strategy",
-        course: "BSMarketing",
-        year: "4",
-        section: "B",
-        day: "Wednesday",
-        time: "10:00",
-        room: "Room 202"
-      }
-    ];
-
-    localStorage.setItem("instructors", JSON.stringify(instructors)); // Save to localStorage
+    const instructors = JSON.parse(localStorage.getItem('instructors')) || [];
 
     function displayInstructorProfiles() {
+      instructorProfiles.innerHTML = '';
       if (instructors.length === 0) {
-        instructorProfiles.innerHTML = '<p class="no-instructors">No instructors registered.</p>';
-      } else {
-        instructors.forEach(instructor => {
-          const box = document.createElement('div');
-          box.classList.add('instructor-box');
-          box.innerHTML = `
-            <h2>${instructor.name}</h2>
-            <p><strong>Subject:</strong> ${instructor.subject}</p>
-            <p><strong>Course:</strong> ${instructor.course}</p>
-            <p><strong>Year:</strong> ${instructor.year}</p>
-            <p><strong>Section:</strong> ${instructor.section}</p>
-            <p><strong>Day:</strong> ${instructor.day}</p>
-            <p><strong>Time:</strong> ${instructor.time}</p>
-            <p><strong>Room:</strong> ${instructor.room}</p>
-          `;
-          instructorProfiles.appendChild(box);
-        });
+        instructorProfiles.innerHTML = '<p>No instructors registered.</p>';
+        return;
       }
+      instructors.forEach(inst => {
+        const box = document.createElement('div');
+        box.classList.add('instructor-box');
+        box.innerHTML = `
+          <h2>${inst.name}</h2>
+          <p><strong>Subject:</strong> ${inst.subject}</p>
+          <p><strong>Course:</strong> ${inst.course}</p>
+          <p><strong>Year:</strong> ${inst.year}</p>
+          <p><strong>Section:</strong> ${inst.section}</p>
+          <p><strong>Day:</strong> ${inst.day}</p>
+          <p><strong>Time:</strong> ${inst.time}</p>`;
+        instructorProfiles.appendChild(box);
+      });
     }
 
     function goBack() {
-      window.location.href = "index.html";
+      window.location.href = 'Instructor.html';
     }
 
     displayInstructorProfiles();
   </script>
-
 </body>
 </html>
