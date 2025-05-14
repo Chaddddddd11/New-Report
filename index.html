@@ -1,7 +1,5 @@
-<!DOCTYPE html>
-<html lang="en">
+<!DOCTYPE html><html>
 <head>
-  <meta charset="UTF-8">
   <title>DHVSU Scheduling System</title>
   <style>
     body {
@@ -13,6 +11,19 @@
     h2 {
       color: #cc5500;
     }
+    label {
+      font-weight: bold;
+      margin-top: 10px;
+      display: block;
+      color: #b22222;
+    }
+    select {
+      margin-bottom: 10px;
+      padding: 5px;
+      border: 1px solid #d2691e;
+      background-color: #ffe4b5;
+      color: #800000;
+    }
     table {
       width: 100%;
       border-collapse: collapse;
@@ -20,28 +31,31 @@
     }
     th, td {
       border: 1px solid #d2691e;
-      padding: 10px;
+      padding: 8px;
       text-align: center;
     }
     th {
       background-color: #ffdead;
     }
     td {
-      background-color: #fff8dc;
+      height: 60px;
     }
     button {
       background-color: #ff4500;
       color: white;
       border: none;
       padding: 10px 15px;
-      margin: 5px;
+      margin-top: 10px;
       cursor: pointer;
     }
   </style>
 </head>
 <body>
+  <h2>DHVSU Automatic Scheduling System</h2><label for="course">Select Course:</label> <select id="course"> <option value="">-- Select Course --</option> <option value="BSIT">BSIT</option> <option value="BSBA">BSBA</option> </select>
 
-  <h2>Weekly Schedule</h2>
+<label for="year">Select Year:</label> <select id="year"> <option value="">-- Select Year --</option> <option value="1st">1st</option> <option value="2nd">2nd</option> </select>
+
+<label for="section">Select Section:</label> <select id="section"> <option value="">-- Select Section --</option> <option value="A">A</option> <option value="B">B</option> </select>
 
   <table>
     <thead>
@@ -56,122 +70,68 @@
         <th>Sunday</th>
       </tr>
     </thead>
-    <tbody>
-      <tr>
-        <td>7:00 - 8:00 AM</td>
-        <td></td>
-        <td></td>
-        <td></td>
-        <td></td>
-        <td></td>
-        <td></td>
-        <td></td>
-      </tr>
-      <tr>
-        <td>8:00 - 9:00 AM</td>
-        <td></td>
-        <td></td>
-        <td></td>
-        <td></td>
-        <td></td>
-        <td></td>
-        <td></td>
-      </tr>
-      <tr>
-        <td>9:00 - 10:00 AM</td>
-        <td></td>
-        <td></td>
-        <td></td>
-        <td></td>
-        <td></td>
-        <td></td>
-        <td></td>
-      </tr>
-      <tr>
-        <td>10:00 - 11:00 AM</td>
-        <td></td>
-        <td></td>
-        <td></td>
-        <td></td>
-        <td></td>
-        <td></td>
-        <td></td>
-      </tr>
-      <tr>
-        <td>11:00 - 12:00 PM</td>
-        <td></td>
-        <td></td>
-        <td></td>
-        <td></td>
-        <td></td>
-        <td></td>
-        <td></td>
-      </tr>
-      <tr>
-        <td>12:00 - 1:00 PM</td>
-        <td></td>
-        <td></td>
-        <td></td>
-        <td></td>
-        <td></td>
-        <td></td>
-        <td></td>
-      </tr>
-      <tr>
-        <td>1:00 - 2:00 PM</td>
-        <td></td>
-        <td></td>
-        <td></td>
-        <td></td>
-        <td></td>
-        <td></td>
-        <td></td>
-      </tr>
-      <tr>
-        <td>2:00 - 3:00 PM</td>
-        <td></td>
-        <td></td>
-        <td></td>
-        <td></td>
-        <td></td>
-        <td></td>
-        <td></td>
-      </tr>
-      <tr>
-        <td>3:00 - 4:00 PM</td>
-        <td></td>
-        <td></td>
-        <td></td>
-        <td></td>
-        <td></td>
-        <td></td>
-        <td></td>
-      </tr>
-      <tr>
-        <td>4:00 - 5:00 PM</td>
-        <td></td>
-        <td></td>
-        <td></td>
-        <td></td>
-        <td></td>
-        <td></td>
-        <td></td>
-      </tr>
-      <tr>
-        <td>5:00 - 6:00 PM</td>
-        <td></td>
-        <td></td>
-        <td></td>
-        <td></td>
-        <td></td>
-        <td></td>
-        <td></td>
-      </tr>
+    <tbody id="schedule-body">
+      <!-- Rows from 7:00 to 17:00 -->
     </tbody>
-  </table>
+  </table><button onclick="location.href='Instructor.html'">Go to Instructor Enrollment</button> <button onclick="location.href='InstructorList.html'">View Instructor List</button>
 
-  <button onclick="window.location.href='Instructor.html'">Enroll Instructor</button>
-  <button onclick="window.location.href='InstructorList.html'">View Instructors</button>
+  <script>
+    const scheduleBody = document.getElementById('schedule-body');
+    const startHour = 7;
+    const endHour = 17;
 
-</body>
+    function generateScheduleTable() {
+      scheduleBody.innerHTML = '';
+      for (let hour = startHour; hour <= endHour; hour++) {
+        const row = document.createElement('tr');
+        const timeCell = document.createElement('td');
+        timeCell.textContent = `${hour}:00`;
+        row.appendChild(timeCell);
+        for (let i = 0; i < 7; i++) {
+          const cell = document.createElement('td');
+          cell.setAttribute('data-day', i);
+          cell.setAttribute('data-time', `${hour}:00`);
+          cell.innerHTML = '<div><strong>Instructor:</strong></div><div><strong>Subject:</strong></div><div><strong>Room:</strong></div>';
+          row.appendChild(cell);
+        }
+        scheduleBody.appendChild(row);
+      }
+    }
+
+    function autoFillSchedule() {
+      const course = document.getElementById('course').value;
+      const year = document.getElementById('year').value;
+      const section = document.getElementById('section').value;
+
+      if (!course || !year || !section) return;
+
+      const instructors = JSON.parse(localStorage.getItem('instructors')) || [];
+      const filtered = instructors.filter(ins =>
+        ins.course === course && ins.year === year && ins.section === section
+      );
+
+      document.querySelectorAll('td[data-day]').forEach(cell => {
+        cell.innerHTML = '<div><strong>Instructor:</strong></div><div><strong>Subject:</strong></div><div><strong>Room:</strong></div>';
+      });
+
+      filtered.forEach(ins => {
+        const dayIndex = getDayIndex(ins.day);
+        const cell = document.querySelector(`td[data-day='${dayIndex}'][data-time='${ins.time}']`);
+        if (cell) {
+          cell.innerHTML = `<div><strong>Instructor:</strong> ${ins.name}</div><div><strong>Subject:</strong> ${ins.subject}</div><div><strong>Room:</strong> ${ins.room || 'N/A'}</div>`;
+        }
+      });
+    }
+
+    function getDayIndex(day) {
+      const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+      return days.findIndex(d => d.toLowerCase() === day.toLowerCase());
+    }
+
+    document.getElementById('course').addEventListener('change', autoFillSchedule);
+    document.getElementById('year').addEventListener('change', autoFillSchedule);
+    document.getElementById('section').addEventListener('change', autoFillSchedule);
+
+    generateScheduleTable();
+  </script></body>
 </html>
