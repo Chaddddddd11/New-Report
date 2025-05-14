@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Instructor Enrollment</title>
+  <title>Instructor Profiles</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -11,208 +11,65 @@
       padding: 20px;
     }
 
-    h1, h2 {
+    h1 {
       color: #66ccff;
     }
 
-    label {
-      display: block;
-      margin-top: 10px;
-      font-weight: bold;
+    .instructor-box {
+      background-color: #1c1c3c;
+      border: 1px solid #444;
+      margin-bottom: 15px;
+      padding: 15px;
     }
 
-    select, input {
-      width: 100%;
-      padding: 6px;
-      margin-top: 5px;
-      margin-bottom: 10px;
-      background-color: #1e1e3f;
-      color: white;
-      border: 1px solid #444;
+    .instructor-box h2 {
+      color: #66ccff;
+      margin: 0 0 5px 0;
+    }
+
+    .instructor-box p {
+      margin: 5px 0;
     }
 
     button {
-      background-color: #004080;
+      background-color: #003366;
       color: white;
       padding: 8px 16px;
       border: none;
-      margin-top: 10px;
+      margin-top: 20px;
       cursor: pointer;
-    }
-
-    .back-button {
-      margin-top: 20px;
-      background-color: #003366;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 20px;
-    }
-
-    th, td {
-      border: 1px solid #444;
-      padding: 8px;
-      text-align: left;
-    }
-
-    th {
-      background-color: #003366;
     }
   </style>
 </head>
 <body>
 
-  <h1>Instructor Enrollment</h1>
+  <h1>Instructor Profiles</h1>
+  <div id="instructor-profiles"></div>
 
-  <label>Name:</label>
-  <input type="text" id="name" placeholder="Instructor Name">
-
-  <label>Subject:</label>
-  <input type="text" id="subject" placeholder="Subject">
-
-  <label>Course:</label>
-  <input type="text" id="course" placeholder="Course">
-
-  <label>Year:</label>
-  <input type="text" id="year" placeholder="Year">
-
-  <label>Section:</label>
-  <input type="text" id="section" placeholder="Section">
-
-  <label>Day:</label>
-  <input type="text" id="day" placeholder="Day">
-
-  <label>Time:</label>
-  <input type="text" id="time" placeholder="Time">
-
-  <button onclick="registerInstructor()">Register Instructor</button>
-
-  <h2>Registered Instructors</h2>
-
-  <table>
-    <thead>
-      <tr>
-        <th>Name</th>
-        <th>Subject</th>
-        <th>Course</th>
-        <th>Year</th>
-        <th>Section</th>
-        <th>Day</th>
-        <th>Time</th>
-        <th>Action</th>
-      </tr>
-    </thead>
-    <tbody id="instructor-list"></tbody>
-  </table>
-
-  <button class="back-button" onclick="goBack()">Back to Schedule</button>
-
-  <!-- New button to go to Instructor List Page -->
-  <button class="back-button" onclick="goToInstructorList()">View All Instructors</button>
+  <button onclick="window.location.href='Instructor.html'">Back to Enrollment Page</button>
 
   <script>
-    const instructorList = document.getElementById('instructor-list');
-    let instructors = JSON.parse(localStorage.getItem('instructors')) || [];
+    const instructorProfiles = document.getElementById('instructor-profiles');
+    const instructors = JSON.parse(localStorage.getItem('instructors')) || [];
 
-    // Function to display instructors in the table
-    function displayInstructors() {
-      instructorList.innerHTML = '';
-      if (instructors.length === 0) {
-        const emptyMessage = document.createElement('tr');
-        emptyMessage.innerHTML = `<td colspan="8" style="text-align:center;">No instructors registered.</td>`;
-        instructorList.appendChild(emptyMessage);
-      } else {
-        instructors.forEach((instructor, index) => {
-          const row = document.createElement('tr');
-          row.innerHTML = `
-            <td>${instructor.name}</td>
-            <td>${instructor.subject}</td>
-            <td>${instructor.course}</td>
-            <td>${instructor.year}</td>
-            <td>${instructor.section}</td>
-            <td>${instructor.day}</td>
-            <td>${instructor.time}</td>
-            <td>
-              <button onclick="editInstructor(${index})">Edit</button>
-              <button onclick="removeInstructor(${index})">Remove</button>
-            </td>
-          `;
-          instructorList.appendChild(row);
-        });
-      }
+    if (instructors.length === 0) {
+      instructorProfiles.innerHTML = '<p>No instructors registered.</p>';
+    } else {
+      instructors.forEach(instructor => {
+        const box = document.createElement('div');
+        box.classList.add('instructor-box');
+        box.innerHTML = `
+          <h2>${instructor.name}</h2>
+          <p><strong>Subject:</strong> ${instructor.subject}</p>
+          <p><strong>Course:</strong> ${instructor.course}</p>
+          <p><strong>Year:</strong> ${instructor.year}</p>
+          <p><strong>Section:</strong> ${instructor.section}</p>
+          <p><strong>Day:</strong> ${instructor.day}</p>
+          <p><strong>Time:</strong> ${instructor.time}</p>
+        `;
+        instructorProfiles.appendChild(box);
+      });
     }
-
-    // Function to register a new instructor
-    function registerInstructor() {
-      const name = document.getElementById('name').value;
-      const subject = document.getElementById('subject').value || 'N/A';
-      const course = document.getElementById('course').value || 'N/A';
-      const year = document.getElementById('year').value || 'N/A';
-      const section = document.getElementById('section').value || 'N/A';
-      const day = document.getElementById('day').value || 'N/A';
-      const time = document.getElementById('time').value || 'N/A';
-
-      if (!name) {
-        alert("Please enter the instructor's name.");
-        return;
-      }
-
-      // Add the new instructor to the list
-      const instructor = { name, subject, course, year, section, day, time };
-      instructors.push(instructor);
-
-      // Save the updated list to localStorage
-      localStorage.setItem('instructors', JSON.stringify(instructors));
-
-      // Refresh the display
-      displayInstructors();
-    }
-
-    // Function to edit an existing instructor
-    function editInstructor(index) {
-      const instructor = instructors[index];
-      document.getElementById('name').value = instructor.name;
-      document.getElementById('subject').value = instructor.subject;
-      document.getElementById('course').value = instructor.course;
-      document.getElementById('year').value = instructor.year;
-      document.getElementById('section').value = instructor.section;
-      document.getElementById('day').value = instructor.day;
-      document.getElementById('time').value = instructor.time;
-
-      // Change button to save changes
-      const registerButton = document.querySelector('button');
-      registerButton.textContent = 'Save Changes';
-
-      // Remove the instructor from the list temporarily
-      removeInstructor(index);
-    }
-
-    // Function to remove an instructor
-    function removeInstructor(index) {
-      // Remove the instructor from the array
-      instructors.splice(index, 1);
-
-      // Save the updated list to localStorage
-      localStorage.setItem('instructors', JSON.stringify(instructors));
-
-      // Refresh the display
-      displayInstructors();
-    }
-
-    // Function to go back to the schedule page
-    function goBack() {
-      window.location.href = "index.html";
-    }
-
-    // Function to go to the Instructor List page
-    function goToInstructorList() {
-      window.location.href = "InstructorList.html";
-    }
-
-    // Display instructors on page load
-    displayInstructors();
   </script>
 
 </body>
