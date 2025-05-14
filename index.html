@@ -9,191 +9,115 @@
       color: #800000;
       padding: 20px;
     }
-
     h2 {
       color: #cc5500;
     }
-
     label {
       font-weight: bold;
       margin-top: 10px;
       display: block;
       color: #b22222;
     }
-
     select {
       margin-bottom: 10px;
       padding: 5px;
-      border: 1px solid #d2691e;
       background-color: #ffe4b5;
       color: #800000;
     }
-
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    th, td {
+      border: 1px solid #b22222;
+      padding: 10px;
+      text-align: center;
+    }
     button {
       background-color: #ff4500;
       color: white;
+      padding: 8px 12px;
+      margin: 5px;
       border: none;
-      padding: 10px 15px;
-      margin-top: 10px;
-      cursor: pointer;
-      font-weight: bold;
-    }
-
-    table {
-      border-collapse: collapse;
-      width: 100%;
-      margin-top: 20px;
-      background-color: #fffaf0;
-    }
-
-    th, td {
-      border: 1px solid #ff7f50;
-      padding: 8px;
-      text-align: left;
-      vertical-align: top;
-    }
-
-    th {
-      background-color: #ffcc00;
-      color: #800000;
-    }
-
-    .cell-box label {
-      display: block;
-      font-size: 12px;
-      color: #b22222;
-    }
-
-    .cell-box input {
-      width: 100%;
-      font-size: 12px;
-      margin-bottom: 4px;
-      box-sizing: border-box;
-      border: 1px solid #ffa07a;
-    }
-
-    .bottom-buttons {
-      margin-top: 40px;
     }
   </style>
 </head>
 <body>
+  <h2>Student Scheduling</h2>
 
-<!-- Dropdowns -->
-<label><strong>Course:</strong></label>
-<select id="course">
-  <option value="BSA">BSA</option>
-  <option value="BSAIS">BSAIS</option>
-  <option value="BSMarketing" selected>BSMarketing</option>
-  <option value="BSE">BSE</option>
-  <option value="BSPublicAdministration">BSPublicAdministration</option>
-</select>
+  <label>Course:</label>
+  <select id="course" onchange="autoFillSchedule()">
+    <option value="">Select Course</option>
+    <option value="BSIT">BSIT</option>
+  </select>
 
-<label><strong>Year:</strong></label>
-<select id="year">
-  <option value="1">1</option>
-  <option value="2">2</option>
-  <option value="3">3</option>
-  <option value="4" selected>4</option>
-</select>
+  <label>Year:</label>
+  <select id="year" onchange="autoFillSchedule()">
+    <option value="">Select Year</option>
+    <option value="1">1st Year</option>
+  </select>
 
-<label><strong>Section:</strong></label>
-<select id="section">
-  <option value="A">A</option>
-  <option value="B" selected>B</option>
-  <option value="C">C</option>
-  <option value="D">D</option>
-</select>
+  <label>Section:</label>
+  <select id="section" onchange="autoFillSchedule()">
+    <option value="">Select Section</option>
+    <option value="A">A</option>
+  </select>
 
-<h2>Selected: <span id="result"></span></h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Time</th>
+        <th>Monday</th>
+        <th>Tuesday</th>
+      </tr>
+    </thead>
+    <tbody id="schedule-table">
+      <tr>
+        <td>8:00 AM</td>
+        <td data-day="Monday" data-time="8:00 AM"></td>
+        <td data-day="Tuesday" data-time="8:00 AM"></td>
+      </tr>
+      <!-- Add more rows as needed -->
+    </tbody>
+  </table>
 
-<!-- Schedule Table -->
-<table>
-  <thead>
-    <tr>
-      <th>Time</th>
-      <th>Monday</th>
-      <th>Tuesday</th>
-      <th>Wednesday</th>
-      <th>Thursday</th>
-      <th>Friday</th>
-      <th>Saturday</th>
-      <th>Sunday</th>
-    </tr>
-  </thead>
-  <tbody id="schedule-body"></tbody>
-</table>
+  <br>
+  <button onclick="goToEnrollment()">Enroll Instructor</button>
+  <button onclick="goToInstructorList()">View Instructors</button>
 
-<div class="bottom-buttons">
-  <button onclick="window.location.href='Instructor.html'">Enroll Instructor</button>
-  <button onclick="window.location.href='InstructorList.html'">View Instructor List</button>
-</div>
-
-<!-- JavaScript -->
-<script>
-  const course = document.getElementById('course');
-  const year = document.getElementById('year');
-  const section = document.getElementById('section');
-  const result = document.getElementById('result');
-  const scheduleBody = document.getElementById('schedule-body');
-
-  const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
-
-  // Create table
-  for (let hour = 7; hour <= 17; hour++) {
-    const row = document.createElement('tr');
-
-    const timeCell = document.createElement('td');
-    timeCell.textContent = `${hour}:00-${hour + 1}:00`;
-    row.appendChild(timeCell);
-
-    for (let i = 0; i < 7; i++) {
-      const cell = document.createElement('td');
-      cell.className = 'cell-box';
-      cell.innerHTML = `
-        <label>Instructor:</label><input type="text" class="instructor">
-        <label>Subject:</label><input type="text" class="subject">
-        <label>Room:</label><input type="text" class="room">
-      `;
-      row.appendChild(cell);
+  <script>
+    function goToEnrollment() {
+      window.location.href = 'Instructor.html';
     }
 
-    scheduleBody.appendChild(row);
-  }
+    function goToInstructorList() {
+      window.location.href = 'InstructorList.html';
+    }
 
-  function updateResult() {
-    const selectedKey = `${course.value}-${year.value}-${section.value}`;
-    result.textContent = selectedKey;
-    populateScheduleFromInstructors(selectedKey);
-  }
+    function autoFillSchedule() {
+      const course = document.getElementById('course').value;
+      const year = document.getElementById('year').value;
+      const section = document.getElementById('section').value;
+      const scheduleTable = document.getElementById('schedule-table');
+      const instructors = JSON.parse(localStorage.getItem('instructors')) || [];
 
-  function populateScheduleFromInstructors(selectedKey) {
-    const instructors = JSON.parse(localStorage.getItem('instructors')) || [];
-    
-    // Clear current table values
-    document.querySelectorAll('.cell-box').forEach(cell => {
-      cell.querySelector('.instructor').value = '';
-      cell.querySelector('.subject').value = '';
-    });
+      const rows = scheduleTable.querySelectorAll('tr');
+      rows.forEach(row => {
+        const tds = row.querySelectorAll('td');
+        tds.forEach(cell => {
+          if (cell.dataset.day) cell.textContent = ''; // clear cell
+        });
+      });
 
-    instructors.forEach(instructor => {
-      const instructorKey = `${instructor.course}-${instructor.year}-${instructor.section}`;
-      if (instructorKey === selectedKey) {
-        const rowIndex = parseInt(instructor.time) - 7; // Assuming time is "7", "8", ...
-        const colIndex = days.indexOf(instructor.day);
-        if (rowIndex >= 0 && rowIndex < 11 && colIndex >= 0) {
-          const row = scheduleBody.rows[rowIndex];
-          const cell = row.cells[colIndex + 1]; // +1 to skip time column
-          cell.querySelector('.instructor').value = instructor.name;
-          cell.querySelector('.subject').value = instructor.subject;
+      instructors.forEach(inst => {
+        if (inst.course === course && inst.year === year && inst.section === section) {
+          const cell = document.querySelector(`td[data-day="${inst.day}"][data-time="${inst.time}"]`);
+          if (cell) {
+            cell.innerHTML = `${inst.name}<br>${inst.subject}`;
+          }
         }
-      }
-    });
-  }
-
-  course.onchange = year.onchange = section.onchange = updateResult;
-  updateResult(); // Initial load
-</script>
-
+      });
+    }
+  </script>
 </body>
 </html>
