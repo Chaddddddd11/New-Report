@@ -6,7 +6,7 @@
   <title>Instructor Enrollment</title>
   <style>
     body { font-family: Arial, sans-serif; padding: 20px; }
-    label, select, input, button { margin-top: 10px; }
+    label, select, input, button { margin-top: 10px; display: block; }
     .instructor-card { margin-top: 10px; padding: 10px; border: 1px solid #ccc; background: #f9f9f9; }
     .back-button { margin-top: 20px; padding: 8px 16px; background-color: #007bff; color: white; border: none; cursor: pointer; }
   </style>
@@ -95,7 +95,10 @@
       const day = document.getElementById('day').value;
       const time = document.getElementById('time').value;
 
-      if (!name) { alert("Please enter the instructor's name."); return; }
+      if (!name) {
+        alert("Please enter the instructor's name.");
+        return;
+      }
 
       const instructor = { name, subject, course, year, section, day, time };
       instructors.push(instructor);
