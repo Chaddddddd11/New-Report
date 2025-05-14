@@ -40,13 +40,6 @@
       cursor: pointer;
     }
 
-    .instructor-card {
-      margin-top: 10px;
-      padding: 10px;
-      border: 1px solid #444;
-      background-color: #1c1c3c;
-    }
-
     .back-button {
       margin-top: 20px;
       background-color: #003366;
@@ -115,6 +108,9 @@
   </table>
 
   <button class="back-button" onclick="goBack()">Back to Schedule</button>
+
+  <!-- New button to go to Instructor List Page -->
+  <button class="back-button" onclick="goToInstructorList()">View All Instructors</button>
 
   <script>
     const instructorList = document.getElementById('instructor-list');
@@ -208,6 +204,11 @@
     // Function to go back to the schedule page
     function goBack() {
       window.location.href = "index.html";
+    }
+
+    // Function to go to the Instructor List page
+    function goToInstructorList() {
+      window.location.href = "InstructorList.html";
     }
 
     // Display instructors on page load
