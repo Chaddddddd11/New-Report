@@ -2,55 +2,143 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Instructor List</title>
+  <title>DHVSU Instructor List</title>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
   <style>
+    :root {
+      --primary-color: #1A5F7A;  /* Deep blue-green */
+      --secondary-color: #2C8EBB; /* Lighter blue */
+      --accent-color: #F7B32D;   /* Warm yellow */
+      --background-color: #F4F7F6;
+      --text-color: #333;
+    }
+
     body {
-      font-family: Arial, sans-serif;
-      background-color: #f0f8ff;
-      color: #000080;
+      font-family: 'Roboto', Arial, sans-serif;
+      max-width: 1200px;
+      margin: 0 auto;
       padding: 20px;
+      background-color: var(--background-color);
+      color: var(--text-color);
     }
+
     h1 {
-      color: #000080;
+      background-color: var(--primary-color);
+      color: white;
+      text-align: center;
+      padding: 15px;
+      margin-bottom: 20px;
+      border-radius: 5px;
     }
+
+    #filterContainer {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 20px;
+    }
+
+    #filterContainer input, 
+    #filterContainer select {
+      padding: 8px;
+      margin-right: 10px;
+      border: 1px solid var(--secondary-color);
+      border-radius: 4px;
+    }
+
     table {
       width: 100%;
       border-collapse: collapse;
       margin-top: 20px;
+      box-shadow: 0 2px 3px rgba(0,0,0,0.1);
     }
+
     th, td {
-      border: 1px solid #000080;
-      padding: 8px;
+      border: 1px solid #ddd;
+      padding: 12px;
       text-align: left;
     }
+
     th {
-      background-color: #add8e6;
-      cursor: pointer;
-    }
-    button {
-      background-color: #000080;
+      background-color: var(--primary-color);
       color: white;
-      padding: 8px 16px;
-      border: none;
-      margin-top: 20px;
       cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+
+    th:hover {
+      background-color: var(--secondary-color);
+    }
+
+    tr:nth-child(even) {
+      background-color: #f2f2f2;
+    }
+
+    tr:hover {
+      background-color: #e6f2f7;
+    }
+
+    .navigation-buttons {
+      margin-top: 20px;
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+    }
+
+    button {
+      background-color: var(--secondary-color);
+      color: white;
+      padding: 10px 15px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+
+    button:hover {
+      background-color: var(--accent-color);
+    }
+
+    #noInstructorsMessage {
+      text-align: center;
+      color: var(--primary-color);
+      margin-top: 20px;
+      font-style: italic;
     }
   </style>
 </head>
 <body>
-
   <h1>Registered Instructors</h1>
+
+  <div id="filterContainer">
+    <div>
+      <input type="text" id="nameFilter" placeholder="Filter by Name">
+      <select id="courseFilter">
+        <option value="">All Courses</option>
+        <option value="BSA">BSA</option>
+        <option value="BSAIS">BSAIS</option>
+        <option value="MSMarketing">MS Marketing</option>
+        <option value="BSE">BSE</option>
+        <option value="BSPublicAdministration">BS Public Administration</option>
+      </select>
+      <select id="yearFilter">
+        <option value="">All Years</option>
+        <option value="1st">1st Year</option>
+        <option value="2nd">2nd Year</option>
+        <option value="3rd">3rd Year</option>
+        <option value="4th">4th Year</option>
+      </select>
+    </div>
+  </div>
 
   <table id="instructorTable">
     <thead>
       <tr>
-        <th onclick="sortTable(0)">Name ▼</th>
-        <th onclick="sortTable(1)">Subject ▼</th>
-        <th onclick="sortTable(2)">Course ▼</th>
-        <th onclick="sortTable(3)">Year ▼</th>
-        <th onclick="sortTable(4)">Section ▼</th>
-        <th onclick="sortTable(5)">Day ▼</th>
-        <th onclick="sortTable(6)">Time ▼</th>
+        <th onclick="sortTable(0)">Name</th>
+        <th onclick="sortTable(1)">Course</th>
+        <th onclick="sortTable(2)">Year</th>
+        <th onclick="sortTable(3)">Section</th>
+        <th onclick="sortTable(4)">Day</th>
+        <th onclick="sortTable(5)">Time</th>
       </tr>
     </thead>
     <tbody id="instructorTableBody">
@@ -58,27 +146,51 @@
     </tbody>
   </table>
 
-  <button onclick="goBack()">Back to Schedule</button>
+  <div id="noInstructorsMessage"></div>
+
+  <div class="navigation-buttons">
+    <button onclick="goBack()">Back to Schedule</button>
+    <button onclick="goToInstructorEnrollment()">Enroll New Instructor</button>
+  </div>
 
   <script>
-    function displayInstructors() {
-      const tableBody = document.getElementById('instructorTableBody');
-      const instructors = JSON.parse(localStorage.getItem('instructors')) || [];
+    const tableBody = document.getElementById('instructorTableBody');
+    const noInstructorsMessage = document.getElementById('noInstructorsMessage');
+    const nameFilter = document.getElementById('nameFilter');
+    const courseFilter = document.getElementById('courseFilter');
+    const yearFilter = document.getElementById('yearFilter');
+
+    let instructors = [];
+
+    function loadInstructors() {
+      instructors = JSON.parse(localStorage.getItem('instructors')) || [];
+      filterAndDisplayInstructors();
+    }
+
+    function filterAndDisplayInstructors() {
+      const nameFilterValue = nameFilter.value.toLowerCase();
+      const courseFilterValue = courseFilter.value;
+      const yearFilterValue = yearFilter.value;
+
+      const filteredInstructors = instructors.filter(instructor => 
+        (nameFilterValue === '' || instructor.name.toLowerCase().includes(nameFilterValue)) &&
+        (courseFilterValue === '' || instructor.course === courseFilterValue) &&
+        (yearFilterValue === '' || instructor.year === yearFilterValue)
+      );
 
       tableBody.innerHTML = '';
 
-      if (instructors.length === 0) {
-        const row = document.createElement('tr');
-        row.innerHTML = `<td colspan="7" style="text-align:center;">No instructors found.</td>`;
-        tableBody.appendChild(row);
+      if (filteredInstructors.length === 0) {
+        noInstructorsMessage.textContent = 'No instructors found matching the current filters.';
         return;
       }
 
-      instructors.forEach(instructor => {
+      noInstructorsMessage.textContent = '';
+
+      filteredInstructors.forEach(instructor => {
         const row = document.createElement('tr');
         row.innerHTML = `
           <td>${instructor.name}</td>
-          <td>${instructor.subject}</td>
           <td>${instructor.course}</td>
           <td>${instructor.year}</td>
           <td>${instructor.section}</td>
@@ -122,8 +234,17 @@
       window.location.href = 'index.html';
     }
 
-    displayInstructors();
-  </script>
+    function goToInstructorEnrollment() {
+      window.location.href = 'Instructor.html';
+    }
 
+    // Add event listeners for filters
+    nameFilter.addEventListener('input', filterAndDisplayInstructors);
+    courseFilter.addEventListener('change', filterAndDisplayInstructors);
+    yearFilter.addEventListener('change', filterAndDisplayInstructors);
+
+    // Load instructors when page loads
+    loadInstructors();
+  </script>
 </body>
 </html>
