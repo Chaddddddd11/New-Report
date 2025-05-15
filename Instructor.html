@@ -39,19 +39,6 @@
       margin-top: 20px;
       background-color: #003366;
     }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 20px;
-    }
-    th, td {
-      border: 1px solid #444;
-      padding: 8px;
-      text-align: left;
-    }
-    th {
-      background-color: #003366;
-    }
     .error {
       color: red;
       margin-bottom: 10px;
@@ -90,30 +77,11 @@
     <button type="button" onclick="clearForm()">Clear Form</button>
   </form>
 
-  <h2>Registered Instructors</h2>
-
-  <table>
-    <thead>
-      <tr>
-        <th>Name</th>
-        <th>Subject</th>
-        <th>Course</th>
-        <th>Year</th>
-        <th>Section</th>
-        <th>Day</th>
-        <th>Time</th>
-        <th>Action</th>
-      </tr>
-    </thead>
-    <tbody id="instructor-list"></tbody>
-  </table>
-
   <button class="back-button" onclick="goBack()">Back to Schedule</button>
   <button class="back-button" onclick="goToInstructorList()">View All Instructors</button>
 
   <script>
     const instructorForm = document.getElementById('instructorForm');
-    const instructorList = document.getElementById('instructor-list');
     const errorContainer = document.getElementById('errorContainer');
     let instructors = JSON.parse(localStorage.getItem('instructors')) || [];
     let editingIndex = -1;
@@ -122,33 +90,6 @@
       event.preventDefault();
       registerInstructor();
     });
-
-    function displayInstructors() {
-      instructorList.innerHTML = '';
-      if (instructors.length === 0) {
-        const emptyMessage = document.createElement('tr');
-        emptyMessage.innerHTML = `<td colspan="8" style="text-align:center;">No instructors registered.</td>`;
-        instructorList.appendChild(emptyMessage);
-      } else {
-        instructors.forEach((instructor, index) => {
-          const row = document.createElement('tr');
-          row.innerHTML = `
-            <td>${instructor.name}</td>
-            <td>${instructor.subject}</td>
-            <td>${instructor.course}</td>
-            <td>${instructor.year}</td>
-            <td>${instructor.section}</td>
-            <td>${instructor.day}</td>
-            <td>${instructor.time}</td>
-            <td>
-              <button onclick="editInstructor(${index})">Edit</button>
-              <button onclick="removeInstructor(${index})">Remove</button>
-            </td>
-          `;
-          instructorList.appendChild(row);
-        });
-      }
-    }
 
     function registerInstructor() {
       const name = document.getElementById('name').value.trim();
@@ -188,31 +129,8 @@
       }
 
       localStorage.setItem('instructors', JSON.stringify(instructors));
-      displayInstructors();
       clearForm();
       clearError();
-    }
-
-    function editInstructor(index) {
-      const instructor = instructors[index];
-      document.getElementById('name').value = instructor.name;
-      document.getElementById('subject').value = instructor.subject;
-      document.getElementById('course').value = instructor.course;
-      document.getElementById('year').value = instructor.year;
-      document.getElementById('section').value = instructor.section;
-      document.getElementById('day').value = instructor.day;
-      document.getElementById('time').value = instructor.time;
-
-      const registerButton = document.querySelector('button[type="submit"]');
-      registerButton.textContent = 'Save Changes';
-      editingIndex = index;
-    }
-
-    function removeInstructor(index) {
-      instructors.splice(index, 1);
-      localStorage.setItem('instructors', JSON.stringify(instructors));
-      displayInstructors();
-      clearForm();
     }
 
     function clearForm() {
@@ -238,8 +156,6 @@
     function goToInstructorList() {
       window.location.href = "InstructorList.html";
     }
-
-    displayInstructors();
   </script>
 
 </body>
