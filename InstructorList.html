@@ -25,6 +25,7 @@
     }
     th {
       background-color: #add8e6;
+      cursor: pointer;
     }
     button {
       background-color: #000080;
@@ -40,16 +41,16 @@
 
   <h1>Registered Instructors</h1>
 
-  <table>
+  <table id="instructorTable">
     <thead>
       <tr>
-        <th>Name</th>
-        <th>Subject</th>
-        <th>Course</th>
-        <th>Year</th>
-        <th>Section</th>
-        <th>Day</th>
-        <th>Time</th>
+        <th onclick="sortTable(0)">Name ▼</th>
+        <th onclick="sortTable(1)">Subject ▼</th>
+        <th onclick="sortTable(2)">Course ▼</th>
+        <th onclick="sortTable(3)">Year ▼</th>
+        <th onclick="sortTable(4)">Section ▼</th>
+        <th onclick="sortTable(5)">Day ▼</th>
+        <th onclick="sortTable(6)">Time ▼</th>
       </tr>
     </thead>
     <tbody id="instructorTableBody">
@@ -86,6 +87,35 @@
         `;
         tableBody.appendChild(row);
       });
+    }
+
+    function sortTable(columnIndex) {
+      const table = document.getElementById('instructorTable');
+      const tbody = table.getElementsByTagName('tbody')[0];
+      const rows = Array.from(tbody.rows);
+      const isAscending = table.rows[0].cells[columnIndex].getAttribute('data-order') !== 'asc';
+
+      rows.sort((a, b) => {
+        const aColText = a.cells[columnIndex].textContent.toLowerCase();
+        const bColText = b.cells[columnIndex].textContent.toLowerCase();
+        return isAscending 
+          ? aColText.localeCompare(bColText)
+          : bColText.localeCompare(aColText);
+      });
+
+      // Clear the table
+      while (tbody.firstChild) {
+        tbody.removeChild(tbody.firstChild);
+      }
+
+      // Reinsert sorted rows
+      rows.forEach(row => tbody.appendChild(row));
+
+      // Update sort indicator and order
+      table.rows[0].cells[columnIndex].setAttribute(
+        'data-order', 
+        isAscending ? 'asc' : 'desc'
+      );
     }
 
     function goBack() {
