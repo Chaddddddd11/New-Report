@@ -165,6 +165,62 @@
   </div>
 
   <script>
+    // Student Capacity Mapping
+    const studentCapacityMap = {
+      // BSA Capacities
+      'BSA-1A': 30, 'BSA-1B': 37, 'BSA-1C': 32, 'BSA-1D': 34, 
+      'BSA-1E': 43, 'BSA-1F': 49, 'BSA-1G': 45, 'BSA-1H': 41, 
+      'BSA-1I': 38, 'BSA-1J': 46,
+      'BSA-2A': 38, 'BSA-2B': 44, 'BSA-2C': 46, 'BSA-2D': 34, 
+      'BSA-2E': 39, 'BSA-2F': 35, 'BSA-2G': 47, 'BSA-2H': 31,
+      'BSA-3A': 44, 'BSA-3B': 50, 'BSA-3C': 41, 'BSA-3D': 32, 
+      'BSA-3E': 50, 'BSA-3F': 36, 'BSA-3G': 42, 'BSA-3H': 39,
+      'BSA-4A': 41, 'BSA-4B': 38, 'BSA-4C': 35, 'BSA-4D': 47,
+
+      // BSAIS Capacities
+      'BSAIS-1A': 40, 'BSAIS-1B': 42, 'BSAIS-1C': 32, 'BSAIS-1D': 44, 'BSAIS-1E': 35,
+      'BSAIS-2A': 41, 'BSAIS-2B': 40, 'BSAIS-2C': 50, 'BSAIS-2D': 44, 'BSAIS-2E': 44, 
+      'BSAIS-2F': 43, 'BSAIS-2G': 38,
+      'BSAIS-3A': 42, 'BSAIS-3B': 50, 'BSAIS-3C': 41, 'BSAIS-3D': 47, 'BSAIS-3E': 41, 
+      'BSAIS-3F': 30,
+      'BSAIS-4A': 36, 'BSAIS-4B': 35, 'BSAIS-4C': 45, 'BSAIS-4D': 42, 'BSAIS-4E': 30, 
+      'BSAIS-4F': 32, 'BSAIS-4G': 34,
+
+      // MSMarketing Capacities
+      'MSMarketing-1A': 36, 'MSMarketing-1B': 39, 'MSMarketing-1C': 35, 'MSMarketing-1D': 31, 
+      'MSMarketing-1E': 36, 'MSMarketing-1F': 43, 'MSMarketing-1G': 41, 'MSMarketing-1H': 41,
+      'MSMarketing-2A': 35, 'MSMarketing-2B': 44, 'MSMarketing-2C': 49, 'MSMarketing-2D': 40, 
+      'MSMarketing-2E': 49, 'MSMarketing-2F': 50, 'MSMarketing-2G': 31, 'MSMarketing-2H': 46, 
+      'MSMarketing-2I': 36,
+      'MSMarketing-3A': 42, 'MSMarketing-3B': 43, 'MSMarketing-3C': 36,
+      'MSMarketing-4A': 37, 'MSMarketing-4B': 31, 'MSMarketing-4C': 49, 'MSMarketing-4D': 47, 
+      'MSMarketing-4E': 43, 'MSMarketing-4F': 44, 'MSMarketing-4G': 33, 'MSMarketing-4H': 45, 
+      'MSMarketing-4I': 31,
+
+      // BSE Capacities
+      'BSE-1A': 40, 'BSE-1B': 48, 'BSE-1C': 50,
+      'BSE-2A': 42, 'BSE-2B': 34, 'BSE-2C': 44, 'BSE-2D': 40, 'BSE-2E': 36, 
+      'BSE-2F': 34, 'BSE-2G': 48, 'BSE-2H': 40,
+      'BSE-3A': 39, 'BSE-3B': 32, 'BSE-3C': 44, 'BSE-3D': 50,
+      'BSE-4A': 41, 'BSE-4B': 37, 'BSE-4C': 42, 'BSE-4D': 40, 'BSE-4E': 33, 
+      'BSE-4F': 43, 'BSE-4G': 49, 'BSE-4H': 38,
+
+      // BSPublicAdministration Capacities
+      'BSPublicAdministration-1A': 36, 'BSPublicAdministration-1B': 34, 
+      'BSPublicAdministration-1C': 50, 'BSPublicAdministration-1D': 31,
+      'BSPublicAdministration-2A': 50, 'BSPublicAdministration-2B': 40, 
+      'BSPublicAdministration-2C': 43, 'BSPublicAdministration-2D': 36, 
+      'BSPublicAdministration-2E': 38, 'BSPublicAdministration-2F': 49, 
+      'BSPublicAdministration-2G': 36,
+      'BSPublicAdministration-3A': 37, 'BSPublicAdministration-3B': 30, 
+      'BSPublicAdministration-3C': 33, 'BSPublicAdministration-3D': 38, 
+      'BSPublicAdministration-3E': 48,
+      'BSPublicAdministration-4A': 34, 'BSPublicAdministration-4B': 43, 
+      'BSPublicAdministration-4C': 33, 'BSPublicAdministration-4D': 30, 
+      'BSPublicAdministration-4E': 43, 'BSPublicAdministration-4F': 39, 
+      'BSPublicAdministration-4G': 30
+    };
+
     // Course-specific configurations with detailed section assignments
     const courseConfig = {
       BSA: {
@@ -316,11 +372,13 @@
         const formattedYear = year === '1st' ? '1' : 
                                year === '2nd' ? '2' : 
                                year === '3rd' ? '3' : '4';
-        courseSummary.textContent = `${course}-${formattedYear}${section}`;
+        const combinedKey = `${course}-${formattedYear}${section}`;
         
-        // Future: Retrieve room capacity for this specific combination
-        // For now, leave as placeholder
-        studentCapacityDisplay.textContent = '---';
+        // Retrieve student capacity
+        const studentCapacity = studentCapacityMap[combinedKey] || '---';
+        
+        courseSummary.textContent = combinedKey;
+        studentCapacityDisplay.textContent = studentCapacity;
       } else {
         courseSummary.textContent = '----';
         studentCapacityDisplay.textContent = '---';
