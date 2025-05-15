@@ -1,22 +1,33 @@
 <!DOCTYPE html>
 <html lang="en">
-<!-- Keep the existing head and style sections -->
 <head>
-  <!-- Previous head content remains the same -->
+  <meta charset="UTF-8">
+  <title>DHVSU Instructor List</title>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
   <style>
-    /* Keep all previous styles and add these new ones */
-    .action-buttons {
-      display: flex;
-      gap: 5px;
+    /* Keep all existing styles */
+    :root {
+      --primary-color: #1A5F7A;
+      --secondary-color: #2C8EBB;
+      --accent-color: #F7B32D;
+      --background-color: #F4F7F6;
+      --text-color: #333;
+      --error-color: #dc3545;
+    }
+
+    /* Add these new styles */
+    .action-cell {
+      white-space: nowrap;
     }
 
     .edit-btn, .delete-btn {
       padding: 5px 10px;
+      margin: 0 2px;
       border: none;
       border-radius: 3px;
       cursor: pointer;
-      font-size: 14px;
       color: white;
+      font-size: 14px;
     }
 
     .edit-btn {
@@ -24,183 +35,99 @@
     }
 
     .delete-btn {
-      background-color: var(--error-color, #dc3545);
+      background-color: var(--error-color);
     }
 
     .edit-btn:hover, .delete-btn:hover {
       opacity: 0.9;
     }
 
-    /* Modal styles */
-    .modal {
-      display: none;
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background-color: rgba(0, 0, 0, 0.5);
-      z-index: 1000;
-    }
-
-    .modal-content {
-      background-color: white;
-      margin: 15% auto;
-      padding: 20px;
-      border-radius: 5px;
-      width: 80%;
-      max-width: 600px;
-    }
-
-    .modal-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 20px;
-    }
-
-    .close {
-      font-size: 24px;
-      cursor: pointer;
-      color: #666;
-    }
-
-    .close:hover {
-      color: #333;
-    }
-
-    .modal-form-group {
-      margin-bottom: 15px;
-    }
-
-    .modal-form-group label {
-      display: block;
-      margin-bottom: 5px;
-    }
-
-    .modal-form-group input,
-    .modal-form-group select {
-      width: 100%;
-      padding: 8px;
-      border: 1px solid #ddd;
-      border-radius: 4px;
-    }
-
-    .modal-buttons {
-      display: flex;
-      justify-content: flex-end;
-      gap: 10px;
-      margin-top: 20px;
-    }
+    /* Keep all your existing styles */
   </style>
 </head>
 <body>
-  <!-- Keep the existing container div structure until the table -->
-  <div class="table-container">
-    <table class="instructor-table">
-      <thead>
-        <tr>
-          <th>Name</th>
-          <th>Subject</th>
-          <th>Course</th>
-          <th>Year</th>
-          <th>Section</th>
-          <th>Day</th>
-          <th>Time</th>
-          <th>Actions</th>
-        </tr>
-      </thead>
-      <tbody id="instructorTableBody">
-        <!-- Instructors will be loaded here -->
-      </tbody>
-    </table>
-    <div id="noInstructorsMessage" class="no-instructors">
-      No Instructors Enrolled Yet
+  <div class="container">
+    <div class="header">
+      <h1>Registered Instructors</h1>
     </div>
-  </div>
 
-  <!-- Add Modal for Editing -->
-  <div id="editModal" class="modal">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h2>Edit Instructor</h2>
-        <span class="close">&times;</span>
+    <div class="filter-section">
+      <div class="filter-group">
+        <input 
+          type="text" 
+          id="nameFilter" 
+          class="filter-input" 
+          placeholder="Filter by Name"
+        >
+        <select id="courseFilter" class="filter-input">
+          <option value="">All Courses</option>
+          <option value="BSA">BSA</option>
+          <option value="BSAIS">BSAIS</option>
+          <option value="MSMarketing">MS Marketing</option>
+          <option value="BSE">BSE</option>
+          <option value="BSPublicAdministration">BS Public Administration</option>
+        </select>
+        <select id="yearFilter" class="filter-input">
+          <option value="">All Years</option>
+          <option value="1st">1st Year</option>
+          <option value="2nd">2nd Year</option>
+          <option value="3rd">3rd Year</option>
+          <option value="4th">4th Year</option>
+        </select>
       </div>
-      <form id="editForm">
-        <input type="hidden" id="editIndex">
-        <div class="modal-form-group">
-          <label for="editName">Name</label>
-          <input type="text" id="editName" required>
-        </div>
-        <div class="modal-form-group">
-          <label for="editSubject">Subject</label>
-          <input type="text" id="editSubject" required>
-        </div>
-        <div class="modal-form-group">
-          <label for="editCourse">Course</label>
-          <select id="editCourse" required>
-            <option value="BSA">BSA</option>
-            <option value="BSAIS">BSAIS</option>
-            <option value="MSMarketing">MS Marketing</option>
-            <option value="BSE">BSE</option>
-            <option value="BSPublicAdministration">BS Public Administration</option>
-          </select>
-        </div>
-        <div class="modal-form-group">
-          <label for="editYear">Year</label>
-          <select id="editYear" required>
-            <option value="1st">1st Year</option>
-            <option value="2nd">2nd Year</option>
-            <option value="3rd">3rd Year</option>
-            <option value="4th">4th Year</option>
-          </select>
-        </div>
-        <div class="modal-form-group">
-          <label for="editSection">Section</label>
-          <select id="editSection" required>
-            <option value="A">Section A</option>
-            <option value="B">Section B</option>
-            <option value="C">Section C</option>
-            <option value="D">Section D</option>
-          </select>
-        </div>
-        <div class="modal-form-group">
-          <label for="editDay">Day</label>
-          <select id="editDay" required>
-            <option value="Monday">Monday</option>
-            <option value="Tuesday">Tuesday</option>
-            <option value="Wednesday">Wednesday</option>
-            <option value="Thursday">Thursday</option>
-            <option value="Friday">Friday</option>
-            <option value="Saturday">Saturday</option>
-          </select>
-        </div>
-        <div class="modal-form-group">
-          <label for="editTime">Time</label>
-          <select id="editTime" required>
-            <option value="7:30 AM - 9:00 AM">7:30 AM - 9:00 AM</option>
-            <option value="9:00 AM - 10:30 AM">9:00 AM - 10:30 AM</option>
-            <option value="10:30 AM - 12:00 PM">10:30 AM - 12:00 PM</option>
-            <option value="1:00 PM - 2:30 PM">1:00 PM - 2:30 PM</option>
-            <option value="2:30 PM - 4:00 PM">2:30 PM - 4:00 PM</option>
-            <option value="4:00 PM - 5:30 PM">4:00 PM - 5:30 PM</option>
-          </select>
-        </div>
-        <div class="modal-buttons">
-          <button type="button" class="btn" onclick="closeModal()">Cancel</button>
-          <button type="submit" class="btn">Save Changes</button>
-        </div>
-      </form>
+    </div>
+
+    <div class="table-container">
+      <table class="instructor-table">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Subject</th>
+            <th>Course</th>
+            <th>Year</th>
+            <th>Section</th>
+            <th>Day</th>
+            <th>Time</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="instructorTableBody">
+          <!-- Instructors will be loaded here -->
+        </tbody>
+      </table>
+      <div id="noInstructorsMessage" class="no-instructors">
+        No Instructors Enrolled Yet
+      </div>
+    </div>
+
+    <div class="navigation-buttons">
+      <a href="index.html" class="btn">Back to Schedule</a>
+      <a href="Instructor.html" class="btn">Enroll New Instructor</a>
     </div>
   </div>
-
-  <!-- Keep the existing navigation buttons div -->
 
   <script>
-    // Keep existing variables and add new ones
-    const modal = document.getElementById('editModal');
-    const closeBtn = document.querySelector('.close');
-    const editForm = document.getElementById('editForm');
+    const tableBody = document.getElementById('instructorTableBody');
+    const noInstructorsMessage = document.getElementById('noInstructorsMessage');
+    const nameFilter = document.getElementById('nameFilter');
+    const courseFilter = document.getElementById('courseFilter');
+    const yearFilter = document.getElementById('yearFilter');
+    const table = document.querySelector('.instructor-table');
+
+    function loadInstructors() {
+      const instructors = JSON.parse(localStorage.getItem('instructors')) || [];
+      
+      if (instructors.length === 0) {
+        table.style.display = 'none';
+        noInstructorsMessage.style.display = 'block';
+        return;
+      }
+
+      table.style.display = 'table';
+      noInstructorsMessage.style.display = 'none';
+
+      displayInstructors(instructors);
+    }
 
     function displayInstructors(instructors) {
       tableBody.innerHTML = '';
@@ -215,7 +142,7 @@
           <td>${instructor.section}</td>
           <td>${instructor.day}</td>
           <td>${instructor.time}</td>
-          <td class="action-buttons">
+          <td class="action-cell">
             <button class="edit-btn" onclick="editInstructor(${index})">Edit</button>
             <button class="delete-btn" onclick="deleteInstructor(${index})">Delete</button>
           </td>
@@ -228,16 +155,20 @@
       const instructors = JSON.parse(localStorage.getItem('instructors')) || [];
       const instructor = instructors[index];
       
-      document.getElementById('editIndex').value = index;
-      document.getElementById('editName').value = instructor.name;
-      document.getElementById('editSubject').value = instructor.subject;
-      document.getElementById('editCourse').value = instructor.course;
-      document.getElementById('editYear').value = instructor.year;
-      document.getElementById('editSection').value = instructor.section;
-      document.getElementById('editDay').value = instructor.day;
-      document.getElementById('editTime').value = instructor.time;
+      // Redirect to Instructor.html with query parameters
+      const params = new URLSearchParams({
+        edit: 'true',
+        index: index,
+        name: instructor.name,
+        subject: instructor.subject,
+        course: instructor.course,
+        year: instructor.year,
+        section: instructor.section,
+        day: instructor.day,
+        time: instructor.time
+      });
       
-      modal.style.display = 'block';
+      window.location.href = `Instructor.html?${params.toString()}`;
     }
 
     function deleteInstructor(index) {
@@ -249,84 +180,40 @@
       }
     }
 
-    function closeModal() {
-      modal.style.display = 'none';
+    function filterInstructors() {
+      const instructors = JSON.parse(localStorage.getItem('instructors')) || [];
+      const nameValue = nameFilter.value.toLowerCase();
+      const courseValue = courseFilter.value;
+      const yearValue = yearFilter.value;
+
+      const filteredInstructors = instructors.filter(instructor => {
+        const nameMatch = instructor.name.toLowerCase().includes(nameValue);
+        const courseMatch = !courseValue || instructor.course === courseValue;
+        const yearMatch = !yearValue || instructor.year === yearValue;
+        return nameMatch && courseMatch && yearMatch;
+      });
+
+      if (filteredInstructors.length === 0) {
+        table.style.display = 'none';
+        noInstructorsMessage.textContent = 'No matching instructors found';
+        noInstructorsMessage.style.display = 'block';
+      } else {
+        table.style.display = 'table';
+        noInstructorsMessage.style.display = 'none';
+        displayInstructors(filteredInstructors);
+      }
     }
 
-    editForm.onsubmit = function(e) {
-      e.preventDefault();
-      const index = document.getElementById('editIndex').value;
-      const instructors = JSON.parse(localStorage.getItem('instructors')) || [];
-      
-      const updatedInstructor = {
-        name: document.getElementById('editName').value,
-        subject: document.getElementById('editSubject').value,
-        course: document.getElementById('editCourse').value,
-        year: document.getElementById('editYear').value,
-        section: document.getElementById('editSection').value,
-        day: document.getElementById('editDay').value,
-        time: document.getElementById('editTime').value
-      };
+    // Load instructors when page loads
+    window.addEventListener('load', loadInstructors);
 
-      // Validate the update using the same rules as registration
-      const otherInstructors = instructors.filter((_, i) => i != index);
+    // Add filter event listeners
+    nameFilter.addEventListener('input', filterInstructors);
+    courseFilter.addEventListener('change', filterInstructors);
+    yearFilter.addEventListener('change', filterInstructors);
 
-      // Check time conflict
-      const hasTimeConflict = otherInstructors.some(instructor => 
-        instructor.name === updatedInstructor.name && 
-        instructor.day === updatedInstructor.day && 
-        instructor.time === updatedInstructor.time
-      );
-
-      if (hasTimeConflict) {
-        alert("This instructor is already teaching another class at this time on this day.");
-        return;
-      }
-
-      // Check subject conflict
-      const hasSubjectConflict = otherInstructors.some(instructor => 
-        instructor.course === updatedInstructor.course && 
-        instructor.year === updatedInstructor.year && 
-        instructor.section === updatedInstructor.section && 
-        instructor.subject.toLowerCase() === updatedInstructor.subject.toLowerCase()
-      );
-
-      if (hasSubjectConflict) {
-        alert("This subject is already assigned to this class.");
-        return;
-      }
-
-      // Check class time conflict
-      const hasClassConflict = otherInstructors.some(instructor => 
-        instructor.course === updatedInstructor.course && 
-        instructor.year === updatedInstructor.year && 
-        instructor.section === updatedInstructor.section && 
-        instructor.day === updatedInstructor.day && 
-        instructor.time === updatedInstructor.time
-      );
-
-      if (hasClassConflict) {
-        alert("This class already has a subject scheduled at this time on this day.");
-        return;
-      }
-
-      instructors[index] = updatedInstructor;
-      localStorage.setItem('instructors', JSON.stringify(instructors));
-      loadInstructors();
-      closeModal();
-    };
-
-    // Close modal when clicking outside
-    window.onclick = function(event) {
-      if (event.target == modal) {
-        closeModal();
-      }
-    };
-
-    // Close modal when clicking X
-    closeBtn.onclick = closeModal;
-
-    // Keep existing event listeners
+    // Listen for storage changes
+    window.addEventListener('storage', loadInstructors);
   </script>
 </body>
 </html>
