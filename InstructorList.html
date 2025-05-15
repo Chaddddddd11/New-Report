@@ -77,59 +77,17 @@
       border-radius: 5px;
       box-shadow: 0 2px 4px rgba(0,0,0,0.1);
       overflow: hidden;
-    }
-
-    .instructor-table {
-      width: 100%;
-      border-collapse: collapse;
-    }
-
-    .instructor-table th {
-      background-color: var(--primary-color);
-      color: white;
-      padding: 12px;
-      text-align: left;
-      cursor: pointer;
-      transition: background-color 0.3s ease;
-    }
-
-    .instructor-table th:hover {
-      background-color: var(--secondary-color);
-    }
-
-    .expandable-row {
-      cursor: pointer;
-      transition: background-color 0.3s ease;
-    }
-
-    .expandable-row:hover {
-      background-color: #e6f2f7;
-    }
-
-    .instructor-table td {
-      padding: 12px;
-      border-bottom: 1px solid #eee;
-    }
-
-    .sub-table {
-      background-color: #f9f9f9;
-      width: 100%;
-    }
-
-    .sub-table td {
-      padding: 10px;
-      border-bottom: 1px solid #eee;
-      background-color: #f0f4f6;
-    }
-
-    .hidden {
-      display: none;
+      min-height: 200px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
     }
 
     .no-instructors {
       text-align: center;
-      padding: 20px;
       color: var(--primary-color);
+      font-size: 1.2em;
+      padding: 40px;
       font-style: italic;
     }
 
@@ -158,6 +116,53 @@
   </style>
 </head>
 <body>
-  <!-- [Rest of the HTML remains the same as in the previous implementation] -->
+  <div class="container">
+    <div class="header">
+      <h1>Registered Instructors</h1>
+    </div>
+
+    <div class="filter-section">
+      <div class="filter-group">
+        <input 
+          type="text" 
+          id="nameFilter" 
+          class="filter-input" 
+          placeholder="Filter by Name"
+          disabled
+        >
+        <select id="courseFilter" class="filter-input" disabled>
+          <option value="">All Courses</option>
+          <option value="BSA">BSA</option>
+          <option value="BSAIS">BSAIS</option>
+          <option value="MSMarketing">MS Marketing</option>
+          <option value="BSE">BSE</option>
+          <option value="BSPublicAdministration">BS Public Administration</option>
+        </select>
+        <select id="yearFilter" class="filter-input" disabled>
+          <option value="">All Years</option>
+          <option value="1st">1st Year</option>
+          <option value="2nd">2nd Year</option>
+          <option value="3rd">3rd Year</option>
+          <option value="4th">4th Year</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="table-container">
+      <div class="no-instructors">
+        No Instructors Enrolled Yet
+      </div>
+    </div>
+
+    <div class="navigation-buttons">
+      <a href="index.html" class="btn">Back to Schedule</a>
+      <a href="Instructor.html" class="btn">Enroll New Instructor</a>
+    </div>
+  </div>
+
+  <script>
+    // Ensure local storage is clear
+    localStorage.removeItem('instructors');
+  </script>
 </body>
 </html>
