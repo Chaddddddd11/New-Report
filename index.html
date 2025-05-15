@@ -5,16 +5,16 @@
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
   <style>
     :root {
-      --primary-color: #1A5F7A;  /* Deep blue-green */
-      --secondary-color: #2C8EBB; /* Lighter blue */
-      --accent-color: #F7B32D;   /* Warm yellow */
+      --primary-color: #1A5F7A;
+      --secondary-color: #2C8EBB;
+      --accent-color: #F7B32D;
       --background-color: #F4F7F6;
       --text-color: #333;
     }
 
     body {
       font-family: 'Roboto', Arial, sans-serif;
-      max-width: 800px;
+      max-width: 1200px;
       margin: 0 auto;
       padding: 20px;
       background-color: var(--background-color);
@@ -188,14 +188,107 @@
   </div>
 
   <script>
-    // Student Capacity Mapping
     const studentCapacityMap = {
-      // ... (keep your existing studentCapacityMap)
+      // BSA Capacities
+      'BSA-1A': 30, 'BSA-1B': 37, 'BSA-1C': 32, 'BSA-1D': 34, 
+      'BSA-1E': 43, 'BSA-1F': 49, 'BSA-1G': 45, 'BSA-1H': 41, 
+      'BSA-1I': 38, 'BSA-1J': 46,
+      'BSA-2A': 38, 'BSA-2B': 44, 'BSA-2C': 46, 'BSA-2D': 34, 
+      'BSA-2E': 39, 'BSA-2F': 35, 'BSA-2G': 47, 'BSA-2H': 31,
+      'BSA-3A': 44, 'BSA-3B': 50, 'BSA-3C': 41, 'BSA-3D': 32, 
+      'BSA-3E': 50, 'BSA-3F': 36, 'BSA-3G': 42, 'BSA-3H': 39,
+      'BSA-4A': 41, 'BSA-4B': 38, 'BSA-4C': 35, 'BSA-4D': 47,
+
+      // BSAIS Capacities
+      'BSAIS-1A': 40, 'BSAIS-1B': 42, 'BSAIS-1C': 32, 'BSAIS-1D': 44, 'BSAIS-1E': 35,
+      'BSAIS-2A': 41, 'BSAIS-2B': 40, 'BSAIS-2C': 50, 'BSAIS-2D': 44, 'BSAIS-2E': 44, 
+      'BSAIS-2F': 43, 'BSAIS-2G': 38,
+      'BSAIS-3A': 42, 'BSAIS-3B': 50, 'BSAIS-3C': 41, 'BSAIS-3D': 47, 'BSAIS-3E': 41, 
+      'BSAIS-3F': 30,
+      'BSAIS-4A': 36, 'BSAIS-4B': 35, 'BSAIS-4C': 45, 'BSAIS-4D': 42, 'BSAIS-4E': 30, 
+      'BSAIS-4F': 32, 'BSAIS-4G': 34,
+
+      // MSMarketing Capacities
+      'MSMarketing-1A': 36, 'MSMarketing-1B': 39, 'MSMarketing-1C': 35, 'MSMarketing-1D': 31, 
+      'MSMarketing-1E': 36, 'MSMarketing-1F': 43, 'MSMarketing-1G': 41, 'MSMarketing-1H': 41,
+      'MSMarketing-2A': 35, 'MSMarketing-2B': 44, 'MSMarketing-2C': 49, 'MSMarketing-2D': 40, 
+      'MSMarketing-2E': 49, 'MSMarketing-2F': 50, 'MSMarketing-2G': 31, 'MSMarketing-2H': 46, 
+      'MSMarketing-2I': 36,
+      'MSMarketing-3A': 42, 'MSMarketing-3B': 43, 'MSMarketing-3C': 36,
+      'MSMarketing-4A': 37, 'MSMarketing-4B': 31, 'MSMarketing-4C': 49, 'MSMarketing-4D': 47, 
+      'MSMarketing-4E': 43, 'MSMarketing-4F': 44, 'MSMarketing-4G': 33, 'MSMarketing-4H': 45, 
+      'MSMarketing-4I': 31,
+
+      // BSE Capacities
+      'BSE-1A': 40, 'BSE-1B': 48, 'BSE-1C': 50,
+      'BSE-2A': 42, 'BSE-2B': 34, 'BSE-2C': 44, 'BSE-2D': 40, 'BSE-2E': 36, 
+      'BSE-2F': 34, 'BSE-2G': 48, 'BSE-2H': 40,
+      'BSE-3A': 39, 'BSE-3B': 32, 'BSE-3C': 44, 'BSE-3D': 50,
+      'BSE-4A': 41, 'BSE-4B': 37, 'BSE-4C': 42, 'BSE-4D': 40, 'BSE-4E': 33, 
+      'BSE-4F': 43, 'BSE-4G': 49, 'BSE-4H': 38,
+
+      // BSPublicAdministration Capacities
+      'BSPublicAdministration-1A': 36, 'BSPublicAdministration-1B': 34, 
+      'BSPublicAdministration-1C': 50, 'BSPublicAdministration-1D': 31,
+      'BSPublicAdministration-2A': 50, 'BSPublicAdministration-2B': 40, 
+      'BSPublicAdministration-2C': 43, 'BSPublicAdministration-2D': 36, 
+      'BSPublicAdministration-2E': 38, 'BSPublicAdministration-2F': 49, 
+      'BSPublicAdministration-2G': 36,
+      'BSPublicAdministration-3A': 37, 'BSPublicAdministration-3B': 30, 
+      'BSPublicAdministration-3C': 33, 'BSPublicAdministration-3D': 38, 
+      'BSPublicAdministration-3E': 48,
+      'BSPublicAdministration-4A': 34, 'BSPublicAdministration-4B': 43, 
+      'BSPublicAdministration-4C': 33, 'BSPublicAdministration-4D': 30, 
+      'BSPublicAdministration-4E': 43, 'BSPublicAdministration-4F': 39, 
+      'BSPublicAdministration-4G': 30
     };
 
-    // Course-specific configurations
     const courseConfig = {
-      // ... (keep your existing courseConfig)
+      BSA: {
+        years: ['1st', '2nd', '3rd', '4th'],
+        sections: {
+          '1st': ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'],
+          '2nd': ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'],
+          '3rd': ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'],
+          '4th': ['A', 'B', 'C', 'D']
+        }
+      },
+      BSAIS: {
+        years: ['1st', '2nd', '3rd', '4th'],
+        sections: {
+          '1st': ['A', 'B', 'C', 'D', 'E'],
+          '2nd': ['A', 'B', 'C', 'D', 'E', 'F', 'G'],
+          '3rd': ['A', 'B', 'C', 'D', 'E', 'F'],
+          '4th': ['A', 'B', 'C', 'D', 'E', 'F', 'G']
+        }
+      },
+      MSMarketing: {
+        years: ['1st', '2nd', '3rd', '4th'],
+        sections: {
+          '1st': ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'],
+          '2nd': ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I'],
+          '3rd': ['A', 'B', 'C'],
+          '4th': ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I']
+        }
+      },
+      BSE: {
+        years: ['1st', '2nd', '3rd', '4th'],
+        sections: {
+          '1st': ['A', 'B', 'C'],
+          '2nd': ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'],
+          '3rd': ['A', 'B', 'C', 'D'],
+          '4th': ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H']
+        }
+      },
+      BSPublicAdministration: {
+        years: ['1st', '2nd', '3rd', '4th'],
+        sections: {
+          '1st': ['A', 'B', 'C', 'D'],
+          '2nd': ['A', 'B', 'C', 'D', 'E', 'F', 'G'],
+          '3rd': ['A', 'B', 'C', 'D', 'E'],
+          '4th': ['A', 'B', 'C', 'D', 'E', 'F', 'G']
+        }
+      }
     };
 
     const courseSelect = document.getElementById('course');
@@ -246,37 +339,38 @@
         days.forEach(day => {
           const cell = document.createElement('td');
 
-          // Check if there's an instructor scheduled for this time slot and day
-          const scheduledInstructor = instructors.find(instructor => {
-            // Only show schedules for selected course, year, and section
-            if (selectedCourse && selectedYear && selectedSection) {
+          // Only show instructors if course, year, and section are selected
+          if (selectedCourse && selectedYear && selectedSection) {
+            // Check if there's an instructor scheduled for this time slot and day
+            const scheduledInstructor = instructors.find(instructor => {
+              // Match the exact course, year, and section
               if (instructor.course !== selectedCourse ||
                   instructor.year !== selectedYear ||
-                  instructor.section !== selectedSection) {
+                  instructor.section !== selectedSection ||
+                  instructor.day !== day) {
                   return false;
               }
+
+              // Parse instructor's time range
+              const [instrStartTime] = instructor.time.split(' - ')[0].split(':');
+              const [instrEndTime] = instructor.time.split(' - ')[1].split(':');
+              const currentHour = startTime.split(':')[0];
+
+              // Check if this time slot falls within the instructor's schedule
+              return parseInt(currentHour) >= parseInt(instrStartTime) &&
+                     parseInt(currentHour) < parseInt(instrEndTime);
+            });
+
+            if (scheduledInstructor) {
+              cell.className = 'occupied-cell';
+              cell.innerHTML = `
+                <div class="schedule-info">
+                  <div class="instructor">${scheduledInstructor.name}</div>
+                  <div class="subject">${scheduledInstructor.subject}</div>
+                  <div class="room">${scheduledInstructor.room || 'TBA'}</div>
+                </div>
+              `;
             }
-
-            // Parse instructor's time range
-            const [instrStartTime] = instructor.time.split(' - ')[0].split(':');
-            const [instrEndTime] = instructor.time.split(' - ')[1].split(':');
-            const currentHour = startTime.split(':')[0];
-
-            // Check if this time slot falls within the instructor's schedule
-            return instructor.day === day &&
-                   parseInt(currentHour) >= parseInt(instrStartTime) &&
-                   parseInt(currentHour) < parseInt(instrEndTime);
-          });
-
-          if (scheduledInstructor) {
-            cell.className = 'occupied-cell';
-            cell.innerHTML = `
-              <div class="schedule-info">
-                <div class="instructor">${scheduledInstructor.name}</div>
-                <div class="subject">${scheduledInstructor.subject}</div>
-                <div class="room">${scheduledInstructor.room || 'TBA'}</div>
-              </div>
-            `;
           }
 
           row.appendChild(cell);
@@ -286,7 +380,6 @@
       });
     }
 
-    // Course select event listener
     courseSelect.addEventListener('change', function() {
       yearSelect.innerHTML = '<option value="">-- Select Year --</option>';
       sectionSelect.innerHTML = '<option value="">-- Select Section --</option>';
@@ -311,7 +404,6 @@
       updateSelectionSummary();
     });
 
-    // Year select event listener
     yearSelect.addEventListener('change', function() {
       sectionSelect.innerHTML = '<option value="">-- Select Section --</option>';
       
@@ -334,7 +426,6 @@
       updateSelectionSummary();
     });
 
-    // Section focus event
     sectionSelect.addEventListener('focus', function() {
       if (!yearSelect.value) {
         alert('Please select a Year first');
@@ -342,7 +433,6 @@
       }
     });
 
-    // Section change event
     sectionSelect.addEventListener('change', updateSelectionSummary);
 
     function updateSelectionSummary() {
@@ -350,13 +440,12 @@
       const year = yearSelect.value;
       const section = sectionSelect.value;
 
-      autoFillSchedule();
-
       if (course && year && section) {
         const formattedYear = year === '1st' ? '1' : 
                              year === '2nd' ? '2' : 
                              year === '3rd' ? '3' : '4';
         const combinedKey = `${course}-${formattedYear}${section}`;
+        
         const studentCapacity = studentCapacityMap[combinedKey] || '---';
         
         courseSummary.textContent = combinedKey;
@@ -365,6 +454,9 @@
         courseSummary.textContent = '----';
         studentCapacityDisplay.textContent = '---';
       }
+
+      // Update schedule after updating summary
+      autoFillSchedule();
     }
 
     // Listen for storage changes
