@@ -1,171 +1,233 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <!-- Previous head content remains the same -->
+  <meta charset="UTF-8">
+  <title>DHVSU Instructor List</title>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary-color: #1A5F7A;  /* Deep blue-green */
+      --secondary-color: #2C8EBB; /* Lighter blue */
+      --accent-color: #F7B32D;   /* Warm yellow */
+      --background-color: #F4F7F6;
+      --text-color: #333;
+    }
+
+    body {
+      font-family: 'Roboto', Arial, sans-serif;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+      background-color: var(--background-color);
+      color: var(--text-color);
+    }
+
+    h1 {
+      background-color: var(--primary-color);
+      color: white;
+      text-align: center;
+      padding: 15px;
+      margin-bottom: 20px;
+      border-radius: 5px;
+    }
+
+    .filter-section {
+      margin-bottom: 20px;
+      display: flex;
+      gap: 10px;
+    }
+
+    .filter-input {
+      flex-grow: 1;
+      padding: 10px;
+      border: 1px solid var(--secondary-color);
+      border-radius: 4px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 20px;
+    }
+
+    th, td {
+      border: 1px solid #ddd;
+      padding: 12px;
+      text-align: left;
+    }
+
+    th {
+      background-color: var(--primary-color);
+      color: white;
+    }
+
+    .no-instructors {
+      text-align: center;
+      color: var(--primary-color);
+      font-style: italic;
+      padding: 20px;
+    }
+
+    .navigation-buttons {
+      display: flex;
+      justify-content: center;
+      gap: 15px;
+    }
+
+    .btn {
+      background-color: var(--secondary-color);
+      color: white;
+      padding: 10px 15px;
+      text-decoration: none;
+      border-radius: 4px;
+      transition: background-color 0.3s ease;
+    }
+
+    .btn:hover {
+      background-color: var(--accent-color);
+    }
+  </style>
 </head>
 <body>
-  <div class="container">
-    <div class="header">
-      <h1>Registered Instructors</h1>
-    </div>
+  <h1>Registered Instructors</h1>
 
-    <div class="filter-section">
-      <div class="filter-group">
-        <input 
-          type="text" 
-          id="nameFilter" 
-          class="filter-input" 
-          placeholder="Filter by Name"
-        >
-        <select id="courseFilter" class="filter-input">
-          <option value="">All Courses</option>
-          <option value="BSA">BSA</option>
-          <option value="BSAIS">BSAIS</option>
-          <option value="MSMarketing">MS Marketing</option>
-          <option value="BSE">BSE</option>
-          <option value="BSPublicAdministration">BS Public Administration</option>
-        </select>
-        <select id="yearFilter" class="filter-input">
-          <option value="">All Years</option>
-          <option value="1st">1st Year</option>
-          <option value="2nd">2nd Year</option>
-          <option value="3rd">3rd Year</option>
-          <option value="4th">4th Year</option>
-        </select>
-      </div>
-    </div>
+  <div class="filter-section">
+    <input 
+      type="text" 
+      id="nameFilter" 
+      class="filter-input" 
+      placeholder="Filter by Name"
+    >
+    <select id="courseFilter" class="filter-input">
+      <option value="">All Courses</option>
+      <option value="BSA">BSA</option>
+      <option value="BSAIS">BSAIS</option>
+      <option value="MSMarketing">MS Marketing</option>
+      <option value="BSE">BSE</option>
+      <option value="BSPublicAdministration">BS Public Administration</option>
+    </select>
+    <select id="yearFilter" class="filter-input">
+      <option value="">All Years</option>
+      <option value="1st">1st Year</option>
+      <option value="2nd">2nd Year</option>
+      <option value="3rd">3rd Year</option>
+      <option value="4th">4th Year</option>
+    </select>
+  </div>
 
-    <div class="table-container">
-      <table id="instructorTable" class="instructor-table">
-        <thead>
-          <tr>
-            <th>Name</th>
-            <th>Total Enrollments</th>
-            <th>Courses</th>
-          </tr>
-        </thead>
-        <tbody id="instructorTableBody">
-          <!-- Instructor data will be inserted here -->
-        </tbody>
-      </table>
-      <div id="noInstructorsMessage" class="no-instructors">No Instructors Enrolled Yet</div>
-    </div>
+  <table id="instructorTable">
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Course</th>
+        <th>Year</th>
+        <th>Section</th>
+        <th>Day</th>
+        <th>Time</th>
+      </tr>
+    </thead>
+    <tbody id="instructorTableBody">
+      <!-- Instructors will be dynamically added here -->
+    </tbody>
+  </table>
 
-    <div class="navigation-buttons">
-      <a href="index.html" class="btn">Back to Schedule</a>
-      <a href="Instructor.html" class="btn">Enroll New Instructor</a>
-    </div>
+  <div id="noInstructorsMessage" class="no-instructors">
+    No Instructors Enrolled Yet
+  </div>
+
+  <div class="navigation-buttons">
+    <a href="index.html" class="btn">Back to Schedule</a>
+    <a href="Instructor.html" class="btn">Enroll New Instructor</a>
   </div>
 
   <script>
+    // Get DOM elements
     const tableBody = document.getElementById('instructorTableBody');
     const noInstructorsMessage = document.getElementById('noInstructorsMessage');
     const nameFilter = document.getElementById('nameFilter');
     const courseFilter = document.getElementById('courseFilter');
     const yearFilter = document.getElementById('yearFilter');
 
-    function groupInstructorEnrollments(instructors) {
-      const groupedInstructors = {};
-
-      instructors.forEach(instructor => {
-        if (!groupedInstructors[instructor.name]) {
-          groupedInstructors[instructor.name] = {
-            name: instructor.name,
-            enrollments: [],
-            courses: new Set(),
-            totalEnrollments: 0
-          };
-        }
-
-        groupedInstructors[instructor.name].enrollments.push(instructor);
-        groupedInstructors[instructor.name].courses.add(instructor.course);
-        groupedInstructors[instructor.name].totalEnrollments++;
-      });
-
-      return Object.values(groupedInstructors);
-    }
-
-    function loadAndDisplayInstructors() {
+    // Function to load and display instructors
+    function loadInstructors() {
       // Retrieve instructors from localStorage
       const instructors = JSON.parse(localStorage.getItem('instructors')) || [];
       
-      // Clear previous content
+      // Clear existing table rows
       tableBody.innerHTML = '';
-      
-      // If no instructors, show no instructors message
+
+      // Show/hide no instructors message
       if (instructors.length === 0) {
         noInstructorsMessage.style.display = 'block';
         return;
       }
-
-      // Hide no instructors message
       noInstructorsMessage.style.display = 'none';
 
-      // Group instructors
-      const groupedInstructors = groupInstructorEnrollments(instructors);
-
-      // Display grouped instructors
-      groupedInstructors.forEach(instructor => {
+      // Populate table with instructors
+      instructors.forEach(instructor => {
         const row = document.createElement('tr');
         row.innerHTML = `
           <td>${instructor.name}</td>
-          <td>${instructor.totalEnrollments}</td>
-          <td>${Array.from(instructor.courses).join(', ')}</td>
+          <td>${instructor.course}</td>
+          <td>${instructor.year}</td>
+          <td>${instructor.section}</td>
+          <td>${instructor.day}</td>
+          <td>${instructor.time}</td>
         `;
-
         tableBody.appendChild(row);
       });
     }
 
-    // Load instructors when page loads
-    window.addEventListener('load', loadAndDisplayInstructors);
-
-    // Listen for storage changes (useful for multiple tabs/windows)
-    window.addEventListener('storage', loadAndDisplayInstructors);
-
-    // Add event listeners for filters
-    nameFilter.addEventListener('input', filterInstructors);
-    courseFilter.addEventListener('change', filterInstructors);
-    yearFilter.addEventListener('change', filterInstructors);
-
+    // Function to filter instructors
     function filterInstructors() {
+      // Retrieve instructors from localStorage
       const instructors = JSON.parse(localStorage.getItem('instructors')) || [];
+      
+      // Get filter values
       const nameFilterValue = nameFilter.value.toLowerCase();
       const courseFilterValue = courseFilter.value;
       const yearFilterValue = yearFilter.value;
 
+      // Filter instructors
       const filteredInstructors = instructors.filter(instructor => 
         (nameFilterValue === '' || instructor.name.toLowerCase().includes(nameFilterValue)) &&
         (courseFilterValue === '' || instructor.course === courseFilterValue) &&
         (yearFilterValue === '' || instructor.year === yearFilterValue)
       );
 
-      // Clear previous content
+      // Clear existing table rows
       tableBody.innerHTML = '';
 
+      // Show/hide no instructors message
       if (filteredInstructors.length === 0) {
         noInstructorsMessage.textContent = 'No Instructors Found';
         noInstructorsMessage.style.display = 'block';
         return;
       }
-
-      // Hide no instructors message
       noInstructorsMessage.style.display = 'none';
 
-      // Group and display filtered instructors
-      const groupedInstructors = groupInstructorEnrollments(filteredInstructors);
-      
-      groupedInstructors.forEach(instructor => {
+      // Populate table with filtered instructors
+      filteredInstructors.forEach(instructor => {
         const row = document.createElement('tr');
         row.innerHTML = `
           <td>${instructor.name}</td>
-          <td>${instructor.totalEnrollments}</td>
-          <td>${Array.from(instructor.courses).join(', ')}</td>
+          <td>${instructor.course}</td>
+          <td>${instructor.year}</td>
+          <td>${instructor.section}</td>
+          <td>${instructor.day}</td>
+          <td>${instructor.time}</td>
         `;
-
         tableBody.appendChild(row);
       });
     }
+
+    // Load instructors when page loads
+    window.addEventListener('load', loadInstructors);
+
+    // Add event listeners for filters
+    nameFilter.addEventListener('input', filterInstructors);
+    courseFilter.addEventListener('change', filterInstructors);
+    yearFilter.addEventListener('change', filterInstructors);
   </script>
 </body>
 </html>
