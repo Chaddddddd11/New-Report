@@ -24,6 +24,7 @@
       background-color: var(--background-color);
       color: var(--text-color);
       line-height: 1.6;
+      min-height: 100vh;
     }
 
     .container {
@@ -134,7 +135,6 @@
       background-color: var(--accent-color);
     }
 
-    /* New styles for action buttons */
     .action-cell {
       white-space: nowrap;
     }
@@ -147,7 +147,6 @@
       cursor: pointer;
       color: white;
       font-size: 14px;
-      transition: opacity 0.3s ease;
     }
 
     .edit-btn {
@@ -164,6 +163,174 @@
   </style>
 </head>
 <body>
-  <!-- Rest of your HTML remains the same -->
+  <div class="container">
+    <div class="header">
+      <h1>Registered Instructors</h1>
+    </div>
+
+    <div class="filter-section">
+      <div class="filter-group">
+        <input 
+          type="text" 
+          id="nameFilter" 
+          class="filter-input" 
+          placeholder="Filter by Name"
+        >
+        <select id="courseFilter" class="filter-input">
+          <option value="">All Courses</option>
+          <option value="BSA">BSA</option>
+          <option value="BSAIS">BSAIS</option>
+          <option value="MSMarketing">MS Marketing</option>
+          <option value="BSE">BSE</option>
+          <option value="BSPublicAdministration">BS Public Administration</option>
+        </select>
+        <select id="yearFilter" class="filter-input">
+          <option value="">All Years</option>
+          <option value="1st">1st Year</option>
+          <option value="2nd">2nd Year</option>
+          <option value="3rd">3rd Year</option>
+          <option value="4th">4th Year</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="table-container">
+      <table class="instructor-table">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Subject</th>
+            <th>Course</th>
+            <th>Year</th>
+            <th>Section</th>
+            <th>Day</th>
+            <th>Time</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="instructorTableBody">
+          <!-- Instructors will be loaded here -->
+        </tbody>
+      </table>
+      <div id="noInstructorsMessage" class="no-instructors">
+        No Instructors Enrolled Yet
+      </div>
+    </div>
+
+    <div class="navigation-buttons">
+      <a href="index.html" class="btn">Back to Schedule</a>
+      <a href="Instructor.html" class="btn">Enroll New Instructor</a>
+    </div>
+  </div>
+
+  <script>
+    const tableBody = document.getElementById('instructorTableBody');
+    const noInstructorsMessage = document.getElementById('noInstructorsMessage');
+    const nameFilter = document.getElementById('nameFilter');
+    const courseFilter = document.getElementById('courseFilter');
+    const yearFilter = document.getElementById('yearFilter');
+    const table = document.querySelector('.instructor-table');
+
+    function loadInstructors() {
+      const instructors = JSON.parse(localStorage.getItem('instructors')) || [];
+      
+      if (instructors.length === 0) {
+        table.style.display = 'none';
+        noInstructorsMessage.style.display = 'block';
+        return;
+      }
+
+      table.style.display = 'table';
+      noInstructorsMessage.style.display = 'none';
+
+      displayInstructors(instructors);
+    }
+
+    function displayInstructors(instructors) {
+      tableBody.innerHTML = '';
+      
+      instructors.forEach((instructor, index) => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>${instructor.name}</td>
+          <td>${instructor.subject}</td>
+          <td>${instructor.course}</td>
+          <td>${instructor.year}</td>
+          <td>${instructor.section}</td>
+          <td>${instructor.day}</td>
+          <td>${instructor.time}</td>
+          <td class="action-cell">
+            <button class="edit-btn" onclick="editInstructor(${index})">Edit</button>
+            <button class="delete-btn" onclick="deleteInstructor(${index})">Delete</button>
+          </td>
+        `;
+        tableBody.appendChild(row);
+      });
+    }
+
+    function editInstructor(index) {
+      const instructors = JSON.parse(localStorage.getItem('instructors')) || [];
+      const instructor = instructors[index];
+      
+      // Redirect to Instructor.html with query parameters
+      const params = new URLSearchParams({
+        edit: 'true',
+        index: index,
+        name: instructor.name,
+        subject: instructor.subject,
+        course: instructor.course,
+        year: instructor.year,
+        section: instructor.section,
+        day: instructor.day,
+        time: instructor.time
+      });
+      
+      window.location.href = `Instructor.html?${params.toString()}`;
+    }
+
+    function deleteInstructor(index) {
+      if (confirm('Are you sure you want to delete this instructor?')) {
+        const instructors = JSON.parse(localStorage.getItem('instructors')) || [];
+        instructors.splice(index, 1);
+        localStorage.setItem('instructors', JSON.stringify(instructors));
+        loadInstructors();
+      }
+    }
+
+    function filterInstructors() {
+      const instructors = JSON.parse(localStorage.getItem('instructors')) || [];
+      const nameValue = nameFilter.value.toLowerCase();
+      const courseValue = courseFilter.value;
+      const yearValue = yearFilter.value;
+
+      const filteredInstructors = instructors.filter(instructor => {
+        const nameMatch = instructor.name.toLowerCase().includes(nameValue);
+        const courseMatch = !courseValue || instructor.course === courseValue;
+        const yearMatch = !yearValue || instructor.year === yearValue;
+        return nameMatch && courseMatch && yearMatch;
+      });
+
+      if (filteredInstructors.length === 0) {
+        table.style.display = 'none';
+        noInstructorsMessage.textContent = 'No matching instructors found';
+        noInstructorsMessage.style.display = 'block';
+      } else {
+        table.style.display = 'table';
+        noInstructorsMessage.style.display = 'none';
+        displayInstructors(filteredInstructors);
+      }
+    }
+
+    // Load instructors when page loads
+    window.addEventListener('load', loadInstructors);
+
+    // Add filter event listeners
+    nameFilter.addEventListener('input', filterInstructors);
+    courseFilter.addEventListener('change', filterInstructors);
+    yearFilter.addEventListener('change', filterInstructors);
+
+    // Listen for storage changes
+    window.addEventListener('storage', loadInstructors);
+  </script>
 </body>
 </html>
