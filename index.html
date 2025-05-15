@@ -1,39 +1,29 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8">
-  <title>Room Registration</title>
+  <title>DHVSU Scheduling System</title>
   <style>
     body {
       font-family: Arial, sans-serif;
-      background-color: #f0f8ff;
-      color: #000080;
+      background-color: #fff5e6;
+      color: #800000;
       padding: 20px;
     }
-    h1, h2 {
-      color: #000080;
+    h2 {
+      color: #cc5500;
     }
     label {
-      display: block;
-      margin-top: 10px;
       font-weight: bold;
-    }
-    input, select {
-      width: 100%;
-      padding: 6px;
-      margin-top: 5px;
-      margin-bottom: 10px;
-      background-color: #e6f2ff;
-      color: #000080;
-      border: 1px solid #000080;
-    }
-    button {
-      background-color: #000080;
-      color: white;
-      padding: 8px 16px;
-      border: none;
       margin-top: 10px;
-      cursor: pointer;
+      display: block;
+      color: #b22222;
+    }
+    select {
+      margin-bottom: 10px;
+      padding: 5px;
+      border: 1px solid #d2691e;
+      background-color: #ffe4b5;
+      color: #800000;
     }
     table {
       width: 100%;
@@ -41,244 +31,189 @@
       margin-top: 20px;
     }
     th, td {
-      border: 1px solid #000080;
+      border: 1px solid #d2691e;
       padding: 8px;
-      text-align: left;
+      text-align: center;
     }
     th {
-      background-color: #add8e6;
+      background-color: #ffdead;
     }
-    .error {
-      color: red;
-      margin-bottom: 10px;
+    td {
+      height: 60px;
+    }
+    button {
+      background-color: #ff4500;
+      color: white;
+      border: none;
+      padding: 10px 15px;
+      margin-top: 10px;
+      cursor: pointer;
+      margin-right: 10px;
+    }
+    #selectionSummary {
+      background-color: #ffe4b5;
+      border: 1px solid #d2691e;
+      padding: 10px;
+      margin-top: 15px;
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+    #selectionSummary span {
+      font-weight: bold;
+      color: #800000;
+    }
+    #studentCapacityDisplay {
+      border-bottom: 2px dotted #800000;
+      min-width: 50px;
+      display: inline-block;
+      text-align: center;
     }
   </style>
 </head>
 <body>
-  <h1>Room Registration</h1>
+  <h2>DHVSU Automatic Scheduling System</h2>
+  
+  <label for="course">Select Course:</label> 
+  <select id="course"> 
+    <option value="">-- Select Course --</option> 
+    <option value="BSIT">BSIT</option> 
+    <option value="BSBA">BSBA</option> 
+  </select>
 
-  <div id="errorContainer" class="error"></div>
+  <label for="year">Select Year:</label> 
+  <select id="year"> 
+    <option value="">-- Select Year --</option> 
+    <option value="1st">1st</option> 
+    <option value="2nd">2nd</option> 
+  </select>
 
-  <form id="roomForm">
-    <label>Room Number:</label>
-    <input type="text" id="roomNumber" placeholder="Room Number" required>
+  <label for="section">Select Section:</label> 
+  <select id="section"> 
+    <option value="">-- Select Section --</option> 
+    <option value="A">A</option> 
+    <option value="B">B</option> 
+  </select>
 
-    <label>Department:</label>
-    <select id="department" required>
-      <option value="">Select Department</option>
-      <option value="BSIT">BSIT</option>
-      <option value="BSBA">BSBA</option>
-      <option value="General">General</option>
-    </select>
-
-    <label>Capacity:</label>
-    <input type="number" id="capacity" placeholder="Room Capacity" min="1" required>
-
-    <label>Available Days:</label>
-    <div>
-      <input type="checkbox" id="monday" name="days" value="Monday">
-      <label for="monday">Monday</label>
-      <input type="checkbox" id="tuesday" name="days" value="Tuesday">
-      <label for="tuesday">Tuesday</label>
-      <input type="checkbox" id="wednesday" name="days" value="Wednesday">
-      <label for="wednesday">Wednesday</label>
-      <input type="checkbox" id="thursday" name="days" value="Thursday">
-      <label for="thursday">Thursday</label>
-      <input type="checkbox" id="friday" name="days" value="Friday">
-      <label for="friday">Friday</label>
-      <input type="checkbox" id="saturday" name="days" value="Saturday">
-      <label for="saturday">Saturday</label>
-      <input type="checkbox" id="sunday" name="days" value="Sunday">
-      <label for="sunday">Sunday</label>
-    </div>
-
-    <label>Available Time Slots:</label>
-    <div>
-      <input type="checkbox" id="time7" name="times" value="7:00">
-      <label for="time7">7:00</label>
-      <input type="checkbox" id="time8" name="times" value="8:00">
-      <label for="time8">8:00</label>
-      <input type="checkbox" id="time9" name="times" value="9:00">
-      <label for="time9">9:00</label>
-      <input type="checkbox" id="time10" name="times" value="10:00">
-      <label for="time10">10:00</label>
-      <input type="checkbox" id="time11" name="times" value="11:00">
-      <label for="time11">11:00</label>
-      <input type="checkbox" id="time12" name="times" value="12:00">
-      <label for="time12">12:00</label>
-      <input type="checkbox" id="time13" name="times" value="13:00">
-      <label for="time13">13:00</label>
-      <input type="checkbox" id="time14" name="times" value="14:00">
-      <label for="time14">14:00</label>
-      <input type="checkbox" id="time15" name="times" value="15:00">
-      <label for="time15">15:00</label>
-      <input type="checkbox" id="time16" name="times" value="16:00">
-      <label for="time16">16:00</label>
-      <input type="checkbox" id="time17" name="times" value="17:00">
-      <label for="time17">17:00</label>
-    </div>
-
-    <button type="submit">Register Room</button>
-    <button type="button" onclick="clearForm()">Clear Form</button>
-  </form>
-
-  <h2>Registered Rooms</h2>
+  <div id="selectionSummary">
+    <span id="courseSummary">----</span>
+    <span>Students Capacity:</span>
+    <span id="studentCapacityDisplay">---</span>
+    <span>Students</span>
+  </div>
 
   <table>
     <thead>
       <tr>
-        <th>Room Number</th>
-        <th>Department</th>
-        <th>Capacity</th>
-        <th>Available Days</th>
-        <th>Available Times</th>
-        <th>Action</th>
+        <th>Time</th>
+        <th>Monday</th>
+        <th>Tuesday</th>
+        <th>Wednesday</th>
+        <th>Thursday</th>
+        <th>Friday</th>
+        <th>Saturday</th>
+        <th>Sunday</th>
       </tr>
     </thead>
-    <tbody id="room-list"></tbody>
+    <tbody id="schedule-body">
+      <!-- Rows from 7:00 to 17:00 -->
+    </tbody>
   </table>
 
   <div>
-    <button onclick="navigateTo('index.html')">Back to Home</button>
-    <button onclick="navigateTo('Instructor.html')">Instructor Enrollment</button>
+    <button onclick="location.href='Instructor.html'">Go to Instructor Enrollment</button> 
+    <button onclick="location.href='InstructorList.html'">View Instructor List</button>
+    <button onclick="location.href='Room.html'">Manage Rooms</button>
   </div>
 
   <script>
-    const roomForm = document.getElementById('roomForm');
-    const roomList = document.getElementById('room-list');
-    const errorContainer = document.getElementById('errorContainer');
-    let rooms = JSON.parse(localStorage.getItem('rooms')) || [];
-    let editingIndex = -1;
+    const courseSelect = document.getElementById('course');
+    const yearSelect = document.getElementById('year');
+    const sectionSelect = document.getElementById('section');
+    const courseSummary = document.getElementById('courseSummary');
+    const studentCapacityDisplay = document.getElementById('studentCapacityDisplay');
+    const scheduleBody = document.getElementById('schedule-body');
+    const startHour = 7;
+    const endHour = 17;
 
-    function navigateTo(page) {
-      window.location.href = page;
-    }
+    // Update selection summary
+    function updateSelectionSummary() {
+      const course = courseSelect.value;
+      const year = yearSelect.value;
+      const section = sectionSelect.value;
 
-    roomForm.addEventListener('submit', function(event) {
-      event.preventDefault();
-      registerRoom();
-    });
-
-    function getSelectedValues(name) {
-      const checkboxes = document.querySelectorAll(`input[name="${name}"]:checked`);
-      return Array.from(checkboxes).map(cb => cb.value);
-    }
-
-    function displayRooms() {
-      roomList.innerHTML = '';
-      if (rooms.length === 0) {
-        const emptyMessage = document.createElement('tr');
-        emptyMessage.innerHTML = `<td colspan="6" style="text-align:center;">No rooms registered.</td>`;
-        roomList.appendChild(emptyMessage);
+      // Format: COURSE-YEAR+SECTION
+      if (course && year && section) {
+        const formattedYear = year === '1st' ? '1' : '2';
+        courseSummary.textContent = `${course}-${formattedYear}${section}`;
+        
+        // Future: Retrieve room capacity for this specific combination
+        // For now, leave as placeholder
+        studentCapacityDisplay.textContent = '---';
       } else {
-        rooms.forEach((room, index) => {
-          const row = document.createElement('tr');
-          row.innerHTML = `
-            <td>${room.roomNumber}</td>
-            <td>${room.department}</td>
-            <td>${room.capacity}</td>
-            <td>${room.days.join(', ')}</td>
-            <td>${room.times.join(', ')}</td>
-            <td>
-              <button onclick="editRoom(${index})">Edit</button>
-              <button onclick="removeRoom(${index})">Remove</button>
-            </td>
-          `;
-          roomList.appendChild(row);
-        });
+        courseSummary.textContent = '----';
+        studentCapacityDisplay.textContent = '---';
+      }
+
+      // Trigger schedule auto-fill
+      autoFillSchedule();
+    }
+
+    // Add event listeners to dropdowns
+    courseSelect.addEventListener('change', updateSelectionSummary);
+    yearSelect.addEventListener('change', updateSelectionSummary);
+    sectionSelect.addEventListener('change', updateSelectionSummary);
+
+    function generateScheduleTable() {
+      scheduleBody.innerHTML = '';
+      for (let hour = startHour; hour <= endHour; hour++) {
+        const row = document.createElement('tr');
+        const timeCell = document.createElement('td');
+        timeCell.textContent = `${hour}:00`;
+        row.appendChild(timeCell);
+        for (let i = 0; i < 7; i++) {
+          const cell = document.createElement('td');
+          cell.setAttribute('data-day', i);
+          cell.setAttribute('data-time', `${hour}:00`);
+          cell.innerHTML = '<div><strong>Instructor:</strong></div><div><strong>Subject:</strong></div><div><strong>Room:</strong></div>';
+          row.appendChild(cell);
+        }
+        scheduleBody.appendChild(row);
       }
     }
 
-    function registerRoom() {
-      const roomNumber = document.getElementById('roomNumber').value.trim();
-      const department = document.getElementById('department').value;
-      const capacity = document.getElementById('capacity').value;
-      const days = getSelectedValues('days');
-      const times = getSelectedValues('times');
+    function autoFillSchedule() {
+      const course = courseSelect.value;
+      const year = yearSelect.value;
+      const section = sectionSelect.value;
 
-      // Validation
-      if (!roomNumber || !department || !capacity || days.length === 0 || times.length === 0) {
-        showError("Please fill in all fields and select at least one day and time.");
-        return;
-      }
+      if (!course || !year || !section) return;
 
-      // Check for duplicate room
-      const isDuplicate = rooms.some(room => 
-        room.roomNumber === roomNumber && 
-        room.department === department
+      const instructors = JSON.parse(localStorage.getItem('instructors')) || [];
+      const filtered = instructors.filter(ins =>
+        ins.course === course && ins.year === year && ins.section === section
       );
 
-      if (isDuplicate) {
-        showError("This room is already registered for the selected department.");
-        return;
-      }
-
-      const room = { roomNumber, department, capacity, days, times };
-
-      if (editingIndex === -1) {
-        rooms.push(room);
-      } else {
-        rooms[editingIndex] = room;
-        editingIndex = -1;
-      }
-
-      localStorage.setItem('rooms', JSON.stringify(rooms));
-      displayRooms();
-      clearForm();
-      clearError();
-    }
-
-    function editRoom(index) {
-      const room = rooms[index];
-      document.getElementById('roomNumber').value = room.roomNumber;
-      document.getElementById('department').value = room.department;
-      document.getElementById('capacity').value = room.capacity;
-
-      // Uncheck all checkboxes first
-      document.querySelectorAll('input[name="days"], input[name="times"]').forEach(cb => {
-        cb.checked = false;
+      document.querySelectorAll('td[data-day]').forEach(cell => {
+        cell.innerHTML = '<div><strong>Instructor:</strong></div><div><strong>Subject:</strong></div><div><strong>Room:</strong></div>';
       });
 
-      // Check selected days and times
-      room.days.forEach(day => {
-        const checkbox = document.querySelector(`input[name="days"][value="${day}"]`);
-        if (checkbox) checkbox.checked = true;
+      filtered.forEach(ins => {
+        const dayIndex = getDayIndex(ins.day);
+        const cell = document.querySelector(`td[data-day='${dayIndex}'][data-time='${ins.time}']`);
+        if (cell) {
+          cell.innerHTML = `<div><strong>Instructor:</strong> ${ins.name}</div><div><strong>Subject:</strong> ${ins.subject}</div><div><strong>Room:</strong> ${ins.room || 'N/A'}</div>`;
+        }
       });
-
-      room.times.forEach(time => {
-        const checkbox = document.querySelector(`input[name="times"][value="${time}"]`);
-        if (checkbox) checkbox.checked = true;
-      });
-
-      const registerButton = document.querySelector('button[type="submit"]');
-      registerButton.textContent = 'Save Changes';
-      editingIndex = index;
     }
 
-    function removeRoom(index) {
-      rooms.splice(index, 1);
-      localStorage.setItem('rooms', JSON.stringify(rooms));
-      displayRooms();
-      clearForm();
+    function getDayIndex(day) {
+      const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+      return days.findIndex(d => d.toLowerCase() === day.toLowerCase());
     }
 
-    function clearForm() {
-      roomForm.reset();
-      const registerButton = document.querySelector('button[type="submit"]');
-      registerButton.textContent = 'Register Room';
-      editingIndex = -1;
-      clearError();
-    }
-
-    function showError(message) {
-      errorContainer.textContent = message;
-    }
-
-    function clearError() {
-      errorContainer.textContent = '';
-    }
-
-    displayRooms();
+    // Initialize schedule table
+    generateScheduleTable();
   </script>
 </body>
 </html>
