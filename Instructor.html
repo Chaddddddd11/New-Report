@@ -38,7 +38,7 @@
       font-weight: 500;
     }
 
-    input {
+    select, input {
       width: 100%;
       padding: 10px;
       margin-top: 5px;
@@ -49,10 +49,15 @@
       transition: all 0.3s ease;
     }
 
-    input:focus {
+    select:focus, input:focus {
       outline: none;
       border-color: var(--accent-color);
       box-shadow: 0 0 5px rgba(247, 179, 45, 0.5);
+    }
+
+    select.disabled, input.disabled {
+      background-color: #cccccc;
+      cursor: not-allowed;
     }
 
     button {
@@ -103,19 +108,50 @@
     <input type="text" id="subject" placeholder="Subject">
 
     <label>Course:</label>
-    <input type="text" id="course" placeholder="Course">
+    <select id="course">
+      <option value="">-- Select Course --</option>
+      <option value="BSA">BSA</option>
+      <option value="BSAIS">BSAIS</option>
+      <option value="MSMarketing">MS Marketing</option>
+      <option value="BSE">BSE</option>
+      <option value="BSPublicAdministration">BS Public Administration</option>
+    </select>
 
     <label>Year:</label>
-    <input type="text" id="year" placeholder="Year">
+    <select id="year" disabled>
+      <option value="">-- Select Year --</option>
+    </select>
 
     <label>Section:</label>
-    <input type="text" id="section" placeholder="Section">
+    <select id="section" disabled>
+      <option value="">-- Select Section --</option>
+    </select>
 
     <label>Day:</label>
-    <input type="text" id="day" placeholder="Day">
+    <select id="day">
+      <option value="">-- Select Day --</option>
+      <option value="Monday">Monday</option>
+      <option value="Tuesday">Tuesday</option>
+      <option value="Wednesday">Wednesday</option>
+      <option value="Thursday">Thursday</option>
+      <option value="Friday">Friday</option>
+      <option value="Saturday">Saturday</option>
+    </select>
 
     <label>Time:</label>
-    <input type="text" id="time" placeholder="Time">
+    <select id="time">
+      <option value="">-- Select Time --</option>
+      <option value="7:00-8:00">7:00-8:00</option>
+      <option value="8:00-9:00">8:00-9:00</option>
+      <option value="9:00-10:00">9:00-10:00</option>
+      <option value="10:00-11:00">10:00-11:00</option>
+      <option value="11:00-12:00">11:00-12:00</option>
+      <option value="12:00-13:00">12:00-13:00</option>
+      <option value="13:00-14:00">13:00-14:00</option>
+      <option value="14:00-15:00">14:00-15:00</option>
+      <option value="15:00-16:00">15:00-16:00</option>
+      <option value="16:00-17:00">16:00-17:00</option>
+    </select>
 
     <div class="navigation-buttons">
       <button type="submit">Register Instructor</button>
@@ -129,10 +165,116 @@
   </div>
 
   <script>
+    // Course-specific configurations with detailed section assignments
+    const courseConfig = {
+      BSA: {
+        years: ['1st', '2nd', '3rd', '4th'],
+        sections: {
+          '1st': ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'],
+          '2nd': ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'],
+          '3rd': ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'],
+          '4th': ['A', 'B', 'C', 'D']
+        }
+      },
+      BSAIS: {
+        years: ['1st', '2nd', '3rd', '4th'],
+        sections: {
+          '1st': ['A', 'B', 'C', 'D', 'E'],
+          '2nd': ['A', 'B', 'C', 'D', 'E', 'F', 'G'],
+          '3rd': ['A', 'B', 'C', 'D', 'E', 'F'],
+          '4th': ['A', 'B', 'C', 'D', 'E', 'F', 'G']
+        }
+      },
+      MSMarketing: {
+        years: ['1st', '2nd'],
+        sections: {
+          '1st': ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'],
+          '2nd': ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I']
+        }
+      },
+      BSE: {
+        years: ['1st', '2nd', '3rd', '4th'],
+        sections: {
+          '1st': ['A', 'B', 'C'],
+          '2nd': ['A', 'H'],
+          '3rd': ['A', 'B', 'C', 'D'],
+          '4th': ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H']
+        }
+      },
+      BSPublicAdministration: {
+        years: ['1st', '2nd', '3rd', '4th'],
+        sections: {
+          '1st': ['A', 'B', 'C', 'D'],
+          '2nd': ['A', 'B', 'C', 'D', 'E', 'F', 'G'],
+          '3rd': ['A', 'B', 'C', 'D', 'E'],
+          '4th': ['A', 'B', 'C', 'D', 'E', 'F', 'G']
+        }
+      }
+    };
+
+    const courseSelect = document.getElementById('course');
+    const yearSelect = document.getElementById('year');
+    const sectionSelect = document.getElementById('section');
     const instructorForm = document.getElementById('instructorForm');
     const errorContainer = document.getElementById('errorContainer');
+
     let instructors = JSON.parse(localStorage.getItem('instructors')) || [];
-    let editingIndex = -1;
+
+    // Populate years based on selected course
+    courseSelect.addEventListener('change', function() {
+      // Reset year and section
+      yearSelect.innerHTML = '<option value="">-- Select Year --</option>';
+      sectionSelect.innerHTML = '<option value="">-- Select Section --</option>';
+      
+      const selectedCourse = courseSelect.value;
+
+      if (selectedCourse) {
+        // Enable year select
+        yearSelect.disabled = false;
+
+        // Populate years for selected course
+        const years = courseConfig[selectedCourse].years;
+        years.forEach(year => {
+          const option = document.createElement('option');
+          option.value = year;
+          option.textContent = year;
+          yearSelect.appendChild(option);
+        });
+
+        // Disable section until year is selected
+        sectionSelect.disabled = true;
+      } else {
+        // Disable both year and section if no course selected
+        yearSelect.disabled = true;
+        sectionSelect.disabled = true;
+      }
+    });
+
+    // Populate sections based on selected year
+    yearSelect.addEventListener('change', function() {
+      // Reset section
+      sectionSelect.innerHTML = '<option value="">-- Select Section --</option>';
+      
+      const selectedCourse = courseSelect.value;
+      const selectedYear = yearSelect.value;
+
+      if (selectedCourse && selectedYear) {
+        // Enable section select
+        sectionSelect.disabled = false;
+
+        // Populate sections for selected course and year
+        const sections = courseConfig[selectedCourse].sections[selectedYear];
+        sections.forEach(section => {
+          const option = document.createElement('option');
+          option.value = section;
+          option.textContent = section;
+          sectionSelect.appendChild(option);
+        });
+      } else {
+        // Disable section
+        sectionSelect.disabled = true;
+      }
+    });
 
     instructorForm.addEventListener('submit', function(event) {
       event.preventDefault();
@@ -142,15 +284,15 @@
     function registerInstructor() {
       const name = document.getElementById('name').value.trim();
       const subject = document.getElementById('subject').value.trim() || 'N/A';
-      const course = document.getElementById('course').value.trim() || 'N/A';
-      const year = document.getElementById('year').value.trim() || 'N/A';
-      const section = document.getElementById('section').value.trim() || 'N/A';
-      const day = document.getElementById('day').value.trim() || 'N/A';
-      const time = document.getElementById('time').value.trim() || 'N/A';
+      const course = courseSelect.value;
+      const year = yearSelect.value;
+      const section = sectionSelect.value;
+      const day = document.getElementById('day').value;
+      const time = document.getElementById('time').value;
 
-      // Validate name
-      if (!name) {
-        showError("Please enter the instructor's name.");
+      // Validate all required fields
+      if (!name || !course || !year || !section || !day || !time) {
+        showError("Please fill in all required fields.");
         return;
       }
 
@@ -169,13 +311,7 @@
 
       const instructor = { name, subject, course, year, section, day, time };
 
-      if (editingIndex === -1) {
-        instructors.push(instructor);
-      } else {
-        instructors[editingIndex] = instructor;
-        editingIndex = -1;
-      }
-
+      instructors.push(instructor);
       localStorage.setItem('instructors', JSON.stringify(instructors));
       clearForm();
       clearError();
@@ -183,9 +319,8 @@
 
     function clearForm() {
       instructorForm.reset();
-      const registerButton = document.querySelector('button[type="submit"]');
-      registerButton.textContent = 'Register Instructor';
-      editingIndex = -1;
+      yearSelect.disabled = true;
+      sectionSelect.disabled = true;
       clearError();
     }
 
