@@ -255,7 +255,7 @@
             // Retrieve instructors from localStorage
             let instructors = JSON.parse(localStorage.getItem('instructors')) || [];
 
-            // 1. Check if instructor is already scheduled at this time
+            // 1. Check if instructor is teaching at the same time (regardless of class/subject)
             const hasInstructorTimeConflict = instructors.some(instructor => 
                 instructor.name === name && 
                 instructor.day === day && 
@@ -263,11 +263,12 @@
             );
 
             if (hasInstructorTimeConflict) {
-                showError("This instructor is already scheduled for another class at this time.");
+                showError("This instructor is already teaching another class at this time.");
                 return;
             }
 
-            // 2. Check if this class (course+year+section) already has this subject
+            // 2. Check if this specific class already has this specific subject
+            // (regardless of instructor or time)
             const hasSubjectInClass = instructors.some(instructor => 
                 instructor.course === course && 
                 instructor.year === year && 
@@ -276,11 +277,11 @@
             );
 
             if (hasSubjectInClass) {
-                showError("This subject is already assigned to this class.");
+                showError("This subject is already assigned to this class (course, year, and section combination).");
                 return;
             }
 
-            // 3. Check if this class (course+year+section) already has another subject at this time slot
+            // 3. Check if this specific class has any subject at this time slot
             const hasClassTimeConflict = instructors.some(instructor => 
                 instructor.course === course && 
                 instructor.year === year && 
@@ -294,7 +295,7 @@
                 return;
             }
 
-            // If all validations pass, add the new instructor schedule
+            // All validations passed, add the new schedule
             const instructor = { name, subject, course, year, section, day, time };
             instructors.push(instructor);
             localStorage.setItem('instructors', JSON.stringify(instructors));
