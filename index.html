@@ -190,7 +190,7 @@
         sectionSelect.disabled = true;
       }
 
-      // Update summary
+      // Update summary and schedule
       updateSelectionSummary();
     });
 
@@ -219,7 +219,7 @@
         sectionSelect.disabled = true;
       }
 
-      // Update summary
+      // Update summary and schedule
       updateSelectionSummary();
     });
 
@@ -240,6 +240,9 @@
       const year = yearSelect.value;
       const section = sectionSelect.value;
 
+      // Always generate schedule
+      autoFillSchedule();
+
       if (course && year && section) {
         // Format: COURSE-YEAR+SECTION
         const formattedYear = year === '1st' ? '1' : 
@@ -250,13 +253,9 @@
         // Future: Retrieve room capacity for this specific combination
         // For now, leave as placeholder
         studentCapacityDisplay.textContent = '---';
-
-        // Generate schedule
-        autoFillSchedule();
       } else {
         courseSummary.textContent = '----';
         studentCapacityDisplay.textContent = '---';
-        clearSchedule();
       }
     }
 
@@ -297,7 +296,8 @@
 
     // Initialize schedule on page load
     document.addEventListener('DOMContentLoaded', function() {
-      clearSchedule();
+      // Manually trigger schedule generation
+      autoFillSchedule();
     });
   </script>
 </body>
