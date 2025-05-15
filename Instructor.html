@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>DHVSU Instructor List</title>
+  <title>DHVSU Instructor Enrollment</title>
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
   <style>
     :root {
@@ -31,203 +31,320 @@
       border-radius: 5px;
     }
 
-    .filter-section {
-      margin-bottom: 20px;
-      display: flex;
-      gap: 10px;
+    label {
+      display: block;
+      margin-top: 10px;
+      color: var(--primary-color);
+      font-weight: 500;
     }
 
-    .filter-input {
-      flex-grow: 1;
+    select, input {
+      width: 100%;
       padding: 10px;
+      margin-top: 5px;
+      margin-bottom: 10px;
       border: 1px solid var(--secondary-color);
       border-radius: 4px;
+      background-color: white;
+      transition: all 0.3s ease;
     }
 
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-bottom: 20px;
+    select:focus, input:focus {
+      outline: none;
+      border-color: var(--accent-color);
+      box-shadow: 0 0 5px rgba(247, 179, 45, 0.5);
     }
 
-    th, td {
-      border: 1px solid #ddd;
-      padding: 12px;
-      text-align: left;
+    select.disabled, input.disabled {
+      background-color: #cccccc;
+      cursor: not-allowed;
     }
 
-    th {
-      background-color: var(--primary-color);
-      color: white;
-    }
-
-    .no-instructors {
-      text-align: center;
-      color: var(--primary-color);
-      font-style: italic;
-      padding: 20px;
-    }
-
-    .navigation-buttons {
-      display: flex;
-      justify-content: center;
-      gap: 15px;
-    }
-
-    .btn {
+    button {
       background-color: var(--secondary-color);
       color: white;
       padding: 10px 15px;
-      text-decoration: none;
+      border: none;
       border-radius: 4px;
+      margin-top: 10px;
+      cursor: pointer;
       transition: background-color 0.3s ease;
     }
 
-    .btn:hover {
+    button:hover {
       background-color: var(--accent-color);
+    }
+
+    .back-button {
+      margin-top: 20px;
+      background-color: var(--primary-color);
+    }
+
+    .error {
+      color: red;
+      margin-bottom: 10px;
+      text-align: center;
+    }
+
+    .navigation-buttons {
+      margin-top: 20px;
+      display: flex;
+      gap: 10px;
+      justify-content: center;
     }
   </style>
 </head>
 <body>
-  <h1>Registered Instructors</h1>
 
-  <div class="filter-section">
-    <input 
-      type="text" 
-      id="nameFilter" 
-      class="filter-input" 
-      placeholder="Filter by Name"
-    >
-    <select id="courseFilter" class="filter-input">
-      <option value="">All Courses</option>
+  <h1>Instructor Enrollment</h1>
+
+  <div id="errorContainer" class="error"></div>
+
+  <form id="instructorForm">
+    <label>Name:</label>
+    <input type="text" id="name" placeholder="Instructor Name" required>
+
+    <label>Subject:</label>
+    <input type="text" id="subject" placeholder="Subject">
+
+    <label>Course:</label>
+    <select id="course">
+      <option value="">-- Select Course --</option>
       <option value="BSA">BSA</option>
       <option value="BSAIS">BSAIS</option>
       <option value="MSMarketing">MS Marketing</option>
       <option value="BSE">BSE</option>
       <option value="BSPublicAdministration">BS Public Administration</option>
     </select>
-    <select id="yearFilter" class="filter-input">
-      <option value="">All Years</option>
-      <option value="1st">1st Year</option>
-      <option value="2nd">2nd Year</option>
-      <option value="3rd">3rd Year</option>
-      <option value="4th">4th Year</option>
+
+    <label>Year:</label>
+    <select id="year" disabled>
+      <option value="">-- Select Year --</option>
     </select>
-  </div>
 
-  <table id="instructorTable">
-    <thead>
-      <tr>
-        <th>Name</th>
-        <th>Course</th>
-        <th>Year</th>
-        <th>Section</th>
-        <th>Day</th>
-        <th>Time</th>
-      </tr>
-    </thead>
-    <tbody id="instructorTableBody">
-      <!-- Instructors will be dynamically added here -->
-    </tbody>
-  </table>
+    <label>Section:</label>
+    <select id="section" disabled>
+      <option value="">-- Select Section --</option>
+    </select>
 
-  <div id="noInstructorsMessage" class="no-instructors">
-    No Instructors Enrolled Yet
-  </div>
+    <label>Day:</label>
+    <select id="day">
+      <option value="">-- Select Day --</option>
+      <option value="Monday">Monday</option>
+      <option value="Tuesday">Tuesday</option>
+      <option value="Wednesday">Wednesday</option>
+      <option value="Thursday">Thursday</option>
+      <option value="Friday">Friday</option>
+      <option value="Saturday">Saturday</option>
+    </select>
+
+    <label>Time:</label>
+    <select id="time">
+      <option value="">-- Select Time --</option>
+      <option value="7:00-8:00">7:00-8:00</option>
+      <option value="8:00-9:00">8:00-9:00</option>
+      <option value="9:00-10:00">9:00-10:00</option>
+      <option value="10:00-11:00">10:00-11:00</option>
+      <option value="11:00-12:00">11:00-12:00</option>
+      <option value="12:00-13:00">12:00-13:00</option>
+      <option value="13:00-14:00">13:00-14:00</option>
+      <option value="14:00-15:00">14:00-15:00</option>
+      <option value="15:00-16:00">15:00-16:00</option>
+      <option value="16:00-17:00">16:00-17:00</option>
+    </select>
+
+    <div class="navigation-buttons">
+      <button type="submit">Register Instructor</button>
+      <button type="button" onclick="clearForm()">Clear Form</button>
+    </div>
+  </form>
 
   <div class="navigation-buttons">
-    <a href="index.html" class="btn">Back to Schedule</a>
-    <a href="Instructor.html" class="btn">Enroll New Instructor</a>
+    <button class="back-button" onclick="goBack()">Back to Schedule</button>
+    <button class="back-button" onclick="goToInstructorList()">View All Instructors</button>
   </div>
 
   <script>
-    // Get DOM elements
-    const tableBody = document.getElementById('instructorTableBody');
-    const noInstructorsMessage = document.getElementById('noInstructorsMessage');
-    const nameFilter = document.getElementById('nameFilter');
-    const courseFilter = document.getElementById('courseFilter');
-    const yearFilter = document.getElementById('yearFilter');
+    // Course-specific configurations with detailed section assignments
+    const courseConfig = {
+      BSA: {
+        years: ['1st', '2nd', '3rd', '4th'],
+        sections: {
+          '1st': ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'],
+          '2nd': ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'],
+          '3rd': ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'],
+          '4th': ['A', 'B', 'C', 'D']
+        }
+      },
+      BSAIS: {
+        years: ['1st', '2nd', '3rd', '4th'],
+        sections: {
+          '1st': ['A', 'B', 'C', 'D', 'E'],
+          '2nd': ['A', 'B', 'C', 'D', 'E', 'F', 'G'],
+          '3rd': ['A', 'B', 'C', 'D', 'E', 'F'],
+          '4th': ['A', 'B', 'C', 'D', 'E', 'F', 'G']
+        }
+      },
+      MSMarketing: {
+        years: ['1st', '2nd'],
+        sections: {
+          '1st': ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'],
+          '2nd': ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I']
+        }
+      },
+      BSE: {
+        years: ['1st', '2nd', '3rd', '4th'],
+        sections: {
+          '1st': ['A', 'B', 'C'],
+          '2nd': ['A', 'H'],
+          '3rd': ['A', 'B', 'C', 'D'],
+          '4th': ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H']
+        }
+      },
+      BSPublicAdministration: {
+        years: ['1st', '2nd', '3rd', '4th'],
+        sections: {
+          '1st': ['A', 'B', 'C', 'D'],
+          '2nd': ['A', 'B', 'C', 'D', 'E', 'F', 'G'],
+          '3rd': ['A', 'B', 'C', 'D', 'E'],
+          '4th': ['A', 'B', 'C', 'D', 'E', 'F', 'G']
+        }
+      }
+    };
 
-    // Function to load and display instructors
-    function loadInstructors() {
-      // Retrieve instructors from localStorage
-      const instructors = JSON.parse(localStorage.getItem('instructors')) || [];
+    const courseSelect = document.getElementById('course');
+    const yearSelect = document.getElementById('year');
+    const sectionSelect = document.getElementById('section');
+    const instructorForm = document.getElementById('instructorForm');
+    const errorContainer = document.getElementById('errorContainer');
+
+    // Populate years based on selected course
+    courseSelect.addEventListener('change', function() {
+      // Reset year and section
+      yearSelect.innerHTML = '<option value="">-- Select Year --</option>';
+      sectionSelect.innerHTML = '<option value="">-- Select Section --</option>';
       
-      // Clear existing table rows
-      tableBody.innerHTML = '';
+      const selectedCourse = courseSelect.value;
 
-      // Show/hide no instructors message
-      if (instructors.length === 0) {
-        noInstructorsMessage.style.display = 'block';
+      if (selectedCourse) {
+        // Enable year select
+        yearSelect.disabled = false;
+
+        // Populate years for selected course
+        const years = courseConfig[selectedCourse].years;
+        years.forEach(year => {
+          const option = document.createElement('option');
+          option.value = year;
+          option.textContent = year;
+          yearSelect.appendChild(option);
+        });
+
+        // Disable section until year is selected
+        sectionSelect.disabled = true;
+      } else {
+        // Disable both year and section if no course selected
+        yearSelect.disabled = true;
+        sectionSelect.disabled = true;
+      }
+    });
+
+    // Populate sections based on selected year
+    yearSelect.addEventListener('change', function() {
+      // Reset section
+      sectionSelect.innerHTML = '<option value="">-- Select Section --</option>';
+      
+      const selectedCourse = courseSelect.value;
+      const selectedYear = yearSelect.value;
+
+      if (selectedCourse && selectedYear) {
+        // Enable section select
+        sectionSelect.disabled = false;
+
+        // Populate sections for selected course and year
+        const sections = courseConfig[selectedCourse].sections[selectedYear];
+        sections.forEach(section => {
+          const option = document.createElement('option');
+          option.value = section;
+          option.textContent = section;
+          sectionSelect.appendChild(option);
+        });
+      } else {
+        // Disable section
+        sectionSelect.disabled = true;
+      }
+    });
+
+    instructorForm.addEventListener('submit', function(event) {
+      event.preventDefault();
+      registerInstructor();
+    });
+
+    function registerInstructor() {
+      const name = document.getElementById('name').value.trim();
+      const subject = document.getElementById('subject').value.trim() || 'N/A';
+      const course = courseSelect.value;
+      const year = yearSelect.value;
+      const section = sectionSelect.value;
+      const day = document.getElementById('day').value;
+      const time = document.getElementById('time').value;
+
+      // Validate all required fields
+      if (!name || !course || !year || !section || !day || !time) {
+        showError("Please fill in all required fields.");
         return;
       }
-      noInstructorsMessage.style.display = 'none';
 
-      // Populate table with instructors
-      instructors.forEach(instructor => {
-        const row = document.createElement('tr');
-        row.innerHTML = `
-          <td>${instructor.name}</td>
-          <td>${instructor.course}</td>
-          <td>${instructor.year}</td>
-          <td>${instructor.section}</td>
-          <td>${instructor.day}</td>
-          <td>${instructor.time}</td>
-        `;
-        tableBody.appendChild(row);
-      });
-    }
+      // Retrieve instructors from localStorage each time
+      let instructors = JSON.parse(localStorage.getItem('instructors')) || [];
 
-    // Function to filter instructors
-    function filterInstructors() {
-      // Retrieve instructors from localStorage
-      const instructors = JSON.parse(localStorage.getItem('instructors')) || [];
-      
-      // Get filter values
-      const nameFilterValue = nameFilter.value.toLowerCase();
-      const courseFilterValue = courseFilter.value;
-      const yearFilterValue = yearFilter.value;
-
-      // Filter instructors
-      const filteredInstructors = instructors.filter(instructor => 
-        (nameFilterValue === '' || instructor.name.toLowerCase().includes(nameFilterValue)) &&
-        (courseFilterValue === '' || instructor.course === courseFilterValue) &&
-        (yearFilterValue === '' || instructor.year === yearFilterValue)
+      // Check for duplicate instructor
+      const isDuplicate = instructors.some(instructor => 
+        instructor.name === name && 
+        instructor.course === course && 
+        instructor.year === year && 
+        instructor.section === section
       );
 
-      // Clear existing table rows
-      tableBody.innerHTML = '';
-
-      // Show/hide no instructors message
-      if (filteredInstructors.length === 0) {
-        noInstructorsMessage.textContent = 'No Instructors Found';
-        noInstructorsMessage.style.display = 'block';
+      if (isDuplicate) {
+        showError("This instructor is already registered for this course, year, and section.");
         return;
       }
-      noInstructorsMessage.style.display = 'none';
 
-      // Populate table with filtered instructors
-      filteredInstructors.forEach(instructor => {
-        const row = document.createElement('tr');
-        row.innerHTML = `
-          <td>${instructor.name}</td>
-          <td>${instructor.course}</td>
-          <td>${instructor.year}</td>
-          <td>${instructor.section}</td>
-          <td>${instructor.day}</td>
-          <td>${instructor.time}</td>
-        `;
-        tableBody.appendChild(row);
-      });
+      const instructor = { name, subject, course, year, section, day, time };
+
+      instructors.push(instructor);
+      localStorage.setItem('instructors', JSON.stringify(instructors));
+      
+      // Show success message
+      alert('Instructor enrolled successfully!');
+      
+      clearForm();
+      clearError();
     }
 
-    // Load instructors when page loads
-    window.addEventListener('load', loadInstructors);
+    function clearForm() {
+      instructorForm.reset();
+      yearSelect.disabled = true;
+      sectionSelect.disabled = true;
+      clearError();
+    }
 
-    // Add event listeners for filters
-    nameFilter.addEventListener('input', filterInstructors);
-    courseFilter.addEventListener('change', filterInstructors);
-    yearFilter.addEventListener('change', filterInstructors);
+    function showError(message) {
+      errorContainer.textContent = message;
+    }
+
+    function clearError() {
+      errorContainer.textContent = '';
+    }
+
+    function goBack() {
+      window.location.href = "index.html";
+    }
+
+    function goToInstructorList() {
+      window.location.href = "InstructorList.html";
+    }
   </script>
+
 </body>
 </html>
