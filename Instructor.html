@@ -52,34 +52,43 @@
     th {
       background-color: #003366;
     }
+    .error {
+      color: red;
+      margin-bottom: 10px;
+    }
   </style>
 </head>
 <body>
 
   <h1>Instructor Enrollment</h1>
 
-  <label>Name:</label>
-  <input type="text" id="name" placeholder="Instructor Name">
+  <div id="errorContainer" class="error"></div>
 
-  <label>Subject:</label>
-  <input type="text" id="subject" placeholder="Subject">
+  <form id="instructorForm">
+    <label>Name:</label>
+    <input type="text" id="name" placeholder="Instructor Name" required>
 
-  <label>Course:</label>
-  <input type="text" id="course" placeholder="Course">
+    <label>Subject:</label>
+    <input type="text" id="subject" placeholder="Subject">
 
-  <label>Year:</label>
-  <input type="text" id="year" placeholder="Year">
+    <label>Course:</label>
+    <input type="text" id="course" placeholder="Course">
 
-  <label>Section:</label>
-  <input type="text" id="section" placeholder="Section">
+    <label>Year:</label>
+    <input type="text" id="year" placeholder="Year">
 
-  <label>Day:</label>
-  <input type="text" id="day" placeholder="Day">
+    <label>Section:</label>
+    <input type="text" id="section" placeholder="Section">
 
-  <label>Time:</label>
-  <input type="text" id="time" placeholder="Time">
+    <label>Day:</label>
+    <input type="text" id="day" placeholder="Day">
 
-  <button onclick="registerInstructor()">Register Instructor</button>
+    <label>Time:</label>
+    <input type="text" id="time" placeholder="Time">
+
+    <button type="submit">Register Instructor</button>
+    <button type="button" onclick="clearForm()">Clear Form</button>
+  </form>
 
   <h2>Registered Instructors</h2>
 
@@ -103,8 +112,16 @@
   <button class="back-button" onclick="goToInstructorList()">View All Instructors</button>
 
   <script>
+    const instructorForm = document.getElementById('instructorForm');
     const instructorList = document.getElementById('instructor-list');
+    const errorContainer = document.getElementById('errorContainer');
     let instructors = JSON.parse(localStorage.getItem('instructors')) || [];
+    let editingIndex = -1;
+
+    instructorForm.addEventListener('submit', function(event) {
+      event.preventDefault();
+      registerInstructor();
+    });
 
     function displayInstructors() {
       instructorList.innerHTML = '';
@@ -134,23 +151,46 @@
     }
 
     function registerInstructor() {
-      const name = document.getElementById('name').value;
-      const subject = document.getElementById('subject').value || 'N/A';
-      const course = document.getElementById('course').value || 'N/A';
-      const year = document.getElementById('year').value || 'N/A';
-      const section = document.getElementById('section').value || 'N/A';
-      const day = document.getElementById('day').value || 'N/A';
-      const time = document.getElementById('time').value || 'N/A';
+      const name = document.getElementById('name').value.trim();
+      const subject = document.getElementById('subject').value.trim() || 'N/A';
+      const course = document.getElementById('course').value.trim() || 'N/A';
+      const year = document.getElementById('year').value.trim() || 'N/A';
+      const section = document.getElementById('section').value.trim() || 'N/A';
+      const day = document.getElementById('day').value.trim() || 'N/A';
+      const time = document.getElementById('time').value.trim() || 'N/A';
 
+      // Validate name
       if (!name) {
-        alert("Please enter the instructor's name.");
+        showError("Please enter the instructor's name.");
+        return;
+      }
+
+      // Check for duplicate instructor
+      const isDuplicate = instructors.some(instructor => 
+        instructor.name === name && 
+        instructor.course === course && 
+        instructor.year === year && 
+        instructor.section === section
+      );
+
+      if (isDuplicate) {
+        showError("This instructor is already registered for this course, year, and section.");
         return;
       }
 
       const instructor = { name, subject, course, year, section, day, time };
-      instructors.push(instructor);
+
+      if (editingIndex === -1) {
+        instructors.push(instructor);
+      } else {
+        instructors[editingIndex] = instructor;
+        editingIndex = -1;
+      }
+
       localStorage.setItem('instructors', JSON.stringify(instructors));
       displayInstructors();
+      clearForm();
+      clearError();
     }
 
     function editInstructor(index) {
@@ -163,16 +203,32 @@
       document.getElementById('day').value = instructor.day;
       document.getElementById('time').value = instructor.time;
 
-      const registerButton = document.querySelector('button');
+      const registerButton = document.querySelector('button[type="submit"]');
       registerButton.textContent = 'Save Changes';
-
-      removeInstructor(index);
+      editingIndex = index;
     }
 
     function removeInstructor(index) {
       instructors.splice(index, 1);
       localStorage.setItem('instructors', JSON.stringify(instructors));
       displayInstructors();
+      clearForm();
+    }
+
+    function clearForm() {
+      instructorForm.reset();
+      const registerButton = document.querySelector('button[type="submit"]');
+      registerButton.textContent = 'Register Instructor';
+      editingIndex = -1;
+      clearError();
+    }
+
+    function showError(message) {
+      errorContainer.textContent = message;
+    }
+
+    function clearError() {
+      errorContainer.textContent = '';
     }
 
     function goBack() {
