@@ -216,15 +216,40 @@
             </div>
 
             <div class="form-group">
-                <label for="time">Time*</label>
-                <select id="time" required>
-                    <option value="">Select Time</option>
-                    <option value="7:30 AM - 9:00 AM">7:30 AM - 9:00 AM</option>
-                    <option value="9:00 AM - 10:30 AM">9:00 AM - 10:30 AM</option>
-                    <option value="10:30 AM - 12:00 PM">10:30 AM - 12:00 PM</option>
-                    <option value="1:00 PM - 2:30 PM">1:00 PM - 2:30 PM</option>
-                    <option value="2:30 PM - 4:00 PM">2:30 PM - 4:00 PM</option>
-                    <option value="4:00 PM - 5:30 PM">4:00 PM - 5:30 PM</option>
+                <label for="timeStart">Time Start*</label>
+                <select id="timeStart" required>
+                    <option value="">Select Start Time</option>
+                    <option value="7:00">7:00 AM</option>
+                    <option value="8:00">8:00 AM</option>
+                    <option value="9:00">9:00 AM</option>
+                    <option value="10:00">10:00 AM</option>
+                    <option value="11:00">11:00 AM</option>
+                    <option value="12:00">12:00 PM</option>
+                    <option value="13:00">1:00 PM</option>
+                    <option value="14:00">2:00 PM</option>
+                    <option value="15:00">3:00 PM</option>
+                    <option value="16:00">4:00 PM</option>
+                    <option value="17:00">5:00 PM</option>
+                    <option value="18:00">6:00 PM</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="timeEnd">Time End*</label>
+                <select id="timeEnd" required>
+                    <option value="">Select End Time</option>
+                    <option value="8:00">8:00 AM</option>
+                    <option value="9:00">9:00 AM</option>
+                    <option value="10:00">10:00 AM</option>
+                    <option value="11:00">11:00 AM</option>
+                    <option value="12:00">12:00 PM</option>
+                    <option value="13:00">1:00 PM</option>
+                    <option value="14:00">2:00 PM</option>
+                    <option value="15:00">3:00 PM</option>
+                    <option value="16:00">4:00 PM</option>
+                    <option value="17:00">5:00 PM</option>
+                    <option value="18:00">6:00 PM</option>
+                    <option value="19:00">7:00 PM</option>
                 </select>
             </div>
 
@@ -241,7 +266,30 @@
         const courseSelect = document.getElementById('course');
         const yearSelect = document.getElementById('year');
         const sectionSelect = document.getElementById('section');
+        const timeStartSelect = document.getElementById('timeStart');
+        const timeEndSelect = document.getElementById('timeEnd');
         const errorMessage = document.getElementById('errorMessage');
+
+        // Add event listener to validate time selection
+        timeStartSelect.addEventListener('change', validateTimeRange);
+        timeEndSelect.addEventListener('change', validateTimeRange);
+
+        function validateTimeRange() {
+            const startTime = timeStartSelect.value;
+            const endTime = timeEndSelect.value;
+
+            if (startTime && endTime) {
+                const start = parseFloat(startTime);
+                const end = parseFloat(endTime);
+
+                if (end <= start) {
+                    showError("End time must be later than start time");
+                    timeEndSelect.value = '';
+                } else {
+                    clearError();
+                }
+            }
+        }
 
         function showError(message) {
             errorMessage.textContent = message;
@@ -260,7 +308,8 @@
             yearSelect.value = '';
             sectionSelect.value = '';
             document.getElementById('day').value = '';
-            document.getElementById('time').value = '';
+            timeStartSelect.value = '';
+            timeEndSelect.value = '';
         }
 
         function registerInstructor() {
@@ -270,31 +319,40 @@
             const year = yearSelect.value;
             const section = sectionSelect.value;
             const day = document.getElementById('day').value;
-            const time = document.getElementById('time').value;
+            const timeStart = timeStartSelect.value;
+            const timeEnd = timeEndSelect.value;
 
             // Validate all required fields
-            if (!name || !subject || !course || !year || !section || !day || !time) {
+            if (!name || !subject || !course || !year || !section || !day || !timeStart || !timeEnd) {
                 showError("Please fill in all required fields.");
                 return;
             }
 
+            // Format the time range
+            const timeRange = formatTimeRange(timeStart, timeEnd);
+
             // Retrieve instructors from localStorage
             let instructors = JSON.parse(localStorage.getItem('instructors')) || [];
 
-            // 1. Check if instructor is teaching at the same time on the same day
-            const hasInstructorTimeConflict = instructors.some(instructor => 
-                instructor.name === name && 
-                instructor.day === day && 
-                instructor.time === time
-            );
+            // 1. Check if instructor is teaching at any overlapping time on the same day
+            const hasInstructorTimeConflict = instructors.some(instructor => {
+                if (instructor.name === name && instructor.day === day) {
+                    const existingStart = parseFloat(instructor.time.split(' - ')[0]);
+                    const existingEnd = parseFloat(instructor.time.split(' - ')[1]);
+                    const newStart = parseFloat(timeStart);
+                    const newEnd = parseFloat(timeEnd);
+                    
+                    return (newStart < existingEnd && newEnd > existingStart);
+                }
+                return false;
+            });
 
             if (hasInstructorTimeConflict) {
-                showError("This instructor is already teaching another class at this time on this day.");
+                showError("This instructor has a time conflict with another class on this day.");
                 return;
             }
 
             // 2. Check if this specific class already has this specific subject
-            // (regardless of instructor, day, or time)
             const hasSubjectInClass = instructors.some(instructor => 
                 instructor.course === course && 
                 instructor.year === year && 
@@ -307,22 +365,37 @@
                 return;
             }
 
-            // 3. Check if this specific class has any subject at this time on this day
-            const hasClassTimeConflict = instructors.some(instructor => 
-                instructor.course === course && 
-                instructor.year === year && 
-                instructor.section === section && 
-                instructor.day === day && 
-                instructor.time === time
-            );
+            // 3. Check if this specific class has any subject at overlapping times on this day
+            const hasClassTimeConflict = instructors.some(instructor => {
+                if (instructor.course === course && 
+                    instructor.year === year && 
+                    instructor.section === section && 
+                    instructor.day === day) {
+                    const existingStart = parseFloat(instructor.time.split(' - ')[0]);
+                    const existingEnd = parseFloat(instructor.time.split(' - ')[1]);
+                    const newStart = parseFloat(timeStart);
+                    const newEnd = parseFloat(timeEnd);
+                    
+                    return (newStart < existingEnd && newEnd > existingStart);
+                }
+                return false;
+            });
 
             if (hasClassTimeConflict) {
-                showError("This class already has a subject scheduled at this time on this day.");
+                showError("This class already has a subject scheduled at overlapping times on this day.");
                 return;
             }
 
             // All validations passed, add the new schedule
-            const instructor = { name, subject, course, year, section, day, time };
+            const instructor = { 
+                name, 
+                subject, 
+                course, 
+                year, 
+                section, 
+                day, 
+                time: timeRange 
+            };
             instructors.push(instructor);
             localStorage.setItem('instructors', JSON.stringify(instructors));
             
@@ -331,6 +404,20 @@
             
             clearForm();
             clearError();
+        }
+
+        function formatTimeRange(start, end) {
+            function formatTime(time) {
+                const hour = parseInt(time);
+                if (hour < 12) {
+                    return `${hour}:00 AM`;
+                } else if (hour === 12) {
+                    return `12:00 PM`;
+                } else {
+                    return `${hour-12}:00 PM`;
+                }
+            }
+            return `${formatTime(start)} - ${formatTime(end)}`;
         }
     </script>
 </body>
