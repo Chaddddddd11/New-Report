@@ -1,311 +1,275 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>DHVSU Instructor Registration</title>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --primary-color: #1A5F7A;
-            --secondary-color: #2C8EBB;
-            --accent-color: #F7B32D;
-            --background-color: #F4F7F6;
-            --text-color: #333;
-            --error-color: #dc3545;
-        }
+  <meta charset="UTF-8">
+  <title>DHVSU Instructor List</title>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary-color: #1A5F7A;  /* Deep blue-green */
+      --secondary-color: #2C8EBB; /* Lighter blue */
+      --accent-color: #F7B32D;   /* Warm yellow */
+      --background-color: #F4F7F6;
+      --text-color: #333;
+    }
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
 
-        body {
-            font-family: 'Roboto', Arial, sans-serif;
-            background-color: var(--background-color);
-            color: var(--text-color);
-            line-height: 1.6;
-        }
+    body {
+      font-family: 'Roboto', Arial, sans-serif;
+      background-color: var(--background-color);
+      color: var(--text-color);
+      line-height: 1.6;
+    }
 
-        .container {
-            width: 100%;
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
-        }
+    .container {
+      width: 100%;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+    }
 
-        .header {
-            background-color: var(--primary-color);
-            color: white;
-            text-align: center;
-            padding: 15px;
-            margin-bottom: 20px;
-            border-radius: 5px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
+    .header {
+      background-color: var(--primary-color);
+      color: white;
+      text-align: center;
+      padding: 15px;
+      margin-bottom: 20px;
+      border-radius: 5px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
 
-        .form-container {
-            background-color: white;
-            padding: 20px;
-            border-radius: 5px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
+    .filter-section {
+      background-color: white;
+      border-radius: 5px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      padding: 15px;
+      margin-bottom: 20px;
+    }
 
-        .form-group {
-            margin-bottom: 15px;
-        }
+    .filter-group {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
 
-        label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: 500;
-            color: var(--text-color);
-        }
+    .filter-input {
+      flex-grow: 1;
+      padding: 10px;
+      border: 1px solid var(--secondary-color);
+      border-radius: 4px;
+      background-color: white;
+      transition: all 0.3s ease;
+    }
 
-        input, select {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid var(--secondary-color);
-            border-radius: 4px;
-            font-size: 16px;
-            transition: all 0.3s ease;
-        }
+    .filter-input:focus {
+      outline: none;
+      border-color: var(--accent-color);
+      box-shadow: 0 0 5px rgba(247, 179, 45, 0.5);
+    }
 
-        input:focus, select:focus {
-            outline: none;
-            border-color: var(--accent-color);
-            box-shadow: 0 0 5px rgba(247, 179, 45, 0.5);
-        }
+    .table-container {
+      background-color: white;
+      border-radius: 5px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      overflow: hidden;
+      margin-bottom: 20px;
+    }
 
-        .btn-container {
-            display: flex;
-            justify-content: space-between;
-            margin-top: 20px;
-            gap: 10px;
-        }
+    .instructor-table {
+      width: 100%;
+      border-collapse: collapse;
+      background-color: white;
+    }
 
-        .btn {
-            padding: 10px 20px;
-            background-color: var(--secondary-color);
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            transition: background-color 0.3s ease;
-            text-decoration: none;
-            text-align: center;
-            flex: 1;
-        }
+    .instructor-table th {
+      background-color: var(--primary-color);
+      color: white;
+      padding: 12px;
+      text-align: left;
+    }
 
-        .btn:hover {
-            background-color: var(--accent-color);
-        }
+    .instructor-table td {
+      padding: 12px;
+      border-bottom: 1px solid #eee;
+    }
 
-        .error-message {
-            color: var(--error-color);
-            margin-top: 10px;
-            padding: 10px;
-            border-radius: 4px;
-            display: none;
-        }
+    .instructor-table tr:hover {
+      background-color: var(--background-color);
+    }
 
-        @media (max-width: 600px) {
-            .container {
-                padding: 10px;
-            }
+    .no-instructors {
+      text-align: center;
+      color: var(--primary-color);
+      font-size: 1.2em;
+      padding: 40px;
+      font-style: italic;
+      background-color: white;
+    }
 
-            .btn-container {
-                flex-direction: column;
-            }
+    .navigation-buttons {
+      display: flex;
+      justify-content: center;
+      gap: 15px;
+      margin-top: 20px;
+    }
 
-            .btn {
-                width: 100%;
-                margin-bottom: 10px;
-            }
-        }
-    </style>
+    .btn {
+      padding: 10px 20px;
+      background-color: var(--secondary-color);
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+      text-decoration: none;
+      display: inline-block;
+    }
+
+    .btn:hover {
+      background-color: var(--accent-color);
+    }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>Instructor Registration</h1>
-        </div>
-
-        <div class="form-container">
-            <div class="form-group">
-                <label for="name">Instructor Name*</label>
-                <input type="text" id="name" required>
-            </div>
-
-            <div class="form-group">
-                <label for="subject">Subject*</label>
-                <input type="text" id="subject" required>
-            </div>
-
-            <div class="form-group">
-                <label for="course">Course*</label>
-                <select id="course" required>
-                    <option value="">Select Course</option>
-                    <option value="BSA">BSA</option>
-                    <option value="BSAIS">BSAIS</option>
-                    <option value="MSMarketing">MS Marketing</option>
-                    <option value="BSE">BSE</option>
-                    <option value="BSPublicAdministration">BS Public Administration</option>
-                </select>
-            </div>
-
-            <div class="form-group">
-                <label for="year">Year*</label>
-                <select id="year" required>
-                    <option value="">Select Year</option>
-                    <option value="1st">1st Year</option>
-                    <option value="2nd">2nd Year</option>
-                    <option value="3rd">3rd Year</option>
-                    <option value="4th">4th Year</option>
-                </select>
-            </div>
-
-            <div class="form-group">
-                <label for="section">Section*</label>
-                <select id="section" required>
-                    <option value="">Select Section</option>
-                    <option value="A">Section A</option>
-                    <option value="B">Section B</option>
-                    <option value="C">Section C</option>
-                    <option value="D">Section D</option>
-                </select>
-            </div>
-
-            <div class="form-group">
-                <label for="day">Day*</label>
-                <select id="day" required>
-                    <option value="">Select Day</option>
-                    <option value="Monday">Monday</option>
-                    <option value="Tuesday">Tuesday</option>
-                    <option value="Wednesday">Wednesday</option>
-                    <option value="Thursday">Thursday</option>
-                    <option value="Friday">Friday</option>
-                    <option value="Saturday">Saturday</option>
-                </select>
-            </div>
-
-            <div class="form-group">
-                <label for="time">Time*</label>
-                <select id="time" required>
-                    <option value="">Select Time</option>
-                    <option value="7:30 AM - 9:00 AM">7:30 AM - 9:00 AM</option>
-                    <option value="9:00 AM - 10:30 AM">9:00 AM - 10:30 AM</option>
-                    <option value="10:30 AM - 12:00 PM">10:30 AM - 12:00 PM</option>
-                    <option value="1:00 PM - 2:30 PM">1:00 PM - 2:30 PM</option>
-                    <option value="2:30 PM - 4:00 PM">2:30 PM - 4:00 PM</option>
-                    <option value="4:00 PM - 5:30 PM">4:00 PM - 5:30 PM</option>
-                </select>
-            </div>
-
-            <div id="errorMessage" class="error-message"></div>
-
-            <div class="btn-container">
-                <a href="InstructorList.html" class="btn">View Instructor List</a>
-                <button onclick="registerInstructor()" class="btn">Register Instructor</button>
-            </div>
-        </div>
+  <div class="container">
+    <div class="header">
+      <h1>Registered Instructors</h1>
     </div>
 
-    <script>
-        const courseSelect = document.getElementById('course');
-        const yearSelect = document.getElementById('year');
-        const sectionSelect = document.getElementById('section');
-        const errorMessage = document.getElementById('errorMessage');
+    <div class="filter-section">
+      <div class="filter-group">
+        <input 
+          type="text" 
+          id="nameFilter" 
+          class="filter-input" 
+          placeholder="Filter by Name"
+        >
+        <select id="courseFilter" class="filter-input">
+          <option value="">All Courses</option>
+          <option value="BSA">BSA</option>
+          <option value="BSAIS">BSAIS</option>
+          <option value="MSMarketing">MS Marketing</option>
+          <option value="BSE">BSE</option>
+          <option value="BSPublicAdministration">BS Public Administration</option>
+        </select>
+        <select id="yearFilter" class="filter-input">
+          <option value="">All Years</option>
+          <option value="1st">1st Year</option>
+          <option value="2nd">2nd Year</option>
+          <option value="3rd">3rd Year</option>
+          <option value="4th">4th Year</option>
+        </select>
+      </div>
+    </div>
 
-        function showError(message) {
-            errorMessage.textContent = message;
-            errorMessage.style.display = 'block';
-        }
+    <div class="table-container">
+      <table class="instructor-table">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Subject</th>
+            <th>Course</th>
+            <th>Year</th>
+            <th>Section</th>
+            <th>Day</th>
+            <th>Time</th>
+          </tr>
+        </thead>
+        <tbody id="instructorTableBody">
+          <!-- Instructors will be loaded here -->
+        </tbody>
+      </table>
+      <div id="noInstructorsMessage" class="no-instructors">
+        No Instructors Enrolled Yet
+      </div>
+    </div>
 
-        function clearError() {
-            errorMessage.textContent = '';
-            errorMessage.style.display = 'none';
-        }
+    <div class="navigation-buttons">
+      <a href="index.html" class="btn">Back to Schedule</a>
+      <a href="Instructor.html" class="btn">Enroll New Instructor</a>
+    </div>
+  </div>
 
-        function clearForm() {
-            document.getElementById('name').value = '';
-            document.getElementById('subject').value = '';
-            courseSelect.value = '';
-            yearSelect.value = '';
-            sectionSelect.value = '';
-            document.getElementById('day').value = '';
-            document.getElementById('time').value = '';
-        }
+  <script>
+    const tableBody = document.getElementById('instructorTableBody');
+    const noInstructorsMessage = document.getElementById('noInstructorsMessage');
+    const nameFilter = document.getElementById('nameFilter');
+    const courseFilter = document.getElementById('courseFilter');
+    const yearFilter = document.getElementById('yearFilter');
+    const table = document.querySelector('.instructor-table');
 
-        function registerInstructor() {
-            const name = document.getElementById('name').value.trim();
-            const subject = document.getElementById('subject').value.trim();
-            const course = courseSelect.value;
-            const year = yearSelect.value;
-            const section = sectionSelect.value;
-            const day = document.getElementById('day').value;
-            const time = document.getElementById('time').value;
+    function loadInstructors() {
+      const instructors = JSON.parse(localStorage.getItem('instructors')) || [];
+      
+      if (instructors.length === 0) {
+        table.style.display = 'none';
+        noInstructorsMessage.style.display = 'block';
+        return;
+      }
 
-            // Validate all required fields
-            if (!name || !subject || !course || !year || !section || !day || !time) {
-                showError("Please fill in all required fields.");
-                return;
-            }
+      table.style.display = 'table';
+      noInstructorsMessage.style.display = 'none';
 
-            // Retrieve instructors from localStorage
-            let instructors = JSON.parse(localStorage.getItem('instructors')) || [];
+      displayInstructors(instructors);
+    }
 
-            // 1. Check if instructor is teaching at the same time on the same day
-            const hasInstructorTimeConflict = instructors.some(instructor => 
-                instructor.name === name && 
-                instructor.day === day && 
-                instructor.time === time
-            );
+    function displayInstructors(instructors) {
+      tableBody.innerHTML = '';
+      
+      instructors.forEach(instructor => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>${instructor.name}</td>
+          <td>${instructor.subject}</td>
+          <td>${instructor.course}</td>
+          <td>${instructor.year}</td>
+          <td>${instructor.section}</td>
+          <td>${instructor.day}</td>
+          <td>${instructor.time}</td>
+        `;
+        tableBody.appendChild(row);
+      });
+    }
 
-            if (hasInstructorTimeConflict) {
-                showError("This instructor is already teaching another class at this time on this day.");
-                return;
-            }
+    function filterInstructors() {
+      const instructors = JSON.parse(localStorage.getItem('instructors')) || [];
+      const nameValue = nameFilter.value.toLowerCase();
+      const courseValue = courseFilter.value;
+      const yearValue = yearFilter.value;
 
-            // 2. Check if this specific class already has this specific subject
-            // (regardless of instructor, day, or time)
-            const hasSubjectInClass = instructors.some(instructor => 
-                instructor.course === course && 
-                instructor.year === year && 
-                instructor.section === section && 
-                instructor.subject.toLowerCase() === subject.toLowerCase()
-            );
+      const filteredInstructors = instructors.filter(instructor => {
+        const nameMatch = instructor.name.toLowerCase().includes(nameValue);
+        const courseMatch = !courseValue || instructor.course === courseValue;
+        const yearMatch = !yearValue || instructor.year === yearValue;
+        return nameMatch && courseMatch && yearMatch;
+      });
 
-            if (hasSubjectInClass) {
-                showError("This subject is already assigned to this class.");
-                return;
-            }
+      if (filteredInstructors.length === 0) {
+        table.style.display = 'none';
+        noInstructorsMessage.textContent = 'No matching instructors found';
+        noInstructorsMessage.style.display = 'block';
+      } else {
+        table.style.display = 'table';
+        noInstructorsMessage.style.display = 'none';
+        displayInstructors(filteredInstructors);
+      }
+    }
 
-            // 3. Check if this specific class has any subject at this time on this day
-            const hasClassTimeConflict = instructors.some(instructor => 
-                instructor.course === course && 
-                instructor.year === year && 
-                instructor.section === section && 
-                instructor.day === day && 
-                instructor.time === time
-            );
+    // Load instructors when page loads
+    window.addEventListener('load', loadInstructors);
 
-            if (hasClassTimeConflict) {
-                showError("This class already has a subject scheduled at this time on this day.");
-                return;
-            }
+    // Add filter event listeners
+    nameFilter.addEventListener('input', filterInstructors);
+    courseFilter.addEventListener('change', filterInstructors);
+    yearFilter.addEventListener('change', filterInstructors);
 
-            // All validations passed, add the new schedule
-            const instructor = { name, subject, course, year, section, day, time };
-            instructors.push(instructor);
-            localStorage.setItem('instructors', JSON.stringify(instructors));
-            
-            // Show success message
-            alert('Instructor enrolled successfully!');
-            
-            clearForm();
-            clearError();
-        }
-    </script>
+    // Listen for storage changes
+    window.addEventListener('storage', loadInstructors);
+  </script>
 </body>
 </html>
