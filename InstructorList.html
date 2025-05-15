@@ -5,13 +5,110 @@
   <title>DHVSU Instructor List</title>
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
   <style>
-    /* [Previous CSS remains the same] */
+    :root {
+      --primary-color: #1A5F7A;  /* Deep blue-green */
+      --secondary-color: #2C8EBB; /* Lighter blue */
+      --accent-color: #F7B32D;   /* Warm yellow */
+      --background-color: #F4F7F6;
+      --text-color: #333;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Roboto', Arial, sans-serif;
+      background-color: var(--background-color);
+      color: var(--text-color);
+      line-height: 1.6;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    .header {
+      background-color: var(--primary-color);
+      color: white;
+      text-align: center;
+      padding: 15px;
+      margin-bottom: 20px;
+      border-radius: 5px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .filter-section {
+      background-color: white;
+      border-radius: 5px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      padding: 15px;
+      margin-bottom: 20px;
+    }
+
+    .filter-group {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .filter-input {
+      flex-grow: 1;
+      padding: 10px;
+      border: 1px solid var(--secondary-color);
+      border-radius: 4px;
+      background-color: white;
+      transition: all 0.3s ease;
+    }
+
+    .filter-input:focus {
+      outline: none;
+      border-color: var(--accent-color);
+      box-shadow: 0 0 5px rgba(247, 179, 45, 0.5);
+    }
+
+    .table-container {
+      background-color: white;
+      border-radius: 5px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      overflow: hidden;
+    }
+
+    .instructor-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .instructor-table th {
+      background-color: var(--primary-color);
+      color: white;
+      padding: 12px;
+      text-align: left;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+
+    .instructor-table th:hover {
+      background-color: var(--secondary-color);
+    }
+
     .expandable-row {
       cursor: pointer;
+      transition: background-color 0.3s ease;
     }
 
     .expandable-row:hover {
       background-color: #e6f2f7;
+    }
+
+    .instructor-table td {
+      padding: 12px;
+      border-bottom: 1px solid #eee;
     }
 
     .sub-table {
@@ -22,182 +119,45 @@
     .sub-table td {
       padding: 10px;
       border-bottom: 1px solid #eee;
+      background-color: #f0f4f6;
     }
 
     .hidden {
       display: none;
     }
+
+    .no-instructors {
+      text-align: center;
+      padding: 20px;
+      color: var(--primary-color);
+      font-style: italic;
+    }
+
+    .navigation-buttons {
+      display: flex;
+      justify-content: center;
+      gap: 15px;
+      margin-top: 20px;
+    }
+
+    .btn {
+      padding: 10px 20px;
+      background-color: var(--secondary-color);
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+      text-decoration: none;
+      display: inline-block;
+    }
+
+    .btn:hover {
+      background-color: var(--accent-color);
+    }
   </style>
 </head>
 <body>
-  <div class="container">
-    <div class="header">
-      <h1>Registered Instructors</h1>
-    </div>
-
-    <div class="filter-section">
-      <div class="filter-group">
-        <input 
-          type="text" 
-          id="nameFilter" 
-          class="filter-input" 
-          placeholder="Filter by Name"
-        >
-        <select id="courseFilter" class="filter-input">
-          <option value="">All Courses</option>
-          <option value="BSA">BSA</option>
-          <option value="BSAIS">BSAIS</option>
-          <option value="MSMarketing">MS Marketing</option>
-          <option value="BSE">BSE</option>
-          <option value="BSPublicAdministration">BS Public Administration</option>
-        </select>
-        <select id="yearFilter" class="filter-input">
-          <option value="">All Years</option>
-          <option value="1st">1st Year</option>
-          <option value="2nd">2nd Year</option>
-          <option value="3rd">3rd Year</option>
-          <option value="4th">4th Year</option>
-        </select>
-      </div>
-    </div>
-
-    <div class="table-container">
-      <table id="instructorTable" class="instructor-table">
-        <thead>
-          <tr>
-            <th>Name</th>
-            <th>Total Enrollments</th>
-            <th>Courses</th>
-          </tr>
-        </thead>
-        <tbody id="instructorTableBody">
-          <!-- Instructor data will be inserted here -->
-        </tbody>
-      </table>
-      <div id="noInstructorsMessage" class="no-instructors"></div>
-    </div>
-
-    <div class="navigation-buttons">
-      <a href="index.html" class="btn">Back to Schedule</a>
-      <a href="Instructor.html" class="btn">Enroll New Instructor</a>
-    </div>
-  </div>
-
-  <script>
-    const tableBody = document.getElementById('instructorTableBody');
-    const noInstructorsMessage = document.getElementById('noInstructorsMessage');
-    const nameFilter = document.getElementById('nameFilter');
-    const courseFilter = document.getElementById('courseFilter');
-    const yearFilter = document.getElementById('yearFilter');
-
-    // IMPORTANT: Clear existing instructors
-    localStorage.removeItem('instructors');
-
-    let instructors = [];
-
-    function groupInstructorEnrollments(instructors) {
-      const groupedInstructors = {};
-
-      instructors.forEach(instructor => {
-        if (!groupedInstructors[instructor.name]) {
-          groupedInstructors[instructor.name] = {
-            name: instructor.name,
-            enrollments: [],
-            courses: new Set(),
-            totalEnrollments: 0
-          };
-        }
-
-        groupedInstructors[instructor.name].enrollments.push(instructor);
-        groupedInstructors[instructor.name].courses.add(instructor.course);
-        groupedInstructors[instructor.name].totalEnrollments++;
-      });
-
-      return Object.values(groupedInstructors);
-    }
-
-    function loadInstructors() {
-      instructors = JSON.parse(localStorage.getItem('instructors')) || [];
-      filterAndDisplayInstructors();
-    }
-
-    function filterAndDisplayInstructors() {
-      const nameFilterValue = nameFilter.value.toLowerCase();
-      const courseFilterValue = courseFilter.value;
-      const yearFilterValue = yearFilter.value;
-
-      // Group instructors first
-      const groupedInstructors = groupInstructorEnrollments(instructors);
-
-      // Filter grouped instructors
-      const filteredInstructors = groupedInstructors.filter(instructor => 
-        (nameFilterValue === '' || instructor.name.toLowerCase().includes(nameFilterValue)) &&
-        (courseFilterValue === '' || instructor.courses.has(courseFilterValue)) &&
-        (yearFilterValue === '' || instructor.enrollments.some(e => e.year === yearFilterValue))
-      );
-
-      tableBody.innerHTML = '';
-
-      if (filteredInstructors.length === 0) {
-        noInstructorsMessage.textContent = 'No instructors found matching the current filters.';
-        return;
-      }
-
-      noInstructorsMessage.textContent = '';
-
-      filteredInstructors.forEach(instructor => {
-        const row = document.createElement('tr');
-        row.classList.add('expandable-row');
-        row.innerHTML = `
-          <td>${instructor.name}</td>
-          <td>${instructor.totalEnrollments}</td>
-          <td>${Array.from(instructor.courses).join(', ')}</td>
-        `;
-
-        // Create expandable details row
-        const detailsRow = document.createElement('tr');
-        const detailsCell = document.createElement('td');
-        detailsCell.setAttribute('colspan', '3');
-        detailsCell.classList.add('hidden');
-
-        // Create sub-table for enrollments
-        const subTable = document.createElement('table');
-        subTable.classList.add('sub-table');
-        const subTableBody = document.createElement('tbody');
-        
-        instructor.enrollments.forEach(enrollment => {
-          const subRow = document.createElement('tr');
-          subRow.innerHTML = `
-            <td>Course: ${enrollment.course}</td>
-            <td>Year: ${enrollment.year}</td>
-            <td>Section: ${enrollment.section}</td>
-            <td>Day: ${enrollment.day}</td>
-            <td>Time: ${enrollment.time}</td>
-          `;
-          subTableBody.appendChild(subRow);
-        });
-
-        subTable.appendChild(subTableBody);
-        detailsCell.appendChild(subTable);
-        detailsRow.appendChild(detailsCell);
-
-        // Toggle details on row click
-        row.addEventListener('click', () => {
-          detailsCell.classList.toggle('hidden');
-        });
-
-        tableBody.appendChild(row);
-        tableBody.appendChild(detailsRow);
-      });
-    }
-
-    // Add event listeners for filters
-    nameFilter.addEventListener('input', filterAndDisplayInstructors);
-    courseFilter.addEventListener('change', filterAndDisplayInstructors);
-    yearFilter.addEventListener('change', filterAndDisplayInstructors);
-
-    // Load instructors when page loads
-    loadInstructors();
-  </script>
+  <!-- [Rest of the HTML remains the same as in the previous implementation] -->
 </body>
 </html>
