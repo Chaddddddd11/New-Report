@@ -3,10 +3,41 @@
 <head>
   <title>DHVSU Scheduling System</title>
   <style>
-    /* Previous CSS remains the same */
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    select {
+      margin: 10px 0;
+      padding: 5px;
+      width: 250px;
+    }
     .disabled {
       background-color: #cccccc;
       cursor: not-allowed;
+    }
+    #selectionSummary {
+      margin: 15px 0;
+      padding: 10px;
+      border: 1px solid #ddd;
+      background-color: #f9f9f9;
+    }
+    #scheduleTable {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    #scheduleTable th, #scheduleTable td {
+      border: 1px solid #ddd;
+      padding: 8px;
+      text-align: center;
+    }
+    #scheduleTable th {
+      background-color: #f2f2f2;
+    }
+    .navigation-buttons {
+      margin-top: 20px;
     }
   </style>
 </head>
@@ -40,52 +71,75 @@
     <span>Students</span>
   </div>
 
-  <!-- Rest of the previous HTML remains the same -->
+  <div id="scheduleContainer">
+    <h3>Class Schedule</h3>
+    <table id="scheduleTable" border="1">
+      <thead>
+        <tr>
+          <th>Time</th>
+          <th>Monday</th>
+          <th>Tuesday</th>
+          <th>Wednesday</th>
+          <th>Thursday</th>
+          <th>Friday</th>
+          <th>Saturday</th>
+        </tr>
+      </thead>
+      <tbody id="scheduleBody">
+        <!-- Schedule rows will be dynamically populated -->
+      </tbody>
+    </table>
+  </div>
+
+  <div class="navigation-buttons">
+    <button onclick="navigateTo('Instructor.html')">Instructor Enrollment</button>
+    <button onclick="navigateTo('Room.html')">Room Registration</button>
+  </div>
 
   <script>
-    // Course-specific configurations
+    // Course-specific configurations with detailed section assignments
     const courseConfig = {
       BSA: {
         years: ['1st', '2nd', '3rd', '4th'],
         sections: {
-          '1st': ['A', 'B'],
-          '2nd': ['A', 'B'],
-          '3rd': ['A', 'B'],
-          '4th': ['A', 'B']
+          '1st': ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'],
+          '2nd': ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'],
+          '3rd': ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'],
+          '4th': ['A', 'B', 'C', 'D']
         }
       },
       BSAIS: {
         years: ['1st', '2nd', '3rd', '4th'],
         sections: {
-          '1st': ['A', 'B'],
-          '2nd': ['A', 'B'],
-          '3rd': ['A', 'B'],
-          '4th': ['A', 'B']
+          '1st': ['A', 'B', 'C', 'D', 'E'],
+          '2nd': ['A', 'B', 'C', 'D', 'E', 'F', 'G'],
+          '3rd': ['A', 'B', 'C', 'D', 'E', 'F'],
+          '4th': ['A', 'B', 'C', 'D', 'E', 'F', 'G']
         }
       },
       MSMarketing: {
         years: ['1st', '2nd'],
         sections: {
-          '1st': ['A'],
-          '2nd': ['A']
+          '1st': ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'],
+          '2nd': ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I']
         }
       },
       BSE: {
         years: ['1st', '2nd', '3rd', '4th'],
         sections: {
-          '1st': ['A', 'B'],
-          '2nd': ['A', 'B'],
-          '3rd': ['A', 'B'],
-          '4th': ['A', 'B']
+          '1st': ['A', 'B', 'C'],
+          '2nd': ['A', 'H'],
+          '3rd': ['A', 'B', 'C', 'D'],
+          '4th': ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H']
         }
       },
       BSPublicAdministration: {
         years: ['1st', '2nd', '3rd', '4th'],
         sections: {
-          '1st': ['A', 'B'],
-          '2nd': ['A', 'B'],
-          '3rd': ['A', 'B'],
-          '4th': ['A', 'B']
+          '1st': ['A', 'B', 'C', 'D'],
+          '2nd': ['A', 'B', 'C', 'D', 'E', 'F', 'G'],
+          '3rd': ['A', 'B', 'C', 'D', 'E'],
+          '4th': ['A', 'B', 'C', 'D', 'E', 'F', 'G']
         }
       }
     };
@@ -95,6 +149,17 @@
     const sectionSelect = document.getElementById('section');
     const courseSummary = document.getElementById('courseSummary');
     const studentCapacityDisplay = document.getElementById('studentCapacityDisplay');
+    const scheduleBody = document.getElementById('scheduleBody');
+
+    // Navigation function
+    function navigateTo(page) {
+      try {
+        window.location.href = page;
+      } catch (error) {
+        console.error('Navigation error:', error);
+        alert('Unable to navigate. Please check the page exists.');
+      }
+    }
 
     // Populate years based on selected course
     courseSelect.addEventListener('change', function() {
@@ -158,6 +223,14 @@
       updateSelectionSummary();
     });
 
+    // Add an additional check to prevent section selection without year
+    sectionSelect.addEventListener('focus', function() {
+      if (!yearSelect.value) {
+        alert('Please select a Year first');
+        courseSelect.focus();
+      }
+    });
+
     // Update section summary when section changes
     sectionSelect.addEventListener('change', updateSelectionSummary);
 
@@ -177,17 +250,55 @@
         // Future: Retrieve room capacity for this specific combination
         // For now, leave as placeholder
         studentCapacityDisplay.textContent = '---';
+
+        // Generate schedule
+        autoFillSchedule();
       } else {
         courseSummary.textContent = '----';
         studentCapacityDisplay.textContent = '---';
+        clearSchedule();
       }
-
-      // Trigger schedule auto-fill
-      autoFillSchedule();
     }
 
-    // Rest of the previous script remains the same...
-    // (generateScheduleTable, autoFillSchedule, getDayIndex functions)
+    // Generate time slots
+    function generateTimeSlots() {
+      const timeSlots = [
+        '7:00-8:00', '8:00-9:00', '9:00-10:00', '10:00-11:00', 
+        '11:00-12:00', '12:00-13:00', '13:00-14:00', '14:00-15:00', 
+        '15:00-16:00', '16:00-17:00'
+      ];
+      return timeSlots;
+    }
+
+    // Auto-fill schedule
+    function autoFillSchedule() {
+      const timeSlots = generateTimeSlots();
+      scheduleBody.innerHTML = '';
+
+      timeSlots.forEach(timeSlot => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>${timeSlot}</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+        `;
+        scheduleBody.appendChild(row);
+      });
+    }
+
+    // Clear schedule
+    function clearSchedule() {
+      scheduleBody.innerHTML = '';
+    }
+
+    // Initialize schedule on page load
+    document.addEventListener('DOMContentLoaded', function() {
+      clearSchedule();
+    });
   </script>
 </body>
 </html>
