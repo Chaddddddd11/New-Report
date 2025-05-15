@@ -1,45 +1,350 @@
-function registerInstructor() {
-  const name = document.getElementById('name').value.trim();
-  const subject = document.getElementById('subject').value.trim() || 'N/A';
-  const course = courseSelect.value;
-  const year = yearSelect.value;
-  const section = sectionSelect.value;
-  const day = document.getElementById('day').value;
-  const time = document.getElementById('time').value;
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>DHVSU Instructor Enrollment</title>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary-color: #1A5F7A;  /* Deep blue-green */
+      --secondary-color: #2C8EBB; /* Lighter blue */
+      --accent-color: #F7B32D;   /* Warm yellow */
+      --background-color: #F4F7F6;
+      --text-color: #333;
+    }
 
-  // Validate all required fields
-  if (!name || !course || !year || !section || !day || !time) {
-    showError("Please fill in all required fields.");
-    return;
-  }
+    body {
+      font-family: 'Roboto', Arial, sans-serif;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+      background-color: var(--background-color);
+      color: var(--text-color);
+    }
 
-  // Retrieve instructors from localStorage each time
-  let instructors = JSON.parse(localStorage.getItem('instructors')) || [];
+    h1 {
+      background-color: var(--primary-color);
+      color: white;
+      text-align: center;
+      padding: 15px;
+      margin-bottom: 20px;
+      border-radius: 5px;
+    }
 
-  // Check for duplicate instructor
-  const isDuplicate = instructors.some(instructor => 
-    instructor.name === name && 
-    instructor.course === course && 
-    instructor.year === year && 
-    instructor.section === section
-  );
+    label {
+      display: block;
+      margin-top: 10px;
+      color: var(--primary-color);
+      font-weight: 500;
+    }
 
-  if (isDuplicate) {
-    showError("This instructor is already registered for this course, year, and section.");
-    return;
-  }
+    select, input {
+      width: 100%;
+      padding: 10px;
+      margin-top: 5px;
+      margin-bottom: 10px;
+      border: 1px solid var(--secondary-color);
+      border-radius: 4px;
+      background-color: white;
+      transition: all 0.3s ease;
+    }
 
-  const instructor = { name, subject, course, year, section, day, time };
+    select:focus, input:focus {
+      outline: none;
+      border-color: var(--accent-color);
+      box-shadow: 0 0 5px rgba(247, 179, 45, 0.5);
+    }
 
-  instructors.push(instructor);
-  localStorage.setItem('instructors', JSON.stringify(instructors));
-  
-  // Show success message
-  alert('Instructor enrolled successfully!');
-  
-  clearForm();
-  clearError();
-}
+    select.disabled, input.disabled {
+      background-color: #cccccc;
+      cursor: not-allowed;
+    }
 
-// Remove the global instructors variable
-// let instructors = JSON.parse(localStorage.getItem('instructors')) || [];
+    button {
+      background-color: var(--secondary-color);
+      color: white;
+      padding: 10px 15px;
+      border: none;
+      border-radius: 4px;
+      margin-top: 10px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+
+    button:hover {
+      background-color: var(--accent-color);
+    }
+
+    .back-button {
+      margin-top: 20px;
+      background-color: var(--primary-color);
+    }
+
+    .error {
+      color: red;
+      margin-bottom: 10px;
+      text-align: center;
+    }
+
+    .navigation-buttons {
+      margin-top: 20px;
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Instructor Enrollment</h1>
+
+  <div id="errorContainer" class="error"></div>
+
+  <form id="instructorForm">
+    <label>Name:</label>
+    <input type="text" id="name" placeholder="Instructor Name" required>
+
+    <label>Subject:</label>
+    <input type="text" id="subject" placeholder="Subject">
+
+    <label>Course:</label>
+    <select id="course">
+      <option value="">-- Select Course --</option>
+      <option value="BSA">BSA</option>
+      <option value="BSAIS">BSAIS</option>
+      <option value="MSMarketing">MS Marketing</option>
+      <option value="BSE">BSE</option>
+      <option value="BSPublicAdministration">BS Public Administration</option>
+    </select>
+
+    <label>Year:</label>
+    <select id="year" disabled>
+      <option value="">-- Select Year --</option>
+    </select>
+
+    <label>Section:</label>
+    <select id="section" disabled>
+      <option value="">-- Select Section --</option>
+    </select>
+
+    <label>Day:</label>
+    <select id="day">
+      <option value="">-- Select Day --</option>
+      <option value="Monday">Monday</option>
+      <option value="Tuesday">Tuesday</option>
+      <option value="Wednesday">Wednesday</option>
+      <option value="Thursday">Thursday</option>
+      <option value="Friday">Friday</option>
+      <option value="Saturday">Saturday</option>
+    </select>
+
+    <label>Time:</label>
+    <select id="time">
+      <option value="">-- Select Time --</option>
+      <option value="7:00-8:00">7:00-8:00</option>
+      <option value="8:00-9:00">8:00-9:00</option>
+      <option value="9:00-10:00">9:00-10:00</option>
+      <option value="10:00-11:00">10:00-11:00</option>
+      <option value="11:00-12:00">11:00-12:00</option>
+      <option value="12:00-13:00">12:00-13:00</option>
+      <option value="13:00-14:00">13:00-14:00</option>
+      <option value="14:00-15:00">14:00-15:00</option>
+      <option value="15:00-16:00">15:00-16:00</option>
+      <option value="16:00-17:00">16:00-17:00</option>
+    </select>
+
+    <div class="navigation-buttons">
+      <button type="submit">Register Instructor</button>
+      <button type="button" onclick="clearForm()">Clear Form</button>
+    </div>
+  </form>
+
+  <div class="navigation-buttons">
+    <button class="back-button" onclick="goBack()">Back to Schedule</button>
+    <button class="back-button" onclick="goToInstructorList()">View All Instructors</button>
+  </div>
+
+  <script>
+    // Course-specific configurations with detailed section assignments
+    const courseConfig = {
+      BSA: {
+        years: ['1st', '2nd', '3rd', '4th'],
+        sections: {
+          '1st': ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'],
+          '2nd': ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'],
+          '3rd': ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'],
+          '4th': ['A', 'B', 'C', 'D']
+        }
+      },
+      BSAIS: {
+        years: ['1st', '2nd', '3rd', '4th'],
+        sections: {
+          '1st': ['A', 'B', 'C', 'D', 'E'],
+          '2nd': ['A', 'B', 'C', 'D', 'E', 'F', 'G'],
+          '3rd': ['A', 'B', 'C', 'D', 'E', 'F'],
+          '4th': ['A', 'B', 'C', 'D', 'E', 'F', 'G']
+        }
+      },
+      MSMarketing: {
+        years: ['1st', '2nd'],
+        sections: {
+          '1st': ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'],
+          '2nd': ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I']
+        }
+      },
+      BSE: {
+        years: ['1st', '2nd', '3rd', '4th'],
+        sections: {
+          '1st': ['A', 'B', 'C'],
+          '2nd': ['A', 'H'],
+          '3rd': ['A', 'B', 'C', 'D'],
+          '4th': ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H']
+        }
+      },
+      BSPublicAdministration: {
+        years: ['1st', '2nd', '3rd', '4th'],
+        sections: {
+          '1st': ['A', 'B', 'C', 'D'],
+          '2nd': ['A', 'B', 'C', 'D', 'E', 'F', 'G'],
+          '3rd': ['A', 'B', 'C', 'D', 'E'],
+          '4th': ['A', 'B', 'C', 'D', 'E', 'F', 'G']
+        }
+      }
+    };
+
+    const courseSelect = document.getElementById('course');
+    const yearSelect = document.getElementById('year');
+    const sectionSelect = document.getElementById('section');
+    const instructorForm = document.getElementById('instructorForm');
+    const errorContainer = document.getElementById('errorContainer');
+
+    // Populate years based on selected course
+    courseSelect.addEventListener('change', function() {
+      // Reset year and section
+      yearSelect.innerHTML = '<option value="">-- Select Year --</option>';
+      sectionSelect.innerHTML = '<option value="">-- Select Section --</option>';
+      
+      const selectedCourse = courseSelect.value;
+
+      if (selectedCourse) {
+        // Enable year select
+        yearSelect.disabled = false;
+
+        // Populate years for selected course
+        const years = courseConfig[selectedCourse].years;
+        years.forEach(year => {
+          const option = document.createElement('option');
+          option.value = year;
+          option.textContent = year;
+          yearSelect.appendChild(option);
+        });
+
+        // Disable section until year is selected
+        sectionSelect.disabled = true;
+      } else {
+        // Disable both year and section if no course selected
+        yearSelect.disabled = true;
+        sectionSelect.disabled = true;
+      }
+    });
+
+    // Populate sections based on selected year
+    yearSelect.addEventListener('change', function() {
+      // Reset section
+      sectionSelect.innerHTML = '<option value="">-- Select Section --</option>';
+      
+      const selectedCourse = courseSelect.value;
+      const selectedYear = yearSelect.value;
+
+      if (selectedCourse && selectedYear) {
+        // Enable section select
+        sectionSelect.disabled = false;
+
+        // Populate sections for selected course and year
+        const sections = courseConfig[selectedCourse].sections[selectedYear];
+        sections.forEach(section => {
+          const option = document.createElement('option');
+          option.value = section;
+          option.textContent = section;
+          sectionSelect.appendChild(option);
+        });
+      } else {
+        // Disable section
+        sectionSelect.disabled = true;
+      }
+    });
+
+    instructorForm.addEventListener('submit', function(event) {
+      event.preventDefault();
+      registerInstructor();
+    });
+
+    function registerInstructor() {
+      const name = document.getElementById('name').value.trim();
+      const subject = document.getElementById('subject').value.trim() || 'N/A';
+      const course = courseSelect.value;
+      const year = yearSelect.value;
+      const section = sectionSelect.value;
+      const day = document.getElementById('day').value;
+      const time = document.getElementById('time').value;
+
+      // Validate all required fields
+      if (!name || !course || !year || !section || !day || !time) {
+        showError("Please fill in all required fields.");
+        return;
+      }
+
+      // Retrieve instructors from localStorage each time
+      let instructors = JSON.parse(localStorage.getItem('instructors')) || [];
+
+      // Check for duplicate instructor
+      const isDuplicate = instructors.some(instructor => 
+        instructor.name === name && 
+        instructor.course === course && 
+        instructor.year === year && 
+        instructor.section === section
+      );
+
+      if (isDuplicate) {
+        showError("This instructor is already registered for this course, year, and section.");
+        return;
+      }
+
+      const instructor = { name, subject, course, year, section, day, time };
+
+      instructors.push(instructor);
+      localStorage.setItem('instructors', JSON.stringify(instructors));
+      
+      // Show success message
+      alert('Instructor enrolled successfully!');
+      
+      clearForm();
+      clearError();
+    }
+
+    function clearForm() {
+      instructorForm.reset();
+      yearSelect.disabled = true;
+      sectionSelect.disabled = true;
+      clearError();
+    }
+
+    function showError(message) {
+      errorContainer.textContent = message;
+    }
+
+    function clearError() {
+      errorContainer.textContent = '';
+    }
+
+    function goBack() {
+      window.location.href = "index.html";
+    }
+
+    function goToInstructorList() {
+      window.location.href = "InstructorList.html";
+    }
+  </script>
+
+</body>
+</html>
