@@ -255,7 +255,7 @@
             // Retrieve instructors from localStorage
             let instructors = JSON.parse(localStorage.getItem('instructors')) || [];
 
-            // 1. Check if instructor is teaching at the same time (regardless of class/subject)
+            // 1. Check if instructor is teaching at the same time on the same day
             const hasInstructorTimeConflict = instructors.some(instructor => 
                 instructor.name === name && 
                 instructor.day === day && 
@@ -263,12 +263,12 @@
             );
 
             if (hasInstructorTimeConflict) {
-                showError("This instructor is already teaching another class at this time.");
+                showError("This instructor is already teaching another class at this time on this day.");
                 return;
             }
 
             // 2. Check if this specific class already has this specific subject
-            // (regardless of instructor or time)
+            // (regardless of instructor, day, or time)
             const hasSubjectInClass = instructors.some(instructor => 
                 instructor.course === course && 
                 instructor.year === year && 
@@ -277,11 +277,11 @@
             );
 
             if (hasSubjectInClass) {
-                showError("This subject is already assigned to this class (course, year, and section combination).");
+                showError("This subject is already assigned to this class.");
                 return;
             }
 
-            // 3. Check if this specific class has any subject at this time slot
+            // 3. Check if this specific class has any subject at this time on this day
             const hasClassTimeConflict = instructors.some(instructor => 
                 instructor.course === course && 
                 instructor.year === year && 
@@ -291,7 +291,7 @@
             );
 
             if (hasClassTimeConflict) {
-                showError("This class already has a subject scheduled at this time slot.");
+                showError("This class already has a subject scheduled at this time on this day.");
                 return;
             }
 
