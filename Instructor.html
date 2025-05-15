@@ -2,46 +2,90 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Instructor Enrollment</title>
+  <title>DHVSU Instructor Enrollment</title>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
   <style>
+    :root {
+      --primary-color: #1A5F7A;  /* Deep blue-green */
+      --secondary-color: #2C8EBB; /* Lighter blue */
+      --accent-color: #F7B32D;   /* Warm yellow */
+      --background-color: #F4F7F6;
+      --text-color: #333;
+    }
+
     body {
-      font-family: Arial, sans-serif;
-      background-color: #0a0a23;
-      color: #f0f0f0;
+      font-family: 'Roboto', Arial, sans-serif;
+      max-width: 800px;
+      margin: 0 auto;
       padding: 20px;
+      background-color: var(--background-color);
+      color: var(--text-color);
     }
-    h1, h2 {
-      color: #66ccff;
+
+    h1 {
+      background-color: var(--primary-color);
+      color: white;
+      text-align: center;
+      padding: 15px;
+      margin-bottom: 20px;
+      border-radius: 5px;
     }
+
     label {
       display: block;
       margin-top: 10px;
-      font-weight: bold;
+      color: var(--primary-color);
+      font-weight: 500;
     }
-    select, input {
+
+    input {
       width: 100%;
-      padding: 6px;
+      padding: 10px;
       margin-top: 5px;
       margin-bottom: 10px;
-      background-color: #1e1e3f;
-      color: white;
-      border: 1px solid #444;
+      border: 1px solid var(--secondary-color);
+      border-radius: 4px;
+      background-color: white;
+      transition: all 0.3s ease;
     }
+
+    input:focus {
+      outline: none;
+      border-color: var(--accent-color);
+      box-shadow: 0 0 5px rgba(247, 179, 45, 0.5);
+    }
+
     button {
-      background-color: #004080;
+      background-color: var(--secondary-color);
       color: white;
-      padding: 8px 16px;
+      padding: 10px 15px;
       border: none;
+      border-radius: 4px;
       margin-top: 10px;
       cursor: pointer;
+      transition: background-color 0.3s ease;
     }
+
+    button:hover {
+      background-color: var(--accent-color);
+    }
+
     .back-button {
       margin-top: 20px;
-      background-color: #003366;
+      background-color: var(--primary-color);
     }
+
     .error {
       color: red;
       margin-bottom: 10px;
+      text-align: center;
+    }
+
+    .navigation-buttons {
+      margin-top: 20px;
+      display: flex;
+      gap: 10px;
+      justify-content: center;
     }
   </style>
 </head>
@@ -73,12 +117,16 @@
     <label>Time:</label>
     <input type="text" id="time" placeholder="Time">
 
-    <button type="submit">Register Instructor</button>
-    <button type="button" onclick="clearForm()">Clear Form</button>
+    <div class="navigation-buttons">
+      <button type="submit">Register Instructor</button>
+      <button type="button" onclick="clearForm()">Clear Form</button>
+    </div>
   </form>
 
-  <button class="back-button" onclick="goBack()">Back to Schedule</button>
-  <button class="back-button" onclick="goToInstructorList()">View All Instructors</button>
+  <div class="navigation-buttons">
+    <button class="back-button" onclick="goBack()">Back to Schedule</button>
+    <button class="back-button" onclick="goToInstructorList()">View All Instructors</button>
+  </div>
 
   <script>
     const instructorForm = document.getElementById('instructorForm');
