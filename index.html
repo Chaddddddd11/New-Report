@@ -110,6 +110,263 @@
   </style>
 </head>
 <body>
-  <!-- Rest of the previous HTML remains exactly the same as in the last submission -->
+  <h2>DHVSU Automatic Scheduling System</h2>
+  
+  <label for="course">Select Course:</label> 
+  <select id="course"> 
+    <option value="">-- Select Course --</option> 
+    <option value="BSA">BSA</option>
+    <option value="BSAIS">BSAIS</option>
+    <option value="MSMarketing">MS Marketing</option>
+    <option value="BSE">BSE</option>
+    <option value="BSPublicAdministration">BS Public Administration</option>
+  </select>
+
+  <label for="year">Select Year:</label> 
+  <select id="year" disabled> 
+    <option value="">-- Select Year --</option>
+  </select>
+
+  <label for="section">Select Section:</label> 
+  <select id="section" disabled> 
+    <option value="">-- Select Section --</option>
+  </select>
+
+  <div id="selectionSummary">
+    <span id="courseSummary">----</span>
+    <span>Students Capacity:</span>
+    <span id="studentCapacityDisplay">---</span>
+    <span>Students</span>
+  </div>
+
+  <div id="scheduleContainer">
+    <h3>Class Schedule</h3>
+    <table id="scheduleTable" border="1">
+      <thead>
+        <tr>
+          <th>Time</th>
+          <th>Monday</th>
+          <th>Tuesday</th>
+          <th>Wednesday</th>
+          <th>Thursday</th>
+          <th>Friday</th>
+          <th>Saturday</th>
+        </tr>
+      </thead>
+      <tbody id="scheduleBody">
+        <!-- Schedule rows will be dynamically populated -->
+      </tbody>
+    </table>
+  </div>
+
+  <div class="navigation-buttons">
+    <button onclick="navigateTo('Instructor.html')">Instructor Enrollment</button>
+    <button onclick="navigateTo('Room.html')">Room Registration</button>
+  </div>
+
+  <script>
+    // Course-specific configurations with detailed section assignments
+    const courseConfig = {
+      BSA: {
+        years: ['1st', '2nd', '3rd', '4th'],
+        sections: {
+          '1st': ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'],
+          '2nd': ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'],
+          '3rd': ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'],
+          '4th': ['A', 'B', 'C', 'D']
+        }
+      },
+      BSAIS: {
+        years: ['1st', '2nd', '3rd', '4th'],
+        sections: {
+          '1st': ['A', 'B', 'C', 'D', 'E'],
+          '2nd': ['A', 'B', 'C', 'D', 'E', 'F', 'G'],
+          '3rd': ['A', 'B', 'C', 'D', 'E', 'F'],
+          '4th': ['A', 'B', 'C', 'D', 'E', 'F', 'G']
+        }
+      },
+      MSMarketing: {
+        years: ['1st', '2nd'],
+        sections: {
+          '1st': ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'],
+          '2nd': ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I']
+        }
+      },
+      BSE: {
+        years: ['1st', '2nd', '3rd', '4th'],
+        sections: {
+          '1st': ['A', 'B', 'C'],
+          '2nd': ['A', 'H'],
+          '3rd': ['A', 'B', 'C', 'D'],
+          '4th': ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H']
+        }
+      },
+      BSPublicAdministration: {
+        years: ['1st', '2nd', '3rd', '4th'],
+        sections: {
+          '1st': ['A', 'B', 'C', 'D'],
+          '2nd': ['A', 'B', 'C', 'D', 'E', 'F', 'G'],
+          '3rd': ['A', 'B', 'C', 'D', 'E'],
+          '4th': ['A', 'B', 'C', 'D', 'E', 'F', 'G']
+        }
+      }
+    };
+
+    const courseSelect = document.getElementById('course');
+    const yearSelect = document.getElementById('year');
+    const sectionSelect = document.getElementById('section');
+    const courseSummary = document.getElementById('courseSummary');
+    const studentCapacityDisplay = document.getElementById('studentCapacityDisplay');
+    const scheduleBody = document.getElementById('scheduleBody');
+
+    // Navigation function
+    function navigateTo(page) {
+      try {
+        window.location.href = page;
+      } catch (error) {
+        console.error('Navigation error:', error);
+        alert('Unable to navigate. Please check the page exists.');
+      }
+    }
+
+    // Populate years based on selected course
+    courseSelect.addEventListener('change', function() {
+      // Reset year and section
+      yearSelect.innerHTML = '<option value="">-- Select Year --</option>';
+      sectionSelect.innerHTML = '<option value="">-- Select Section --</option>';
+      
+      const selectedCourse = courseSelect.value;
+
+      if (selectedCourse) {
+        // Enable year select
+        yearSelect.disabled = false;
+
+        // Populate years for selected course
+        const years = courseConfig[selectedCourse].years;
+        years.forEach(year => {
+          const option = document.createElement('option');
+          option.value = year;
+          option.textContent = year;
+          yearSelect.appendChild(option);
+        });
+
+        // Disable section until year is selected
+        sectionSelect.disabled = true;
+      } else {
+        // Disable both year and section if no course selected
+        yearSelect.disabled = true;
+        sectionSelect.disabled = true;
+      }
+
+      // Update summary
+      updateSelectionSummary();
+    });
+
+    // Populate sections based on selected year
+    yearSelect.addEventListener('change', function() {
+      // Reset section
+      sectionSelect.innerHTML = '<option value="">-- Select Section --</option>';
+      
+      const selectedCourse = courseSelect.value;
+      const selectedYear = yearSelect.value;
+
+      if (selectedCourse && selectedYear) {
+        // Enable section select
+        sectionSelect.disabled = false;
+
+        // Populate sections for selected course and year
+        const sections = courseConfig[selectedCourse].sections[selectedYear];
+        sections.forEach(section => {
+          const option = document.createElement('option');
+          option.value = section;
+          option.textContent = section;
+          sectionSelect.appendChild(option);
+        });
+      } else {
+        // Disable section
+        sectionSelect.disabled = true;
+      }
+
+      // Update summary
+      updateSelectionSummary();
+    });
+
+    // Add an additional check to prevent section selection without year
+    sectionSelect.addEventListener('focus', function() {
+      if (!yearSelect.value) {
+        alert('Please select a Year first');
+        courseSelect.focus();
+      }
+    });
+
+    // Update section summary when section changes
+    sectionSelect.addEventListener('change', updateSelectionSummary);
+
+    // Update selection summary
+    function updateSelectionSummary() {
+      const course = courseSelect.value;
+      const year = yearSelect.value;
+      const section = sectionSelect.value;
+
+      // Always generate schedule
+      autoFillSchedule();
+
+      if (course && year && section) {
+        // Format: COURSE-YEAR+SECTION
+        const formattedYear = year === '1st' ? '1' : 
+                               year === '2nd' ? '2' : 
+                               year === '3rd' ? '3' : '4';
+        courseSummary.textContent = `${course}-${formattedYear}${section}`;
+        
+        // Future: Retrieve room capacity for this specific combination
+        // For now, leave as placeholder
+        studentCapacityDisplay.textContent = '---';
+      } else {
+        courseSummary.textContent = '----';
+        studentCapacityDisplay.textContent = '---';
+      }
+    }
+
+    // Generate time slots
+    function generateTimeSlots() {
+      const timeSlots = [
+        '7:00-8:00', '8:00-9:00', '9:00-10:00', '10:00-11:00', 
+        '11:00-12:00', '12:00-13:00', '13:00-14:00', '14:00-15:00', 
+        '15:00-16:00', '16:00-17:00'
+      ];
+      return timeSlots;
+    }
+
+    // Auto-fill schedule
+    function autoFillSchedule() {
+      const timeSlots = generateTimeSlots();
+      scheduleBody.innerHTML = '';
+
+      timeSlots.forEach(timeSlot => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>${timeSlot}</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+        `;
+        scheduleBody.appendChild(row);
+      });
+    }
+
+    // Clear schedule
+    function clearSchedule() {
+      scheduleBody.innerHTML = '';
+    }
+
+    // Initialize schedule on page load
+    document.addEventListener('DOMContentLoaded', function() {
+      // Manually trigger schedule generation
+      autoFillSchedule();
+    });
+  </script>
 </body>
 </html>
