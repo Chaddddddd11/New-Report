@@ -2,7 +2,7 @@
 <html>
 <head>
   <title>DHVSU Scheduling System</title>
-  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <link href="[https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap"](https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap") rel="stylesheet">
   <style>
     :root {
       --primary-color: #1A5F7A;
@@ -130,6 +130,25 @@
     .schedule-info .room {
       color: #f0f0f0;
     }
+
+    .room-select {
+      width: 100%;
+      margin-bottom: 5px;
+      padding: 5px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+    }
+
+    .room-select:focus {
+      outline: none;
+      border-color: var(--accent-color);
+      box-shadow: 0 0 5px rgba(247, 179, 45, 0.5);
+    }
+
+    .capacity-info {
+      font-size: 0.9em;
+      color: #666;
+    }
   </style>
 </head>
 <body>
@@ -185,6 +204,7 @@
   <div class="navigation-buttons">
     <button onclick="navigateTo('Instructor.html')">Instructor Enrollment</button>
     <button onclick="navigateTo('Room.html')">Room Registration</button>
+    <button onclick="clearAssignments()">Clear Assignments</button>
   </div>
 
   <script>
@@ -203,8 +223,8 @@
       'BSAIS-1A': 40, 'BSAIS-1B': 42, 'BSAIS-1C': 32, 'BSAIS-1D': 44, 'BSAIS-1E': 35,
       'BSAIS-2A': 41, 'BSAIS-2B': 40, 'BSAIS-2C': 50, 'BSAIS-2D': 44, 'BSAIS-2E': 44, 
       'BSAIS-2F': 43, 'BSAIS-2G': 38,
-      'BSAIS-3A': 42, 'BSAIS-3B': 50, 'BSAIS-3C': 41, 'BSAIS-3D': 47, 'BSAIS-3E': 41, 
-      'BSAIS-3F': 30,
+      'BSAIS-3A': 42, 'BSAIS-3B': 50, 'BSAIS-3C': 41, 'BSAIS-3D': 47, 'BSAIS-3E': 41,
+            'BSAIS-3F': 30,
       'BSAIS-4A': 36, 'BSAIS-4B': 35, 'BSAIS-4C': 45, 'BSAIS-4D': 42, 'BSAIS-4E': 30, 
       'BSAIS-4F': 32, 'BSAIS-4G': 34,
 
@@ -326,6 +346,22 @@
 
       // Get instructors from localStorage
       const instructors = JSON.parse(localStorage.getItem('instructors')) || [];
+      // Get rooms from localStorage
+      const rooms = JSON.parse(localStorage.getItem('rooms')) || [];
+      // Get saved room assignments
+      const savedAssignments = JSON.parse(localStorage.getItem('roomAssignments')) || {};
+      // Get current room assignments
+      const currentAssignments = JSON.parse(localStorage.getItem('currentAssignments')) || {};
+
+      // Function to check if a room is already assigned at this time
+      function isRoomAssigned(roomId, day, time) {
+        return Object.entries(currentAssignments).some(([key, assignedRoom]) => {
+          const [assignedDay, assignedTime] = key.split('-');
+          return assignedRoom === roomId && 
+                 assignedDay === day && 
+                 assignedTime === time;
+        });
+      }
 
       timeSlots.forEach(timeSlot => {
         const row = document.createElement('tr');
@@ -338,6 +374,7 @@
         const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
         days.forEach(day => {
           const cell = document.createElement('td');
+          const cellId = `${day}-${startTime}`;
 
           // Only show instructors if course, year, and section are selected
           if (selectedCourse && selectedYear && selectedSection) {
@@ -348,8 +385,8 @@
                   instructor.year !== selectedYear ||
                   instructor.section !== selectedSection ||
                   instructor.day !== day) {
-                  return false;
-              }
+                    return false;
+                  }
 
               // Parse instructor's time range
               const [instrStartTime] = instructor.time.split(' - ')[0].split(':');
@@ -362,14 +399,93 @@
             });
 
             if (scheduledInstructor) {
-              cell.className = 'occupied-cell';
-              cell.innerHTML = `
-                <div class="schedule-info">
+              // Get student capacity for this section
+              const studentKey = `${selectedCourse}-${selectedYear}${selectedSection}`;
+              const studentCapacity = studentCapacityMap[studentKey] || 0;
+
+              // Find all rooms available at this time
+              const availableRooms = rooms.filter(room => {
+                return room.day === day && room.time === startTime;
+              });
+
+              // Filter rooms by capacity
+              const suitableRooms = availableRooms.filter(room => 
+                parseInt(room.capacity) >= studentCapacity
+              );
+
+              // Filter out rooms that are already assigned
+              const availableSuitableRooms = suitableRooms.filter(room => 
+                !isRoomAssigned(room.roomName, day, startTime)
+              );
+
+              if (availableSuitableRooms.length > 0) {
+                // Create a select element for room selection
+                const select = document.createElement('select');
+                select.className = 'room-select';
+                select.id = `room-${cellId}`;
+
+                // Add options for each suitable room
+                availableSuitableRooms.forEach(room => {
+                  const option = document.createElement('option');
+                  option.value = room.roomName;
+                  option.textContent = `${room.roomName} (${room.capacity} students)`;
+                  select.appendChild(option);
+                });
+
+                // Set selected value from saved assignments
+                const savedRoom = savedAssignments[cellId];
+                if (savedRoom && availableSuitableRooms.some(room => room.roomName === savedRoom)) {
+                  select.value = savedRoom;
+                }
+
+                // Add change event listener
+                select.addEventListener('change', function() {
+                  // Update current assignments
+                  const assignments = {
+                    ...currentAssignments,
+                    [cellId]: this.value
+                  };                  localStorage.setItem('currentAssignments', JSON.stringify(assignments));
+
+                  // Update saved assignments
+                  const savedAssignments = {
+                    ...savedAssignments,
+                    [cellId]: this.value
+                  };
+                  localStorage.setItem('roomAssignments', JSON.stringify(savedAssignments));
+
+                  // Update the display
+                  const displayDiv = this.nextElementSibling;
+                  displayDiv.querySelector('.room').textContent = this.value;
+                });
+
+                // Create a div to show current selection
+                const displayDiv = document.createElement('div');
+                displayDiv.className = 'schedule-info';
+                displayDiv.innerHTML = `
                   <div class="instructor">${scheduledInstructor.name}</div>
                   <div class="subject">${scheduledInstructor.subject}</div>
-                  <div class="room">${scheduledInstructor.room || 'TBA'}</div>
-                </div>
-              `;
+                  <div class="room">${select.value || 'Select Room'}</div>
+                  <div class="capacity-info">Room Capacity: ${studentCapacity} students</div>
+                `;
+
+                // Create a container for both select and display
+                const container = document.createElement('div');
+                container.className = 'occupied-cell';
+                container.appendChild(select);
+                container.appendChild(displayDiv);
+                cell.appendChild(container);
+              } else {
+                // No suitable rooms available
+                cell.className = 'occupied-cell';
+                cell.innerHTML = `
+                  <div class="schedule-info">
+                    <div class="instructor">${scheduledInstructor.name}</div>
+                    <div class="subject">${scheduledInstructor.subject}</div>
+                    <div class="room">No Available Rooms</div>
+                    <div class="capacity-info">Student Count: ${studentCapacity} students</div>
+                  </div>
+                `;
+              }
             }
           }
 
@@ -380,6 +496,33 @@
       });
     }
 
+    // Function to clear all assignments
+    function clearAssignments() {
+      localStorage.removeItem('currentAssignments');
+      localStorage.removeItem('roomAssignments');
+      autoFillSchedule();
+    }
+
+    // Add clear button to navigation
+    const navButtons = document.querySelector('.navigation-buttons');
+    const clearButton = document.createElement('button');
+    clearButton.textContent = 'Clear Assignments';
+    clearButton.onclick = clearAssignments;
+    navButtons.appendChild(clearButton);
+
+    // Initialize schedule on page load
+    document.addEventListener('DOMContentLoaded', function() {
+      autoFillSchedule();
+    });
+
+    // Listen for storage changes
+    window.addEventListener('storage', function(e) {
+      if (e.key === 'instructors' || e.key === 'rooms') {
+        autoFillSchedule();
+      }
+    });
+
+    // Initialize course selection
     courseSelect.addEventListener('change', function() {
       yearSelect.innerHTML = '<option value="">-- Select Year --</option>';
       sectionSelect.innerHTML = '<option value="">-- Select Section --</option>';
@@ -404,6 +547,7 @@
       updateSelectionSummary();
     });
 
+    // Initialize year selection
     yearSelect.addEventListener('change', function() {
       sectionSelect.innerHTML = '<option value="">-- Select Section --</option>';
       
@@ -426,15 +570,7 @@
       updateSelectionSummary();
     });
 
-    sectionSelect.addEventListener('focus', function() {
-      if (!yearSelect.value) {
-        alert('Please select a Year first');
-        courseSelect.focus();
-      }
-    });
-
-    sectionSelect.addEventListener('change', updateSelectionSummary);
-
+    // Update selection summary
     function updateSelectionSummary() {
       const course = courseSelect.value;
       const year = yearSelect.value;
@@ -459,10 +595,11 @@
       autoFillSchedule();
     }
 
-    // Listen for storage changes
-    window.addEventListener('storage', function(e) {
-      if (e.key === 'instructors') {
-        autoFillSchedule();
+    // Initialize section selection
+    sectionSelect.addEventListener('focus', function() {
+      if (!yearSelect.value) {
+        alert('Please select a Year first');
+        courseSelect.focus();
       }
     });
 
@@ -471,210 +608,5 @@
       autoFillSchedule();
     });
   </script>
-<script>
-  // ... (previous code remains the same until autoFillSchedule function)
-
-  function autoFillSchedule() {
-    const timeSlots = generateTimeSlots();
-    const selectedCourse = courseSelect.value;
-    const selectedYear = yearSelect.value;
-    const selectedSection = sectionSelect.value;
-    
-    scheduleBody.innerHTML = '';
-
-    // Get instructors from localStorage
-    const instructors = JSON.parse(localStorage.getItem('instructors')) || [];
-    // Get rooms from localStorage
-    const rooms = JSON.parse(localStorage.getItem('rooms')) || [];
-    // Get saved room assignments
-    const savedAssignments = JSON.parse(localStorage.getItem('roomAssignments')) || {};
-    // Get current room assignments
-    const currentAssignments = JSON.parse(localStorage.getItem('currentAssignments')) || {};
-
-    // Function to check if a room is already assigned at this time
-    function isRoomAssigned(roomId, day, time) {
-      return Object.entries(currentAssignments).some(([key, assignedRoom]) => {
-        const [assignedDay, assignedTime] = key.split('-');
-        return assignedRoom === roomId && 
-               assignedDay === day && 
-               assignedTime === time;
-      });
-    }
-
-    timeSlots.forEach(timeSlot => {
-      const row = document.createElement('tr');
-      const [startTime] = timeSlot.split('-');
-      
-      // First add the time column
-      row.innerHTML = `<td>${timeSlot}</td>`;
-
-      // Add cells for each day
-      const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-      days.forEach(day => {
-        const cell = document.createElement('td');
-        const cellId = `${day}-${startTime}`;
-
-        // Only show instructors if course, year, and section are selected
-        if (selectedCourse && selectedYear && selectedSection) {
-          // Check if there's an instructor scheduled for this time slot and day
-          const scheduledInstructor = instructors.find(instructor => {
-            // Match the exact course, year, and section
-            if (instructor.course !== selectedCourse ||
-                instructor.year !== selectedYear ||
-                instructor.section !== selectedSection ||
-                instructor.day !== day) {
-                  return false;
-                }
-
-            // Parse instructor's time range
-            const [instrStartTime] = instructor.time.split(' - ')[0].split(':');
-            const [instrEndTime] = instructor.time.split(' - ')[1].split(':');
-            const currentHour = startTime.split(':')[0];
-
-            // Check if this time slot falls within the instructor's schedule
-            return parseInt(currentHour) >= parseInt(instrStartTime) &&
-                   parseInt(currentHour) < parseInt(instrEndTime);
-          });
-
-          if (scheduledInstructor) {
-            // Get student capacity for this section
-            const studentKey = `${selectedCourse}-${selectedYear}${selectedSection}`;
-            const studentCapacity = studentCapacityMap[studentKey] || 0;
-
-            // Find all rooms available at this time
-            const availableRooms = rooms.filter(room => {
-              return room.day === day && room.time === startTime;
-            });
-
-            // Filter rooms by capacity
-            const suitableRooms = availableRooms.filter(room => 
-              parseInt(room.capacity) >= studentCapacity
-            );
-
-            // Filter out rooms that are already assigned
-            const availableSuitableRooms = suitableRooms.filter(room => 
-              !isRoomAssigned(room.roomName, day, startTime)
-            );
-
-            if (availableSuitableRooms.length > 0) {
-              // Create a select element for room selection
-              const select = document.createElement('select');
-              select.className = 'room-select';
-              select.id = `room-${cellId}`;
-
-              // Add options for each suitable room
-              availableSuitableRooms.forEach(room => {
-                const option = document.createElement('option');
-                option.value = room.roomName;
-                option.textContent = `${room.roomName} (${room.capacity} students)`;
-                select.appendChild(option);
-              });
-
-              // Set selected value from saved assignments
-              const savedRoom = savedAssignments[cellId];
-              if (savedRoom && availableSuitableRooms.some(room => room.roomName === savedRoom)) {
-                select.value = savedRoom;
-              }
-
-              // Add change event listener
-              select.addEventListener('change', function() {
-                // Update current assignments
-                const assignments = {
-                  ...currentAssignments,
-                  [cellId]: this.value
-                };
-                localStorage.setItem('currentAssignments', JSON.stringify(assignments));
-
-                // Update saved assignments
-                const savedAssignments = {
-                  ...savedAssignments,
-                  [cellId]: this.value
-                };
-                localStorage.setItem('roomAssignments', JSON.stringify(savedAssignments));
-
-                // Update the display
-                const displayDiv = this.nextElementSibling;
-                displayDiv.querySelector('.room').textContent = this.value;
-              });
-
-              // Create a div to show current selection
-              const displayDiv = document.createElement('div');
-              displayDiv.className = 'schedule-info';
-              displayDiv.innerHTML = `
-                <div class="instructor">${scheduledInstructor.name}</div>
-                <div class="subject">${scheduledInstructor.subject}</div>
-                <div class="room">${select.value || 'Select Room'}</div>
-                <div class="capacity-info">Room Capacity: ${studentCapacity} students</div>
-              `;
-
-              // Create a container for both select and display
-              const container = document.createElement('div');
-              container.className = 'occupied-cell';
-              container.appendChild(select);
-              container.appendChild(displayDiv);
-              cell.appendChild(container);
-            } else {
-              // No suitable rooms available
-              cell.className = 'occupied-cell';
-              cell.innerHTML = `
-                <div class="schedule-info">
-                  <div class="instructor">${scheduledInstructor.name}</div>
-                  <div class="subject">${scheduledInstructor.subject}</div>
-                  <div class="room">No Available Rooms</div>
-                  <div class="capacity-info">Student Count: ${studentCapacity} students</div>
-                </div>
-              `;
-            }
-          }
-        }
-
-        row.appendChild(cell);
-      });
-
-      scheduleBody.appendChild(row);
-    });
-  }
-
-  // Function to clear all assignments
-  function clearAssignments() {
-    localStorage.removeItem('currentAssignments');
-    localStorage.removeItem('roomAssignments');
-    autoFillSchedule();
-  }
-
-  // Add clear button to navigation
-  const navButtons = document.querySelector('.navigation-buttons');
-  const clearButton = document.createElement('button');
-  clearButton.textContent = 'Clear Assignments';
-  clearButton.onclick = clearAssignments;
-  navButtons.appendChild(clearButton);
-
-  // Add styling for room selects
-  const style = document.createElement('style');
-  style.textContent = `
-    .room-select {
-      width: 100%;
-      margin-bottom: 5px;
-      padding: 5px;
-      border: 1px solid #ddd;
-      border-radius: 4px;
-    }
-    .room-select:focus {
-      outline: none;
-      border-color: var(--accent-color);
-      box-shadow: 0 0 5px rgba(247, 179, 45, 0.5);
-    }
-    .capacity-info {
-      font-size: 0.9em;
-      color: #666;
-    }
-  `;
-  document.head.appendChild(style);
-
-  // Initialize schedule on page load
-  document.addEventListener('DOMContentLoaded', function() {
-    autoFillSchedule();
-  });
-</script>
 </body>
 </html>
