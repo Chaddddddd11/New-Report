@@ -488,6 +488,18 @@
     const rooms = JSON.parse(localStorage.getItem('rooms')) || [];
     // Get saved room assignments
     const savedAssignments = JSON.parse(localStorage.getItem('roomAssignments')) || {};
+    // Get current room assignments
+    const currentAssignments = JSON.parse(localStorage.getItem('currentAssignments')) || {};
+
+    // Function to check if a room is already assigned at this time
+    function isRoomAssigned(roomId, day, time) {
+      return Object.entries(currentAssignments).some(([key, assignedRoom]) => {
+        const [assignedDay, assignedTime] = key.split('-');
+        return assignedRoom === roomId && 
+               assignedDay === day && 
+               assignedTime === time;
+      });
+    }
 
     timeSlots.forEach(timeSlot => {
       const row = document.createElement('tr');
@@ -511,8 +523,8 @@
                 instructor.year !== selectedYear ||
                 instructor.section !== selectedSection ||
                 instructor.day !== day) {
-                return false;
-            }
+                  return false;
+                }
 
             // Parse instructor's time range
             const [instrStartTime] = instructor.time.split(' - ')[0].split(':');
@@ -525,28 +537,33 @@
           });
 
           if (scheduledInstructor) {
-            // Find available rooms for this time slot
-            const availableRooms = rooms.filter(room => {
-              return room.day === day && room.time === startTime;
-            });
-
             // Get student capacity for this section
             const studentKey = `${selectedCourse}-${selectedYear}${selectedSection}`;
             const studentCapacity = studentCapacityMap[studentKey] || 0;
 
-            // Filter rooms that have sufficient capacity
+            // Find all rooms available at this time
+            const availableRooms = rooms.filter(room => {
+              return room.day === day && room.time === startTime;
+            });
+
+            // Filter rooms by capacity
             const suitableRooms = availableRooms.filter(room => 
               parseInt(room.capacity) >= studentCapacity
             );
 
-            if (suitableRooms.length > 0) {
+            // Filter out rooms that are already assigned
+            const availableSuitableRooms = suitableRooms.filter(room => 
+              !isRoomAssigned(room.roomName, day, startTime)
+            );
+
+            if (availableSuitableRooms.length > 0) {
               // Create a select element for room selection
               const select = document.createElement('select');
               select.className = 'room-select';
               select.id = `room-${cellId}`;
 
-              // Add option for each suitable room
-              suitableRooms.forEach(room => {
+              // Add options for each suitable room
+              availableSuitableRooms.forEach(room => {
                 const option = document.createElement('option');
                 option.value = room.roomName;
                 option.textContent = `${room.roomName} (${room.capacity} students)`;
@@ -555,17 +572,29 @@
 
               // Set selected value from saved assignments
               const savedRoom = savedAssignments[cellId];
-              if (savedRoom) {
+              if (savedRoom && availableSuitableRooms.some(room => room.roomName === savedRoom)) {
                 select.value = savedRoom;
               }
 
               // Add change event listener
               select.addEventListener('change', function() {
-                const assignment = {
+                // Update current assignments
+                const assignments = {
+                  ...currentAssignments,
+                  [cellId]: this.value
+                };
+                localStorage.setItem('currentAssignments', JSON.stringify(assignments));
+
+                // Update saved assignments
+                const savedAssignments = {
                   ...savedAssignments,
                   [cellId]: this.value
                 };
-                localStorage.setItem('roomAssignments', JSON.stringify(assignment));
+                localStorage.setItem('roomAssignments', JSON.stringify(savedAssignments));
+
+                // Update the display
+                const displayDiv = this.nextElementSibling;
+                displayDiv.querySelector('.room').textContent = this.value;
               });
 
               // Create a div to show current selection
@@ -574,7 +603,8 @@
               displayDiv.innerHTML = `
                 <div class="instructor">${scheduledInstructor.name}</div>
                 <div class="subject">${scheduledInstructor.subject}</div>
-                <div class="room">${select.value}</div>
+                <div class="room">${select.value || 'Select Room'}</div>
+                <div class="capacity-info">Room Capacity: ${studentCapacity} students</div>
               `;
 
               // Create a container for both select and display
@@ -590,7 +620,8 @@
                 <div class="schedule-info">
                   <div class="instructor">${scheduledInstructor.name}</div>
                   <div class="subject">${scheduledInstructor.subject}</div>
-                  <div class="room">No Suitable Rooms Available</div>
+                  <div class="room">No Available Rooms</div>
+                  <div class="capacity-info">Student Count: ${studentCapacity} students</div>
                 </div>
               `;
             }
@@ -602,27 +633,48 @@
 
       scheduleBody.appendChild(row);
     });
-
-    // Add styling for room selects
-    const style = document.createElement('style');
-    style.textContent = `
-      .room-select {
-        width: 100%;
-        margin-bottom: 5px;
-        padding: 5px;
-        border: 1px solid #ddd;
-        border-radius: 4px;
-      }
-      .room-select:focus {
-        outline: none;
-        border-color: var(--accent-color);
-        box-shadow: 0 0 5px rgba(247, 179, 45, 0.5);
-      }
-    `;
-    document.head.appendChild(style);
   }
 
-  // ... (rest of the code remains the same)
+  // Function to clear all assignments
+  function clearAssignments() {
+    localStorage.removeItem('currentAssignments');
+    localStorage.removeItem('roomAssignments');
+    autoFillSchedule();
+  }
+
+  // Add clear button to navigation
+  const navButtons = document.querySelector('.navigation-buttons');
+  const clearButton = document.createElement('button');
+  clearButton.textContent = 'Clear Assignments';
+  clearButton.onclick = clearAssignments;
+  navButtons.appendChild(clearButton);
+
+  // Add styling for room selects
+  const style = document.createElement('style');
+  style.textContent = `
+    .room-select {
+      width: 100%;
+      margin-bottom: 5px;
+      padding: 5px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+    }
+    .room-select:focus {
+      outline: none;
+      border-color: var(--accent-color);
+      box-shadow: 0 0 5px rgba(247, 179, 45, 0.5);
+    }
+    .capacity-info {
+      font-size: 0.9em;
+      color: #666;
+    }
+  `;
+  document.head.appendChild(style);
+
+  // Initialize schedule on page load
+  document.addEventListener('DOMContentLoaded', function() {
+    autoFillSchedule();
+  });
 </script>
 </body>
 </html>
