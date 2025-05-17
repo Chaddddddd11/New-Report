@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Registered Rooms</title>
+  <style>
+    :root {
+      --primary-color: #d92323;
+      --secondary-color: #ffcc00;
+      --background-color: #f5f5f5;
+      --text-color: #333;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Arial', sans-serif;
+      background-color: var(--background-color);
+      color: var(--text-color);
+      line-height: 1.6;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    header {
+      background-color: var(--primary-color);
+      color: white;
+      padding: 20px;
+      text-align: center;
+      margin-bottom: 30px;
+      border-radius: 10px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+
+    h1 {
+      font-size: 2.5em;
+      margin-bottom: 15px;
+      color: white;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+
+    th, td {
+      padding: 15px;
+      text-align: left;
+      border-bottom: 1px solid #ddd;
+    }
+
+    th {
+      background-color: var(--primary-color);
+      color: white;
+      font-weight: bold;
+    }
+
+    tr:hover {
+      background-color: #f5f5f5;
+    }
+
+    button {
+      background-color: var(--primary-color);
+      color: white;
+      padding: 12px 25px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 1em;
+      transition: background-color 0.3s;
+      margin-right: 10px;
+    }
+
+    button:hover {
+      background-color: #b31a1a;
+    }
+
+    .no-rooms {
+      text-align: center;
+      padding: 20px;
+      background: white;
+      border-radius: 10px;
+      margin-top: 20px;
+    }
+
+    @media (max-width: 768px) {
+      .container {
+        padding: 10px;
+      }
+
+      table {
+        display: block;
+        overflow-x: auto;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Registered Rooms</h1>
+    </header>
+
+    <div style="margin-bottom: 20px; text-align: center;">
+      <button onclick="navigateTo('Room.html')">Register New Room</button>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Room Name</th>
+          <th>Day</th>
+          <th>Time</th>
+          <th>Capacity</th>
+        </tr>
+      </thead>
+      <tbody id="room-list">
+        <!-- Rooms will be populated here -->
+      </tbody>
+    </table>
+
+    <div id="noRooms" class="no-rooms" style="display: none;">
+      <p>No rooms registered yet. Please register a new room.</p>
+    </div>
+  </div>
+
+  <script>
+    function navigateTo(page) {
+      window.location.href = page;
+    }
+
+    function displayRooms() {
+      const roomList = document.getElementById('room-list');
+      const noRoomsDiv = document.getElementById('noRooms');
+      const storedRooms = localStorage.getItem('rooms');
+      
+      if (!storedRooms) {
+        noRoomsDiv.style.display = 'block';
+        return;
+      }
+
+      const rooms = JSON.parse(storedRooms);
+      roomList.innerHTML = '';
+
+      if (rooms.length === 0) {
+        noRoomsDiv.style.display = 'block';
+        return;
+      }
+
+      noRoomsDiv.style.display = 'none';
+      rooms.forEach(room => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>${room.roomName}</td>
+          <td>${room.day}</td>
+          <td>${room.time}</td>
+          <td>${room.capacity}</td>
+        `;
+        roomList.appendChild(row);
+      });
+    }
+
+    // Load rooms when page loads
+    document.addEventListener('DOMContentLoaded', displayRooms);
+  </script>
+</body>
+</html>
