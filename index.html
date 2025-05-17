@@ -2,7 +2,7 @@
 <html>
 <head>
   <title>DHVSU Scheduling System</title>
-<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <link href="[https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap"](https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap") rel="stylesheet">
   <style>
     :root {
       --primary-color: #1A5F7A;
@@ -208,131 +208,80 @@
   </div>
 
   <script>
-    // Sample instructor data - add this at the start of your script
-if (!localStorage.getItem('instructors')) {
-  localStorage.setItem('instructors', JSON.stringify([
-    {
-      name: "John Smith",
-      subject: "Mathematics",
-      course: "BSA",
-      year: "1st",
-      section: "A",
-      day: "Monday",
-      time: "8:00 - 10:00"
-    },
-    {
-      name: "Jane Doe",
-      subject: "English",
-      course: "BSA",
-      year: "1st",
-      section: "A",
-      day: "Tuesday",
-      time: "9:00 - 11:00"
+    // Add sample instructor data to localStorage
+    if (!localStorage.getItem('instructors')) {
+      localStorage.setItem('instructors', JSON.stringify([
+        {
+          name: "John Smith",
+          subject: "Mathematics",
+          course: "BSA",
+          year: "1st",
+          section: "A",
+          day: "Monday",
+          time: "8:00 - 10:00"
+        },
+        {
+          name: "Jane Doe",
+          subject: "English",
+          course: "BSA",
+          year: "1st",
+          section: "A",
+          day: "Tuesday",
+          time: "9:00 - 11:00"
+        },
+        {
+          name: "Bob Johnson",
+          subject: "Physics",
+          course: "BSA",
+          year: "2nd",
+          section: "B",
+          day: "Monday",
+          time: "10:00 - 12:00"
+        }
+      ]));
     }
-    // Add more sample instructors as needed
-  ]));
-}
+
+    // Add sample room data to localStorage
+    if (!localStorage.getItem('rooms')) {
+      localStorage.setItem('rooms', JSON.stringify([
+        {
+          roomName: "Room 101",
+          day: "Monday",
+          time: "8:00",
+          capacity: "50"
+        },
+        {
+          roomName: "Room 102",
+          day: "Monday",
+          time: "9:00",
+          capacity: "40"
+        },
+        {
+          roomName: "Room 103",
+          day: "Tuesday",
+          time: "9:00",
+          capacity: "35"
+        }
+      ]));
+    }
+
     const studentCapacityMap = {
-      // BSA Capacities
-      'BSA-1A': 30, 'BSA-1B': 37, 'BSA-1C': 32, 'BSA-1D': 34, 
-      'BSA-1E': 43, 'BSA-1F': 49, 'BSA-1G': 45, 'BSA-1H': 41, 
-      'BSA-1I': 38, 'BSA-1J': 46,
-      'BSA-2A': 38, 'BSA-2B': 44, 'BSA-2C': 46, 'BSA-2D': 34, 
-      'BSA-2E': 39, 'BSA-2F': 35, 'BSA-2G': 47, 'BSA-2H': 31,
-      'BSA-3A': 44, 'BSA-3B': 50, 'BSA-3C': 41, 'BSA-3D': 32, 
-      'BSA-3E': 50, 'BSA-3F': 36, 'BSA-3G': 42, 'BSA-3H': 39,
-      'BSA-4A': 41, 'BSA-4B': 38, 'BSA-4C': 35, 'BSA-4D': 47,
-
-      // BSAIS Capacities
-      'BSAIS-1A': 40, 'BSAIS-1B': 42, 'BSAIS-1C': 32, 'BSAIS-1D': 44, 'BSAIS-1E': 35,
-      'BSAIS-2A': 41, 'BSAIS-2B': 40, 'BSAIS-2C': 50, 'BSAIS-2D': 44, 'BSAIS-2E': 44, 
-      'BSAIS-2F': 43, 'BSAIS-2G': 38,
-      'BSAIS-3A': 42, 'BSAIS-3B': 50, 'BSAIS-3C': 41, 'BSAIS-3D': 47, 'BSAIS-3E': 41,
-            'BSAIS-3F': 30,
-      'BSAIS-4A': 36, 'BSAIS-4B': 35, 'BSAIS-4C': 45, 'BSAIS-4D': 42, 'BSAIS-4E': 30, 
-      'BSAIS-4F': 32, 'BSAIS-4G': 34,
-
-      // MSMarketing Capacities
-      'MSMarketing-1A': 36, 'MSMarketing-1B': 39, 'MSMarketing-1C': 35, 'MSMarketing-1D': 31, 
-      'MSMarketing-1E': 36, 'MSMarketing-1F': 43, 'MSMarketing-1G': 41, 'MSMarketing-1H': 41,
-      'MSMarketing-2A': 35, 'MSMarketing-2B': 44, 'MSMarketing-2C': 49, 'MSMarketing-2D': 40, 
-      'MSMarketing-2E': 49, 'MSMarketing-2F': 50, 'MSMarketing-2G': 31, 'MSMarketing-2H': 46, 
-      'MSMarketing-2I': 36,
-      'MSMarketing-3A': 42, 'MSMarketing-3B': 43, 'MSMarketing-3C': 36,
-      'MSMarketing-4A': 37, 'MSMarketing-4B': 31, 'MSMarketing-4C': 49, 'MSMarketing-4D': 47, 
-      'MSMarketing-4E': 43, 'MSMarketing-4F': 44, 'MSMarketing-4G': 33, 'MSMarketing-4H': 45, 
-      'MSMarketing-4I': 31,
-
-      // BSE Capacities
-      'BSE-1A': 40, 'BSE-1B': 48, 'BSE-1C': 50,
-      'BSE-2A': 42, 'BSE-2B': 34, 'BSE-2C': 44, 'BSE-2D': 40, 'BSE-2E': 36, 
-      'BSE-2F': 34, 'BSE-2G': 48, 'BSE-2H': 40,
-      'BSE-3A': 39, 'BSE-3B': 32, 'BSE-3C': 44, 'BSE-3D': 50,
-      'BSE-4A': 41, 'BSE-4B': 37, 'BSE-4C': 42, 'BSE-4D': 40, 'BSE-4E': 33, 
-      'BSE-4F': 43, 'BSE-4G': 49, 'BSE-4H': 38,
-
-      // BSPublicAdministration Capacities
-      'BSPublicAdministration-1A': 36, 'BSPublicAdministration-1B': 34, 
-      'BSPublicAdministration-1C': 50, 'BSPublicAdministration-1D': 31,
-      'BSPublicAdministration-2A': 50, 'BSPublicAdministration-2B': 40, 
-      'BSPublicAdministration-2C': 43, 'BSPublicAdministration-2D': 36, 
-      'BSPublicAdministration-2E': 38, 'BSPublicAdministration-2F': 49, 
-      'BSPublicAdministration-2G': 36,
-      'BSPublicAdministration-3A': 37, 'BSPublicAdministration-3B': 30, 
-      'BSPublicAdministration-3C': 33, 'BSPublicAdministration-3D': 38, 
-      'BSPublicAdministration-3E': 48,
-      'BSPublicAdministration-4A': 34, 'BSPublicAdministration-4B': 43, 
-      'BSPublicAdministration-4C': 33, 'BSPublicAdministration-4D': 30, 
-      'BSPublicAdministration-4E': 43, 'BSPublicAdministration-4F': 39, 
-      'BSPublicAdministration-4G': 30
+      'BSA-1A': 30,
+      'BSA-1B': 35,
+      'BSA-2A': 40,
+      // Add more student capacities as needed
     };
 
     const courseConfig = {
       BSA: {
         years: ['1st', '2nd', '3rd', '4th'],
         sections: {
-          '1st': ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'],
-          '2nd': ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'],
-          '3rd': ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'],
-          '4th': ['A', 'B', 'C', 'D']
-        }
-      },
-      BSAIS: {
-        years: ['1st', '2nd', '3rd', '4th'],
-        sections: {
           '1st': ['A', 'B', 'C', 'D', 'E'],
-          '2nd': ['A', 'B', 'C', 'D', 'E', 'F', 'G'],
-          '3rd': ['A', 'B', 'C', 'D', 'E', 'F'],
-          '4th': ['A', 'B', 'C', 'D', 'E', 'F', 'G']
-        }
-      },
-      MSMarketing: {
-        years: ['1st', '2nd', '3rd', '4th'],
-        sections: {
-          '1st': ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'],
-          '2nd': ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I'],
-          '3rd': ['A', 'B', 'C'],
-          '4th': ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I']
-        }
-      },
-      BSE: {
-        years: ['1st', '2nd', '3rd', '4th'],
-        sections: {
-          '1st': ['A', 'B', 'C'],
-          '2nd': ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'],
-          '3rd': ['A', 'B', 'C', 'D'],
-          '4th': ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H']
-        }
-      },
-      BSPublicAdministration: {
-        years: ['1st', '2nd', '3rd', '4th'],
-        sections: {
-          '1st': ['A', 'B', 'C', 'D'],
-          '2nd': ['A', 'B', 'C', 'D', 'E', 'F', 'G'],
-          '3rd': ['A', 'B', 'C', 'D', 'E'],
-          '4th': ['A', 'B', 'C', 'D', 'E', 'F', 'G']
+          '2nd': ['A', 'B', 'C', 'D', 'E'],
+          // Add other years and sections
         }
       }
+      // Add other courses
     };
 
     const courseSelect = document.getElementById('course');
@@ -360,77 +309,35 @@ if (!localStorage.getItem('instructors')) {
       return timeSlots;
     }
 
-function autoFillSchedule() {
-  const timeSlots = generateTimeSlots();
-  const selectedCourse = courseSelect.value;
-  const selectedYear = yearSelect.value;
-  const selectedSection = sectionSelect.value;
-  
-  scheduleBody.innerHTML = '';
+    function autoFillSchedule() {
+      const timeSlots = generateTimeSlots();
+      const selectedCourse = courseSelect.value;
+      const selectedYear = yearSelect.value;
+      const selectedSection = sectionSelect.value;
+      
+      scheduleBody.innerHTML = '';
 
-  // Get instructors from localStorage
-  const instructors = JSON.parse(localStorage.getItem('instructors')) || [];
-  
-  // Check if we have instructors data
-  if (!instructors.length) {
-    console.error('No instructors data found in localStorage');
-    return;
-  }
+      // Get data from localStorage
+      const instructors = JSON.parse(localStorage.getItem('instructors')) || [];
+      const rooms = JSON.parse(localStorage.getItem('rooms')) || [];
+      const savedAssignments = JSON.parse(localStorage.getItem('roomAssignments')) || {};
+      const currentAssignments = JSON.parse(localStorage.getItem('currentAssignments')) || {};
 
-  timeSlots.forEach(timeSlot => {
-    const row = document.createElement('tr');
-    const [startTime] = timeSlot.split('-');
-    
-    // First add the time column
-    row.innerHTML = `<td>${timeSlot}</td>`;
-
-    // Add cells for each day
-    const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-    days.forEach(day => {
-      const cell = document.createElement('td');
-      const cellId = `${day}-${startTime}`;
-
-      // Only show instructors if course, year, and section are selected
-      if (selectedCourse && selectedYear && selectedSection) {
-        // Find matching instructor
-        const scheduledInstructor = instructors.find(instructor => {
-          return instructor.course === selectedCourse &&
-                 instructor.year === selectedYear &&
-                 instructor.section === selectedSection &&
-                 instructor.day === day &&
-                 instructor.time.includes(startTime.split(':')[0]);
+      // Function to check if a room is already assigned
+      function isRoomAssigned(roomId, day, time) {
+        return Object.entries(currentAssignments).some(([key, assignedRoom]) => {
+          const [assignedDay, assignedTime] = key.split('-');
+          return assignedRoom === roomId && 
+                 assignedDay === day && 
+                 assignedTime === time;
         });
-
-        if (scheduledInstructor) {
-          // Get student capacity for this section
-          const studentKey = `${selectedCourse}-${selectedYear}${selectedSection}`;
-          const studentCapacity = studentCapacityMap[studentKey] || 0;
-
-          // Display instructor info
-          cell.className = 'occupied-cell';
-          cell.innerHTML = `
-            <div class="schedule-info">
-              <div class="instructor">${scheduledInstructor.name}</div>
-              <div class="subject">${scheduledInstructor.subject}</div>
-              <div class="room">Room Assignment Needed</div>
-              <div class="capacity-info">Student Count: ${studentCapacity} students</div>
-            </div>
-          `;
-        }
       }
-
-      row.appendChild(cell);
-    });
-
-    scheduleBody.appendChild(row);
-  });
-}
 
       timeSlots.forEach(timeSlot => {
         const row = document.createElement('tr');
         const [startTime] = timeSlot.split('-');
         
-        // First add the time column
+        // Add time column
         row.innerHTML = `<td>${timeSlot}</td>`;
 
         // Add cells for each day
@@ -439,55 +346,38 @@ function autoFillSchedule() {
           const cell = document.createElement('td');
           const cellId = `${day}-${startTime}`;
 
-          // Only show instructors if course, year, and section are selected
+          // Only show instructors if selections are made
           if (selectedCourse && selectedYear && selectedSection) {
-            // Check if there's an instructor scheduled for this time slot and day
             const scheduledInstructor = instructors.find(instructor => {
-              // Match the exact course, year, and section
-              if (instructor.course !== selectedCourse ||
-                  instructor.year !== selectedYear ||
-                  instructor.section !== selectedSection ||
-                  instructor.day !== day) {
-                    return false;
-                  }
-
-              // Parse instructor's time range
-              const [instrStartTime] = instructor.time.split(' - ')[0].split(':');
-              const [instrEndTime] = instructor.time.split(' - ')[1].split(':');
-              const currentHour = startTime.split(':')[0];
-
-              // Check if this time slot falls within the instructor's schedule
-              return parseInt(currentHour) >= parseInt(instrStartTime) &&
-                     parseInt(currentHour) < parseInt(instrEndTime);
+              return instructor.course === selectedCourse &&
+                     instructor.year === selectedYear &&
+                     instructor.section === selectedSection &&
+                     instructor.day === day &&
+                     instructor.time.includes(startTime.split(':')[0]);
             });
 
             if (scheduledInstructor) {
-              // Get student capacity for this section
               const studentKey = `${selectedCourse}-${selectedYear}${selectedSection}`;
               const studentCapacity = studentCapacityMap[studentKey] || 0;
 
-              // Find all rooms available at this time
+              // Find available rooms
               const availableRooms = rooms.filter(room => {
-                return room.day === day && room.time === startTime;
+                return room.day === day && room.time.split(':')[0] === startTime.split(':')[0];
               });
 
-              // Filter rooms by capacity
               const suitableRooms = availableRooms.filter(room => 
                 parseInt(room.capacity) >= studentCapacity
               );
 
-              // Filter out rooms that are already assigned
               const availableSuitableRooms = suitableRooms.filter(room => 
                 !isRoomAssigned(room.roomName, day, startTime)
               );
 
               if (availableSuitableRooms.length > 0) {
-                // Create a select element for room selection
                 const select = document.createElement('select');
                 select.className = 'room-select';
                 select.id = `room-${cellId}`;
 
-                // Add options for each suitable room
                 availableSuitableRooms.forEach(room => {
                   const option = document.createElement('option');
                   option.value = room.roomName;
@@ -495,33 +385,28 @@ function autoFillSchedule() {
                   select.appendChild(option);
                 });
 
-                // Set selected value from saved assignments
                 const savedRoom = savedAssignments[cellId];
                 if (savedRoom && availableSuitableRooms.some(room => room.roomName === savedRoom)) {
                   select.value = savedRoom;
                 }
 
-                // Add change event listener
                 select.addEventListener('change', function() {
-                  // Update current assignments
                   const assignments = {
                     ...currentAssignments,
                     [cellId]: this.value
-                  };                  localStorage.setItem('currentAssignments', JSON.stringify(assignments));
+                  };
+                  localStorage.setItem('currentAssignments', JSON.stringify(assignments));
 
-                  // Update saved assignments
                   const savedAssignments = {
                     ...savedAssignments,
                     [cellId]: this.value
                   };
                   localStorage.setItem('roomAssignments', JSON.stringify(savedAssignments));
 
-                  // Update the display
                   const displayDiv = this.nextElementSibling;
                   displayDiv.querySelector('.room').textContent = this.value;
                 });
 
-                // Create a div to show current selection
                 const displayDiv = document.createElement('div');
                 displayDiv.className = 'schedule-info';
                 displayDiv.innerHTML = `
@@ -531,14 +416,12 @@ function autoFillSchedule() {
                   <div class="capacity-info">Room Capacity: ${studentCapacity} students</div>
                 `;
 
-                // Create a container for both select and display
                 const container = document.createElement('div');
                 container.className = 'occupied-cell';
                 container.appendChild(select);
                 container.appendChild(displayDiv);
                 cell.appendChild(container);
               } else {
-                // No suitable rooms available
                 cell.className = 'occupied-cell';
                 cell.innerHTML = `
                   <div class="schedule-info">
@@ -550,40 +433,40 @@ function autoFillSchedule() {
                 `;
               }
             }
+            
+            row.appendChild(cell);
           }
-
-          row.appendChild(cell);
         });
 
         scheduleBody.appendChild(row);
       });
+
+      // Update summary display
+      const course = courseSelect.value;
+      const year = yearSelect.value;
+      const section = sectionSelect.value;
+
+      if (course && year && section) {
+        const formattedYear = year === '1st' ? '1' : 
+                             year === '2nd' ? '2' : 
+                             year === '3rd' ? '3' : '4';
+        const combinedKey = `${course}-${formattedYear}${section}`;
+        
+        const studentCapacity = studentCapacityMap[combinedKey] || '---';
+        
+        courseSummary.textContent = combinedKey;
+        studentCapacityDisplay.textContent = studentCapacity;
+      } else {
+        courseSummary.textContent = '----';
+        studentCapacityDisplay.textContent = '---';
+      }
     }
 
-    // Function to clear all assignments
     function clearAssignments() {
       localStorage.removeItem('currentAssignments');
       localStorage.removeItem('roomAssignments');
       autoFillSchedule();
     }
-
-    // Add clear button to navigation
-    const navButtons = document.querySelector('.navigation-buttons');
-    const clearButton = document.createElement('button');
-    clearButton.textContent = 'Clear Assignments';
-    clearButton.onclick = clearAssignments;
-    navButtons.appendChild(clearButton);
-
-    // Initialize schedule on page load
-    document.addEventListener('DOMContentLoaded', function() {
-      autoFillSchedule();
-    });
-
-    // Listen for storage changes
-    window.addEventListener('storage', function(e) {
-      if (e.key === 'instructors' || e.key === 'rooms') {
-        autoFillSchedule();
-      }
-    });
 
     // Initialize course selection
     courseSelect.addEventListener('change', function() {
@@ -633,7 +516,6 @@ function autoFillSchedule() {
       updateSelectionSummary();
     });
 
-    // Update selection summary
     function updateSelectionSummary() {
       const course = courseSelect.value;
       const year = yearSelect.value;
@@ -654,26 +536,20 @@ function autoFillSchedule() {
         studentCapacityDisplay.textContent = '---';
       }
 
-      // Update schedule after updating summary
       autoFillSchedule();
     }
-
-    // Initialize section selection
-    sectionSelect.addEventListener('focus', function() {
-      if (!yearSelect.value) {
-        alert('Please select a Year first');
-        courseSelect.focus();
-      }
-    });
 
     // Initialize schedule on page load
     document.addEventListener('DOMContentLoaded', function() {
       autoFillSchedule();
     });
-  // Initialize schedule when page loads
-document.addEventListener('DOMContentLoaded', function() {
-  autoFillSchedule();
-});
+
+    // Listen for storage changes
+    window.addEventListener('storage', function(e) {
+      if (e.key === 'instructors' || e.key === 'rooms') {
+        autoFillSchedule();
+      }
+    });
   </script>
 </body>
 </html>
