@@ -471,5 +471,158 @@
       autoFillSchedule();
     });
   </script>
+<script>
+  // ... (previous code remains the same until autoFillSchedule function)
+
+  function autoFillSchedule() {
+    const timeSlots = generateTimeSlots();
+    const selectedCourse = courseSelect.value;
+    const selectedYear = yearSelect.value;
+    const selectedSection = sectionSelect.value;
+    
+    scheduleBody.innerHTML = '';
+
+    // Get instructors from localStorage
+    const instructors = JSON.parse(localStorage.getItem('instructors')) || [];
+    // Get rooms from localStorage
+    const rooms = JSON.parse(localStorage.getItem('rooms')) || [];
+    // Get saved room assignments
+    const savedAssignments = JSON.parse(localStorage.getItem('roomAssignments')) || {};
+
+    timeSlots.forEach(timeSlot => {
+      const row = document.createElement('tr');
+      const [startTime] = timeSlot.split('-');
+      
+      // First add the time column
+      row.innerHTML = `<td>${timeSlot}</td>`;
+
+      // Add cells for each day
+      const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+      days.forEach(day => {
+        const cell = document.createElement('td');
+        const cellId = `${day}-${startTime}`;
+
+        // Only show instructors if course, year, and section are selected
+        if (selectedCourse && selectedYear && selectedSection) {
+          // Check if there's an instructor scheduled for this time slot and day
+          const scheduledInstructor = instructors.find(instructor => {
+            // Match the exact course, year, and section
+            if (instructor.course !== selectedCourse ||
+                instructor.year !== selectedYear ||
+                instructor.section !== selectedSection ||
+                instructor.day !== day) {
+                return false;
+            }
+
+            // Parse instructor's time range
+            const [instrStartTime] = instructor.time.split(' - ')[0].split(':');
+            const [instrEndTime] = instructor.time.split(' - ')[1].split(':');
+            const currentHour = startTime.split(':')[0];
+
+            // Check if this time slot falls within the instructor's schedule
+            return parseInt(currentHour) >= parseInt(instrStartTime) &&
+                   parseInt(currentHour) < parseInt(instrEndTime);
+          });
+
+          if (scheduledInstructor) {
+            // Find available rooms for this time slot
+            const availableRooms = rooms.filter(room => {
+              return room.day === day && room.time === startTime;
+            });
+
+            // Get student capacity for this section
+            const studentKey = `${selectedCourse}-${selectedYear}${selectedSection}`;
+            const studentCapacity = studentCapacityMap[studentKey] || 0;
+
+            // Filter rooms that have sufficient capacity
+            const suitableRooms = availableRooms.filter(room => 
+              parseInt(room.capacity) >= studentCapacity
+            );
+
+            if (suitableRooms.length > 0) {
+              // Create a select element for room selection
+              const select = document.createElement('select');
+              select.className = 'room-select';
+              select.id = `room-${cellId}`;
+
+              // Add option for each suitable room
+              suitableRooms.forEach(room => {
+                const option = document.createElement('option');
+                option.value = room.roomName;
+                option.textContent = `${room.roomName} (${room.capacity} students)`;
+                select.appendChild(option);
+              });
+
+              // Set selected value from saved assignments
+              const savedRoom = savedAssignments[cellId];
+              if (savedRoom) {
+                select.value = savedRoom;
+              }
+
+              // Add change event listener
+              select.addEventListener('change', function() {
+                const assignment = {
+                  ...savedAssignments,
+                  [cellId]: this.value
+                };
+                localStorage.setItem('roomAssignments', JSON.stringify(assignment));
+              });
+
+              // Create a div to show current selection
+              const displayDiv = document.createElement('div');
+              displayDiv.className = 'schedule-info';
+              displayDiv.innerHTML = `
+                <div class="instructor">${scheduledInstructor.name}</div>
+                <div class="subject">${scheduledInstructor.subject}</div>
+                <div class="room">${select.value}</div>
+              `;
+
+              // Create a container for both select and display
+              const container = document.createElement('div');
+              container.className = 'occupied-cell';
+              container.appendChild(select);
+              container.appendChild(displayDiv);
+              cell.appendChild(container);
+            } else {
+              // No suitable rooms available
+              cell.className = 'occupied-cell';
+              cell.innerHTML = `
+                <div class="schedule-info">
+                  <div class="instructor">${scheduledInstructor.name}</div>
+                  <div class="subject">${scheduledInstructor.subject}</div>
+                  <div class="room">No Suitable Rooms Available</div>
+                </div>
+              `;
+            }
+          }
+        }
+
+        row.appendChild(cell);
+      });
+
+      scheduleBody.appendChild(row);
+    });
+
+    // Add styling for room selects
+    const style = document.createElement('style');
+    style.textContent = `
+      .room-select {
+        width: 100%;
+        margin-bottom: 5px;
+        padding: 5px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+      }
+      .room-select:focus {
+        outline: none;
+        border-color: var(--accent-color);
+        box-shadow: 0 0 5px rgba(247, 179, 45, 0.5);
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
+  // ... (rest of the code remains the same)
+</script>
 </body>
 </html>
