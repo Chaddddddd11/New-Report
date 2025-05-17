@@ -208,6 +208,30 @@
   </div>
 
   <script>
+    // Sample instructor data - add this at the start of your script
+if (!localStorage.getItem('instructors')) {
+  localStorage.setItem('instructors', JSON.stringify([
+    {
+      name: "John Smith",
+      subject: "Mathematics",
+      course: "BSA",
+      year: "1st",
+      section: "A",
+      day: "Monday",
+      time: "8:00 - 10:00"
+    },
+    {
+      name: "Jane Doe",
+      subject: "English",
+      course: "BSA",
+      year: "1st",
+      section: "A",
+      day: "Tuesday",
+      time: "9:00 - 11:00"
+    }
+    // Add more sample instructors as needed
+  ]));
+}
     const studentCapacityMap = {
       // BSA Capacities
       'BSA-1A': 30, 'BSA-1B': 37, 'BSA-1C': 32, 'BSA-1D': 34, 
@@ -336,32 +360,71 @@
       return timeSlots;
     }
 
-    function autoFillSchedule() {
-      const timeSlots = generateTimeSlots();
-      const selectedCourse = courseSelect.value;
-      const selectedYear = yearSelect.value;
-      const selectedSection = sectionSelect.value;
-      
-      scheduleBody.innerHTML = '';
+function autoFillSchedule() {
+  const timeSlots = generateTimeSlots();
+  const selectedCourse = courseSelect.value;
+  const selectedYear = yearSelect.value;
+  const selectedSection = sectionSelect.value;
+  
+  scheduleBody.innerHTML = '';
 
-      // Get instructors from localStorage
-      const instructors = JSON.parse(localStorage.getItem('instructors')) || [];
-      // Get rooms from localStorage
-      const rooms = JSON.parse(localStorage.getItem('rooms')) || [];
-      // Get saved room assignments
-      const savedAssignments = JSON.parse(localStorage.getItem('roomAssignments')) || {};
-      // Get current room assignments
-      const currentAssignments = JSON.parse(localStorage.getItem('currentAssignments')) || {};
+  // Get instructors from localStorage
+  const instructors = JSON.parse(localStorage.getItem('instructors')) || [];
+  
+  // Check if we have instructors data
+  if (!instructors.length) {
+    console.error('No instructors data found in localStorage');
+    return;
+  }
 
-      // Function to check if a room is already assigned at this time
-      function isRoomAssigned(roomId, day, time) {
-        return Object.entries(currentAssignments).some(([key, assignedRoom]) => {
-          const [assignedDay, assignedTime] = key.split('-');
-          return assignedRoom === roomId && 
-                 assignedDay === day && 
-                 assignedTime === time;
+  timeSlots.forEach(timeSlot => {
+    const row = document.createElement('tr');
+    const [startTime] = timeSlot.split('-');
+    
+    // First add the time column
+    row.innerHTML = `<td>${timeSlot}</td>`;
+
+    // Add cells for each day
+    const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    days.forEach(day => {
+      const cell = document.createElement('td');
+      const cellId = `${day}-${startTime}`;
+
+      // Only show instructors if course, year, and section are selected
+      if (selectedCourse && selectedYear && selectedSection) {
+        // Find matching instructor
+        const scheduledInstructor = instructors.find(instructor => {
+          return instructor.course === selectedCourse &&
+                 instructor.year === selectedYear &&
+                 instructor.section === selectedSection &&
+                 instructor.day === day &&
+                 instructor.time.includes(startTime.split(':')[0]);
         });
+
+        if (scheduledInstructor) {
+          // Get student capacity for this section
+          const studentKey = `${selectedCourse}-${selectedYear}${selectedSection}`;
+          const studentCapacity = studentCapacityMap[studentKey] || 0;
+
+          // Display instructor info
+          cell.className = 'occupied-cell';
+          cell.innerHTML = `
+            <div class="schedule-info">
+              <div class="instructor">${scheduledInstructor.name}</div>
+              <div class="subject">${scheduledInstructor.subject}</div>
+              <div class="room">Room Assignment Needed</div>
+              <div class="capacity-info">Student Count: ${studentCapacity} students</div>
+            </div>
+          `;
+        }
       }
+
+      row.appendChild(cell);
+    });
+
+    scheduleBody.appendChild(row);
+  });
+}
 
       timeSlots.forEach(timeSlot => {
         const row = document.createElement('tr');
@@ -607,6 +670,10 @@
     document.addEventListener('DOMContentLoaded', function() {
       autoFillSchedule();
     });
+  // Initialize schedule when page loads
+document.addEventListener('DOMContentLoaded', function() {
+  autoFillSchedule();
+});
   </script>
 </body>
 </html>
