@@ -165,7 +165,7 @@
     <button class="back-button" onclick="navigateTo('index.html')">Back to Home</button>
     
     <header>
-      <h1>Room Registration</h1>
+      <h1 id="formTitle">Room Registration</h1>
     </header>
 
     <div id="errorContainer" class="error"></div>
@@ -186,7 +186,6 @@
           <option value="Thursday">Thursday</option>
           <option value="Friday">Friday</option>
           <option value="Saturday">Saturday</option>
-          <option value="Sunday">Sunday</option>
         </select>
       </div>
 
@@ -194,17 +193,17 @@
         <label>Available Time:</label>
         <select id="time" required>
           <option value="">Select Time</option>
-          <option value="07:00">07:00 - 08:00</option>
-          <option value="08:00">08:00 - 09:00</option>
-          <option value="09:00">09:00 - 10:00</option>
-          <option value="10:00">10:00 - 11:00</option>
-          <option value="11:00">11:00 - 12:00</option>
-          <option value="12:00">12:00 - 13:00</option>
-          <option value="13:00">13:00 - 14:00</option>
-          <option value="14:00">14:00 - 15:00</option>
-          <option value="15:00">15:00 - 16:00</option>
-          <option value="16:00">16:00 - 17:00</option>
-          <option value="17:00">17:00 - 18:00</option>
+          <option value="7:00-8:00">7:00 - 8:00</option>
+          <option value="8:00-9:00">8:00 - 9:00</option>
+          <option value="9:00-10:00">9:00 - 10:00</option>
+          <option value="10:00-11:00">10:00 - 11:00</option>
+          <option value="11:00-12:00">11:00 - 12:00</option>
+          <option value="12:00-13:00">12:00 - 13:00</option>
+          <option value="13:00-14:00">13:00 - 14:00</option>
+          <option value="14:00-15:00">14:00 - 15:00</option>
+          <option value="15:00-16:00">15:00 - 16:00</option>
+          <option value="16:00-17:00">16:00 - 17:00</option>
+          <option value="17:00-18:00">17:00 - 18:00</option>
         </select>
       </div>
 
@@ -239,13 +238,24 @@
       } else {
         timeSlotsDiv.style.display = 'none';
         timeSelect.required = false;
-        timeSelect.value = ''; // Reset time selection
+        timeSelect.value = '';
       }
     }
 
     const roomForm = document.getElementById('roomForm');
     const errorContainer = document.getElementById('errorContainer');
-    let rooms = [];
+    const urlParams = new URLSearchParams(window.location.search);
+    const isEdit = urlParams.get('edit') === 'true';
+    const editIndex = urlParams.get('index');
+
+    if (isEdit) {
+      document.getElementById('formTitle').textContent = 'Edit Room';
+      document.getElementById('roomName').value = urlParams.get('roomName');
+      document.getElementById('day').value = urlParams.get('day');
+      document.getElementById('time').value = urlParams.get('time');
+      document.getElementById('capacity').value = urlParams.get('capacity');
+      toggleTimeSlots(urlParams.get('day'));
+    }
 
     roomForm.addEventListener('submit', function(event) {
       event.preventDefault();
@@ -256,39 +266,40 @@
       const roomName = document.getElementById('roomName').value.trim();
       const day = document.getElementById('day').value;
       const time = document.getElementById('time').value;
-      const capacity = document.getElementById('capacity').value;
+      const capacity = document.getElementById('capacity').value.trim();
 
       if (!roomName || !day || !time || !capacity) {
         showError("Please fill in all required fields.");
         return;
       }
 
-      const room = { roomName, day, time, capacity };
-      rooms.push(room);
+      if (!/^\d+$/.test(capacity)) {
+        showError("Capacity must be a number.");
+        return;
+      }
 
-      // Store in localStorage
+      const room = { roomName, day, time, capacity };
+      let rooms = JSON.parse(localStorage.getItem('rooms')) || [];
+
+      if (isEdit) {
+        rooms[parseInt(editIndex)] = room;
+      } else {
+        rooms.push(room);
+      }
+
       localStorage.setItem('rooms', JSON.stringify(rooms));
-      
-      // Redirect to RoomList.html
       navigateTo('RoomList.html');
     }
 
     function clearForm() {
       roomForm.reset();
       document.getElementById('timeSlots').style.display = 'none';
+      showError('');
     }
 
     function showError(message) {
       errorContainer.textContent = message;
     }
-
-    // Load any existing rooms when page loads
-    document.addEventListener('DOMContentLoaded', function() {
-      const storedRooms = localStorage.getItem('rooms');
-      if (storedRooms) {
-        rooms = JSON.parse(storedRooms);
-      }
-    });
   </script>
 </body>
 </html>
