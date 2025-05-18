@@ -294,6 +294,122 @@ courses.forEach(course => {
 
     els.section.addEventListener('change', updateSummary);
     document.addEventListener('DOMContentLoaded', updateSchedule);
+    const yearSelect = document.getElementById('year');
+const sectionSelect = document.getElementById('section');
+const courseSummary = document.getElementById('courseSummary');
+const studentCapacityDisplay = document.getElementById('studentCapacityDisplay');
+const scheduleBody = document.getElementById('scheduleBody');
+
+function navigateTo(page) {
+  try {
+    window.location.href = page;
+  } catch (error) {
+    console.error('Navigation error:', error);
+    alert('Unable to navigate. Please check the page exists.');
+  }
+}
+
+function generateTimeSlots() {
+  return [
+    '7:00-8:00', '8:00-9:00', '9:00-10:00', '10:00-11:00',
+    '11:00-12:00', '12:00-13:00', '13:00-14:00', '14:00-15:00',
+    '15:00-16:00', '16:00-17:00', '17:00-18:00', '18:00-19:00'
+  ];
+}
+
+function autoFillSchedule() {
+  const timeSlots = generateTimeSlots();
+  const selectedCourse = courseSelect.value;
+  const selectedYear = yearSelect.value;
+  const selectedSection = sectionSelect.value;
+  
+  scheduleBody.innerHTML = '';
+
+  const instructors = JSON.parse(localStorage.getItem('instructors')) || [];
+
+  timeSlots.forEach(timeSlot => {
+    const row = document.createElement('tr');
+    const [startTime] = timeSlot.split('-');
+    
+    row.innerHTML = `<td>${timeSlot}</td>`;
+
+    const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    days.forEach(day => {
+      const cell = document.createElement('td');
+
+      if (selectedCourse && selectedYear && selectedSection) {
+        const scheduledInstructor = instructors.find(instructor => {
+          if (instructor.course !== selectedCourse ||
+              instructor.year !== selectedYear ||
+              instructor.section !== selectedSection ||
+              instructor.day !== day) {
+              return false;
+          }
+
+          const [instrStartTime] = instructor.time.split(' - ')[0].split(':');
+          const [instrEndTime] = instructor.time.split(' - ')[1].split(':');
+          const currentHour = startTime.split(':')[0];
+
+          return parseInt(currentHour) >= parseInt(instrStartTime) &&
+                 parseInt(currentHour) < parseInt(instrEndTime);
+        });
+
+        if (scheduledInstructor) {
+          cell.className = 'occupied-cell';
+          cell.innerHTML = `
+            <div class="schedule-info">
+              <div class="instructor">${scheduledInstructor.name}</div>
+              <div class="subject">${scheduledInstructor.subject}</div>
+              <div class="room">${scheduledInstructor.room || 'TBA'}</div>
+            </div>
+          `;
+        }
+      }
+
+      row.appendChild(cell);
+    });
+
+    scheduleBody.appendChild(row);
+  });
+}
+
+function updateSelectionSummary() {
+  const course = courseSelect.value;
+  const year = yearSelect.value;
+  const section = sectionSelect.value;
+
+  if (course && year && section) {
+    const formattedYear = year === '1st' ? '1' : 
+                         year === '2nd' ? '2' : 
+                         year === '3rd' ? '3' : '4';
+    const combinedKey = `${course}-${formattedYear}${section}`;
+    
+    const studentCapacity = studentCapacityMap[combinedKey] || '---';
+    
+    courseSummary.textContent = combinedKey;
+    studentCapacityDisplay.textContent = studentCapacity;
+  } else {
+    courseSummary.textContent = '----';
+    studentCapacityDisplay.textContent = '---';
+  }
+
+  autoFillSchedule();
+}
+
+// Course selection handler
+courseSelect.addEventListener('change', function() {
+  yearSelect.innerHTML = '<option value="">-- Select Year --</option>';
+  sectionSelect.innerHTML = '<option value="">-- Select Section --</option>';
+  
+  const selectedCourse = courseSelect.value;
+
+  if (selectedCourse) {
+    yearSelect.disabled = false;
+    const years = courseConfig[selectedCourse].years;
+    years.forEach(year => {
+      const option = document.createElement('option');
+      option.value = year;
+      option.textContent = year;
   </script>
 </body>
 </html>
