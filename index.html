@@ -2,7 +2,7 @@
 <html>
 <head>
   <title>DHVSU Scheduling System</title>
-  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <link href="[https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap"](https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap") rel="stylesheet">
   <style>
     :root {
       --primary-color: #1A5F7A;
@@ -223,6 +223,7 @@
       'BSE-1A': 40, 'BSE-1B': 48, 'BSE-1C': 50,
       'BSE-2A': 42, 'BSE-2B': 34, 'BSE-2C': 44, 'BSE-2D': 40, 'BSE-2E': 36, 
       'BSE-2F': 34, 'BSE-2G': 48, 'BSE-2H': 40,
+            'BSE-2F': 34, 'BSE-2G': 48, 'BSE-2H': 40,
       'BSE-3A': 39, 'BSE-3B': 32, 'BSE-3C': 44, 'BSE-3D': 50,
       'BSE-4A': 41, 'BSE-4B': 37, 'BSE-4C': 42, 'BSE-4D': 40, 'BSE-4E': 33, 
       'BSE-4F': 43, 'BSE-4G': 49, 'BSE-4H': 38,
@@ -324,8 +325,9 @@
       
       scheduleBody.innerHTML = '';
 
-      // Get instructors from localStorage
+      // Get instructors and rooms from localStorage
       const instructors = JSON.parse(localStorage.getItem('instructors')) || [];
+      const rooms = JSON.parse(localStorage.getItem('rooms')) || [];
 
       timeSlots.forEach(timeSlot => {
         const row = document.createElement('tr');
@@ -362,12 +364,18 @@
             });
 
             if (scheduledInstructor) {
+              // Find matching room for this time slot and day
+              const matchingRoom = rooms.find(room => 
+                room.day === day && 
+                room.time === timeSlot
+              );
+
               cell.className = 'occupied-cell';
               cell.innerHTML = `
                 <div class="schedule-info">
-                  <div class="instructor">${scheduledInstructor.name}</div>
-                  <div class="subject">${scheduledInstructor.subject}</div>
-                  <div class="room">${scheduledInstructor.room || 'TBA'}</div>
+                  <div class="instructor">Instructor: ${scheduledInstructor.name}</div>
+                  <div class="subject">Subject: ${scheduledInstructor.subject}</div>
+                  <div class="room">Room: ${matchingRoom ? matchingRoom.room : 'TBA'}</div>
                 </div>
               `;
             }
@@ -438,6 +446,8 @@
     function updateSelectionSummary() {
       const course = courseSelect.value;
       const year = yearSelect.value;
+            const course = courseSelect.value;
+      const year = yearSelect.value;
       const section = sectionSelect.value;
 
       if (course && year && section) {
@@ -461,7 +471,7 @@
 
     // Listen for storage changes
     window.addEventListener('storage', function(e) {
-      if (e.key === 'instructors') {
+      if (e.key === 'instructors' || e.key === 'rooms') {
         autoFillSchedule();
       }
     });
