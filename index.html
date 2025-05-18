@@ -188,60 +188,16 @@
   </div>
 
   <script>
+    // Simplified student capacity map
     const studentCapacityMap = {
-      // BSA Capacities
-      'BSA-1A': 30, 'BSA-1B': 37, 'BSA-1C': 32, 'BSA-1D': 34, 
-      'BSA-1E': 43, 'BSA-1F': 49, 'BSA-1G': 45, 'BSA-1H': 41, 
+      'BSA-1A': 30, 'BSA-1B': 37, 'BSA-1C': 32, 'BSA-1D': 34,
+      'BSA-1E': 43, 'BSA-1F': 49, 'BSA-1G': 45, 'BSA-1H': 41,
       'BSA-1I': 38, 'BSA-1J': 46,
-      'BSA-2A': 38, 'BSA-2B': 44, 'BSA-2C': 46, 'BSA-2D': 34, 
+      'BSA-2A': 38, 'BSA-2B': 44, 'BSA-2C': 46, 'BSA-2D': 34,
       'BSA-2E': 39, 'BSA-2F': 35, 'BSA-2G': 47, 'BSA-2H': 31,
-      'BSA-3A': 44, 'BSA-3B': 50, 'BSA-3C': 41, 'BSA-3D': 32, 
+      'BSA-3A': 44, 'BSA-3B': 50, 'BSA-3C': 41, 'BSA-3D': 32,
       'BSA-3E': 50, 'BSA-3F': 36, 'BSA-3G': 42, 'BSA-3H': 39,
-      'BSA-4A': 41, 'BSA-4B': 38, 'BSA-4C': 35, 'BSA-4D': 47,
-
-      // BSAIS Capacities
-      'BSAIS-1A': 40, 'BSAIS-1B': 42, 'BSAIS-1C': 32, 'BSAIS-1D': 44, 'BSAIS-1E': 35,
-      'BSAIS-2A': 41, 'BSAIS-2B': 40, 'BSAIS-2C': 50, 'BSAIS-2D': 44, 'BSAIS-2E': 44, 
-      'BSAIS-2F': 43, 'BSAIS-2G': 38,
-      'BSAIS-3A': 42, 'BSAIS-3B': 50, 'BSAIS-3C': 41, 'BSAIS-3D': 47, 'BSAIS-3E': 41, 
-      'BSAIS-3F': 30,
-      'BSAIS-4A': 36, 'BSAIS-4B': 35, 'BSAIS-4C': 45, 'BSAIS-4D': 42, 'BSAIS-4E': 30, 
-      'BSAIS-4F': 32, 'BSAIS-4G': 34,
-
-      // MSMarketing Capacities
-      'MSMarketing-1A': 36, 'MSMarketing-1B': 39, 'MSMarketing-1C': 35, 'MSMarketing-1D': 31, 
-      'MSMarketing-1E': 36, 'MSMarketing-1F': 43, 'MSMarketing-1G': 41, 'MSMarketing-1H': 41,
-      'MSMarketing-2A': 35, 'MSMarketing-2B': 44, 'MSMarketing-2C': 49, 'MSMarketing-2D': 40, 
-      'MSMarketing-2E': 49, 'MSMarketing-2F': 50, 'MSMarketing-2G': 31, 'MSMarketing-2H': 46, 
-      'MSMarketing-2I': 36,
-      'MSMarketing-3A': 42, 'MSMarketing-3B': 43, 'MSMarketing-3C': 36,
-      'MSMarketing-4A': 37, 'MSMarketing-4B': 31, 'MSMarketing-4C': 49, 'MSMarketing-4D': 47, 
-      'MSMarketing-4E': 43, 'MSMarketing-4F': 44, 'MSMarketing-4G': 33, 'MSMarketing-4H': 45, 
-      'MSMarketing-4I': 31,
-
-      // BSE Capacities
-      'BSE-1A': 40, 'BSE-1B': 48, 'BSE-1C': 50,
-      'BSE-2A': 42, 'BSE-2B': 34, 'BSE-2C': 44, 'BSE-2D': 40, 'BSE-2E': 36, 
-      'BSE-2F': 34, 'BSE-2G': 48, 'BSE-2H': 40,
-            'BSE-2F': 34, 'BSE-2G': 48, 'BSE-2H': 40,
-      'BSE-3A': 39, 'BSE-3B': 32, 'BSE-3C': 44, 'BSE-3D': 50,
-      'BSE-4A': 41, 'BSE-4B': 37, 'BSE-4C': 42, 'BSE-4D': 40, 'BSE-4E': 33, 
-      'BSE-4F': 43, 'BSE-4G': 49, 'BSE-4H': 38,
-
-      // BSPublicAdministration Capacities
-      'BSPublicAdministration-1A': 36, 'BSPublicAdministration-1B': 34, 
-      'BSPublicAdministration-1C': 50, 'BSPublicAdministration-1D': 31,
-      'BSPublicAdministration-2A': 50, 'BSPublicAdministration-2B': 40, 
-      'BSPublicAdministration-2C': 43, 'BSPublicAdministration-2D': 36, 
-      'BSPublicAdministration-2E': 38, 'BSPublicAdministration-2F': 49, 
-      'BSPublicAdministration-2G': 36,
-      'BSPublicAdministration-3A': 37, 'BSPublicAdministration-3B': 30, 
-      'BSPublicAdministration-3C': 33, 'BSPublicAdministration-3D': 38, 
-      'BSPublicAdministration-3E': 48,
-      'BSPublicAdministration-4A': 34, 'BSPublicAdministration-4B': 43, 
-      'BSPublicAdministration-4C': 33, 'BSPublicAdministration-4D': 30, 
-      'BSPublicAdministration-4E': 43, 'BSPublicAdministration-4F': 39, 
-      'BSPublicAdministration-4G': 30
+      'BSA-4A': 41, 'BSA-4B': 38, 'BSA-4C': 35, 'BSA-4D': 47
     };
 
     const courseConfig = {
@@ -252,42 +208,6 @@
           '2nd': ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'],
           '3rd': ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'],
           '4th': ['A', 'B', 'C', 'D']
-        }
-      },
-      BSAIS: {
-        years: ['1st', '2nd', '3rd', '4th'],
-        sections: {
-          '1st': ['A', 'B', 'C', 'D', 'E'],
-          '2nd': ['A', 'B', 'C', 'D', 'E', 'F', 'G'],
-          '3rd': ['A', 'B', 'C', 'D', 'E', 'F'],
-          '4th': ['A', 'B', 'C', 'D', 'E', 'F', 'G']
-        }
-      },
-      MSMarketing: {
-        years: ['1st', '2nd', '3rd', '4th'],
-        sections: {
-          '1st': ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'],
-          '2nd': ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I'],
-          '3rd': ['A', 'B', 'C'],
-          '4th': ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I']
-        }
-      },
-      BSE: {
-        years: ['1st', '2nd', '3rd', '4th'],
-        sections: {
-          '1st': ['A', 'B', 'C'],
-          '2nd': ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'],
-          '3rd': ['A', 'B', 'C', 'D'],
-          '4th': ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H']
-        }
-      },
-      BSPublicAdministration: {
-        years: ['1st', '2nd', '3rd', '4th'],
-        sections: {
-          '1st': ['A', 'B', 'C', 'D'],
-          '2nd': ['A', 'B', 'C', 'D', 'E', 'F', 'G'],
-          '3rd': ['A', 'B', 'C', 'D', 'E'],
-          '4th': ['A', 'B', 'C', 'D', 'E', 'F', 'G']
         }
       }
     };
@@ -303,183 +223,176 @@
       try {
         window.location.href = page;
       } catch (error) {
-        console.error('Navigation error:', error);
-        alert('Unable to navigate. Please check the page exists.');
-      }
-    }
+        function navigateTo(page) {
+  try {
+    window.location.href = page;
+  } catch (error) {
+    console.error('Navigation error:', error);
+    alert('Unable to navigate. Please check the page exists.');
+  }
+}
 
-    function generateTimeSlots() {
-      const timeSlots = [
-        '7:00-8:00', '8:00-9:00', '9:00-10:00', '10:00-11:00', 
-        '11:00-12:00', '12:00-13:00', '13:00-14:00', '14:00-15:00', 
-        '15:00-16:00', '16:00-17:00', '17:00-18:00', '18:00-19:00'
-      ];
-      return timeSlots;
-    }
+function generateTimeSlots() {
+  const timeSlots = [
+    '7:00-8:00', '8:00-9:00', '9:00-10:00', '10:00-11:00', 
+    '11:00-12:00', '12:00-13:00', '13:00-14:00', '14:00-15:00', 
+    '15:00-16:00', '16:00-17:00', '17:00-18:00', '18:00-19:00'
+  ];
+  return timeSlots;
+}
 
-    function autoFillSchedule() {
-      const timeSlots = generateTimeSlots();
-      const selectedCourse = courseSelect.value;
-      const selectedYear = yearSelect.value;
-      const selectedSection = sectionSelect.value;
-      
-      scheduleBody.innerHTML = '';
+function autoFillSchedule() {
+  const timeSlots = generateTimeSlots();
+  const selectedCourse = courseSelect.value;
+  const selectedYear = yearSelect.value;
+  const selectedSection = sectionSelect.value;
+  
+  scheduleBody.innerHTML = '';
 
-      // Get instructors and rooms from localStorage
-      const instructors = JSON.parse(localStorage.getItem('instructors')) || [];
-      const rooms = JSON.parse(localStorage.getItem('rooms')) || [];
+  // Get instructors from localStorage
+  const instructors = JSON.parse(localStorage.getItem('instructors')) || [];
+  const rooms = JSON.parse(localStorage.getItem('rooms')) || [];
 
-      timeSlots.forEach(timeSlot => {
-        const row = document.createElement('tr');
-        const [startTime] = timeSlot.split('-');
-        
-        // First add the time column
-        row.innerHTML = <td>${timeSlot}</td>;
+  timeSlots.forEach(timeSlot => {
+    const row = document.createElement('tr');
+    const [startTime] = timeSlot.split('-');
+    
+    // First add the time column
+    row.innerHTML = `<td>${timeSlot}</td>`;
 
-        // Add cells for each day
-        const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-        days.forEach(day => {
-          const cell = document.createElement('td');
+    // Add cells for each day
+    const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    days.forEach(day => {
+      const cell = document.createElement('td');
 
-          // Only show instructors if course, year, and section are selected
-          if (selectedCourse && selectedYear && selectedSection) {
-            // Check if there's an instructor scheduled for this time slot and day
-            const scheduledInstructor = instructors.find(instructor => {
-              // Match the exact course, year, and section
-              if (instructor.course !== selectedCourse ||
-                  instructor.year !== selectedYear ||
-                  instructor.section !== selectedSection ||
-                  instructor.day !== day) {
-                  return false;
-              }
-
-              // Parse instructor's time range
-              const [instrStartTime] = instructor.time.split(' - ')[0].split(':');
-              const [instrEndTime] = instructor.time.split(' - ')[1].split(':');
-              const currentHour = startTime.split(':')[0];
-
-              // Check if this time slot falls within the instructor's schedule
-              return parseInt(currentHour) >= parseInt(instrStartTime) &&
-                     parseInt(currentHour) < parseInt(instrEndTime);
-            });
-
-            if (scheduledInstructor) {
-              // Find matching room for this time slot and day
-              const matchingRoom = rooms.find(room => 
-                room.day === day && 
-                room.time === timeSlot
-              );
-
-              cell.className = 'occupied-cell';
-              cell.innerHTML = 
-                <div class="schedule-info">
-                  <div class="instructor">Instructor: ${scheduledInstructor.name}</div>
-                  <div class="subject">Subject: ${scheduledInstructor.subject}</div>
-                  <div class="room">Room: ${matchingRoom ? matchingRoom.room : 'TBA'}</div>
-                </div>
-              ;
-            }
+      // Only show instructors if course, year, and section are selected
+      if (selectedCourse && selectedYear && selectedSection) {
+        // Check if there's an instructor scheduled for this time slot and day
+        const scheduledInstructor = instructors.find(instructor => {
+          // Match the exact course, year, and section
+          if (instructor.course !== selectedCourse ||
+              instructor.year !== selectedYear ||
+              instructor.section !== selectedSection ||
+              instructor.day !== day) {
+              return false;
           }
 
-          row.appendChild(cell);
+          // Parse instructor's time range
+          const [instrStartTime] = instructor.time.split(' - ')[0].split(':');
+          const [instrEndTime] = instructor.time.split(' - ')[1].split(':');
+          const currentHour = startTime.split(':')[0];
+
+          // Check if this time slot falls within the instructor's schedule
+          return parseInt(currentHour) >= parseInt(instrStartTime) &&
+                 parseInt(currentHour) < parseInt(instrEndTime);
         });
 
-        scheduleBody.appendChild(row);
-      });
-    }
+        if (scheduledInstructor) {
+          // Find matching room for this time slot and day
+          const matchingRoom = rooms.find(room => 
+            room.day === day && 
+            room.time === timeSlot
+          );
 
-    courseSelect.addEventListener('change', function() {
-      yearSelect.innerHTML = '<option value="">-- Select Year --</option>';
-      sectionSelect.innerHTML = '<option value="">-- Select Section --</option>';
-      
-      const selectedCourse = courseSelect.value;
-
-      if (selectedCourse) {
-        yearSelect.disabled = false;
-        const years = courseConfig[selectedCourse].years;
-        years.forEach(year => {
-          const option = document.createElement('option');
-          option.value = year;
-          option.textContent = year;
-          yearSelect.appendChild(option);
-        });
-        sectionSelect.disabled = true;
-      } else {
-        yearSelect.disabled = true;
-        sectionSelect.disabled = true;
+          cell.className = 'occupied-cell';
+          cell.innerHTML = `
+            <div class="schedule-info">
+              <div class="instructor">${scheduledInstructor.name}</div>
+              <div class="subject">${scheduledInstructor.subject}</div>
+              <div class="room">${matchingRoom ? matchingRoom.room : 'TBA'}</div>
+            </div>
+          `;
+        }
       }
 
-      updateSelectionSummary();
+      row.appendChild(cell);
     });
 
-    yearSelect.addEventListener('change', function() {
-      sectionSelect.innerHTML = '<option value="">-- Select Section --</option>';
-      
-      const selectedCourse = courseSelect.value;
-      const selectedYear = yearSelect.value;
+    scheduleBody.appendChild(row);
+  });
+}
 
-      if (selectedCourse && selectedYear) {
-        sectionSelect.disabled = false;
-        const sections = courseConfig[selectedCourse].sections[selectedYear];
-        sections.forEach(section => {
-          const option = document.createElement('option');
-          option.value = section;
-          option.textContent = section;
-          sectionSelect.appendChild(option);
-        });
-      } else {
-        sectionSelect.disabled = true;
-      }
+courseSelect.addEventListener('change', function() {
+  yearSelect.innerHTML = '<option value="">-- Select Year --</option>';
+  sectionSelect.innerHTML = '<option value="">-- Select Section --</option>';
+  
+  const selectedCourse = courseSelect.value;
 
-      updateSelectionSummary();
+  if (selectedCourse) {
+    yearSelect.disabled = false;
+    const years = courseConfig[selectedCourse].years;
+    years.forEach(year => {
+      const option = document.createElement('option');
+      option.value = year;
+      option.textContent = year;
+      yearSelect.appendChild(option);
     });
+    sectionSelect.disabled = true;
+  } else {
+    yearSelect.disabled = true;
+    sectionSelect.disabled = true;
+  }
 
-    sectionSelect.addEventListener('focus', function() {
-      if (!yearSelect.value) {
-        alert('Please select a Year first');
-        courseSelect.focus();
-      }
+  updateSelectionSummary();
+});
+
+yearSelect.addEventListener('change', function() {
+  sectionSelect.innerHTML = '<option value="">-- Select Section --</option>';
+  
+  const selectedCourse = courseSelect.value;
+  const selectedYear = yearSelect.value;
+
+  if (selectedCourse && selectedYear) {
+    sectionSelect.disabled = false;
+    const sections = courseConfig[selectedCourse].sections[selectedYear];
+    sections.forEach(section => {
+      const option = document.createElement('option');
+      option.value = section;
+      option.textContent = section;
+      sectionSelect.appendChild(option);
     });
+  } else {
+    sectionSelect.disabled = true;
+  }
 
-    sectionSelect.addEventListener('change', updateSelectionSummary);
+  updateSelectionSummary();
+});
 
-    function updateSelectionSummary() {
-      const course = courseSelect.value;
-      const year = yearSelect.value;
-            const course = courseSelect.value;
-      const year = yearSelect.value;
-      const section = sectionSelect.value;
+sectionSelect.addEventListener('focus', function() {
+  if (!yearSelect.value) {
+    alert('Please select a Year first');
+    courseSelect.focus();
+  }
+});
 
-      if (course && year && section) {
-        const formattedYear = year === '1st' ? '1' : 
-                             year === '2nd' ? '2' : 
-                             year === '3rd' ? '3' : '4';
-        const combinedKey = ${course}-${formattedYear}${section};
-        
-        const studentCapacity = studentCapacityMap[combinedKey] || '---';
-        
-        courseSummary.textContent = combinedKey;
-        studentCapacityDisplay.textContent = studentCapacity;
-      } else {
-        courseSummary.textContent = '----';
-        studentCapacityDisplay.textContent = '---';
-      }
+sectionSelect.addEventListener('change', updateSelectionSummary);
 
-      // Update schedule after updating summary
-      autoFillSchedule();
-    }
+function updateSelectionSummary() {
+  const course = courseSelect.value;
+  const year = yearSelect.value;
+  const section = sectionSelect.value;
 
-    // Listen for storage changes
-    window.addEventListener('storage', function(e) {
-      if (e.key === 'instructors' || e.key === 'rooms') {
-        autoFillSchedule();
-      }
-    });
+  if (course && year && section) {
+    const formattedYear = year === '1st' ? '1' : 
+                         year === '2nd' ? '2' : 
+                         year === '3rd' ? '3' : '4';
+    const key = `${course}-${formattedYear}${section}`;
+    
+    const capacity = studentCapacityMap[key] || '---';
+    
+    courseSummary.textContent = key;
+    studentCapacityDisplay.textContent = capacity;
+  } else {
+    courseSummary.textContent = '----';
+    studentCapacityDisplay.textContent = '---';
+  }
 
-    // Initialize schedule on page load
-    document.addEventListener('DOMContentLoaded', function() {
-      autoFillSchedule();
-    });
-  </script>
+  autoFillSchedule();
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  autoFillSchedule();
+});
+          </script>
 </body>
 </html>
