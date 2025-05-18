@@ -1,134 +1,485 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>DHVSU Scheduling System</title>
-  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"/>
+  <link href="[https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap"](https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap") rel="stylesheet">
   <style>
+    :root {
+      --primary-color: #1A5F7A;
+      --secondary-color: #2C8EBB;
+      --accent-color: #F7B32D;
+      --background-color: #F4F7F6;
+      --text-color: #333;
+    }
+
     body {
-      font-family: Arial, sans-serif;
-      background-color: #f8f9fa;
-    }
-
-    .container {
+      font-family: 'Roboto', Arial, sans-serif;
       max-width: 1200px;
-      margin: 30px auto;
-      background-color: #fff;
-      padding: 30px;
-      border-radius: 10px;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+      margin: 0 auto;
+      padding: 20px;
+      background-color: var(--background-color);
     }
 
-    h1 {
-      font-size: 2rem;
-      margin-bottom: 30px;
-    }
-
-    .form-row > div {
-      margin-bottom: 15px;
-    }
-
-    table {
-      margin-top: 20px;
-    }
-
-    th, td {
+    h2 {
+      background-color: var(--primary-color);
+      color: white;
       text-align: center;
-      vertical-align: middle !important;
+      padding: 15px;
+      margin-bottom: 20px;
+      border-radius: 5px;
+    }
+
+    select {
+      margin: 10px 0;
+      padding: 10px;
+      width: 250px;
+      border: 1px solid var(--secondary-color);
+      border-radius: 4px;
+      background-color: white;
+      transition: all 0.3s ease;
+    }
+
+    select:focus {
+      outline: none;
+      border-color: var(--accent-color);
+      box-shadow: 0 0 5px rgba(247, 179, 45, 0.5);
+    }
+
+    .disabled {
+      background-color: #cccccc;
+      cursor: not-allowed;
+    }
+
+    #selectionSummary {
+      margin: 15px 0;
+      padding: 10px;
+      border: 1px solid var(--secondary-color);
+      background-color: #f9f9f9;
+      border-radius: 5px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    #scheduleTable {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 15px;
+      box-shadow: 0 2px 3px rgba(0,0,0,0.1);
+    }
+
+    #scheduleTable th, #scheduleTable td {
+      border: 1px solid #ddd;
+      padding: 8px;
+      text-align: center;
+    }
+
+    #scheduleTable th {
+      background-color: var(--primary-color);
+      color: white;
+      font-weight: bold;
+    }
+
+    .navigation-buttons {
+      margin-top: 20px;
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+    }
+
+    .navigation-buttons button {
+      padding: 10px 15px;
+      background-color: var(--secondary-color);
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+
+    .navigation-buttons button:hover {
+      background-color: var(--accent-color);
+    }
+
+    label {
+      display: block;
+      margin-top: 10px;
+      color: var(--primary-color);
+      font-weight: 500;
+    }
+
+    .occupied-cell {
+      background-color: var(--secondary-color);
+      color: white;
+      padding: 5px;
+    }
+
+    .schedule-info {
+      font-size: 12px;
+      line-height: 1.3;
+    }
+
+    .schedule-info .instructor {
+      font-weight: bold;
+    }
+
+    .schedule-info .subject {
+      font-style: italic;
+    }
+
+    .schedule-info .room {
+      color: #f0f0f0;
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <h1 class="text-center">DHVSU Scheduling System</h1>
+  <h2>DHVSU Automatic Scheduling System</h2>
+  
+  <label for="course">Select Course:</label> 
+  <select id="course"> 
+    <option value="">-- Select Course --</option> 
+    <option value="BSA">BSA</option>
+    <option value="BSAIS">BSAIS</option>
+    <option value="MSMarketing">MS Marketing</option>
+    <option value="BSE">BSE</option>
+    <option value="BSPublicAdministration">BS Public Administration</option>
+  </select>
 
-    <div class="form-row">
-      <div class="form-group col-md-4">
-        <label for="course-selector">Course</label>
-        <select id="course-selector" class="form-control">
-          <option value="">Select Course</option>
-          <option value="BSCS">BSCS</option>
-          <option value="BSIT">BSIT</option>
-          <option value="BSEMC">BSEMC</option>
-        </select>
-      </div>
-      <div class="form-group col-md-4">
-        <label for="year-selector">Year</label>
-        <select id="year-selector" class="form-control">
-          <option value="">Select Year</option>
-          <option value="1">1st Year</option>
-          <option value="2">2nd Year</option>
-          <option value="3">3rd Year</option>
-          <option value="4">4th Year</option>
-        </select>
-      </div>
-      <div class="form-group col-md-4">
-        <label for="section-selector">Section</label>
-        <select id="section-selector" class="form-control">
-          <option value="">Select Section</option>
-          <option value="A">A</option>
-          <option value="B">B</option>
-          <option value="C">C</option>
-        </select>
-      </div>
-    </div>
+  <label for="year">Select Year:</label> 
+  <select id="year" disabled> 
+    <option value="">-- Select Year --</option>
+  </select>
 
-    <table class="table table-bordered table-striped">
-      <thead class="thead-dark">
+  <label for="section">Select Section:</label> 
+  <select id="section" disabled> 
+    <option value="">-- Select Section --</option>
+  </select>
+
+  <div id="selectionSummary">
+    <span id="courseSummary">----</span>
+    <span>Students Capacity:</span>
+    <span id="studentCapacityDisplay">---</span>
+    <span>Students</span>
+  </div>
+
+  <div id="scheduleContainer">
+    <h3>Class Schedule</h3>
+    <table id="scheduleTable" border="1">
+      <thead>
         <tr>
-          <th>Subject</th>
-          <th>Instructor</th>
-          <th>Room</th>
-          <th>Day</th>
           <th>Time</th>
-          <th>Capacity</th> <!-- ✅ This was added back -->
+          <th>Monday</th>
+          <th>Tuesday</th>
+          <th>Wednesday</th>
+          <th>Thursday</th>
+          <th>Friday</th>
+          <th>Saturday</th>
         </tr>
       </thead>
-      <tbody id="schedule-table-body">
-        <!-- Populated by JavaScript -->
+      <tbody id="scheduleBody">
+        <!-- Schedule rows will be dynamically populated -->
       </tbody>
     </table>
   </div>
 
+  <div class="navigation-buttons">
+    <button onclick="navigateTo('Instructor.html')">Instructor Enrollment</button>
+    <button onclick="navigateTo('Room.html')">Room Registration</button>
+  </div>
+
   <script>
-    document.addEventListener("DOMContentLoaded", function () {
-      ["course-selector", "year-selector", "section-selector"].forEach(id =>
-        document.getElementById(id).addEventListener("change", updateScheduleTable)
-      );
-      updateScheduleTable();
-    });
+    const studentCapacityMap = {
+      // BSA Capacities
+      'BSA-1A': 30, 'BSA-1B': 37, 'BSA-1C': 32, 'BSA-1D': 34, 
+      'BSA-1E': 43, 'BSA-1F': 49, 'BSA-1G': 45, 'BSA-1H': 41, 
+      'BSA-1I': 38, 'BSA-1J': 46,
+      'BSA-2A': 38, 'BSA-2B': 44, 'BSA-2C': 46, 'BSA-2D': 34, 
+      'BSA-2E': 39, 'BSA-2F': 35, 'BSA-2G': 47, 'BSA-2H': 31,
+      'BSA-3A': 44, 'BSA-3B': 50, 'BSA-3C': 41, 'BSA-3D': 32, 
+      'BSA-3E': 50, 'BSA-3F': 36, 'BSA-3G': 42, 'BSA-3H': 39,
+      'BSA-4A': 41, 'BSA-4B': 38, 'BSA-4C': 35, 'BSA-4D': 47,
 
-    function updateScheduleTable() {
-      const scheduleData = JSON.parse(localStorage.getItem("scheduleData")) || {};
-      const tableBody = document.getElementById("schedule-table-body");
-      tableBody.innerHTML = "";
+      // BSAIS Capacities
+      'BSAIS-1A': 40, 'BSAIS-1B': 42, 'BSAIS-1C': 32, 'BSAIS-1D': 44, 'BSAIS-1E': 35,
+      'BSAIS-2A': 41, 'BSAIS-2B': 40, 'BSAIS-2C': 50, 'BSAIS-2D': 44, 'BSAIS-2E': 44, 
+      'BSAIS-2F': 43, 'BSAIS-2G': 38,
+      'BSAIS-3A': 42, 'BSAIS-3B': 50, 'BSAIS-3C': 41, 'BSAIS-3D': 47, 'BSAIS-3E': 41, 
+      'BSAIS-3F': 30,
+      'BSAIS-4A': 36, 'BSAIS-4B': 35, 'BSAIS-4C': 45, 'BSAIS-4D': 42, 'BSAIS-4E': 30, 
+      'BSAIS-4F': 32, 'BSAIS-4G': 34,
 
-      const course = document.getElementById("course-selector").value;
-      const year = document.getElementById("year-selector").value;
-      const section = document.getElementById("section-selector").value;
+      // MSMarketing Capacities
+      'MSMarketing-1A': 36, 'MSMarketing-1B': 39, 'MSMarketing-1C': 35, 'MSMarketing-1D': 31, 
+      'MSMarketing-1E': 36, 'MSMarketing-1F': 43, 'MSMarketing-1G': 41, 'MSMarketing-1H': 41,
+      'MSMarketing-2A': 35, 'MSMarketing-2B': 44, 'MSMarketing-2C': 49, 'MSMarketing-2D': 40, 
+      'MSMarketing-2E': 49, 'MSMarketing-2F': 50, 'MSMarketing-2G': 31, 'MSMarketing-2H': 46, 
+      'MSMarketing-2I': 36,
+      'MSMarketing-3A': 42, 'MSMarketing-3B': 43, 'MSMarketing-3C': 36,
+      'MSMarketing-4A': 37, 'MSMarketing-4B': 31, 'MSMarketing-4C': 49, 'MSMarketing-4D': 47, 
+      'MSMarketing-4E': 43, 'MSMarketing-4F': 44, 'MSMarketing-4G': 33, 'MSMarketing-4H': 45, 
+      'MSMarketing-4I': 31,
 
-      const key = `${course}-${year}-${section}`;
+      // BSE Capacities
+      'BSE-1A': 40, 'BSE-1B': 48, 'BSE-1C': 50,
+      'BSE-2A': 42, 'BSE-2B': 34, 'BSE-2C': 44, 'BSE-2D': 40, 'BSE-2E': 36, 
+      'BSE-2F': 34, 'BSE-2G': 48, 'BSE-2H': 40,
+            'BSE-2F': 34, 'BSE-2G': 48, 'BSE-2H': 40,
+      'BSE-3A': 39, 'BSE-3B': 32, 'BSE-3C': 44, 'BSE-3D': 50,
+      'BSE-4A': 41, 'BSE-4B': 37, 'BSE-4C': 42, 'BSE-4D': 40, 'BSE-4E': 33, 
+      'BSE-4F': 43, 'BSE-4G': 49, 'BSE-4H': 38,
 
-      if (scheduleData[key] && scheduleData[key].length > 0) {
-        scheduleData[key].forEach(entry => {
-          const row = document.createElement("tr");
-          row.innerHTML = `
-            <td>${entry.subject || "-"}</td>
-            <td>${entry.instructor || "-"}</td>
-            <td>${entry.room || "-"}</td>
-            <td>${entry.day || "-"}</td>
-            <td>${entry.time || "-"}</td>
-            <td>${entry.capacity || "-"}</td> <!-- ✅ Restored Capacity -->
-          `;
-          tableBody.appendChild(row);
-        });
-      } else {
-        const row = document.createElement("tr");
-        row.innerHTML = `<td colspan="6" class="text-center">No schedule data available.</td>`;
-        tableBody.appendChild(row);
+      // BSPublicAdministration Capacities
+      'BSPublicAdministration-1A': 36, 'BSPublicAdministration-1B': 34, 
+      'BSPublicAdministration-1C': 50, 'BSPublicAdministration-1D': 31,
+      'BSPublicAdministration-2A': 50, 'BSPublicAdministration-2B': 40, 
+      'BSPublicAdministration-2C': 43, 'BSPublicAdministration-2D': 36, 
+      'BSPublicAdministration-2E': 38, 'BSPublicAdministration-2F': 49, 
+      'BSPublicAdministration-2G': 36,
+      'BSPublicAdministration-3A': 37, 'BSPublicAdministration-3B': 30, 
+      'BSPublicAdministration-3C': 33, 'BSPublicAdministration-3D': 38, 
+      'BSPublicAdministration-3E': 48,
+      'BSPublicAdministration-4A': 34, 'BSPublicAdministration-4B': 43, 
+      'BSPublicAdministration-4C': 33, 'BSPublicAdministration-4D': 30, 
+      'BSPublicAdministration-4E': 43, 'BSPublicAdministration-4F': 39, 
+      'BSPublicAdministration-4G': 30
+    };
+
+    const courseConfig = {
+      BSA: {
+        years: ['1st', '2nd', '3rd', '4th'],
+        sections: {
+          '1st': ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'],
+          '2nd': ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'],
+          '3rd': ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'],
+          '4th': ['A', 'B', 'C', 'D']
+        }
+      },
+      BSAIS: {
+        years: ['1st', '2nd', '3rd', '4th'],
+        sections: {
+          '1st': ['A', 'B', 'C', 'D', 'E'],
+          '2nd': ['A', 'B', 'C', 'D', 'E', 'F', 'G'],
+          '3rd': ['A', 'B', 'C', 'D', 'E', 'F'],
+          '4th': ['A', 'B', 'C', 'D', 'E', 'F', 'G']
+        }
+      },
+      MSMarketing: {
+        years: ['1st', '2nd', '3rd', '4th'],
+        sections: {
+          '1st': ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'],
+          '2nd': ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I'],
+          '3rd': ['A', 'B', 'C'],
+          '4th': ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I']
+        }
+      },
+      BSE: {
+        years: ['1st', '2nd', '3rd', '4th'],
+        sections: {
+          '1st': ['A', 'B', 'C'],
+          '2nd': ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'],
+          '3rd': ['A', 'B', 'C', 'D'],
+          '4th': ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H']
+        }
+      },
+      BSPublicAdministration: {
+        years: ['1st', '2nd', '3rd', '4th'],
+        sections: {
+          '1st': ['A', 'B', 'C', 'D'],
+          '2nd': ['A', 'B', 'C', 'D', 'E', 'F', 'G'],
+          '3rd': ['A', 'B', 'C', 'D', 'E'],
+          '4th': ['A', 'B', 'C', 'D', 'E', 'F', 'G']
+        }
+      }
+    };
+
+    const courseSelect = document.getElementById('course');
+    const yearSelect = document.getElementById('year');
+    const sectionSelect = document.getElementById('section');
+    const courseSummary = document.getElementById('courseSummary');
+    const studentCapacityDisplay = document.getElementById('studentCapacityDisplay');
+    const scheduleBody = document.getElementById('scheduleBody');
+
+    function navigateTo(page) {
+      try {
+        window.location.href = page;
+      } catch (error) {
+        console.error('Navigation error:', error);
+        alert('Unable to navigate. Please check the page exists.');
       }
     }
+
+    function generateTimeSlots() {
+      const timeSlots = [
+        '7:00-8:00', '8:00-9:00', '9:00-10:00', '10:00-11:00', 
+        '11:00-12:00', '12:00-13:00', '13:00-14:00', '14:00-15:00', 
+        '15:00-16:00', '16:00-17:00', '17:00-18:00', '18:00-19:00'
+      ];
+      return timeSlots;
+    }
+
+    function autoFillSchedule() {
+      const timeSlots = generateTimeSlots();
+      const selectedCourse = courseSelect.value;
+      const selectedYear = yearSelect.value;
+      const selectedSection = sectionSelect.value;
+      
+      scheduleBody.innerHTML = '';
+
+      // Get instructors and rooms from localStorage
+      const instructors = JSON.parse(localStorage.getItem('instructors')) || [];
+      const rooms = JSON.parse(localStorage.getItem('rooms')) || [];
+
+      timeSlots.forEach(timeSlot => {
+        const row = document.createElement('tr');
+        const [startTime] = timeSlot.split('-');
+        
+        // First add the time column
+        row.innerHTML = <td>${timeSlot}</td>;
+
+        // Add cells for each day
+        const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+        days.forEach(day => {
+          const cell = document.createElement('td');
+
+          // Only show instructors if course, year, and section are selected
+          if (selectedCourse && selectedYear && selectedSection) {
+            // Check if there's an instructor scheduled for this time slot and day
+            const scheduledInstructor = instructors.find(instructor => {
+              // Match the exact course, year, and section
+              if (instructor.course !== selectedCourse ||
+                  instructor.year !== selectedYear ||
+                  instructor.section !== selectedSection ||
+                  instructor.day !== day) {
+                  return false;
+              }
+
+              // Parse instructor's time range
+              const [instrStartTime] = instructor.time.split(' - ')[0].split(':');
+              const [instrEndTime] = instructor.time.split(' - ')[1].split(':');
+              const currentHour = startTime.split(':')[0];
+
+              // Check if this time slot falls within the instructor's schedule
+              return parseInt(currentHour) >= parseInt(instrStartTime) &&
+                     parseInt(currentHour) < parseInt(instrEndTime);
+            });
+
+            if (scheduledInstructor) {
+              // Find matching room for this time slot and day
+              const matchingRoom = rooms.find(room => 
+                room.day === day && 
+                room.time === timeSlot
+              );
+
+              cell.className = 'occupied-cell';
+              cell.innerHTML = 
+                <div class="schedule-info">
+                  <div class="instructor">Instructor: ${scheduledInstructor.name}</div>
+                  <div class="subject">Subject: ${scheduledInstructor.subject}</div>
+                  <div class="room">Room: ${matchingRoom ? matchingRoom.room : 'TBA'}</div>
+                </div>
+              ;
+            }
+          }
+
+          row.appendChild(cell);
+        });
+
+        scheduleBody.appendChild(row);
+      });
+    }
+
+    courseSelect.addEventListener('change', function() {
+      yearSelect.innerHTML = '<option value="">-- Select Year --</option>';
+      sectionSelect.innerHTML = '<option value="">-- Select Section --</option>';
+      
+      const selectedCourse = courseSelect.value;
+
+      if (selectedCourse) {
+        yearSelect.disabled = false;
+        const years = courseConfig[selectedCourse].years;
+        years.forEach(year => {
+          const option = document.createElement('option');
+          option.value = year;
+          option.textContent = year;
+          yearSelect.appendChild(option);
+        });
+        sectionSelect.disabled = true;
+      } else {
+        yearSelect.disabled = true;
+        sectionSelect.disabled = true;
+      }
+
+      updateSelectionSummary();
+    });
+
+    yearSelect.addEventListener('change', function() {
+      sectionSelect.innerHTML = '<option value="">-- Select Section --</option>';
+      
+      const selectedCourse = courseSelect.value;
+      const selectedYear = yearSelect.value;
+
+      if (selectedCourse && selectedYear) {
+        sectionSelect.disabled = false;
+        const sections = courseConfig[selectedCourse].sections[selectedYear];
+        sections.forEach(section => {
+          const option = document.createElement('option');
+          option.value = section;
+          option.textContent = section;
+          sectionSelect.appendChild(option);
+        });
+      } else {
+        sectionSelect.disabled = true;
+      }
+
+      updateSelectionSummary();
+    });
+
+    sectionSelect.addEventListener('focus', function() {
+      if (!yearSelect.value) {
+        alert('Please select a Year first');
+        courseSelect.focus();
+      }
+    });
+
+    sectionSelect.addEventListener('change', updateSelectionSummary);
+
+    function updateSelectionSummary() {
+      const course = courseSelect.value;
+      const year = yearSelect.value;
+            const course = courseSelect.value;
+      const year = yearSelect.value;
+      const section = sectionSelect.value;
+
+      if (course && year && section) {
+        const formattedYear = year === '1st' ? '1' : 
+                             year === '2nd' ? '2' : 
+                             year === '3rd' ? '3' : '4';
+        const combinedKey = ${course}-${formattedYear}${section};
+        
+        const studentCapacity = studentCapacityMap[combinedKey] || '---';
+        
+        courseSummary.textContent = combinedKey;
+        studentCapacityDisplay.textContent = studentCapacity;
+      } else {
+        courseSummary.textContent = '----';
+        studentCapacityDisplay.textContent = '---';
+      }
+
+      // Update schedule after updating summary
+      autoFillSchedule();
+    }
+
+    // Listen for storage changes
+    window.addEventListener('storage', function(e) {
+      if (e.key === 'instructors' || e.key === 'rooms') {
+        autoFillSchedule();
+      }
+    });
+
+    // Initialize schedule on page load
+    document.addEventListener('DOMContentLoaded', function() {
+      autoFillSchedule();
+    });
   </script>
 </body>
 </html>
