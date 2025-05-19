@@ -29,6 +29,7 @@
       max-width: 800px;
       margin: 0 auto;
       padding: 20px;
+      position: relative;
     }
 
     .back-button {
@@ -140,6 +141,15 @@
       background-color: rgba(217, 35, 35, 0.1);
     }
 
+    .bottom-buttons {
+      margin-top: 30px;
+      text-align: center;
+    }
+
+    .bottom-buttons button {
+      margin: 0 10px;
+    }
+
     @media (max-width: 768px) {
       .container {
         padding: 10px;
@@ -163,7 +173,7 @@
 <body>
   <div class="container">
     <button class="back-button" onclick="navigateTo('index.html')">Back to Home</button>
-    
+
     <header>
       <h1 id="formTitle">Room Registration</h1>
     </header>
@@ -218,7 +228,7 @@
       </div>
     </form>
 
-    <div style="margin-top: 20px; text-align: center;">
+    <div class="bottom-buttons">
       <button onclick="navigateTo('RoomList.html')">View Registered Rooms</button>
     </div>
   </div>
@@ -231,7 +241,7 @@
     function toggleTimeSlots(day) {
       const timeSlotsDiv = document.getElementById('timeSlots');
       const timeSelect = document.getElementById('time');
-      
+
       if (day) {
         timeSlotsDiv.style.display = 'block';
         timeSelect.required = true;
