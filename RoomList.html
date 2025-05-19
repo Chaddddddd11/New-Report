@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Room List</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Registered Rooms</title>
   <style>
     :root {
       --primary-color: #d92323;
@@ -12,217 +12,221 @@
       --text-color: #333;
     }
 
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-
     body {
       font-family: 'Arial', sans-serif;
       background-color: var(--background-color);
-      color: var(--text-color);
-      line-height: 1.6;
+      margin: 0;
+      padding: 0;
+    }
+
+    .top-buttons {
+      display: flex;
+      justify-content: space-between;
       padding: 20px;
+    }
+
+    .top-buttons button {
+      background-color: var(--secondary-color);
+      border: none;
+      border-radius: 5px;
+      padding: 10px 20px;
+      font-size: 0.9em;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+
+    .top-buttons button:hover {
+      background-color: #e6b800;
     }
 
     header {
       background-color: var(--primary-color);
       color: white;
-      padding: 20px;
       text-align: center;
-      margin-bottom: 30px;
-      border-radius: 10px;
+      padding: 20px;
+      border-radius: 0 0 10px 10px;
       box-shadow: 0 2px 10px rgba(0,0,0,0.1);
     }
 
     h1 {
-      font-size: 2.2em;
+      margin: 0;
+      font-size: 2em;
     }
 
-    .day-section {
+    .container {
+      max-width: 1000px;
+      margin: 20px auto;
+      padding: 0 20px;
+    }
+
+    .day-group {
       margin-bottom: 30px;
     }
 
     .day-title {
       font-size: 1.5em;
-      margin-bottom: 15px;
       color: var(--primary-color);
-      border-bottom: 2px solid var(--primary-color);
+      margin-bottom: 15px;
+      border-bottom: 2px solid #ccc;
       padding-bottom: 5px;
     }
 
     .room-card {
       background: white;
+      padding: 20px;
       border-radius: 10px;
-      padding: 15px 20px;
-      margin-bottom: 15px;
       box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      flex-wrap: wrap;
+      margin-bottom: 15px;
     }
 
     .room-info {
-      flex: 1;
-    }
-
-    .room-info strong {
-      display: block;
-      font-size: 1.2em;
-      margin-bottom: 5px;
-    }
-
-    .room-buttons button {
-      background-color: var(--secondary-color);
-      border: none;
-      padding: 8px 12px;
-      margin-left: 5px;
-      border-radius: 5px;
-      cursor: pointer;
-      font-size: 0.9em;
-    }
-
-    .room-buttons button:hover {
-      background-color: #e6b800;
-    }
-
-    .no-rooms {
-      color: #777;
-      font-style: italic;
-      text-align: center;
-    }
-
-    .nav-buttons {
       display: flex;
-      justify-content: center;
-      gap: 15px;
-      margin-top: 40px;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 10px;
     }
 
-    .nav-buttons button {
+    .room-info span {
+      font-weight: bold;
+      color: var(--text-color);
+    }
+
+    .room-actions {
+      margin-top: 10px;
+      text-align: right;
+    }
+
+    .room-actions button {
+      margin-left: 10px;
       background-color: var(--primary-color);
       color: white;
-      padding: 10px 20px;
       border: none;
+      padding: 8px 14px;
       border-radius: 5px;
-      font-size: 1em;
       cursor: pointer;
+      transition: background-color 0.3s;
     }
 
-    .nav-buttons button:hover {
+    .room-actions button:hover {
       background-color: #b31a1a;
     }
 
-    @media (max-width: 600px) {
-      .room-card {
+    @media (max-width: 768px) {
+      .room-info {
         flex-direction: column;
         align-items: flex-start;
       }
 
-      .room-buttons {
-        margin-top: 10px;
+      .room-actions {
+        text-align: left;
+      }
+
+      .top-buttons {
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .top-buttons button {
+        width: 100%;
+        max-width: 200px;
       }
     }
   </style>
 </head>
 <body>
+
+  <div class="top-buttons">
+    <button onclick="navigateTo('index.html')">Back to Home</button>
+    <button onclick="navigateTo('Room.html')">Register New Room</button>
+  </div>
+
   <header>
     <h1>Registered Rooms</h1>
   </header>
 
-  <div id="roomListContainer"></div>
-
-  <div class="nav-buttons">
-    <button onclick="navigateTo('Room.html')">Register New Room</button>
-    <button onclick="navigateTo('index.html')">Back to Home</button>
-  </div>
+  <div class="container" id="roomContainer"></div>
 
   <script>
-    const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+    function navigateTo(page) {
+      window.location.href = page;
+    }
 
     function loadRooms() {
-      const container = document.getElementById("roomListContainer");
-      const rooms = JSON.parse(localStorage.getItem("rooms")) || [];
+      const roomContainer = document.getElementById('roomContainer');
+      const rooms = JSON.parse(localStorage.getItem('rooms')) || [];
 
-      if (rooms.length === 0) {
-        container.innerHTML = '<p class="no-rooms">No rooms registered.</p>';
-        return;
-      }
-
-      days.forEach(day => {
-        const daySection = document.createElement("div");
-        daySection.className = "day-section";
-
-        const title = document.createElement("h2");
-        title.className = "day-title";
-        title.textContent = day;
-        daySection.appendChild(title);
-
-        const dayRooms = rooms
-          .map((room, index) => ({ ...room, index }))
-          .filter(r => r.day === day)
-          .sort((a, b) => a.time.localeCompare(b.time));
-
-        if (dayRooms.length === 0) {
-          const none = document.createElement("p");
-          none.className = "no-rooms";
-          none.textContent = "No rooms for this day.";
-          daySection.appendChild(none);
-        } else {
-          dayRooms.forEach(({ roomName, time, capacity, index }) => {
-            const card = document.createElement("div");
-            card.className = "room-card";
-
-            const info = document.createElement("div");
-            info.className = "room-info";
-            info.innerHTML = `
-              <strong>${roomName}</strong>
-              🕒 ${time} | 👥 ${capacity} students
-            `;
-
-            const buttons = document.createElement("div");
-            buttons.className = "room-buttons";
-            buttons.innerHTML = `
-              <button onclick="editRoom(${index})">Edit</button>
-              <button onclick="deleteRoom(${index})">Delete</button>
-            `;
-
-            card.appendChild(info);
-            card.appendChild(buttons);
-            daySection.appendChild(card);
-          });
+      const grouped = {};
+      rooms.forEach((room, index) => {
+        if (!grouped[room.day]) {
+          grouped[room.day] = [];
         }
+        grouped[room.day].push({ ...room, index });
+      });
 
-        container.appendChild(daySection);
+      roomContainer.innerHTML = '';
+
+      const sortedDays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+      sortedDays.forEach(day => {
+        if (grouped[day]) {
+          const groupDiv = document.createElement('div');
+          groupDiv.className = 'day-group';
+
+          const dayTitle = document.createElement('div');
+          dayTitle.className = 'day-title';
+          dayTitle.textContent = day;
+          groupDiv.appendChild(dayTitle);
+
+          grouped[day].sort((a, b) => a.time.localeCompare(b.time)).forEach(room => {
+            const card = document.createElement('div');
+            card.className = 'room-card';
+
+            const info = document.createElement('div');
+            info.className = 'room-info';
+            info.innerHTML = `
+              <div><span>Room:</span> ${room.roomName}</div>
+              <div><span>Time:</span> ${room.time}</div>
+              <div><span>Capacity:</span> ${room.capacity}</div>
+            `;
+            card.appendChild(info);
+
+            const actions = document.createElement('div');
+            actions.className = 'room-actions';
+            actions.innerHTML = `
+              <button onclick="editRoom(${room.index})">Edit</button>
+              <button onclick="deleteRoom(${room.index})">Delete</button>
+            `;
+            card.appendChild(actions);
+
+            groupDiv.appendChild(card);
+          });
+
+          roomContainer.appendChild(groupDiv);
+        }
       });
     }
 
     function editRoom(index) {
-      const rooms = JSON.parse(localStorage.getItem("rooms")) || [];
+      const rooms = JSON.parse(localStorage.getItem('rooms')) || [];
       const room = rooms[index];
       const query = new URLSearchParams({
-        edit: true,
+        edit: 'true',
         index,
         roomName: room.roomName,
         day: room.day,
         time: room.time,
         capacity: room.capacity
-      }).toString();
-      navigateTo(`Room.html?${query}`);
+      });
+      window.location.href = `Room.html?${query.toString()}`;
     }
 
     function deleteRoom(index) {
-      if (!confirm("Are you sure you want to delete this room?")) return;
-      const rooms = JSON.parse(localStorage.getItem("rooms")) || [];
-      rooms.splice(index, 1);
-      localStorage.setItem("rooms", JSON.stringify(rooms));
-      location.reload();
-    }
-
-    function navigateTo(page) {
-      window.location.href = page;
+      if (confirm('Are you sure you want to delete this room?')) {
+        let rooms = JSON.parse(localStorage.getItem('rooms')) || [];
+        rooms.splice(index, 1);
+        localStorage.setItem('rooms', JSON.stringify(rooms));
+        loadRooms();
+      }
     }
 
     loadRooms();
