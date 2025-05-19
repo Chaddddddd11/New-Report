@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>DHVSU Room List</title>
+    <title>DHVSU Instructors List</title>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -101,13 +101,13 @@
             margin-bottom: 20px;
         }
 
-        .room-table {
+        .instructor-table {
             width: 100%;
             border-collapse: collapse;
             background-color: white;
         }
 
-        .room-table th {
+        .instructor-table th {
             background-color: var(--primary-color);
             color: white;
             padding: 12px;
@@ -115,16 +115,16 @@
             white-space: nowrap;
         }
 
-        .room-table td {
+        .instructor-table td {
             padding: 12px;
             border-bottom: 1px solid #eee;
         }
 
-        .room-table tr:hover {
+        .instructor-table tr:hover {
             background-color: var(--background-color);
         }
 
-        .no-rooms {
+        .no-instructors {
             text-align: center;
             color: var(--primary-color);
             font-size: 1.2em;
@@ -181,149 +181,113 @@
     </style>
 </head>
 <body>
-    <div class="container">
-        <a href="index.html" class="back-btn">← Back</a>
-        <div class="header">
-            <h1>Registered Rooms</h1>
-        </div>
+<div class="container">
+    <a href="index.html" class="back-btn">← Back</a>
+    <div class="header">
+        <h1>Enrolled Instructors List</h1>
+    </div>
 
-        <div class="filter-section">
-            <div class="filter-group">
-                <input 
-                    type="text" 
-                    id="roomFilter" 
-                    class="filter-input" 
-                    placeholder="Filter by Room Name"
-                >
-                <select id="dayFilter" class="filter-input">
-                    <option value="">All Days</option>
-                    <option value="Monday">Monday</option>
-                    <option value="Tuesday">Tuesday</option>
-                    <option value="Wednesday">Wednesday</option>
-                    <option value="Thursday">Thursday</option>
-                    <option value="Friday">Friday</option>
-                    <option value="Saturday">Saturday</option>
-                </select>
-            </div>
-        </div>
-
-        <div class="table-container">
-            <table class="room-table">
-                <thead>
-                    <tr>
-                        <th>Room Name</th>
-                        <th>Day</th>
-                        <th>Time Slot</th>
-                        <th>Capacity</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody id="roomTableBody">
-                    <!-- Rooms will be loaded here -->
-                </tbody>
-            </table>
-            <div id="noRoomsMessage" class="no-rooms">
-                No Rooms Registered Yet
-            </div>
-        </div>
-
-        <div class="btn-container">
-            <a href="Room.html" class="btn">Register New Room</a>
+    <div class="filter-section">
+        <div class="filter-group">
+            <input type="text" id="nameFilter" class="filter-input" placeholder="Filter by Instructor Name">
+            <input type="text" id="departmentFilter" class="filter-input" placeholder="Filter by Department">
         </div>
     </div>
 
-    <script>
-        const tableBody = document.getElementById('roomTableBody');
-        const noRoomsMessage = document.getElementById('noRoomsMessage');
-        const roomFilter = document.getElementById('roomFilter');
-        const dayFilter = document.getElementById('dayFilter');
-        const table = document.querySelector('.room-table');
+    <div class="table-container">
+        <table class="instructor-table">
+            <thead>
+                <tr>
+                    <th>Instructor Name</th>
+                    <th>Department</th>
+                    <th>Subject</th>
+                    <th>Email</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="instructorTableBody">
+                <!-- Instructors will be loaded here -->
+            </tbody>
+        </table>
+        <div id="noInstructorsMessage" class="no-instructors">
+            No Instructors Enrolled Yet
+        </div>
+    </div>
 
-        function loadRooms() {
-            const rooms = JSON.parse(localStorage.getItem('rooms')) || [];
-            
-            if (rooms.length === 0) {
-                table.style.display = 'none';
-                noRoomsMessage.style.display = 'block';
-                return;
-            }
+    <div class="btn-container">
+        <a href="Instructor.html" class="btn">Register New Instructor</a>
+    </div>
+</div>
 
-            table.style.display = 'table';
-            noRoomsMessage.style.display = 'none';
+<script>
+    const tableBody = document.getElementById('instructorTableBody');
+    const noInstructorsMessage = document.getElementById('noInstructorsMessage');
+    const nameFilter = document.getElementById('nameFilter');
+    const departmentFilter = document.getElementById('departmentFilter');
+    const table = document.querySelector('.instructor-table');
 
-            displayRooms(rooms);
+    function loadInstructors() {
+        const instructors = JSON.parse(localStorage.getItem('instructors')) || [];
+
+        if (instructors.length === 0) {
+            table.style.display = 'none';
+            noInstructorsMessage.style.display = 'block';
+            return;
         }
 
-        function displayRooms(rooms) {
-            tableBody.innerHTML = '';
-            
-            rooms.forEach((room, index) => {
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td>${room.roomName}</td>
-                    <td>${room.day}</td>
-                    <td>${room.time}</td>
-                    <td>${room.capacity}</td>
-                    <td class="action-cell">
-                        <button class="edit-btn" onclick="editRoom(${index})">Edit</button>
-                        <button class="delete-btn" onclick="deleteRoom(${index})">Delete</button>
-                    </td>
-                `;
-                tableBody.appendChild(row);
-            });
+        table.style.display = 'table';
+        noInstructorsMessage.style.display = 'none';
+
+        displayInstructors(instructors);
+    }
+
+    function displayInstructors(instructors) {
+        tableBody.innerHTML = '';
+
+        instructors.forEach((instructor, index) => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${instructor.name}</td>
+                <td>${instructor.department}</td>
+                <td>${instructor.subject}</td>
+                <td>${instructor.email}</td>
+                <td class="action-cell">
+                    <button class="edit-btn" onclick="editInstructor(${index})">Edit</button>
+                    <button class="delete-btn" onclick="deleteInstructor(${index})">Delete</button>
+                </td>
+            `;
+            tableBody.appendChild(row);
+        });
+    }
+
+    function editInstructor(index) {
+        const instructors = JSON.parse(localStorage.getItem('instructors')) || [];
+        const instructor = instructors[index];
+
+        const params = new URLSearchParams({
+            edit: 'true',
+            index: index,
+            name: instructor.name,
+            department: instructor.department,
+            subject: instructor.subject,
+            email: instructor.email
+        });
+
+        window.location.href = `Instructor.html?${params.toString()}`;
+    }
+
+    function deleteInstructor(index) {
+        if (confirm('Are you sure you want to delete this instructor?')) {
+            const instructors = JSON.parse(localStorage.getItem('instructors')) || [];
+            instructors.splice(index, 1);
+            localStorage.setItem('instructors', JSON.stringify(instructors));
+            loadInstructors();
         }
+    }
 
-        function editRoom(index) {
-            const rooms = JSON.parse(localStorage.getItem('rooms')) || [];
-            const room = rooms[index];
-            
-            const params = new URLSearchParams({
-                edit: 'true',
-                index: index,
-                roomName: room.roomName,
-                day: room.day,
-                time: room.time.split(' - ')[0], // Extract start time
-                capacity: room.capacity
-            });
-            
-            window.location.href = `Room.html?${params.toString()}`;
-        }
+    function filterInstructors() {
+        const instructors = JSON.parse(localStorage.getItem('instructors')) || [];
+        const nameValue = nameFilter.value.toLowerCase();
+        const deptValue = departmentFilter.value.toLowerCase();
 
-        function deleteRoom(index) {
-            if (confirm('Are you sure you want to delete this room?')) {
-                const rooms = JSON.parse(localStorage.getItem('rooms')) || [];
-                rooms.splice(index, 1);
-                localStorage.setItem('rooms', JSON.stringify(rooms));
-                loadRooms();
-            }
-        }
-
-        function filterRooms() {
-            const rooms = JSON.parse(localStorage.getItem('rooms')) || [];
-            const roomValue = roomFilter.value.toLowerCase();
-            const dayValue = dayFilter.value;
-
-            const filteredRooms = rooms.filter(room => {
-                const roomMatch = room.roomName.toLowerCase().includes(roomValue);
-                const dayMatch = !dayValue || room.day === dayValue;
-                return roomMatch && dayMatch;
-            });
-
-            if (filteredRooms.length === 0) {
-                table.style.display = 'none';
-                noRoomsMessage.textContent = 'No matching rooms found';
-                noRoomsMessage.style.display = 'block';
-            } else {
-                table.style.display = 'table';
-                noRoomsMessage.style.display = 'none';
-                displayRooms(filteredRooms);
-            }
-        }
-
-        window.addEventListener('load', loadRooms);
-        roomFilter.addEventListener('input', filterRooms);
-        dayFilter.addEventListener('change', filterRooms);
-        window.addEventListener('storage', loadRooms);
-    </script>
-</body>
-</html>
+        const
