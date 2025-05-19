@@ -1,363 +1,231 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>DHVSU Instructor List</title>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --primary-color: #1A5F7A;
-            --secondary-color: #2C8EBB;
-            --accent-color: #F7B32D;
-            --background-color: #F4F7F6;
-            --text-color: #333;
-            --error-color: #dc3545;
-        }
+  <meta charset="UTF-8" />
+  <title>Room List</title>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Roboto', sans-serif;
+      background-color: #f4f7f6;
+      margin: 0;
+      padding: 20px;
+      color: #333;
+    }
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
+    .header {
+      background-color: #1A5F7A;
+      color: white;
+      text-align: center;
+      padding: 15px;
+      margin-bottom: 20px;
+      border-radius: 5px;
+    }
 
-        body {
-            font-family: 'Roboto', Arial, sans-serif;
-            background-color: var(--background-color);
-            color: var(--text-color);
-            line-height: 1.6;
-        }
+    .btn {
+      display: inline-block;
+      margin: 10px 5px;
+      padding: 10px 20px;
+      background-color: #2C8EBB;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      text-decoration: none;
+      transition: background-color 0.3s ease;
+    }
 
-        .container {
-            position: relative;
-            width: 100%;
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
-        }
+    .btn:hover {
+      background-color: #F7B32D;
+    }
 
-        .back-btn {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            padding: 8px 15px;
-            background-color: var(--secondary-color);
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            text-decoration: none;
-            font-size: 14px;
-            transition: background-color 0.3s ease;
-        }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background-color: white;
+      border-radius: 5px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
 
-        .back-btn:hover {
-            background-color: var(--accent-color);
-        }
+    th, td {
+      padding: 12px 15px;
+      text-align: left;
+      border-bottom: 1px solid #ddd;
+    }
 
-        .header {
-            background-color: var(--primary-color);
-            color: white;
-            text-align: center;
-            padding: 15px;
-            margin-bottom: 20px;
-            border-radius: 5px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
+    th {
+      background-color: #2C8EBB;
+      color: white;
+    }
 
-        .filter-section {
-            background-color: white;
-            border-radius: 5px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            padding: 15px;
-            margin-bottom: 20px;
-        }
+    .action-btn {
+      margin: 0 5px;
+      padding: 5px 10px;
+      border: none;
+      border-radius: 3px;
+      cursor: pointer;
+      font-size: 14px;
+    }
 
-        .filter-group {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-        }
+    .edit-btn {
+      background-color: #F7B32D;
+      color: white;
+    }
 
-        .filter-input {
-            flex-grow: 1;
-            padding: 10px;
-            border: 1px solid var(--secondary-color);
-            border-radius: 4px;
-            background-color: white;
-            transition: all 0.3s ease;
-        }
+    .delete-btn {
+      background-color: #dc3545;
+      color: white;
+    }
 
-        .filter-input:focus {
-            outline: none;
-            border-color: var(--accent-color);
-            box-shadow: 0 0 5px rgba(247, 179, 45, 0.5);
-        }
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.5);
+      justify-content: center;
+      align-items: center;
+    }
 
-        .table-container {
-            background-color: white;
-            border-radius: 5px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            overflow-x: auto;
-            margin-bottom: 20px;
-        }
+    .modal-content {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      width: 90%;
+      max-width: 500px;
+    }
 
-        .instructor-table {
-            width: 100%;
-            border-collapse: collapse;
-            background-color: white;
-        }
+    .modal-content input {
+      width: 100%;
+      padding: 8px;
+      margin-top: 8px;
+      margin-bottom: 15px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
 
-        .instructor-table th {
-            background-color: var(--primary-color);
-            color: white;
-            padding: 12px;
-            text-align: left;
-            white-space: nowrap;
-        }
+    .modal-buttons {
+      text-align: right;
+    }
 
-        .instructor-table td {
-            padding: 12px;
-            border-bottom: 1px solid #eee;
-        }
+    .modal-buttons button {
+      margin-left: 10px;
+    }
 
-        .instructor-table tr:hover {
-            background-color: var(--background-color);
-        }
+    @media (max-width: 600px) {
+      table, thead, tbody, th, td, tr {
+        display: block;
+      }
 
-        .no-instructors {
-            text-align: center;
-            color: var(--primary-color);
-            font-size: 1.2em;
-            padding: 40px;
-            font-style: italic;
-            background-color: white;
-            display: none;
-        }
+      td {
+        border: none;
+        padding: 10px;
+        position: relative;
+      }
 
-        .action-cell {
-            white-space: nowrap;
-        }
-
-        .edit-btn, .delete-btn {
-            padding: 5px 10px;
-            margin: 0 2px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            color: white;
-            font-size: 14px;
-        }
-
-        .edit-btn {
-            background-color: var(--secondary-color);
-        }
-
-        .delete-btn {
-            background-color: var(--error-color);
-        }
-
-        .edit-btn:hover, .delete-btn:hover {
-            opacity: 0.9;
-        }
-
-        @media (max-width: 768px) {
-            .container {
-                padding: 10px;
-            }
-
-            .table-container {
-                margin: 0 -10px;
-                border-radius: 0;
-            }
-
-            .filter-group {
-                flex-direction: column;
-            }
-
-            .filter-input {
-                width: 100%;
-            }
-        }
-    </style>
+      td::before {
+        content: attr(data-label);
+        font-weight: bold;
+        display: block;
+        margin-bottom: 5px;
+      }
+    }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <a href="index.html" class="back-btn">← Back</a>
-        <div class="header">
-            <h1>Registered Instructors</h1>
-        </div>
+  <div class="header">
+    <h1>Registered Rooms</h1>
+  </div>
 
-        <div class="filter-section">
-            <div class="filter-group">
-                <input 
-                    type="text" 
-                    id="nameFilter" 
-                    class="filter-input" 
-                    placeholder="Filter by Name"
-                >
-                <select id="courseFilter" class="filter-input">
-                    <option value="">All Courses</option>
-                    <option value="BSA">BSA</option>
-                    <option value="BSAIS">BSAIS</option>
-                    <option value="MSMarketing">MS Marketing</option>
-                    <option value="BSE">BSE</option>
-                    <option value="BSPublicAdministration">BS Public Administration</option>
-                </select>
-                <select id="yearFilter" class="filter-input">
-                    <option value="">All Years</option>
-                    <option value="1st">1st Year</option>
-                    <option value="2nd">2nd Year</option>
-                    <option value="3rd">3rd Year</option>
-                    <option value="4th">4th Year</option>
-                </select>
-            </div>
-        </div>
+  <div style="margin-bottom: 20px;">
+    <a href="Room.html" class="btn">&larr; Back to Room Registration</a>
+    <a href="index.html" class="btn">Back to Schedule System</a>
+  </div>
 
-        <div class="table-container">
-            <table class="instructor-table">
-                <thead>
-                    <tr>
-                        <th>Name</th>
-                        <th>Subject</th>
-                        <th>Course</th>
-                        <th>Year</th>
-                        <th>Section</th>
-                        <th>Day</th>
-                        <th>Time Start</th>
-                        <th>Time End</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody id="instructorTableBody">
-                    <!-- Instructors will be loaded here -->
-                </tbody>
-            </table>
-            <div id="noInstructorsMessage" class="no-instructors">
-                No Instructors Enrolled Yet
-            </div>
-        </div>
+  <table id="roomTable">
+    <thead>
+      <tr>
+        <th>Room Name</th>
+        <th>Capacity</th>
+        <th>Building</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
 
-        <div class="btn-container">
-            <a href="Instructor.html" class="btn">Enroll New Instructor</a>
-        </div>
+  <!-- Edit Modal -->
+  <div id="editModal" class="modal">
+    <div class="modal-content">
+      <h3>Edit Room</h3>
+      <input type="text" id="editRoomName" placeholder="Room Name">
+      <input type="text" id="editCapacity" placeholder="Capacity">
+      <input type="text" id="editBuilding" placeholder="Building">
+
+      <div class="modal-buttons">
+        <button class="btn" onclick="closeModal()">Cancel</button>
+        <button class="btn" onclick="saveEdit()">Save</button>
+      </div>
     </div>
+  </div>
 
-    <script>
-        const tableBody = document.getElementById('instructorTableBody');
-        const noInstructorsMessage = document.getElementById('noInstructorsMessage');
-        const nameFilter = document.getElementById('nameFilter');
-        const courseFilter = document.getElementById('courseFilter');
-        const yearFilter = document.getElementById('yearFilter');
-        const table = document.querySelector('.instructor-table');
+  <script>
+    let rooms = JSON.parse(localStorage.getItem('rooms')) || [];
+    const tbody = document.querySelector("#roomTable tbody");
+    let currentEditIndex = null;
 
-        function loadInstructors() {
-            const instructors = JSON.parse(localStorage.getItem('instructors')) || [];
-            
-            if (instructors.length === 0) {
-                table.style.display = 'none';
-                noInstructorsMessage.style.display = 'block';
-                return;
-            }
+    function renderTable() {
+      tbody.innerHTML = "";
+      rooms.forEach((room, index) => {
+        const row = document.createElement("tr");
+        row.innerHTML = `
+          <td>${room.name}</td>
+          <td>${room.capacity}</td>
+          <td>${room.building}</td>
+          <td>
+            <button class="action-btn edit-btn" onclick="editRoom(${index})">Edit</button>
+            <button class="action-btn delete-btn" onclick="deleteRoom(${index})">Delete</button>
+          </td>
+        `;
+        tbody.appendChild(row);
+      });
+    }
 
-            table.style.display = 'table';
-            noInstructorsMessage.style.display = 'none';
+    function editRoom(index) {
+      currentEditIndex = index;
+      const r = rooms[index];
+      document.getElementById("editRoomName").value = r.name;
+      document.getElementById("editCapacity").value = r.capacity;
+      document.getElementById("editBuilding").value = r.building;
+      document.getElementById("editModal").style.display = "flex";
+    }
 
-            displayInstructors(instructors);
-        }
+    function closeModal() {
+      document.getElementById("editModal").style.display = "none";
+    }
 
-        function displayInstructors(instructors) {
-            tableBody.innerHTML = '';
-            
-            instructors.forEach((instructor, index) => {
-                const [timeStart, timeEnd] = instructor.time.split(' - ');
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td>${instructor.name}</td>
-                    <td>${instructor.subject}</td>
-                    <td>${instructor.course}</td>
-                    <td>${instructor.year}</td>
-                    <td>${instructor.section}</td>
-                    <td>${instructor.day}</td>
-                    <td>${timeStart}</td>
-                    <td>${timeEnd}</td>
-                    <td class="action-cell">
-                        <button class="edit-btn" onclick="editInstructor(${index})">Edit</button>
-                        <button class="delete-btn" onclick="deleteInstructor(${index})">Delete</button>
-                    </td>
-                `;
-                tableBody.appendChild(row);
-            });
-        }
+    function saveEdit() {
+      if (currentEditIndex !== null) {
+        rooms[currentEditIndex] = {
+          name: document.getElementById("editRoomName").value,
+          capacity: document.getElementById("editCapacity").value,
+          building: document.getElementById("editBuilding").value
+        };
+        localStorage.setItem('rooms', JSON.stringify(rooms));
+        renderTable();
+        closeModal();
+      }
+    }
 
-        function editInstructor(index) {
-            const instructors = JSON.parse(localStorage.getItem('instructors')) || [];
-            const instructor = instructors[index];
-            const [timeStart, timeEnd] = instructor.time.split(' - ');
-            
-            // Convert time format for URL parameters
-            const startTime = timeStart.replace(':00 AM', '').replace(':00 PM', '');
-            const endTime = timeEnd.replace(':00 AM', '').replace(':00 PM', '');
-            
-            // Create URL parameters
-            const params = new URLSearchParams({
-                edit: 'true',
-                index: index,
-                name: instructor.name,
-                subject: instructor.subject,
-                course: instructor.course,
-                year: instructor.year,
-                section: instructor.section,
-                day: instructor.day,
-                timeStart: startTime,
-                timeEnd: endTime
-            });
-            
-            window.location.href = `Instructor.html?${params.toString()}`;
-        }
+    function deleteRoom(index) {
+      if (confirm("Are you sure you want to delete this room?")) {
+        rooms.splice(index, 1);
+        localStorage.setItem('rooms', JSON.stringify(rooms));
+        renderTable();
+      }
+    }
 
-        function deleteInstructor(index) {
-            if (confirm('Are you sure you want to delete this instructor?')) {
-                const instructors = JSON.parse(localStorage.getItem('instructors')) || [];
-                instructors.splice(index, 1);
-                localStorage.setItem('instructors', JSON.stringify(instructors));
-                loadInstructors();
-            }
-        }
-
-        function filterInstructors() {
-            const instructors = JSON.parse(localStorage.getItem('instructors')) || [];
-            const nameValue = nameFilter.value.toLowerCase();
-            const courseValue = courseFilter.value;
-            const yearValue = yearFilter.value;
-
-            const filteredInstructors = instructors.filter(instructor => {
-                const nameMatch = instructor.name.toLowerCase().includes(nameValue);
-                const courseMatch = !courseValue || instructor.course === courseValue;
-                const yearMatch = !yearValue || instructor.year === yearValue;
-                return nameMatch && courseMatch && yearMatch;
-            });
-
-            if (filteredInstructors.length === 0) {
-                table.style.display = 'none';
-                noInstructorsMessage.textContent = 'No matching instructors found';
-                noInstructorsMessage.style.display = 'block';
-            } else {
-                table.style.display = 'table';
-                noInstructorsMessage.style.display = 'none';
-                displayInstructors(filteredInstructors);
-            }
-        }
-
-        // Load instructors when page loads
-        window.addEventListener('load', loadInstructors);
-
-        // Add filter event listeners
-        nameFilter.addEventListener('input', filterInstructors);
-        courseFilter.addEventListener('change', filterInstructors);
-        yearFilter.addEventListener('change', filterInstructors);
-
-        // Listen for storage changes
-        window.addEventListener('storage', loadInstructors);
-    </script>
+    renderTable();
+  </script>
 </body>
 </html>
