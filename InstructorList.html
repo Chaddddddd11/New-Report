@@ -40,10 +40,10 @@
             margin-bottom: 20px;
         }
 
-        .back-btn {
+        .btn {
             display: inline-block;
-            margin-bottom: 20px;
-            padding: 8px 15px;
+            margin: 10px 5px 20px 0;
+            padding: 10px 15px;
             background-color: var(--secondary-color);
             color: white;
             text-decoration: none;
@@ -51,7 +51,7 @@
             transition: background-color 0.3s ease;
         }
 
-        .back-btn:hover {
+        .btn:hover {
             background-color: var(--accent-color);
         }
 
@@ -79,88 +79,99 @@
             background-color: #f1f1f1;
         }
 
-        @media (max-width: 600px) {
-            table, thead, tbody, th, td, tr {
-                display: block;
-            }
+        .action-btn {
+            cursor: pointer;
+            color: var(--accent-color);
+            border: none;
+            background: none;
+            font-weight: bold;
+        }
 
-            th {
-                position: sticky;
-                top: 0;
-                background-color: var(--secondary-color);
-            }
-
-            td {
-                padding-left: 50%;
-                position: relative;
-            }
-
-            td::before {
-                position: absolute;
-                top: 12px;
-                left: 15px;
-                font-weight: bold;
-                white-space: nowrap;
-            }
-
-            tr {
-                margin-bottom: 15px;
-                border: 1px solid #ddd;
-                border-radius: 5px;
-                overflow: hidden;
-            }
+        .search-bar {
+            margin-bottom: 10px;
+            width: 100%;
+            padding: 10px;
+            font-size: 16px;
+            border: 1px solid var(--secondary-color);
+            border-radius: 4px;
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <a href="Instructor.html" class="back-btn">← Back to Registration</a>
-        <div class="header">
-            <h1>Instructor List</h1>
-        </div>
+<div class="container">
+    <a href="Instructor.html" class="btn">← Back to Registration</a>
+    <a href="index.html" class="btn">🏠 Go to Schedule System</a>
+    <input type="text" id="searchInput" class="search-bar" placeholder="Search instructors...">
 
-        <table id="instructorTable">
-            <thead>
-                <tr>
-                    <th>#</th>
-                    <th>Name</th>
-                    <th>Subject</th>
-                    <th>Course</th>
-                    <th>Year</th>
-                    <th>Section</th>
-                    <th>Schedule</th>
-                </tr>
-            </thead>
-            <tbody>
-                <!-- Populated via JavaScript -->
-            </tbody>
-        </table>
+    <div class="header">
+        <h1>Instructor List</h1>
     </div>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const tableBody = document.querySelector('#instructorTable tbody');
-            const instructors = JSON.parse(localStorage.getItem('instructors')) || [];
+    <table id="instructorTable">
+        <thead>
+        <tr>
+            <th>#</th>
+            <th>Name</th>
+            <th>Subject</th>
+            <th>Course</th>
+            <th>Year</th>
+            <th>Section</th>
+            <th>Schedule</th>
+            <th>Actions</th>
+        </tr>
+        </thead>
+        <tbody>
+        <!-- Populated via JavaScript -->
+        </tbody>
+    </table>
+</div>
 
-            if (instructors.length === 0) {
-                tableBody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding: 20px;">No instructors registered.</td></tr>';
-                return;
-            }
+<script>
+    function renderTable() {
+        const instructors = JSON.parse(localStorage.getItem('instructors')) || [];
+        const tableBody = document.querySelector('#instructorTable tbody');
+        const searchQuery = document.getElementById('searchInput').value.toLowerCase();
 
-            instructors.forEach((instructor, index) => {
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td>${index + 1}</td>
-                    <td>${instructor.name}</td>
-                    <td>${instructor.subject}</td>
-                    <td>${instructor.course}</td>
-                    <td>${instructor.year}</td>
-                    <td>${instructor.section}</td>
-                    <td>${instructor.day}, ${instructor.time}</td>
-                `;
-                tableBody.appendChild(row);
-            });
+        tableBody.innerHTML = '';
+
+        if (instructors.length === 0) {
+            tableBody.innerHTML = '<tr><td colspan="8" style="text-align:center; padding: 20px;">No instructors registered.</td></tr>';
+            return;
+        }
+
+        instructors.forEach((instructor, index) => {
+            const combinedText = Object.values(instructor).join(' ').toLowerCase();
+            if (!combinedText.includes(searchQuery)) return;
+
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${index + 1}</td>
+                <td>${instructor.name}</td>
+                <td>${instructor.subject}</td>
+                <td>${instructor.course}</td>
+                <td>${instructor.year}</td>
+                <td>${instructor.section}</td>
+                <td>${instructor.day}, ${instructor.time}</td>
+                <td>
+                    <button class="action-btn" onclick="deleteInstructor(${index})">🗑 Delete</button>
+                </td>
+            `;
+            tableBody.appendChild(row);
         });
-    </script>
+    }
+
+    function deleteInstructor(index) {
+        if (!confirm('Are you sure you want to delete this instructor?')) return;
+        let instructors = JSON.parse(localStorage.getItem('instructors')) || [];
+        instructors.splice(index, 1);
+        localStorage.setItem('instructors', JSON.stringify(instructors));
+        renderTable();
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        renderTable();
+        document.getElementById('searchInput').addEventListener('input', renderTable);
+    });
+</script>
 </body>
 </html>
