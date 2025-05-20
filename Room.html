@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Room Registration</title>
+  <title>Register Room</title>
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
     import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
@@ -27,12 +27,12 @@
       const capacity = document.getElementById('capacity').value.trim();
 
       if (!roomName || !day || !time || !capacity) {
-        showError("Please fill in all required fields.");
+        alert("Please fill in all fields.");
         return;
       }
 
       if (!/^[0-9]+$/.test(capacity)) {
-        showError("Capacity must be a number.");
+        alert("Capacity must be a number.");
         return;
       }
 
@@ -45,15 +45,82 @@
         });
 
         alert("Room registered successfully!");
-        clearForm();
+        document.getElementById("roomForm").reset();
       } catch (error) {
         console.error("Error saving room:", error);
-        showError("Failed to register room. Please try again.");
+        alert("Failed to register room. Please try again.");
       }
     }
   </script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f4;
+      margin: 0;
+      padding: 40px;
+    }
+    h1 {
+      text-align: center;
+      color: #333;
+    }
+    form {
+      background: #fff;
+      max-width: 500px;
+      margin: 20px auto;
+      padding: 20px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      border-radius: 8px;
+    }
+    label {
+      display: block;
+      margin-top: 10px;
+      margin-bottom: 5px;
+    }
+    input, select {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 15px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+    button {
+      background-color: #007BFF;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      cursor: pointer;
+      border-radius: 4px;
+      width: 100%;
+      font-size: 16px;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+  </style>
 </head>
 <body>
-  <!-- The rest of your existing HTML remains unchanged -->
+  <h1>Register Room</h1>
+  <form id="roomForm">
+    <label for="roomName">Room Name</label>
+    <input type="text" id="roomName" required>
+
+    <label for="day">Day</label>
+    <select id="day" required>
+      <option value="">Select Day</option>
+      <option value="Monday">Monday</option>
+      <option value="Tuesday">Tuesday</option>
+      <option value="Wednesday">Wednesday</option>
+      <option value="Thursday">Thursday</option>
+      <option value="Friday">Friday</option>
+    </select>
+
+    <label for="time">Time</label>
+    <input type="time" id="time" required>
+
+    <label for="capacity">Capacity</label>
+    <input type="number" id="capacity" required>
+
+    <button type="button" onclick="registerRoom()">Register Room</button>
+  </form>
 </body>
 </html>
