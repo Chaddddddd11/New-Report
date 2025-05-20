@@ -223,7 +223,6 @@
             </div>
 
             <div class="form-group">
-            <div class="form-group">
                 <label for="roomAvailable">Room Available*</label>
                 <select id="roomAvailable" required disabled>
                     <option value="">Select All Details First</option>
@@ -322,18 +321,13 @@
             const timeSelect = document.getElementById('time');
             timeSelect.innerHTML = '<option value="">Select Time Slot</option>';
             
-            // Generate time slots from 7:00 to 17:00
+            // Generate time slots from 07:00 to 17:00 (7:00 AM to 5:00 PM)
             for (let hour = 7; hour < 17; hour++) {
                 const startHourPadded = String(hour).padStart(2, '0');
                 const endHourPadded = String(hour + 1).padStart(2, '0');
                 
-                // Create display text with AM/PM format
-                const displayStartHour = hour % 12 || 12;
-                const displayEndHour = (hour + 1) % 12 || 12;
-                const ampm = hour < 12 ? 'AM' : 'PM';
-                
                 const timeSlotValue = `${startHourPadded}:00-${endHourPadded}:00`;
-                const timeSlotText = `${displayStartHour}:00 ${ampm} - ${displayEndHour}:00 ${ampm}`;
+                const timeSlotText = `${startHourPadded}:00 - ${endHourPadded}:00`;
                 
                 const option = document.createElement('option');
                 option.value = timeSlotValue;
@@ -363,19 +357,6 @@
             roomAvailableSelect.innerHTML = '<option value="">Select All Details First</option>';
             roomAvailableSelect.disabled = true; 
             clearError();
-        }
-        
-        function formatTimeDisplay(timeValue) {
-            if (!timeValue || !timeValue.includes(':')) return "Invalid Time";
-            const [hourStr, minuteStr] = timeValue.split(':');
-            let hour = parseInt(hourStr, 10);
-            const minutes = parseInt(minuteStr, 10);
-            if (isNaN(hour) || isNaN(minutes)) return "Invalid Time";
-            const ampm = hour >= 12 ? 'PM' : 'AM';
-            hour = hour % 12;
-            hour = hour ? hour : 12; 
-            const minutePadded = String(minutes).padStart(2, '0');
-            return `${hour}:${minutePadded} ${ampm}`;
         }
 
         async function updateAvailableRooms() {
@@ -442,140 +423,45 @@
                 } else {
                     roomAvailableSelect.innerHTML = '<option value="">No Rooms Available</option>';
                     showError(`No available rooms for ${studentsInClass} students on ${selectedDay} at ${selectedTimeSlot}. Check capacity or existing bookings.`);
+                }
             } catch (error) {
-                console.error("Error fetching available rooms: ", error);
-                showError("Failed to fetch available rooms. " + error.message);
-                roomAvailableSelect.innerHTML = '<option value="">Error loading rooms</option>';
+                showError(`Error checking available rooms: ${error.message}`);
             }
         }
-
-        document.addEventListener('DOMContentLoaded', () => {
-            populateTimeSlots();
-            daySelect.addEventListener('change', updateAvailableRooms);
-            timeSelect.addEventListener('change', updateAvailableRooms);
-            courseSelect.addEventListener('change', updateAvailableRooms);
-            yearSelect.addEventListener('change', updateAvailableRooms);
-            sectionSelect.addEventListener('change', updateAvailableRooms);
-            updateAvailableRooms(); 
-        });
 
         async function registerInstructor() {
-            clearError(); 
-
-            const name = nameInput.value.trim();
-            const subject = subjectInput.value.trim();
-            const course = courseSelect.value;
-            const year = yearSelect.value;
-            const section = sectionSelect.value;
-            const day = daySelect.value;
-            const timeSlot = timeSelect.value; 
-            const roomName = roomAvailableSelect.value; 
-
-            if (!name || !subject || !course || !year || !section || !day || !timeSlot || !roomName || roomName === "No Rooms Available" || roomName === "Select All Details First" || roomName === "Loading rooms..." || roomName.startsWith("Error:")) {
-                showError("Please fill in all required fields and select a valid available room.");
-                return;
-            }
-            
-            if (!timeSlot.includes('-') || !timeSlot.includes(':')) {
-                showError("Invalid time slot format selected.");
-                return;
-            }
-            const [timeStart, timeEnd] = timeSlot.split('-');
-
-            const startHour = parseInt(timeStart.split(':')[0], 10);
-            const endHour = parseInt(timeEnd.split(':')[0], 10);
-
             const instructorData = {
-                name,
-                subject,
-                course,
-                year,
-                section,
-                day,
-                timeStart, 
-                timeEnd,   
-                roomName,
-            };
+                name: nameInput.value,
+                subject: subjectInput.value,
+                course: courseSelect.value,
+                year: yearSelect.value,
+                section: sectionSelect.value,
+                day: daySelect.value,
+                timeSlot: timeSelect.value,
+                roomName: roomAvailableSelect.value,
+                timeStart: timeSelect.value.split('-')[0],
+                timeEnd: timeSelect.value.split('-')[1],
+            timestamp: new Date().toISOString()
+        };
 
-            try {
-                // Conflict Validations
-                const instructorTimeConflictQuery = query(instructorsCollectionRef, 
-                    where("name", "==", name), 
-                    where("day", "==", day)
-                );
-                const instructorTimeSnapshot = await getDocs(instructorTimeConflictQuery);
-                for (const docSnap of instructorTimeSnapshot.docs) {
-                    const existing = docSnap.data();
-                    if (existing.timeStart && existing.timeEnd) {
-                        const existingStartHour = parseInt(existing.timeStart.split(':')[0], 10);
-                        const existingEndHour = parseInt(existing.timeEnd.split(':')[0], 10);
-                        if (startHour < existingEndHour && endHour > existingStartHour) {
-                            showError(`This instructor (${name}) already has a class from ${formatTimeDisplay(existing.timeStart)} to ${formatTimeDisplay(existing.timeEnd)} on ${day}.`);
-                            return;
-                        }
-                    }
-                }
-
-                const subjectInClassQuery = query(instructorsCollectionRef,
-                    where("course", "==", course),
-                    where("year", "==", year),
-                    where("section", "==", section),
-                    where("subject", "==", subject) 
-                );
-                const subjectInClassSnapshot = await getDocs(subjectInClassQuery);
-                if (!subjectInClassSnapshot.empty) {
-                    showError(`The subject "${subject}" is already assigned to ${course} ${year}-${section}.`);
-                    return;
-                }
-
-                const classTimeConflictQuery = query(instructorsCollectionRef,
-                    where("course", "==", course),
-                    where("year", "==", year),
-                    where("section", "==", section),
-                    where("day", "==", day)
-                );
-                const classTimeSnapshot = await getDocs(classTimeConflictQuery);
-                for (const docSnap of classTimeSnapshot.docs) {
-                    const existing = docSnap.data();
-                    if (existing.timeStart && existing.timeEnd) {
-                        const existingStartHour = parseInt(existing.timeStart.split(':')[0], 10);
-                        const existingEndHour = parseInt(existing.timeEnd.split(':')[0], 10);
-                        if (startHour < existingEndHour && endHour > existingStartHour) {
-                            showError(`${course} ${year}-${section} already has a class ("${existing.subject}") from ${formatTimeDisplay(existing.timeStart)} to ${formatTimeDisplay(existing.timeEnd)} on ${day}.`);
-                            return;
-                        }
-                    }
-                }
-                
-                // Final check if selected room is STILL available (mitigates race condition if UI is slow to update vs another booking)
-                const finalRoomCheckQuery = query(instructorsCollectionRef,
-                    where("roomName", "==", roomName),
-                    where("day", "==", day)
-                );
-                const finalRoomCheckSnapshot = await getDocs(finalRoomCheckQuery);
-                for (const docSnap of finalRoomCheckSnapshot.docs) {
-                    const existingBooking = docSnap.data();
-                    if (existingBooking.timeStart && existingBooking.timeEnd) {
-                        const existingStartHour = parseInt(existingBooking.timeStart.split(':')[0], 10);
-                        const existingEndHour = parseInt(existingBooking.timeEnd.split(':')[0], 10);
-                        if (startHour < existingEndHour && endHour > existingStartHour) {
-                            showError(`Room "${roomName}" was just booked by instructor ${existingBooking.name} for subject "${existingBooking.subject}" from ${formatTimeDisplay(existingBooking.timeStart)} to ${formatTimeDisplay(existingBooking.timeEnd)} on ${day}. Please select another room or time.`);
-                            updateAvailableRooms(); 
-                            return;
-                        }
-                    }
-                }
-
-                await addDoc(instructorsCollectionRef, instructorData);
-                alert('Instructor registered successfully with Firebase!');
-                clearForm(); 
-                updateAvailableRooms(); 
-
-            } catch (error) {
-                console.error("Error registering instructor: ", error);
-                showError("Failed to register instructor. Check console for details. Error: " + error.message);
-            }
+        try {
+            const docRef = await addDoc(instructorsCollectionRef, instructorData);
+            clearForm();
+            alert('Instructor registered successfully!');
+        } catch (error) {
+            showError(`Error registering instructor: ${error.message}`);
         }
+    }
+
+    // Initialize time slots and event listeners
+    document.addEventListener('DOMContentLoaded', () => {
+        populateTimeSlots();
+        daySelect.addEventListener('change', updateAvailableRooms);
+        timeSelect.addEventListener('change', updateAvailableRooms);
+        courseSelect.addEventListener('change', updateAvailableRooms);
+        yearSelect.addEventListener('change', updateAvailableRooms);
+        sectionSelect.addEventListener('change', updateAvailableRooms);
+    });
     </script>
 </body>
 </html>
