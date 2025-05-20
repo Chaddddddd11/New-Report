@@ -163,7 +163,7 @@
 <body>
   <div class="container">
     <button class="back-button" onclick="navigateTo('index.html')">Back to Home</button>
-    
+
     <header>
       <h1 id="formTitle">Room Registration</h1>
     </header>
@@ -231,7 +231,7 @@
     function toggleTimeSlots(day) {
       const timeSlotsDiv = document.getElementById('timeSlots');
       const timeSelect = document.getElementById('time');
-      
+
       if (day) {
         timeSlotsDiv.style.display = 'block';
         timeSelect.required = true;
@@ -266,8 +266,14 @@
         return;
       }
 
-      const room = { roomName, day, time, capacity };
-      const url = "https://script.google.com/macros/s/AKfycbx1CA4hRI2k4ATlz77Vjgz2O3HxYdVvaKlwVZ2ilNkqWIij9MlrMEBD_6AdKbhrgOBi/exec";
+      const room = {
+        "Room Name": roomName,
+        "Day": day,
+        "Time": time,
+        "Capacity": capacity
+      };
+
+      const url = "https://script.google.com/macros/s/AKfycbxgKco7sHsWwYaysINo3IcvlCaomNkFdEoobvXp92Y/dev";
 
       fetch(url, {
         method: "POST",
