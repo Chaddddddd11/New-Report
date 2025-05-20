@@ -128,7 +128,8 @@
     }
 
     .schedule-info .room {
-      color: #f0f0f0;
+      /* color: #f0f0f0; */ /* Adjusted for better visibility on secondary-color */
+      color: #e0e0e0; 
     }
   </style>
 </head>
@@ -143,6 +144,13 @@
     <option value="MSMarketing">MS Marketing</option>
     <option value="BSE">BSE</option>
     <option value="BSPublicAdministration">BS Public Administration</option>
+    <!-- Added more courses for consistency -->
+    <option value="BSBA">BSBA</option>
+    <option value="BSCS">BSCS</option>
+    <option value="BSEE">BSEE</option>
+    <option value="BSECE">BSECE</option>
+    <option value="BSIT">BSIT</option>
+    <option value="BSME">BSME</option>
   </select>
 
   <label for="year">Select Year:</label> 
@@ -177,17 +185,39 @@
         </tr>
       </thead>
       <tbody id="scheduleBody">
-        <!-- Schedule rows will be dynamically populated -->
+        <!-- Schedule rows will be dynamically populated by Firebase data -->
       </tbody>
     </table>
   </div>
 
   <div class="navigation-buttons">
     <button onclick="navigateTo('Instructor.html')">Instructor Enrollment</button>
-    <button onclick="navigateTo('Room.html')">Room Registration</button>
+    <button onclick="navigateTo('RoomList.html')">View Room Usage</button>
+    <button onclick="navigateTo('InstructorList.html')">View Instructor List</button>
   </div>
 
-  <script>
+  <script type="module">
+    // Import the functions you need from the SDKs you need
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getFirestore, collection, onSnapshot, query } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+    // Your web app's Firebase configuration (as provided by user)
+    const firebaseConfig = {
+      apiKey: "AIzaSyDeqxzp_-kKjM3hPr6CLGfTn38e4swSKbo",
+      authDomain: "room-management-system-8e899.firebaseapp.com",
+      projectId: "room-management-system-8e899",
+      storageBucket: "room-management-system-8e899.firebasestorage.app", // Using exact value from user
+      messagingSenderId: "667821278853",
+      appId: "1:667821278853:web:a3a80c985073772670cbec"
+    };
+
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const instructorsCollectionRef = collection(db, "instructors");
+
+    let allInstructorsData = []; // To store all instructors from Firebase
+
     const studentCapacityMap = {
       // BSA Capacities
       'BSA-1A': 30, 'BSA-1B': 37, 'BSA-1C': 32, 'BSA-1D': 34, 
@@ -240,55 +270,39 @@
       'BSPublicAdministration-4A': 34, 'BSPublicAdministration-4B': 43, 
       'BSPublicAdministration-4C': 33, 'BSPublicAdministration-4D': 30, 
       'BSPublicAdministration-4E': 43, 'BSPublicAdministration-4F': 39, 
-      'BSPublicAdministration-4G': 30
+      'BSPublicAdministration-4G': 30,
+      // Add other courses as needed, ensure keys match format 'COURSE-YEARSECTION'
+      // e.g., 'BSBA-1A': 30, 'BSCS-1A':30 etc.
     };
 
     const courseConfig = {
       BSA: {
         years: ['1st', '2nd', '3rd', '4th'],
-        sections: {
-          '1st': ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'],
-          '2nd': ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'],
-          '3rd': ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'],
-          '4th': ['A', 'B', 'C', 'D']
-        }
+        sections: { '1st': ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'], '2nd': ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'], '3rd': ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'], '4th': ['A', 'B', 'C', 'D'] }
       },
       BSAIS: {
         years: ['1st', '2nd', '3rd', '4th'],
-        sections: {
-          '1st': ['A', 'B', 'C', 'D', 'E'],
-          '2nd': ['A', 'B', 'C', 'D', 'E', 'F', 'G'],
-          '3rd': ['A', 'B', 'C', 'D', 'E', 'F'],
-          '4th': ['A', 'B', 'C', 'D', 'E', 'F', 'G']
-        }
+        sections: { '1st': ['A', 'B', 'C', 'D', 'E'], '2nd': ['A', 'B', 'C', 'D', 'E', 'F', 'G'], '3rd': ['A', 'B', 'C', 'D', 'E', 'F'], '4th': ['A', 'B', 'C', 'D', 'E', 'F', 'G'] }
       },
       MSMarketing: {
         years: ['1st', '2nd', '3rd', '4th'],
-        sections: {
-          '1st': ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'],
-          '2nd': ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I'],
-          '3rd': ['A', 'B', 'C'],
-          '4th': ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I']
-        }
+        sections: { '1st': ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'], '2nd': ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I'], '3rd': ['A', 'B', 'C'], '4th': ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I'] }
       },
       BSE: {
         years: ['1st', '2nd', '3rd', '4th'],
-        sections: {
-          '1st': ['A', 'B', 'C'],
-          '2nd': ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'],
-          '3rd': ['A', 'B', 'C', 'D'],
-          '4th': ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H']
-        }
+        sections: { '1st': ['A', 'B', 'C'], '2nd': ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'], '3rd': ['A', 'B', 'C', 'D'], '4th': ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'] }
       },
       BSPublicAdministration: {
         years: ['1st', '2nd', '3rd', '4th'],
-        sections: {
-          '1st': ['A', 'B', 'C', 'D'],
-          '2nd': ['A', 'B', 'C', 'D', 'E', 'F', 'G'],
-          '3rd': ['A', 'B', 'C', 'D', 'E'],
-          '4th': ['A', 'B', 'C', 'D', 'E', 'F', 'G']
-        }
-      }
+        sections: { '1st': ['A', 'B', 'C', 'D'], '2nd': ['A', 'B', 'C', 'D', 'E', 'F', 'G'], '3rd': ['A', 'B', 'C', 'D', 'E'], '4th': ['A', 'B', 'C', 'D', 'E', 'F', 'G'] }
+      },
+      // Adding other common courses from previous context, ensure studentCapacityMap has entries
+      BSBA: { years: ['1st', '2nd', '3rd', '4th'], sections: { '1st': ['A','B','C','D'], '2nd': ['A','B','C'], '3rd': ['A','B'], '4th': ['A','B'] } },
+      BSCS: { years: ['1st', '2nd', '3rd', '4th'], sections: { '1st': ['A','B','C'], '2nd': ['A','B'], '3rd': ['A','B'], '4th': ['A'] } },
+      BSEE: { years: ['1st', '2nd', '3rd', '4th'], sections: { '1st': ['A','B'], '2nd': ['A'], '3rd': ['A'], '4th': ['A'] } },
+      BSECE: { years: ['1st', '2nd', '3rd', '4th'], sections: { '1st': ['A','B'], '2nd': ['A'], '3rd': ['A'], '4th': ['A'] } },
+      BSIT: { years: ['1st', '2nd', '3rd', '4th'], sections: { '1st': ['A','B','C','D'], '2nd': ['A','B','C'], '3rd': ['A','B'], '4th': ['A','B'] } },
+      BSME: { years: ['1st', '2nd', '3rd', '4th'], sections: { '1st': ['A','B'], '2nd': ['A'], '3rd': ['A'], '4th': ['A'] } }
     };
 
     const courseSelect = document.getElementById('course');
@@ -305,77 +319,71 @@
         console.error('Navigation error:', error);
         alert('Unable to navigate. Please check the page exists.');
       }
+      // Make function globally accessible for HTML onclick
+      window.navigateTo = navigateTo; 
     }
+    window.navigateTo = navigateTo; // Expose for buttons
+
 
     function generateTimeSlots() {
-      const timeSlots = [
-        '7:00-8:00', '8:00-9:00', '9:00-10:00', '10:00-11:00', 
-        '11:00-12:00', '12:00-13:00', '13:00-14:00', '14:00-15:00', 
-        '15:00-16:00', '16:00-17:00', '17:00-18:00', '18:00-19:00'
-      ];
-      return timeSlots;
+      const slots = [];
+      for (let i = 7; i < 19; i++) { // 7 AM to 6 PM (18:00-19:00 slot ends at 19:00)
+          const startHour = String(i).padStart(2, '0');
+          const endHour = String(i + 1).padStart(2, '0');
+          slots.push(`${startHour}:00-${endHour}:00`);
+      }
+      return slots;
     }
 
-    function autoFillSchedule() {
+    function renderSchedule() {
       const timeSlots = generateTimeSlots();
       const selectedCourse = courseSelect.value;
-      const selectedYear = yearSelect.value;
-      const selectedSection = sectionSelect.value;
+      const selectedYearValue = yearSelect.value; // e.g., "1st", "2nd"
+      const selectedSection = sectionSelect.value; // e.g., "A", "B"
       
-      scheduleBody.innerHTML = '';
+      scheduleBody.innerHTML = ''; // Clear previous schedule
 
-      // Get instructors from localStorage
-      const instructors = JSON.parse(localStorage.getItem('instructors')) || [];
+      if (!selectedCourse || !selectedYearValue || !selectedSection) {
+        // Optionally, display a message to select all filters
+        timeSlots.forEach(timeSlot => {
+            const row = document.createElement('tr');
+            row.innerHTML = `<td>${timeSlot}</td><td></td><td></td><td></td><td></td><td></td><td></td>`;
+            scheduleBody.appendChild(row);
+        });
+        return;
+      }
+
+      // Convert selectedYearValue ("1st", "2nd") to numeric part ("1", "2")
+      const yearNumeric = selectedYearValue.match(/\d+/)[0]; 
+      const targetYearSection = `${yearNumeric}${selectedSection}`; // e.g., "1A", "2B"
 
       timeSlots.forEach(timeSlot => {
         const row = document.createElement('tr');
-        const [startTime] = timeSlot.split('-');
-        
-        // First add the time column
-        row.innerHTML = `<td>${timeSlot}</td>`;
+        row.innerHTML = `<td>${timeSlot}</td>`; // Time column
 
-        // Add cells for each day
         const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
         days.forEach(day => {
           const cell = document.createElement('td');
+          
+          const scheduledInstructor = allInstructorsData.find(instructor => {
+            return instructor.course === selectedCourse &&
+                   instructor.yearSection === targetYearSection && // Match combined yearSection
+                   instructor.day === day &&
+                   instructor.time === timeSlot; // Direct match for time slot
+          });
 
-          // Only show instructors if course, year, and section are selected
-          if (selectedCourse && selectedYear && selectedSection) {
-            // Check if there's an instructor scheduled for this time slot and day
-            const scheduledInstructor = instructors.find(instructor => {
-              // Match the exact course, year, and section
-              if (instructor.course !== selectedCourse ||
-                  instructor.year !== selectedYear ||
-                  instructor.section !== selectedSection ||
-                  instructor.day !== day) {
-                  return false;
-              }
-
-              // Parse instructor's time range
-              const [instrStartTime] = instructor.time.split(' - ')[0].split(':');
-              const [instrEndTime] = instructor.time.split(' - ')[1].split(':');
-              const currentHour = startTime.split(':')[0];
-
-              // Check if this time slot falls within the instructor's schedule
-              return parseInt(currentHour) >= parseInt(instrStartTime) &&
-                     parseInt(currentHour) < parseInt(instrEndTime);
-            });
-
-            if (scheduledInstructor) {
-              cell.className = 'occupied-cell';
-              cell.innerHTML = `
-                <div class="schedule-info">
-                  <div class="instructor">${scheduledInstructor.name}</div>
-                  <div class="subject">${scheduledInstructor.subject}</div>
-                  <div class="room">${scheduledInstructor.room || 'TBA'}</div>
-                </div>
-              `;
-            }
+          if (scheduledInstructor) {
+            cell.className = 'occupied-cell';
+            cell.innerHTML = `
+              <div class="schedule-info">
+                <div class="instructor">${scheduledInstructor.name || 'N/A'}</div>
+                <div class="subject">${scheduledInstructor.subject || 'N/A'}</div>
+                <div class="room">${scheduledInstructor.roomName || 'TBA'}</div>
+              </div>
+            `;
           }
-
           row.appendChild(cell);
         });
-
         scheduleBody.appendChild(row);
       });
     }
@@ -386,7 +394,7 @@
       
       const selectedCourse = courseSelect.value;
 
-      if (selectedCourse) {
+      if (selectedCourse && courseConfig[selectedCourse]) {
         yearSelect.disabled = false;
         const years = courseConfig[selectedCourse].years;
         years.forEach(year => {
@@ -400,8 +408,7 @@
         yearSelect.disabled = true;
         sectionSelect.disabled = true;
       }
-
-      updateSelectionSummary();
+      updateSelectionSummaryAndSchedule();
     });
 
     yearSelect.addEventListener('change', function() {
@@ -410,7 +417,7 @@
       const selectedCourse = courseSelect.value;
       const selectedYear = yearSelect.value;
 
-      if (selectedCourse && selectedYear) {
+      if (selectedCourse && selectedYear && courseConfig[selectedCourse] && courseConfig[selectedCourse].sections[selectedYear]) {
         sectionSelect.disabled = false;
         const sections = courseConfig[selectedCourse].sections[selectedYear];
         sections.forEach(section => {
@@ -422,53 +429,49 @@
       } else {
         sectionSelect.disabled = true;
       }
-
-      updateSelectionSummary();
+      updateSelectionSummaryAndSchedule();
     });
 
-    sectionSelect.addEventListener('focus', function() {
-      if (!yearSelect.value) {
-        alert('Please select a Year first');
-        courseSelect.focus();
-      }
-    });
+    sectionSelect.addEventListener('change', updateSelectionSummaryAndSchedule);
 
-    sectionSelect.addEventListener('change', updateSelectionSummary);
-
-    function updateSelectionSummary() {
+    function updateSelectionSummaryAndSchedule() {
       const course = courseSelect.value;
-      const year = yearSelect.value;
+      const yearValue = yearSelect.value; // "1st", "2nd", etc.
       const section = sectionSelect.value;
 
-      if (course && year && section) {
-        const formattedYear = year === '1st' ? '1' : 
-                             year === '2nd' ? '2' : 
-                             year === '3rd' ? '3' : '4';
-        const combinedKey = `${course}-${formattedYear}${section}`;
+      if (course && yearValue && section) {
+        const yearNumeric = yearValue.match(/\d+/)[0];
+        const combinedKeyForMap = `${course}-${yearNumeric}${section}`; // For studentCapacityMap
+        const displayKey = `${course} ${yearNumeric}-${section}`; // For display
         
-        const studentCapacity = studentCapacityMap[combinedKey] || '---';
+        const studentCapacity = studentCapacityMap[combinedKeyForMap] || '---';
         
-        courseSummary.textContent = combinedKey;
+        courseSummary.textContent = displayKey;
         studentCapacityDisplay.textContent = studentCapacity;
       } else {
         courseSummary.textContent = '----';
         studentCapacityDisplay.textContent = '---';
       }
-
-      // Update schedule after updating summary
-      autoFillSchedule();
+      renderSchedule(); // Update schedule whenever selection changes
     }
 
-    // Listen for storage changes
-    window.addEventListener('storage', function(e) {
-      if (e.key === 'instructors') {
-        autoFillSchedule();
-      }
+    // Listen for real-time updates from Firebase
+    const q = query(instructorsCollectionRef);
+    onSnapshot(q, (querySnapshot) => {
+        allInstructorsData = []; // Clear previous data
+        querySnapshot.forEach((doc) => {
+            allInstructorsData.push({ id: doc.id, ...doc.data() });
+        });
+        console.log("Fetched instructors from Firebase:", allInstructorsData);
+        renderSchedule(); // Re-render schedule with new data
+    }, (error) => {
+        console.error("Error fetching instructors from Firebase: ", error);
+        scheduleBody.innerHTML = `<tr><td colspan="7">Error loading schedule data. Check console.</td></tr>`;
     });
 
-    // Initialize schedule on page load
+    // Initialize schedule on page load with empty cells until selections are made
     document.addEventListener('DOMContentLoaded', function() {
-      autoFillSchedule();
+      renderSchedule(); // Initial render (will be empty until selections)
     });
   </script>
 </body>
