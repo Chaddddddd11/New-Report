@@ -2,18 +2,20 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>DHVSU Instructor List</title>
+    <title>DHVSU Registered Instructors</title>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --primary-color: #1A5F7A;
-            --secondary-color: #2C8EBB;
-            --accent-color: #F7B32D;
-            --background-color: #F4F7F6;
+            --primary-color: #005f73; /* Darker blue-green for professionalism */
+            --secondary-color: #0a9396; /* Complementary teal */
+            --accent-color: #94d2bd; /* Lighter accent for highlights */
+            --background-color: #e9f5f4; /* Very light teal/blue for background */
             --text-color: #333;
-            --error-color: #dc3545;
-            --table-header-bg: #E9ECEF;
-            --table-border-color: #DEE2E6;
+            --danger-color: #ae2012; /* Muted red for delete */
+            --edit-color: #2a9d8f;   /* Teal for edit */
+            --table-header-bg: #cae9ff; /* Light blue for table headers */
+            --table-border-color: #90e0ef; /* Light teal for borders */
+            --modal-bg: rgba(0,0,0,0.6);
         }
 
         body {
@@ -23,21 +25,24 @@
             line-height: 1.6;
             margin: 0;
             padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
 
         .container {
-            max-width: 1200px;
-            margin: 0 auto;
+            width: 95%;
+            max-width: 1300px; /* Wider for more columns */
             background-color: white;
-            padding: 20px;
+            padding: 25px;
             border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
         }
 
         .header {
             text-align: center;
             color: var(--primary-color);
-            margin-bottom: 20px;
+            margin-bottom: 25px;
         }
 
         .controls {
@@ -50,7 +55,7 @@
             background-color: var(--secondary-color);
             color: white;
             border: none;
-            border-radius: 4px;
+            border-radius: 5px;
             cursor: pointer;
             text-decoration: none;
             font-size: 16px;
@@ -60,24 +65,19 @@
 
         .btn:hover {
             background-color: var(--accent-color);
+            color: var(--primary-color);
         }
         
-        .btn-danger {
-            background-color: var(--error-color);
-        }
-        .btn-danger:hover {
-            background-color: #c82333;
-        }
-
         table {
             width: 100%;
             border-collapse: collapse;
             margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
         }
 
         th, td {
             border: 1px solid var(--table-border-color);
-            padding: 12px;
+            padding: 12px 15px;
             text-align: left;
             vertical-align: middle;
         }
@@ -86,26 +86,39 @@
             background-color: var(--table-header-bg);
             font-weight: 500;
             color: var(--primary-color);
+            text-transform: uppercase;
+            font-size: 0.9em;
         }
 
         tr:nth-child(even) {
             background-color: #f8f9fa;
         }
+        tr:hover {
+            background-color: #e0f7fa; /* Light hover effect */
+        }
 
         .actions-cell button {
+            padding: 6px 12px;
             margin-right: 5px;
-            padding: 6px 10px;
-            font-size: 14px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.85em;
+            border: none;
+            color: white;
         }
+        .edit-btn { background-color: var(--edit-color); }
+        .edit-btn:hover { background-color: #238174; }
+        .delete-btn { background-color: var(--danger-color); }
+        .delete-btn:hover { background-color: #8a1a0e; }
 
         .loading-message, .empty-message {
             text-align: center;
             padding: 20px;
             font-style: italic;
-            color: #6c757d;
+            color: #555;
         }
 
-        /* Basic Modal Styles for Edit */
+        /* Modal Styles */
         .modal {
             display: none; 
             position: fixed; 
@@ -115,18 +128,28 @@
             width: 100%; 
             height: 100%; 
             overflow: auto; 
-            background-color: rgba(0,0,0,0.4);
+            background-color: var(--modal-bg);
         }
 
         .modal-content {
             background-color: #fefefe;
-            margin: 10% auto;
-            padding: 20px;
+            margin: 8% auto; /* Adjusted margin for better centering */
+            padding: 30px;
             border: 1px solid #888;
-            width: 80%;
-            max-width: 600px;
+            width: 90%;
+            max-width: 700px; /* Increased max-width for more fields */
             border-radius: 8px;
-            position: relative;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+        }
+        
+        .modal-header {
+            padding-bottom: 15px;
+            border-bottom: 1px solid #eee;
+            margin-bottom: 20px;
+        }
+        .modal-header h2 {
+            margin: 0;
+            color: var(--primary-color);
         }
 
         .close-btn {
@@ -134,6 +157,7 @@
             float: right;
             font-size: 28px;
             font-weight: bold;
+            line-height: 1;
         }
 
         .close-btn:hover,
@@ -142,44 +166,54 @@
             text-decoration: none;
             cursor: pointer;
         }
+
         .form-group {
-            margin-bottom: 15px;
-        }
-        .form-group label {
-            display: block;
-            margin-bottom: 5px;
-        }
-        .form-group input, .form-group select {
-            width: 100%;
-            padding: 8px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
+            margin-bottom: 20px;
         }
 
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: var(--primary-color);
+        }
+
+        .form-group input[type="text"],
+        .form-group select {
+            width: calc(100% - 24px); /* Full width minus padding */
+            padding: 12px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 1em;
+            box-sizing: border-box;
+        }
+
+        .modal-actions {
+            text-align: right;
+            margin-top: 20px;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="controls">
-            <a href="Instructor.html" class="btn">Register New Instructor</a>
             <a href="index.html" class="btn">Back to Main Menu</a>
+            <a href="Instructor.html" class="btn">Register New Instructor</a>
         </div>
         <div class="header">
-            <h1>Registered Instructor List</h1>
+            <h1>Registered Instructors</h1>
         </div>
 
         <table id="instructorTable">
             <thead>
                 <tr>
-                    <th>Name</th>
+                    <th>Instructor Name</th>
                     <th>Subject</th>
                     <th>Course</th>
-                    <th>Year</th>
-                    <th>Section</th>
+                    <th>Year & Section</th> <!-- UPDATED -->
                     <th>Day</th>
-                    <th>Time Start</th>
-                    <th>Time End</th>
-                    <th>Room</th> <!-- ADDED ROOM HEADER -->
+                    <th>Time</th> <!-- UPDATED -->
+                    <th>Room</th>
                     <th>Actions</th>
                 </tr>
             </thead>
@@ -187,45 +221,88 @@
                 <!-- Rows will be populated by JavaScript -->
             </tbody>
         </table>
-        <div id="loadingMessage" class="loading-message" style="display:none;">Loading instructors...</div>
+        <div id="loadingMessage" class="loading-message">Loading instructor data...</div>
         <div id="emptyMessage" class="empty-message" style="display:none;">No instructors registered yet.</div>
     </div>
 
-    <!-- Edit Modal -->
-    <div id="editModal" class="modal">
+    <!-- Edit Instructor Modal -->
+    <div id="editInstructorModal" class="modal">
         <div class="modal-content">
-            <span class="close-btn" onclick="closeModal()">&times;</span>
-            <h2>Edit Instructor</h2>
-            <input type="hidden" id="editDocId">
-            <div class="form-group">
-                <label for="editName">Name:</label>
-                <input type="text" id="editName" required>
+            <div class="modal-header">
+                <span class="close-btn">&times;</span>
+                <h2>Edit Instructor Details</h2>
             </div>
-            <div class="form-group">
-                <label for="editSubject">Subject:</label>
-                <input type="text" id="editSubject" required>
-            </div>
-            <!-- Add other fields as needed: Course, Year, Section, Day, Time, Room -->
-            <!-- For simplicity, keeping it to Name and Subject for this example -->
-             <div class="form-group">
-                <label for="editRoomName">Room:</label>
-                <input type="text" id="editRoomName" required>
-            </div>
-            <button onclick="saveChanges()" class="btn">Save Changes</button>
+            <form id="editInstructorForm">
+                <input type="hidden" id="editInstructorId">
+                <div class="form-group">
+                    <label for="editInstructorName">Instructor Name:</label>
+                    <input type="text" id="editInstructorName" required>
+                </div>
+                <div class="form-group">
+                    <label for="editSubject">Subject:</label>
+                    <input type="text" id="editSubject" required>
+                </div>
+                <div class="form-group">
+                    <label for="editCourse">Course:</label>
+                     <select id="editCourse" name="course" required>
+                        <option value="">Select Course</option>
+                        <option value="BSA">BSA (Bachelor of Science in Accountancy)</option>
+                        <option value="BSBA">BSBA (Bachelor of Science in Business Administration)</option>
+                        <option value="BSCS">BSCS (Bachelor of Science in Computer Science)</option>
+                        <option value="BSEE">BSEE (Bachelor of Science in Electrical Engineering)</option>
+                        <option value="BSECE">BSECE (Bachelor of Science in Electronics Engineering)</option>
+                        <option value="BSIT">BSIT (Bachelor of Science in Information Technology)</option>
+                        <option value="BSME">BSME (Bachelor of Science in Mechanical Engineering)</option>
+                        <option value="BSPublicAdministration">BSPubAd (Bachelor of Science in Public Administration)</option>
+                    </select>
+                </div>
+                 <div class="form-group">
+                    <label for="editYearSection">Year & Section (e.g., 1A, 2B):</label>
+                    <input type="text" id="editYearSection" placeholder="e.g., 1A, 2B" required>
+                </div>
+                <div class="form-group">
+                    <label for="editDay">Day:</label>
+                    <select id="editDay" required>
+                        <option value="">Select Day</option>
+                        <option value="Monday">Monday</option>
+                        <option value="Tuesday">Tuesday</option>
+                        <option value="Wednesday">Wednesday</option>
+                        <option value="Thursday">Thursday</option>
+                        <option value="Friday">Friday</option>
+                        <option value="Saturday">Saturday</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="editTime">Time:</label>
+                    <select id="editTime" required>
+                        <!-- Time slots will be populated by JS -->
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="editRoomName">Room:</label>
+                    <select id="editRoomName" required>
+                        <!-- Rooms will be populated by JS -->
+                    </select>
+                </div>
+                <div class="modal-actions">
+                    <button type="submit" class="btn">Save Changes</button>
+                </div>
+            </form>
         </div>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-        import { 
-            getFirestore, 
-            collection, 
-            onSnapshot, // For real-time updates
-            doc, 
+        import {
+            getFirestore,
+            collection,
+            getDocs, // Added for initial room availability check if needed, otherwise onSnapshot is primary
+            doc,
+            updateDoc,
             deleteDoc,
-            updateDoc, // For editing
+            onSnapshot,
             query,
-            orderBy // Optional: to order the list
+            orderBy
         } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
         // IMPORTANT: Use your actual Firebase config
@@ -245,42 +322,153 @@
         const tableBody = document.getElementById('instructorTableBody');
         const loadingMessage = document.getElementById('loadingMessage');
         const emptyMessage = document.getElementById('emptyMessage');
-        
-        // Edit Modal Elements
-        const editModal = document.getElementById('editModal');
-        const editDocIdInput = document.getElementById('editDocId');
-        const editNameInput = document.getElementById('editName');
+        const editModal = document.getElementById('editInstructorModal');
+        const editForm = document.getElementById('editInstructorForm');
+        const closeModalBtn = editModal.querySelector('.close-btn');
+
+        // Edit Modal Form Fields
+        const editInstructorIdInput = document.getElementById('editInstructorId');
+        const editInstructorNameInput = document.getElementById('editInstructorName');
         const editSubjectInput = document.getElementById('editSubject');
-        const editRoomNameInput = document.getElementById('editRoomName'); // For editing room
+        const editCourseSelect = document.getElementById('editCourse');
+        const editYearSectionInput = document.getElementById('editYearSection');
+        const editDaySelect = document.getElementById('editDay');
+        const editTimeSelect = document.getElementById('editTime');
+        const editRoomNameSelect = document.getElementById('editRoomName');
 
-        // Expose functions to global scope for onclick attributes
-        window.openEditModal = openEditModal;
-        window.closeModal = closeModal;
-        window.saveChanges = saveChanges;
-        window.deleteInstructor = deleteInstructor;
+        // Data for dynamic dropdowns (consistent with Instructor.html)
+        const allRooms = [
+            { name: "CL1 (Computer Laboratory 1)", capacity: 30 },
+            { name: "CL2 (Computer Laboratory 2)", capacity: 35 },
+            { name: "CL3 (Computer Laboratory 3)", capacity: 30 },
+            { name: "MDH (Multi-Disciplinary Hall)", capacity: 100 },
+            { name: "AVR (Audio-Visual Room)", capacity: 50 },
+            { name: "Room 201", capacity: 40 },
+            { name: "Room 202", capacity: 40 },
+            { name: "Room 203", capacity: 35 },
+            { name: "Room 301", capacity: 45 },
+            { name: "Room 302", capacity: 25 }
+        ];
 
+        const studentCapacityMap = {
+            'BSA-1A': 30, 'BSA-1B': 30, 'BSA-1C': 30, 'BSA-1D': 30, 'BSA-1E': 30, 'BSA-1F': 30, 'BSA-1G': 30,
+            'BSA-2A': 25, 'BSA-2B': 25, 'BSA-2C': 25, 'BSA-2D': 25, 'BSA-2E': 25, 'BSA-2F': 25, 'BSA-2G': 25,
+            'BSA-3A': 20, 'BSA-3B': 20, 'BSA-3C': 20, 'BSA-3D': 20, 'BSA-3E': 20, 'BSA-3F': 20, 'BSA-3G': 20,
+            'BSA-4A': 15, 'BSA-4B': 15, 'BSA-4C': 15, 'BSA-4D': 15, 'BSA-4E': 15, 'BSA-4F': 15, 'BSA-4G': 15,
+            'BSBA-1A': 30, 'BSBA-1B': 30, 'BSBA-1C': 30, 'BSBA-1D': 30, 'BSBA-1E': 30, 'BSBA-1F': 30, 'BSBA-1G': 30,
+            'BSBA-2A': 25, 'BSBA-2B': 25, 'BSBA-2C': 25, 'BSBA-2D': 25, 'BSBA-2E': 25, 'BSBA-2F': 25, 'BSBA-2G': 25,
+            'BSBA-3A': 20, 'BSBA-3B': 20, 'BSBA-3C': 20, 'BSBA-3D': 20, 'BSBA-3E': 20, 'BSBA-3F': 20, 'BSBA-3G': 20,
+            'BSBA-4A': 15, 'BSBA-4B': 15, 'BSBA-4C': 15, 'BSBA-4D': 15, 'BSBA-4E': 15, 'BSBA-4F': 15, 'BSBA-4G': 15,
+            'BSCS-1A': 30, 'BSCS-1B': 30, 'BSCS-1C': 30, 'BSCS-1D': 30, 'BSCS-1E': 30, 'BSCS-1F': 30, 'BSCS-1G': 30,
+            'BSCS-2A': 25, 'BSCS-2B': 25, 'BSCS-2C': 25, 'BSCS-2D': 25, 'BSCS-2E': 25, 'BSCS-2F': 25, 'BSCS-2G': 25,
+            'BSCS-3A': 20, 'BSCS-3B': 20, 'BSCS-3C': 20, 'BSCS-3D': 20, 'BSCS-3E': 20, 'BSCS-3F': 20, 'BSCS-3G': 20,
+            'BSCS-4A': 15, 'BSCS-4B': 15, 'BSCS-4C': 15, 'BSCS-4D': 15, 'BSCS-4E': 15, 'BSCS-4F': 15, 'BSCS-4G': 15,
+            'BSEE-1A': 30, 'BSEE-1B': 30, 'BSEE-1C': 30, 'BSEE-1D': 30, 'BSEE-1E': 30, 'BSEE-1F': 30, 'BSEE-1G': 30,
+            'BSEE-2A': 25, 'BSEE-2B': 25, 'BSEE-2C': 25, 'BSEE-2D': 25, 'BSEE-2E': 25, 'BSEE-2F': 25, 'BSEE-2G': 25,
+            'BSEE-3A': 20, 'BSEE-3B': 20, 'BSEE-3C': 20, 'BSEE-3D': 20, 'BSEE-3E': 20, 'BSEE-3F': 20, 'BSEE-3G': 20,
+            'BSEE-4A': 15, 'BSEE-4B': 15, 'BSEE-4C': 15, 'BSEE-4D': 15, 'BSEE-4E': 15, 'BSEE-4F': 15, 'BSEE-4G': 15,
+            'BSECE-1A': 30, 'BSECE-1B': 30, 'BSECE-1C': 30, 'BSECE-1D': 30, 'BSECE-1E': 30, 'BSECE-1F': 30, 'BSECE-1G': 30,
+            'BSECE-2A': 25, 'BSECE-2B': 25, 'BSECE-2C': 25, 'BSECE-2D': 25, 'BSECE-2E': 25, 'BSECE-2F': 25, 'BSECE-2G': 25,
+            'BSECE-3A': 20, 'BSECE-3B': 20, 'BSECE-3C': 20, 'BSECE-3D': 20, 'BSECE-3E': 20, 'BSECE-3F': 20, 'BSECE-3G': 20,
+            'BSECE-4A': 15, 'BSECE-4B': 15, 'BSECE-4C': 15, 'BSECE-4D': 15, 'BSECE-4E': 15, 'BSECE-4F': 15, 'BSECE-4G': 15,
+            'BSIT-1A': 30, 'BSIT-1B': 30, 'BSIT-1C': 30, 'BSIT-1D': 30, 'BSIT-1E': 30, 'BSIT-1F': 30, 'BSIT-1G': 30,
+            'BSIT-2A': 25, 'BSIT-2B': 25, 'BSIT-2C': 25, 'BSIT-2D': 25, 'BSIT-2E': 25, 'BSIT-2F': 25, 'BSIT-2G': 25,
+            'BSIT-3A': 20, 'BSIT-3B': 20, 'BSIT-3C': 20, 'BSIT-3D': 20, 'BSIT-3E': 20, 'BSIT-3F': 20, 'BSIT-3G': 20,
+            'BSIT-4A': 15, 'BSIT-4B': 15, 'BSIT-4C': 15, 'BSIT-4D': 15, 'BSIT-4E': 15, 'BSIT-4F': 15, 'BSIT-4G': 15,
+            'BSME-1A': 30, 'BSME-1B': 30, 'BSME-1C': 30, 'BSME-1D': 30, 'BSME-1E': 30, 'BSME-1F': 30, 'BSME-1G': 30,
+            'BSME-2A': 25, 'BSME-2B': 25, 'BSME-2C': 25, 'BSME-2D': 25, 'BSME-2E': 25, 'BSME-2F': 25, 'BSME-2G': 25,
+            'BSME-3A': 20, 'BSME-3B': 20, 'BSME-3C': 20, 'BSME-3D': 20, 'BSME-3E': 20, 'BSME-3F': 20, 'BSME-3G': 20,
+            'BSME-4A': 15, 'BSME-4B': 15, 'BSME-4C': 15, 'BSME-4D': 15, 'BSME-4E': 15, 'BSME-4F': 15, 'BSME-4G': 15,
+            'BSPublicAdministration-1A': 30, 'BSPublicAdministration-1B': 30, 'BSPublicAdministration-1C': 30, 'BSPublicAdministration-1D': 30, 'BSPublicAdministration-1E': 30, 'BSPublicAdministration-1F': 30, 'BSPublicAdministration-1G': 30,
+            'BSPublicAdministration-2A': 25, 'BSPublicAdministration-2B': 25, 'BSPublicAdministration-2C': 25, 'BSPublicAdministration-2D': 25, 'BSPublicAdministration-2E': 25, 'BSPublicAdministration-2F': 25, 'BSPublicAdministration-2G': 25,
+            'BSPublicAdministration-3A': 20, 'BSPublicAdministration-3B': 20, 'BSPublicAdministration-3C': 20, 'BSPublicAdministration-3D': 20, 'BSPublicAdministration-3E': 20, 'BSPublicAdministration-3F': 20, 'BSPublicAdministration-3G': 20,
+            'BSPublicAdministration-4A': 15, 'BSPublicAdministration-4B': 15, 'BSPublicAdministration-4C': 15, 'BSPublicAdministration-4D': 15, 'BSPublicAdministration-4E': 15, 'BSPublicAdministration-4F': 15, 'BSPublicAdministration-4G': 15
+        };
 
-        function formatTimeDisplay(timeValue) { // Helper for display
-            if (!timeValue || !timeValue.includes(':')) return timeValue || "N/A"; // Return original or N/A
-            const [hourStr, minuteStr] = timeValue.split(':');
-            let hour = parseInt(hourStr, 10);
-            const minutes = parseInt(minuteStr, 10);
+        function generateTimeSlots() {
+            const slots = [];
+            for (let i = 7; i < 19; i++) { // 7 AM to 6 PM (18:00-19:00 slot ends at 19:00)
+                const startHour = String(i).padStart(2, '0');
+                const endHour = String(i + 1).padStart(2, '0');
+                slots.push(`${startHour}:00-${endHour}:00`);
+            }
+            return slots;
+        }
+        const timeSlots = generateTimeSlots();
 
-            if (isNaN(hour) || isNaN(minutes)) return timeValue; // Return original if parsing fails
-            
-            const ampm = hour >= 12 ? 'PM' : 'AM';
-            hour = hour % 12;
-            hour = hour ? hour : 12; // the hour '0' should be '12'
-            const minutePadded = String(minutes).padStart(2, '0');
-            return `${hour}:${minutePadded} ${ampm}`;
+        function populateTimeSelect(selectElement, selectedTime) {
+            selectElement.innerHTML = '<option value="">Select Time</option>'; // Clear and add default
+            timeSlots.forEach(slot => {
+                const option = document.createElement('option');
+                option.value = slot;
+                option.textContent = slot;
+                if (slot === selectedTime) {
+                    option.selected = true;
+                }
+                selectElement.appendChild(option);
+            });
         }
 
+        async function populateRoomSelectForEdit(selectedDay, selectedTime, currentCourse, currentYearSection, selectedRoomName, currentInstructorId) {
+            editRoomNameSelect.innerHTML = '<option value="">Loading rooms...</option>';
+            const courseYearSectionKey = `${currentCourse}-${currentYearSection}`.toUpperCase();
+            const requiredCapacity = studentCapacityMap[courseYearSectionKey] || 0;
+            let availableRoomsForSelect = [];
+
+            if (!selectedDay || !selectedTime || !currentCourse || !currentYearSection) {
+                editRoomNameSelect.innerHTML = '<option value="">Select Day, Time, Course, and Year/Section first</option>';
+                return;
+            }
+            
+            const instructorDocs = await getDocs(instructorsCollectionRef);
+            const bookings = [];
+            instructorDocs.forEach(docSnapshot => {
+                // Only consider other instructors' bookings or this instructor's other bookings
+                if (docSnapshot.id !== currentInstructorId) {
+                     bookings.push(docSnapshot.data());
+                }
+            });
+
+            allRooms.forEach(room => {
+                if (room.capacity >= requiredCapacity) {
+                    const isBooked = bookings.some(b => 
+                        b.roomName === room.name && 
+                        b.day === selectedDay && 
+                        b.time === selectedTime
+                    );
+                    // The room is available if it's not booked by OTHERS at the selected time/day OR if it's the room currently assigned to this instructor for this slot
+                    if (!isBooked || room.name === selectedRoomName) { 
+                        availableRoomsForSelect.push(room);
+                    }
+                }
+            });
+
+            editRoomNameSelect.innerHTML = '<option value="">Select Room</option>';
+            if (availableRoomsForSelect.length > 0) {
+                availableRoomsForSelect.forEach(room => {
+                    const option = document.createElement('option');
+                    option.value = room.name;
+                    option.textContent = `${room.name} (Capacity: ${room.capacity})`;
+                    if (room.name === selectedRoomName) {
+                        option.selected = true;
+                    }
+                    editRoomNameSelect.appendChild(option);
+                });
+            } else {
+                editRoomNameSelect.innerHTML += '<option value="" disabled selected>No rooms available for selected criteria</option>';
+            }
+             // Re-select the original room if it's in the list and should be shown
+            if (selectedRoomName && editRoomNameSelect.querySelector(`option[value="${selectedRoomName}"]`)) {
+                editRoomNameSelect.value = selectedRoomName;
+            }
+        }
 
         function populateInstructorTable(instructors) {
-            tableBody.innerHTML = ''; // Clear existing rows
+            tableBody.innerHTML = ''; 
             if (instructors.length === 0) {
                 emptyMessage.style.display = 'block';
                 loadingMessage.style.display = 'none';
+                tableBody.innerHTML = `<tr><td colspan="8" style="text-align:center;">No instructors registered yet.</td></tr>`;
                 return;
             }
             emptyMessage.style.display = 'none';
@@ -291,33 +479,30 @@
                 row.insertCell().textContent = instructor.name || 'N/A';
                 row.insertCell().textContent = instructor.subject || 'N/A';
                 row.insertCell().textContent = instructor.course || 'N/A';
-                row.insertCell().textContent = instructor.year || 'N/A';
-                row.insertCell().textContent = instructor.section || 'N/A';
+                row.insertCell().textContent = instructor.yearSection || 'N/A'; // UPDATED
                 row.insertCell().textContent = instructor.day || 'N/A';
-                row.insertCell().textContent = formatTimeDisplay(instructor.timeStart) || 'N/A';
-                row.insertCell().textContent = formatTimeDisplay(instructor.timeEnd) || 'N/A';
-                row.insertCell().textContent = instructor.roomName || 'N/A'; // MODIFIED: Display roomName
+                row.insertCell().textContent = instructor.time || 'N/A'; // UPDATED
+                row.insertCell().textContent = instructor.roomName || 'N/A';
 
                 const actionsCell = row.insertCell();
                 actionsCell.classList.add('actions-cell');
                 
                 const editButton = document.createElement('button');
                 editButton.textContent = 'Edit';
-                editButton.classList.add('btn');
+                editButton.classList.add('btn', 'edit-btn');
                 editButton.onclick = () => openEditModal(instructor);
                 actionsCell.appendChild(editButton);
 
                 const deleteButton = document.createElement('button');
                 deleteButton.textContent = 'Delete';
-                deleteButton.classList.add('btn', 'btn-danger');
+                deleteButton.classList.add('btn', 'delete-btn');
                 deleteButton.onclick = () => deleteInstructor(instructor.id);
                 actionsCell.appendChild(deleteButton);
             });
         }
 
-        // Listen for real-time updates
         loadingMessage.style.display = 'block';
-        const q = query(instructorsCollectionRef, orderBy("name")); // Optional: order by name
+        const q = query(instructorsCollectionRef, orderBy("name")); 
 
         onSnapshot(q, (querySnapshot) => {
             const instructors = [];
@@ -333,11 +518,17 @@
 
         // --- Edit Functionality ---
         function openEditModal(instructor) {
-            editDocIdInput.value = instructor.id;
-            editNameInput.value = instructor.name || '';
+            editInstructorIdInput.value = instructor.id;
+            editInstructorNameInput.value = instructor.name || '';
             editSubjectInput.value = instructor.subject || '';
-            editRoomNameInput.value = instructor.roomName || ''; // Populate room for editing
-            // Populate other fields if you add them to the modal
+            editCourseSelect.value = instructor.course || '';
+            editYearSectionInput.value = instructor.yearSection || '';
+            editDaySelect.value = instructor.day || '';
+            
+            populateTimeSelect(editTimeSelect, instructor.time || '');
+            // Initial population of rooms
+            populateRoomSelectForEdit(instructor.day, instructor.time, instructor.course, instructor.yearSection, instructor.roomName || '', instructor.id);
+            
             editModal.style.display = "block";
         }
 
@@ -345,17 +536,38 @@
             editModal.style.display = "none";
         }
 
-        async function saveChanges() {
-            const docId = editDocIdInput.value;
+        // Add event listeners to relevant fields in the edit modal to update room availability
+        [editDaySelect, editTimeSelect, editCourseSelect, editYearSectionInput].forEach(el => {
+            el.addEventListener('change', () => {
+                const currentInstructorId = editInstructorIdInput.value;
+                 // Pass the original selected room name for comparison to allow keeping it if still valid
+                const originalSelectedRoom = editRoomNameSelect.value; 
+                populateRoomSelectForEdit(
+                    editDaySelect.value,
+                    editTimeSelect.value,
+                    editCourseSelect.value,
+                    editYearSectionInput.value,
+                    originalSelectedRoom, // Pass the currently selected room in the dropdown
+                    currentInstructorId
+                );
+            });
+        });
+
+        editForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const docId = editInstructorIdInput.value;
             const updatedData = {
-                name: editNameInput.value.trim(),
+                name: editInstructorNameInput.value.trim(),
                 subject: editSubjectInput.value.trim(),
-                roomName: editRoomNameInput.value.trim() // Save updated room name
-                // Add other fields from the modal here
+                course: editCourseSelect.value,
+                yearSection: editYearSectionInput.value.trim().toUpperCase(),
+                day: editDaySelect.value,
+                time: editTimeSelect.value,
+                roomName: editRoomNameSelect.value
             };
 
-            if (!updatedData.name || !updatedData.subject || !updatedData.roomName) {
-                alert("Name, Subject, and Room cannot be empty.");
+            if (!updatedData.name || !updatedData.subject || !updatedData.course || !updatedData.yearSection || !updatedData.day || !updatedData.time || !updatedData.roomName) {
+                alert("All fields are required.");
                 return;
             }
 
@@ -368,9 +580,8 @@
                 console.error("Error updating instructor: ", error);
                 alert("Failed to update instructor. " + error.message);
             }
-        }
+        });
         
-        // --- Delete Functionality ---
         async function deleteInstructor(docId) {
             if (!confirm("Are you sure you want to delete this instructor record?")) {
                 return;
@@ -378,19 +589,22 @@
             try {
                 await deleteDoc(doc(db, "instructors", docId));
                 alert("Instructor deleted successfully!");
-                // The onSnapshot listener will automatically update the table
             } catch (error) {
                 console.error("Error deleting instructor: ", error);
                 alert("Failed to delete instructor. " + error.message);
             }
         }
 
-        // Close modal if user clicks outside of it
+        closeModalBtn.onclick = closeModal;
         window.onclick = function(event) {
             if (event.target == editModal) {
                 closeModal();
             }
         }
+
+        // Expose to global for older onclick attributes if any were missed (best to remove those in HTML)
+        window.openEditModal = openEditModal; 
+        window.deleteInstructor = deleteInstructor;
 
     </script>
 </body>
