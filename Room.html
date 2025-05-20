@@ -29,7 +29,6 @@
       max-width: 800px;
       margin: 0 auto;
       padding: 20px;
-      position: relative;
     }
 
     .back-button {
@@ -141,15 +140,6 @@
       background-color: rgba(217, 35, 35, 0.1);
     }
 
-    .bottom-buttons {
-      margin-top: 30px;
-      text-align: center;
-    }
-
-    .bottom-buttons button {
-      margin: 0 10px;
-    }
-
     @media (max-width: 768px) {
       .container {
         padding: 10px;
@@ -173,7 +163,7 @@
 <body>
   <div class="container">
     <button class="back-button" onclick="navigateTo('index.html')">Back to Home</button>
-
+    
     <header>
       <h1 id="formTitle">Room Registration</h1>
     </header>
@@ -228,7 +218,7 @@
       </div>
     </form>
 
-    <div class="bottom-buttons">
+    <div style="margin-top: 20px; text-align: center;">
       <button onclick="navigateTo('RoomList.html')">View Registered Rooms</button>
     </div>
   </div>
@@ -241,7 +231,7 @@
     function toggleTimeSlots(day) {
       const timeSlotsDiv = document.getElementById('timeSlots');
       const timeSelect = document.getElementById('time');
-
+      
       if (day) {
         timeSlotsDiv.style.display = 'block';
         timeSelect.required = true;
@@ -254,18 +244,6 @@
 
     const roomForm = document.getElementById('roomForm');
     const errorContainer = document.getElementById('errorContainer');
-    const urlParams = new URLSearchParams(window.location.search);
-    const isEdit = urlParams.get('edit') === 'true';
-    const editIndex = urlParams.get('index');
-
-    if (isEdit) {
-      document.getElementById('formTitle').textContent = 'Edit Room';
-      document.getElementById('roomName').value = urlParams.get('roomName');
-      document.getElementById('day').value = urlParams.get('day');
-      document.getElementById('time').value = urlParams.get('time');
-      document.getElementById('capacity').value = urlParams.get('capacity');
-      toggleTimeSlots(urlParams.get('day'));
-    }
 
     roomForm.addEventListener('submit', function(event) {
       event.preventDefault();
@@ -283,22 +261,28 @@
         return;
       }
 
-      if (!/^\d+$/.test(capacity)) {
+      if (!/^[0-9]+$/.test(capacity)) {
         showError("Capacity must be a number.");
         return;
       }
 
       const room = { roomName, day, time, capacity };
-      let rooms = JSON.parse(localStorage.getItem('rooms')) || [];
+      const url = "https://script.google.com/macros/s/AKfycbx1CA4hRI2k4ATlz77Vjgz2O3HxYdVvaKlwVZ2ilNkqWIij9MlrMEBD_6AdKbhrgOBi/exec";
 
-      if (isEdit) {
-        rooms[parseInt(editIndex)] = room;
-      } else {
-        rooms.push(room);
-      }
-
-      localStorage.setItem('rooms', JSON.stringify(rooms));
-      navigateTo('RoomList.html');
+      fetch(url, {
+        method: "POST",
+        mode: "no-cors",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(room)
+      })
+      .then(() => {
+        alert("Room registered successfully!");
+        clearForm();
+      })
+      .catch((err) => {
+        console.error("Error saving room:", err);
+        showError("Failed to register room. Please try again.");
+      });
     }
 
     function clearForm() {
