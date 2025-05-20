@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>DHVSU Instructor Registration</title>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="[https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap"](https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap") rel="stylesheet">
     <style>
         :root {
             --primary-color: #1A5F7A;
@@ -126,7 +126,7 @@
             margin-top: 10px;
             padding: 10px;
             border-radius: 4px;
-            display: none; /* Initially hidden */
+            display: none;
         }
 
         @media (max-width: 600px) {
@@ -199,8 +199,6 @@
                     <option value="B">Section B</option>
                     <option value="C">Section C</option>
                     <option value="D">Section D</option>
-                    <!-- Add G for BS Public Administration if needed -->
-                    <!-- <option value="G">Section G</option> -->
                 </select>
             </div>
 
@@ -221,15 +219,14 @@
                 <label for="time">Time (1-hour slots)*</label>
                 <select id="time" required>
                     <option value="">Select Time Slot</option>
-                    <!-- Options will be populated by JavaScript -->
                 </select>
             </div>
 
             <div class="form-group">
+            <div class="form-group">
                 <label for="roomAvailable">Room Available*</label>
-                <select id="roomAvailable" required disabled> <!-- Disabled initially -->
+                <select id="roomAvailable" required disabled>
                     <option value="">Select All Details First</option>
-                    <!-- Options will be populated by JavaScript based on Day, Time, and Capacity -->
                 </select>
             </div>
 
@@ -254,14 +251,14 @@
             where 
         } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-        // IMPORTANT: Ensure this Firebase config is correct for your project!
+        // Firebase config
         const firebaseConfig = {
-            apiKey: "AIzaSyDeqxzp_-kKjM3hPr6CLGfTn38e4swSKbo", // <<< YOUR FIREBASE API KEY
-            authDomain: "room-management-system-8e899.firebaseapp.com", // <<< YOUR AUTH DOMAIN
-            projectId: "room-management-system-8e899", // <<< YOUR PROJECT ID
-            storageBucket: "room-management-system-8e899.appspot.com", // <<< YOUR STORAGE BUCKET
-            messagingSenderId: "667821278853", // <<< YOUR MESSAGING SENDER ID
-            appId: "1:667821278853:web:a3a80c985073772670cbec" // <<< YOUR APP ID
+            apiKey: "AIzaSyDeqxzp_-kKjM3hPr6CLGfTn38e4swSKbo",
+            authDomain: "room-management-system-8e899.firebaseapp.com",
+            projectId: "room-management-system-8e899",
+            storageBucket: "room-management-system-8e899.appspot.com",
+            messagingSenderId: "667821278853",
+            appId: "1:667821278853:web:a3a80c985073772670cbec"
         };
 
         // Initialize Firebase
@@ -280,59 +277,64 @@
         const roomAvailableSelect = document.getElementById('roomAvailable');
         const errorMessageDiv = document.getElementById('errorMessage');
 
-        window.registerInstructor = registerInstructor;
-
-        // Data Definitions
+        // Student capacity map
         const studentCapacityMap = {
             'BSA-1st-A': 30, 'BSA-1st-B': 30, 'BSA-1st-C': 28, 'BSA-1st-D': 30,
             'BSA-2nd-A': 32, 'BSA-2nd-B': 30, 'BSA-2nd-C': 30, 'BSA-2nd-D': 32,
             'BSA-3rd-A': 28, 'BSA-3rd-B': 29, 'BSA-3rd-C': 30, 'BSA-3rd-D': 28,
             'BSA-4th-A': 30, 'BSA-4th-B': 31, 'BSA-4th-C': 29, 'BSA-4th-D': 30,
-
             'BSAIS-1st-A': 35, 'BSAIS-1st-B': 33, 'BSAIS-1st-C': 34, 'BSAIS-1st-D': 35,
             'BSAIS-2nd-A': 30, 'BSAIS-2nd-B': 31, 'BSAIS-2nd-C': 32, 'BSAIS-2nd-D': 30,
             'BSAIS-3rd-A': 33, 'BSAIS-3rd-B': 35, 'BSAIS-3rd-C': 34, 'BSAIS-3rd-D': 33,
             'BSAIS-4th-A': 31, 'BSAIS-4th-B': 30, 'BSAIS-4th-C': 32, 'BSAIS-4th-D': 31,
-
             'MSMarketing-1st-A': 20, 'MSMarketing-1st-B': 22, 
             'MSMarketing-2nd-A': 21, 'MSMarketing-2nd-B': 20,
-            'MSMarketing-3rd-A': 20, 'MSMarketing-3rd-B': 20, // Added 3rd year for MSMarketing
-            'MSMarketing-4th-A': 20, 'MSMarketing-4th-B': 20, // Added 4th year for MSMarketing
-            
+            'MSMarketing-3rd-A': 20, 'MSMarketing-3rd-B': 20,
+            'MSMarketing-4th-A': 20, 'MSMarketing-4th-B': 20,
             'BSE-1st-A': 40, 'BSE-1st-B': 40, 'BSE-1st-C': 38, 'BSE-1st-D': 39,
             'BSE-2nd-A': 37, 'BSE-2nd-B': 39, 'BSE-2nd-C': 40, 'BSE-2nd-D': 38,
             'BSE-3rd-A': 35, 'BSE-3rd-B': 36, 'BSE-3rd-C': 37, 'BSE-3rd-D': 35,
             'BSE-4th-A': 38, 'BSE-4th-B': 40, 'BSE-4th-C': 39, 'BSE-4th-D': 37,
+            'BSPublicAdministration-1st-A': 30, 'BSPublicAdministration-1st-B': 32, 
+            'BSPublicAdministration-1st-C': 31, 'BSPublicAdministration-1st-D': 30,
+            'BSPublicAdministration-2nd-A': 28, 'BSPublicAdministration-2nd-B': 30,
+            'BSPublicAdministration-2nd-C': 29, 'BSPublicAdministration-2nd-D': 28,
+            'BSPublicAdministration-3rd-A': 31, 'BSPublicAdministration-3rd-B': 29,
+            'BSPublicAdministration-3rd-C': 30, 'BSPublicAdministration-3rd-D': 31,
+            'BSPublicAdministration-4th-A': 29, 'BSPublicAdministration-4th-B': 30,
+            'BSPublicAdministration-4th-C': 28, 'BSPublicAdministration-4th-D': 29
+        };
 
-            'BSPublicAdministration-1st-A': 30, 'BSPublicAdministration-1st-B': 32, 'BSPublicAdministration-1st-C': 31, 'BSPublicAdministration-1st-D': 30,
-            'BSPublicAdministration-2nd-A': 28, 'BSPublicAdministration-2nd-B': 30, 'BSPublicAdministration-2nd-C': 29, 'BSPublicAdministration-2nd-D': 28,
-            'BSPublicAdministration-3rd-A': 31, 'BSPublicAdministration-3rd-B': 29, 'BSPublicAdministration-3rd-C': 30, 'BSPublicAdministration-3rd-D': 31,
-            'BSPublicAdministration-4th-A': 29, 'BSPublicAdministration-4th-B': 30, 'BSPublicAdministration-4th-C': 28, 'BSPublicAdministration-4th-D': 29,
-            // Add section G if applicable, for example:
-            // 'BSPublicAdministration-4th-G': 30 
-
+        // Room definitions
+        const allRooms = [
+            { name: "R101", capacity: 40 },
+            { name: "R102", capacity: 35 },
+            { name: "R103", capacity: 30 },
+            { name: "R104", capacity: 45 },
+            { name: "R105", capacity: 32 },
+            { name: "R106", capacity: 38 },
+            { name: "R107", capacity: 42 },
+            { name: "R108", capacity: 36 }
+        ];
 
         // Helper Functions
         function populateTimeSlots() {
-            const startTime = 7; 
-            const endTime = 17;  
-
-            for (let hour = startTime; hour < endTime; hour++) {
-                const startHourPadded = String(hour).padStart(2, '0'); 
+            const timeSelect = document.getElementById('time');
+            timeSelect.innerHTML = '<option value="">Select Time Slot</option>';
+            
+            // Generate time slots from 7:00 to 17:00
+            for (let hour = 7; hour < 17; hour++) {
+                const startHourPadded = String(hour).padStart(2, '0');
                 const endHourPadded = String(hour + 1).padStart(2, '0');
-                const timeSlotValue = ${startHourPadded}:00-${endHourPadded}:00;
                 
-                let displayStartHour = hour % 12;
-                if (displayStartHour === 0) displayStartHour = 12; 
-                const displayStartAmPm = hour < 12 ? 'AM' : 'PM';
+                // Create display text with AM/PM format
+                const displayStartHour = hour % 12 || 12;
+                const displayEndHour = (hour + 1) % 12 || 12;
+                const ampm = hour < 12 ? 'AM' : 'PM';
                 
-                let displayEndHour = (hour + 1) % 12;
-                if (displayEndHour === 0) displayEndHour = 12;
-                let displayEndAmPm = (hour + 1) < 12 || (hour + 1) === 24 ? 'AM' : 'PM';
-                if ((hour + 1) === 12) displayEndAmPm = 'PM';
+                const timeSlotValue = `${startHourPadded}:00-${endHourPadded}:00`;
+                const timeSlotText = `${displayStartHour}:00 ${ampm} - ${displayEndHour}:00 ${ampm}`;
                 
-                const timeSlotText = ${displayStartHour}:00 ${displayStartAmPm} - ${displayEndHour}:00 ${displayEndAmPm};
-
                 const option = document.createElement('option');
                 option.value = timeSlotValue;
                 option.textContent = timeSlotText;
@@ -361,7 +363,6 @@
             roomAvailableSelect.innerHTML = '<option value="">Select All Details First</option>';
             roomAvailableSelect.disabled = true; 
             clearError();
-            // updateAvailableRooms(); // Call to ensure room dropdown is correctly reset/updated
         }
         
         function formatTimeDisplay(timeValue) {
@@ -374,7 +375,7 @@
             hour = hour % 12;
             hour = hour ? hour : 12; 
             const minutePadded = String(minutes).padStart(2, '0');
-            return ${hour}:${minutePadded} ${ampm};
+            return `${hour}:${minutePadded} ${ampm}`;
         }
 
         async function updateAvailableRooms() {
@@ -390,7 +391,6 @@
 
             if (!selectedDay || !selectedTimeSlot || !selectedCourse || !selectedYear || !selectedSection) {
                 roomAvailableSelect.innerHTML = '<option value="">Select All Details First</option>';
-                // roomAvailableSelect.disabled = true; // Already set
                 return;
             }
 
@@ -398,11 +398,11 @@
             const startHour = parseInt(timeStartStr.split(':')[0], 10);
             const endHour = parseInt(timeEndStr.split(':')[0], 10);
 
-            const classKey = ${selectedCourse}-${selectedYear}-${selectedSection};
+            const classKey = `${selectedCourse}-${selectedYear}-${selectedSection}`;
             const studentsInClass = studentCapacityMap[classKey];
 
             if (studentsInClass === undefined) {
-                showError(Student capacity not defined for ${selectedCourse} ${selectedYear}-${selectedSection}. Please check configuration.);
+                showError(`Student capacity not defined for ${selectedCourse} ${selectedYear}-${selectedSection}. Please check configuration.`);
                 roomAvailableSelect.innerHTML = '<option value="">Error: Set class capacity</option>';
                 return;
             }
@@ -435,15 +435,13 @@
                     availableRooms.forEach(room => {
                         const option = document.createElement('option');
                         option.value = room.name;
-                        option.textContent = ${room.name} (Capacity: ${room.capacity});
+                        option.textContent = `${room.name} (Capacity: ${room.capacity})`;
                         roomAvailableSelect.appendChild(option);
                     });
                     roomAvailableSelect.disabled = false;
                 } else {
                     roomAvailableSelect.innerHTML = '<option value="">No Rooms Available</option>';
-                    showError(No available rooms for ${studentsInClass} students on ${selectedDay} at ${selectedTimeSlot}. Check capacity or existing bookings.);
-                }
-
+                    showError(`No available rooms for ${studentsInClass} students on ${selectedDay} at ${selectedTimeSlot}. Check capacity or existing bookings.`);
             } catch (error) {
                 console.error("Error fetching available rooms: ", error);
                 showError("Failed to fetch available rooms. " + error.message);
@@ -512,7 +510,7 @@
                         const existingStartHour = parseInt(existing.timeStart.split(':')[0], 10);
                         const existingEndHour = parseInt(existing.timeEnd.split(':')[0], 10);
                         if (startHour < existingEndHour && endHour > existingStartHour) {
-                            showError(This instructor (${name}) already has a class from ${formatTimeDisplay(existing.timeStart)} to ${formatTimeDisplay(existing.timeEnd)} on ${day}.);
+                            showError(`This instructor (${name}) already has a class from ${formatTimeDisplay(existing.timeStart)} to ${formatTimeDisplay(existing.timeEnd)} on ${day}.`);
                             return;
                         }
                     }
@@ -526,7 +524,7 @@
                 );
                 const subjectInClassSnapshot = await getDocs(subjectInClassQuery);
                 if (!subjectInClassSnapshot.empty) {
-                    showError(The subject "${subject}" is already assigned to ${course} ${year}-${section}.);
+                    showError(`The subject "${subject}" is already assigned to ${course} ${year}-${section}.`);
                     return;
                 }
 
@@ -543,7 +541,7 @@
                         const existingStartHour = parseInt(existing.timeStart.split(':')[0], 10);
                         const existingEndHour = parseInt(existing.timeEnd.split(':')[0], 10);
                         if (startHour < existingEndHour && endHour > existingStartHour) {
-                            showError(${course} ${year}-${section} already has a class ("${existing.subject}") from ${formatTimeDisplay(existing.timeStart)} to ${formatTimeDisplay(existing.timeEnd)} on ${day}.);
+                            showError(`${course} ${year}-${section} already has a class ("${existing.subject}") from ${formatTimeDisplay(existing.timeStart)} to ${formatTimeDisplay(existing.timeEnd)} on ${day}.`);
                             return;
                         }
                     }
@@ -555,24 +553,23 @@
                     where("day", "==", day)
                 );
                 const finalRoomCheckSnapshot = await getDocs(finalRoomCheckQuery);
-                 for (const docSnap of finalRoomCheckSnapshot.docs) {
+                for (const docSnap of finalRoomCheckSnapshot.docs) {
                     const existingBooking = docSnap.data();
                     if (existingBooking.timeStart && existingBooking.timeEnd) {
                         const existingStartHour = parseInt(existingBooking.timeStart.split(':')[0], 10);
                         const existingEndHour = parseInt(existingBooking.timeEnd.split(':')[0], 10);
                         if (startHour < existingEndHour && endHour > existingStartHour) {
-                             showError(Room "${roomName}" was just booked by instructor ${existingBooking.name} for subject "${existingBooking.subject}" from ${formatTimeDisplay(existingBooking.timeStart)} to ${formatTimeDisplay(existingBooking.timeEnd)} on ${day}. Please select another room or time.);
-                            updateAvailableRooms(); // Refresh room list
+                            showError(`Room "${roomName}" was just booked by instructor ${existingBooking.name} for subject "${existingBooking.subject}" from ${formatTimeDisplay(existingBooking.timeStart)} to ${formatTimeDisplay(existingBooking.timeEnd)} on ${day}. Please select another room or time.`);
+                            updateAvailableRooms(); 
                             return;
                         }
                     }
                 }
 
-
                 await addDoc(instructorsCollectionRef, instructorData);
                 alert('Instructor registered successfully with Firebase!');
                 clearForm(); 
-                updateAvailableRooms(); // Ensure room dropdown is reset correctly after clearing form
+                updateAvailableRooms(); 
 
             } catch (error) {
                 console.error("Error registering instructor: ", error);
