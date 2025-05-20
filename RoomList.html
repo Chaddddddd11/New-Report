@@ -37,10 +37,10 @@
           const data = docSnap.data();
           const row = document.createElement("tr");
           row.innerHTML = `
-            <td>${data.roomName}</td>
-            <td>${data.day}</td>
-            <td>${data.time}</td>
-            <td>${data.capacity}</td>
+            <td>${data.RoomName}</td>
+            <td>${data.Day}</td>
+            <td>${data.Time}</td>
+            <td>${data.Capacity}</td>
             <td><button onclick="deleteRoom(\"${docSnap.id}\")">Delete</button></td>
           `;
           tableBody.appendChild(row);
