@@ -234,10 +234,10 @@
     } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
     const firebaseConfig = {
-      apiKey: "AIzaSyDeqxzp_-kKjM3hPr6CLGfTn38e4swSKbo",
+      apiKey: "AIzaSyDeqxzp_-kKjM3hPr6CLGfTn38e4swSKbo", // Replace with your actual API key if this is a placeholder
       authDomain: "room-management-system-8e899.firebaseapp.com",
       projectId: "room-management-system-8e899",
-      storageBucket: "room-management-system-8e899.appspot.com", // ✅ FIXED HERE
+      storageBucket: "room-management-system-8e899.appspot.com",
       messagingSenderId: "667821278853",
       appId: "1:667821278853:web:a3a80c985073772670cbec"
     };
@@ -252,13 +252,14 @@
       const capacity = document.getElementById('capacity').value.trim();
       const errorContainer = document.getElementById('errorContainer');
 
-      errorContainer.textContent = "";
+      errorContainer.textContent = ""; // Clear previous errors
 
       if (!roomName || !day || !time || !capacity) {
         errorContainer.textContent = "Please fill in all required fields.";
         return;
       }
 
+      // Basic validation for capacity to be a number
       if (!/^\d+$/.test(capacity)) {
         errorContainer.textContent = "Capacity must be a number.";
         return;
@@ -269,46 +270,84 @@
         const isEdit = urlParams.get('edit') === 'true';
         const editId = urlParams.get('id');
 
-        const roomData = { roomName, day, time, capacity };
+        const roomData = { roomName, day, time, capacity: parseInt(capacity, 10) }; // Store capacity as a number
 
         if (isEdit && editId) {
           const docRef = doc(db, "rooms", editId);
           await updateDoc(docRef, roomData);
+          alert('Room updated successfully!'); // Optional: Provide user feedback
         } else {
           await addDoc(collection(db, "rooms"), roomData);
+          alert('Room registered successfully!'); // Optional: Provide user feedback
         }
 
-        window.location.href = 'RoomList.html';
+        // Redirect to room list page or clear form
+        window.location.href = 'RoomList.html'; // Or clear form: roomForm.reset(); toggleTimeSlots('');
       } catch (error) {
         errorContainer.textContent = "Failed to save room. Please try again.";
-        console.error("Error saving room:", error);
+        console.error("Error saving room:", error); // Crucial for debugging
       }
     }
 
-    // Set up event listeners
+    // Event listener for form submission
     document.getElementById('roomForm').addEventListener('submit', function(event) {
-      event.preventDefault();
+      event.preventDefault(); // Prevent default form submission
       registerRoom();
     });
 
+    // Expose toggleTimeSlots to global scope for inline HTML onchange
     window.toggleTimeSlots = function(day) {
       const timeSlotsDiv = document.getElementById('timeSlots');
-      timeSlotsDiv.style.display = day ? 'block' : 'none';
-      document.getElementById('time').required = !!day;
+      const timeSelect = document.getElementById('time');
+      if (day) {
+        timeSlotsDiv.style.display = 'block';
+        timeSelect.required = true;
+      } else {
+        timeSlotsDiv.style.display = 'none';
+        timeSelect.required = false;
+        timeSelect.value = ''; // Clear time selection if day is deselected
+      }
     };
 
-    // Load form data in edit mode
-    const urlParams = new URLSearchParams(window.location.search);
-    const isEdit = urlParams.get('edit') === 'true';
+    // Function to load form data if in edit mode
+    function loadEditData() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const isEdit = urlParams.get('edit') === 'true';
+      const formTitle = document.getElementById('formTitle');
+      
+      // Ensure all elements exist before trying to set their values
+      const roomNameInput = document.getElementById('roomName');
+      const daySelect = document.getElementById('day');
+      const timeSelect = document.getElementById('time');
+      const capacityInput = document.getElementById('capacity');
 
-    if (isEdit) {
-      document.getElementById('formTitle').textContent = 'Edit Room';
-      document.getElementById('roomName').value = urlParams.get('roomName') || '';
-      document.getElementById('day').value = urlParams.get('day') || '';
-      document.getElementById('time').value = urlParams.get('time') || '';
-      document.getElementById('capacity').value = urlParams.get('capacity') || '';
-      window.toggleTimeSlots(urlParams.get('day'));
+      if (isEdit) {
+        if (formTitle) formTitle.textContent = 'Edit Room';
+        
+        const roomName = urlParams.get('roomName');
+        const day = urlParams.get('day');
+        const time = urlParams.get('time');
+        const capacity = urlParams.get('capacity');
+
+        if (roomNameInput && roomName) roomNameInput.value = roomName;
+        if (daySelect && day) daySelect.value = day;
+        if (timeSelect && time) timeSelect.value = time; // Make sure this value exists in options
+        if (capacityInput && capacity) capacityInput.value = capacity;
+        
+        if (day) {
+            window.toggleTimeSlots(day); // Show and require time slots if day is pre-selected
+        } else {
+            window.toggleTimeSlots(''); // Hide time slots if no day is pre-selected
+        }
+      } else {
+        if (formTitle) formTitle.textContent = 'Room Registration';
+        window.toggleTimeSlots(''); // Ensure time slots are hidden on new form load
+      }
     }
+
+    // Load edit data when the DOM is fully loaded
+    document.addEventListener('DOMContentLoaded', loadEditData);
+
   </script>
 </body>
 </html>
