@@ -3,70 +3,68 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Registered Room List</title>
+  <title>Room List</title>
   <style>
     body {
       font-family: Arial, sans-serif;
-      background-color: #f9f9f9;
+      background-color: #f5f5f5;
       margin: 0;
-      padding: 0;
+      padding: 20px;
     }
-
     header {
+      text-align: center;
       background-color: #d92323;
       color: white;
       padding: 20px;
-      text-align: center;
-    }
-
-    .container {
-      max-width: 900px;
-      margin: 20px auto;
-      padding: 20px;
-      background: white;
       border-radius: 10px;
-      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      margin-bottom: 20px;
     }
-
-    h2 {
-      text-align: center;
-      color: #d92323;
+    .actions-top {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 20px;
     }
-
+    .actions-top button {
+      padding: 10px 15px;
+      font-size: 14px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    .back-button {
+      background-color: #ffcc00;
+    }
+    .register-button {
+      background-color: #d92323;
+      color: white;
+    }
     table {
       width: 100%;
       border-collapse: collapse;
-      margin-top: 20px;
+      background-color: white;
     }
-
     th, td {
-      padding: 12px 15px;
-      border: 1px solid #ddd;
+      border: 1px solid #ccc;
+      padding: 10px;
       text-align: left;
     }
-
     th {
-      background-color: #f2f2f2;
-      color: #333;
+      background-color: #eee;
     }
-
-    tr:nth-child(even) {
-      background-color: #f9f9f9;
+    .action-btn {
+      padding: 5px 10px;
+      margin-right: 5px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
     }
-
-    .back-button {
-      display: inline-block;
-      margin-top: 20px;
-      padding: 10px 20px;
-      background-color: #ffcc00;
-      color: #333;
-      text-decoration: none;
-      border-radius: 5px;
-      transition: background-color 0.3s;
+    .edit-btn {
+      background-color: #4CAF50;
+      color: white;
     }
-
-    .back-button:hover {
-      background-color: #e6b800;
+    .delete-btn {
+      background-color: #f44336;
+      color: white;
     }
   </style>
 </head>
@@ -75,58 +73,72 @@
     <h1>Registered Rooms</h1>
   </header>
 
-  <div class="container">
-    <h2>Room Schedule List</h2>
-    <table id="roomTable">
-      <thead>
-        <tr>
-          <th>Room Name</th>
-          <th>Day</th>
-          <th>Time</th>
-          <th>Capacity</th>
-        </tr>
-      </thead>
-      <tbody>
-        <!-- Room rows will be added here dynamically -->
-      </tbody>
-    </table>
-
-    <a href="Room.html" class="back-button">Back to Register</a>
+  <div class="actions-top">
+    <button class="back-button" onclick="window.location.href='index.html'">Back to Home</button>
+    <button class="register-button" onclick="window.location.href='Room.html'">Register New Room</button>
   </div>
 
+  <table id="roomTable">
+    <thead>
+      <tr>
+        <th>Room Name</th>
+        <th>Day</th>
+        <th>Time</th>
+        <th>Capacity</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
   <script>
-    const sheetURL = "https://script.google.com/macros/s/AKfycbxgKco7sHsWwYaysINo3IcvlCaomNkFdEoobvXp92Y/dev";
+    const SHEET_URL = "https://script.google.com/macros/s/AKfycbxgKco7sHsWwYaysINo3IcvlCaomNkFdEoobvXp92Y/dev";
 
-    fetch(sheetURL)
-      .then(response => response.json())
-      .then(data => {
-        const tableBody = document.querySelector("#roomTable tbody");
+    async function loadRooms() {
+      try {
+        const res = await fetch(SHEET_URL);
+        const rooms = await res.json();
 
-        if (!data || !Array.isArray(data)) {
-          tableBody.innerHTML = '<tr><td colspan="4">No data available</td></tr>';
-          return;
-        }
+        const tbody = document.querySelector('#roomTable tbody');
+        tbody.innerHTML = '';
 
-        if (data.length === 0) {
-          tableBody.innerHTML = '<tr><td colspan="4">No rooms registered yet</td></tr>';
-        } else {
-          data.forEach(room => {
-            const row = document.createElement("tr");
-            row.innerHTML = `
-              <td>${room["Room Name"] || ""}</td>
-              <td>${room.Day || ""}</td>
-              <td>${room.Time || ""}</td>
-              <td>${room.Capacity || ""}</td>
-            `;
-            tableBody.appendChild(row);
-          });
-        }
-      })
-      .catch(error => {
-        console.error("Error fetching data:", error);
-        const tableBody = document.querySelector("#roomTable tbody");
-        tableBody.innerHTML = '<tr><td colspan="4">Failed to load data</td></tr>';
-      });
+        rooms.forEach((room, index) => {
+          const row = document.createElement('tr');
+          row.innerHTML = `
+            <td><input type="text" value="${room['Room Name']}" data-index="${index}" class="edit-roomName" /></td>
+            <td><input type="text" value="${room['Day']}" data-index="${index}" class="edit-day" /></td>
+            <td><input type="text" value="${room['Time']}" data-index="${index}" class="edit-time" /></td>
+            <td><input type="text" value="${room['Capacity']}" data-index="${index}" class="edit-capacity" /></td>
+            <td>
+              <button class="action-btn edit-btn" onclick="editRoom(${index})">Save</button>
+              <button class="action-btn delete-btn" onclick="deleteRoom(${index})">Delete</button>
+            </td>
+          `;
+          tbody.appendChild(row);
+        });
+      } catch (error) {
+        console.error('Error loading rooms:', error);
+      }
+    }
+
+    async function editRoom(index) {
+      const roomName = document.querySelector(`.edit-roomName[data-index='${index}']`).value;
+      const day = document.querySelector(`.edit-day[data-index='${index}']`).value;
+      const time = document.querySelector(`.edit-time[data-index='${index}']`).value;
+      const capacity = document.querySelector(`.edit-capacity[data-index='${index}']`).value;
+
+      const updatedRoom = { RoomName: roomName, Day: day, Time: time, Capacity: capacity };
+
+      // Send to Apps Script for update (not natively supported without Apps Script backend logic update)
+      alert("Editing in Google Sheet requires an Apps Script 'update' function.");
+    }
+
+    async function deleteRoom(index) {
+      // This also requires a server-side delete handler
+      alert("Deleting from Google Sheet requires an Apps Script 'delete' function.");
+    }
+
+    window.onload = loadRooms;
   </script>
 </body>
 </html>
