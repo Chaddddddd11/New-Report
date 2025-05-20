@@ -242,100 +242,137 @@
         </div>
     </div>
 
-<script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-    import {
-        getFirestore,
-        collection,
-        addDoc,
-        getDocs
-    } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Room Schedule Form</title>
+  <style>
+    .checkbox-group {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 8px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Room Schedule Form</h1>
+  <form id="scheduleForm">
+    <label for="room">Room:</label>
+    <input type="text" id="room" name="room" required /><br /><br />
 
-    const firebaseConfig = {
-        apiKey: "AIzaSyDeqxzp_-kKjM3hPr6CLGfTn38e4swSKbo",
-        authDomain: "room-management-system-8e899.firebaseapp.com",
-        projectId: "room-management-system-8e899",
-        storageBucket: "room-management-system-8e899.appspot.com",
-        messagingSenderId: "667821278853",
-        appId: "1:667821278853:web:a3a80c985073772670cbec"
-    };
+    <label for="section">Section:</label>
+    <select id="section" name="section" required>
+      <option value="">Select Section</option>
+      <option value="BSA-1st-A">BSA-1st-A</option>
+      <option value="BSA-1st-B">BSA-1st-B</option>
+      <option value="MSMarketing-3rd-A">MSMarketing-3rd-A</option>
+      <option value="MSMarketing-4th-B">MSMarketing-4th-B</option>
+      <!-- Add other sections as needed -->
+    </select><br /><br />
 
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-    const instructorsCollectionRef = collection(db, "instructors");
+    <label for="capacity">Room Capacity:</label>
+    <input type="number" id="capacity" name="capacity" required /><br /><br />
 
+    <label>Time Slots:</label>
+    <div id="timeSlots" class="checkbox-group"></div><br />
+
+    <button type="submit">Submit</button>
+  </form>
+
+  <script>
     // Data Definitions
     const studentCapacityMap = {
-        'BSA-1st-A': 30, 'BSA-1st-B': 30, 'BSA-1st-C': 28, 'BSA-1st-D': 30,
-        'BSA-2nd-A': 32, 'BSA-2nd-B': 30, 'BSA-2nd-C': 30, 'BSA-2nd-D': 32,
-        'BSA-3rd-A': 28, 'BSA-3rd-B': 29, 'BSA-3rd-C': 30, 'BSA-3rd-D': 28,
-        'BSA-4th-A': 30, 'BSA-4th-B': 31, 'BSA-4th-C': 29, 'BSA-4th-D': 30,
+      'BSA-1st-A': 30, 'BSA-1st-B': 30, 'BSA-1st-C': 28, 'BSA-1st-D': 30,
+      'BSA-2nd-A': 32, 'BSA-2nd-B': 30, 'BSA-2nd-C': 30, 'BSA-2nd-D': 32,
+      'BSA-3rd-A': 28, 'BSA-3rd-B': 29, 'BSA-3rd-C': 30, 'BSA-3rd-D': 28,
+      'BSA-4th-A': 30, 'BSA-4th-B': 31, 'BSA-4th-C': 29, 'BSA-4th-D': 30,
 
-        'BSAIS-1st-A': 35, 'BSAIS-1st-B': 33, 'BSAIS-1st-C': 34, 'BSAIS-1st-D': 35,
-        'BSAIS-2nd-A': 30, 'BSAIS-2nd-B': 31, 'BSAIS-2nd-C': 32, 'BSAIS-2nd-D': 30,
-        'BSAIS-3rd-A': 33, 'BSAIS-3rd-B': 35, 'BSAIS-3rd-C': 34, 'BSAIS-3rd-D': 33,
-        'BSAIS-4th-A': 31, 'BSAIS-4th-B': 30, 'BSAIS-4th-C': 32, 'BSAIS-4th-D': 31,
+      'BSAIS-1st-A': 35, 'BSAIS-1st-B': 33, 'BSAIS-1st-C': 34, 'BSAIS-1st-D': 35,
+      'BSAIS-2nd-A': 30, 'BSAIS-2nd-B': 31, 'BSAIS-2nd-C': 32, 'BSAIS-2nd-D': 30,
+      'BSAIS-3rd-A': 33, 'BSAIS-3rd-B': 35, 'BSAIS-3rd-C': 34, 'BSAIS-3rd-D': 33,
+      'BSAIS-4th-A': 31, 'BSAIS-4th-B': 30, 'BSAIS-4th-C': 32, 'BSAIS-4th-D': 31,
 
-        'MSMarketing-1st-A': 20, 'MSMarketing-1st-B': 22, 
-        'MSMarketing-2nd-A': 21, 'MSMarketing-2nd-B': 20,
-        'MSMarketing-3rd-A': 20, 'MSMarketing-3rd-B': 20,
-        'MSMarketing-4th-A': 20, 'MSMarketing-4th-B': 20,
+      'MSMarketing-1st-A': 20, 'MSMarketing-1st-B': 22, 
+      'MSMarketing-2nd-A': 21, 'MSMarketing-2nd-B': 20,
+      'MSMarketing-3rd-A': 20, 'MSMarketing-3rd-B': 20,
+      'MSMarketing-4th-A': 20, 'MSMarketing-4th-B': 20,
 
-        'BSE-1st-A': 40, 'BSE-1st-B': 40, 'BSE-1st-C': 38, 'BSE-1st-D': 39,
-        'BSE-2nd-A': 37, 'BSE-2nd-B': 39, 'BSE-2nd-C': 40, 'BSE-2nd-D': 38,
-        'BSE-3rd-A': 35, 'BSE-3rd-B': 36, 'BSE-3rd-C': 37, 'BSE-3rd-D': 35,
-        'BSE-4th-A': 38, 'BSE-4th-B': 40, 'BSE-4th-C': 39, 'BSE-4th-D': 37,
+      'BSE-1st-A': 40, 'BSE-1st-B': 40, 'BSE-1st-C': 38, 'BSE-1st-D': 39,
+      'BSE-2nd-A': 37, 'BSE-2nd-B': 39, 'BSE-2nd-C': 40, 'BSE-2nd-D': 38,
+      'BSE-3rd-A': 35, 'BSE-3rd-B': 36, 'BSE-3rd-C': 37, 'BSE-3rd-D': 35,
+      'BSE-4th-A': 38, 'BSE-4th-B': 40, 'BSE-4th-C': 39, 'BSE-4th-D': 37,
 
-        'BSPublicAdministration-1st-A': 30, 'BSPublicAdministration-1st-B': 32, 'BSPublicAdministration-1st-C': 31, 'BSPublicAdministration-1st-D': 30,
-        'BSPublicAdministration-2nd-A': 28, 'BSPublicAdministration-2nd-B': 30, 'BSPublicAdministration-2nd-C': 29, 'BSPublicAdministration-2nd-D': 28,
-        'BSPublicAdministration-3rd-A': 31, 'BSPublicAdministration-3rd-B': 29, 'BSPublicAdministration-3rd-C': 30, 'BSPublicAdministration-3rd-D': 31,
-        'BSPublicAdministration-4th-A': 29, 'BSPublicAdministration-4th-B': 30, 'BSPublicAdministration-4th-C': 28, 'BSPublicAdministration-4th-D': 29
+      'BSPublicAdministration-1st-A': 30, 'BSPublicAdministration-1st-B': 32,
+      'BSPublicAdministration-1st-C': 31, 'BSPublicAdministration-1st-D': 30,
+      'BSPublicAdministration-2nd-A': 28, 'BSPublicAdministration-2nd-B': 30,
+      'BSPublicAdministration-2nd-C': 29, 'BSPublicAdministration-2nd-D': 28,
+      'BSPublicAdministration-3rd-A': 31, 'BSPublicAdministration-3rd-B': 29,
+      'BSPublicAdministration-3rd-C': 30, 'BSPublicAdministration-3rd-D': 31,
+      'BSPublicAdministration-4th-A': 29, 'BSPublicAdministration-4th-B': 30,
+      'BSPublicAdministration-4th-C': 28, 'BSPublicAdministration-4th-D': 29,
+      // Add section G if needed
     };
 
-    async function registerInstructor() {
-        const instructorName = document.getElementById('instructorName').value;
-        const instructorCourse = document.getElementById('instructorCourse').value;
-        const instructorSection = document.getElementById('instructorSection').value;
+    const timeSlots = [
+      "7:00-8:00", "8:00-9:00", "9:00-10:00", "10:00-11:00",
+      "11:00-12:00", "12:00-1:00", "1:00-2:00", "2:00-3:00",
+      "3:00-4:00", "4:00-5:00", "5:00-6:00", "6:00-7:00"
+    ];
 
-        if (!instructorName || !instructorCourse || !instructorSection) {
-            alert("Please fill out all fields.");
-            return;
+    function renderTimeSlots() {
+      const container = document.getElementById("timeSlots");
+      container.innerHTML = "";
+      timeSlots.forEach((slot, i) => {
+        const label = document.createElement("label");
+        const checkbox = document.createElement("input");
+        checkbox.type = "checkbox";
+        checkbox.name = "timeSlots";
+        checkbox.value = slot;
+        label.appendChild(checkbox);
+        label.appendChild(document.createTextNode(slot));
+        container.appendChild(label);
+      });
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      renderTimeSlots();
+
+      document.getElementById("section").addEventListener("change", function () {
+        const selectedSection = this.value;
+        const capacity = studentCapacityMap[selectedSection];
+        if (capacity !== undefined) {
+          document.getElementById("capacity").value = capacity;
+        } else {
+          document.getElementById("capacity").value = "";
+        }
+      });
+
+      document.getElementById("scheduleForm").addEventListener("submit", function (event) {
+        event.preventDefault();
+
+        const selectedSection = document.getElementById("section").value;
+        const inputCapacity = parseInt(document.getElementById("capacity").value, 10);
+        const actualCapacity = studentCapacityMap[selectedSection];
+
+        if (inputCapacity < actualCapacity) {
+          alert(`Room capacity (${inputCapacity}) is less than the number of students (${actualCapacity}) in ${selectedSection}.`);
+          return;
         }
 
-        const instructorData = {
-            name: instructorName,
-            course: instructorCourse,
-            section: instructorSection,
-            timestamp: new Date()
-        };
+        const selectedTimeSlots = Array.from(document.querySelectorAll("input[name='timeSlots']:checked"))
+          .map(input => input.value);
 
-        try {
-            await addDoc(instructorsCollectionRef, instructorData);
-            alert('Instructor registered successfully with Firebase!');
-            clearForm();
-            updateAvailableRooms();
-
-            // ✅ Log updated instructor list
-            const updatedSnapshot = await getDocs(instructorsCollectionRef);
-            const updatedInstructors = updatedSnapshot.docs.map(doc => doc.data());
-            console.log("All Instructors in Firebase after registration:", updatedInstructors);
-
-        } catch (error) {
-            console.error("Error adding instructor to Firestore:", error);
-            alert("Failed to register instructor.");
+        if (selectedTimeSlots.length === 0) {
+          alert("Please select at least one time slot.");
+          return;
         }
-    }
 
-    function clearForm() {
-        document.getElementById('instructorName').value = '';
-        document.getElementById('instructorCourse').value = '';
-        document.getElementById('instructorSection').value = '';
-    }
-
-    function updateAvailableRooms() {
-        // Placeholder — implement room availability update logic if needed
-        console.log("updateAvailableRooms() called.");
-    }
-</script>
+        alert("Schedule submitted successfully!");
+        // Submit or process the data here
+      });
+    });
+  </script>
 </body>
 </html>
