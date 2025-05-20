@@ -1,3 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>DHVSU Instructor Registration</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #1A5F7A;
+            --secondary-color: #2C8EBB;
+            --accent-color: #F7B32D;
+            --background-color: #F4F7F6;
+            --text-color: #333;
+            --error-color: #dc3545;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Roboto', Arial, sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            line-height: 1.6;
+        }
+
+        .container {
+            position: relative;
+            width: 100%;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .back-btn {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            padding: 8px 15px;
+            background-color: var(--secondary-color);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            text-decoration: none;
+            font-size: 14px;
+            transition: background-color 0.3s ease;
+        }
+
+        .back-btn:hover {
+            background-color: var(--accent-color);
+        }
+
+        .header {
+            background-color: var(--primary-color);
+            color: white;
+            text-align: center;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .form-container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: var(--text-color);
+        }
+
+        input, select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--secondary-color);
+            border-radius: 4px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--accent-color);
+            box-shadow: 0 0 5px rgba(247, 179, 45, 0.5);
+        }
+
+        .btn-container {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+            gap: 10px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            background-color: var(--secondary-color);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            text-decoration: none;
+            text-align: center;
+            flex: 1;
+        }
+
+        .btn:hover {
+            background-color: var(--accent-color);
+        }
+
+        .error-message {
+            color: var(--error-color);
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 4px;
+            display: none;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 10px;
+            }
+
+            .btn-container {
+                flex-direction: column;
+            }
+
+            .btn {
+                width: 100%;
+                margin-bottom: 10px;
+            }
+
+            .back-btn {
+                top: 10px;
+                left: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="index.html" class="back-btn">← Back</a>
+        <div class="header">
+            <h1>Instructor Registration</h1>
+        </div>
+
+        <div class="form-container">
+            <div class="form-group">
+                <label for="name">Instructor Name*</label>
+                <input type="text" id="name" required>
+            </div>
+
+            <div class="form-group">
+                <label for="subject">Subject*</label>
+                <input type="text" id="subject" required>
+            </div>
+
+            <div class="form-group">
+                <label for="course">Course*</label>
+                <select id="course" required>
+                    <option value="">Select Course</option>
+                    <option value="BSA">BSA</option>
+                    <option value="BSAIS">BSAIS</option>
+                    <option value="MSMarketing">MS Marketing</option>
+                    <option value="BSE">BSE</option>
+                    <option value="BSPublicAdministration">BS Public Administration</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="year">Year*</label>
+                <select id="year" required>
+                    <option value="">Select Year</option>
+                    <option value="1st">1st Year</option>
+                    <option value="2nd">2nd Year</option>
+                    <option value="3rd">3rd Year</option>
+                    <option value="4th">4th Year</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="section">Section*</label>
+                <select id="section" required>
+                    <option value="">Select Section</option>
+                    <option value="A">Section A</option>
+                    <option value="B">Section B</option>
+                    <option value="C">Section C</option>
+                    <option value="D">Section D</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="day">Day*</label>
+                <select id="day" required>
+                    <option value="">Select Day</option>
+                    <option value="Monday">Monday</option>
+                    <option value="Tuesday">Tuesday</option>
+                    <option value="Wednesday">Wednesday</option>
+                    <option value="Thursday">Thursday</option>
+                    <option value="Friday">Friday</option>
+                    <option value="Saturday">Saturday</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="timeStart">Time Start*</label>
+                <select id="timeStart" required>
+                    <option value="">Select Start Time</option>
+                    <option value="7:00">7:00 AM</option>
+                    <option value="8:00">8:00 AM</option>
+                    <option value="9:00">9:00 AM</option>
+                    <option value="10:00">10:00 AM</option>
+                    <option value="11:00">11:00 AM</option>
+                    <option value="12:00">12:00 PM</option>
+                    <option value="13:00">1:00 PM</option>
+                    <option value="14:00">2:00 PM</option>
+                    <option value="15:00">3:00 PM</option>
+                    <option value="16:00">4:00 PM</option>
+                    <option value="17:00">5:00 PM</option>
+                    <option value="18:00">6:00 PM</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="timeEnd">Time End*</label>
+                <select id="timeEnd" required>
+                    <option value="">Select End Time</option>
+                    <option value="8:00">8:00 AM</option>
+                    <option value="9:00">9:00 AM</option>
+                    <option value="10:00">10:00 AM</option>
+                    <option value="11:00">11:00 AM</option>
+                    <option value="12:00">12:00 PM</option>
+                    <option value="13:00">1:00 PM</option>
+                    <option value="14:00">2:00 PM</option>
+                    <option value="15:00">3:00 PM</option>
+                    <option value="16:00">4:00 PM</option>
+                    <option value="17:00">5:00 PM</option>
+                    <option value="18:00">6:00 PM</option>
+                    <option value="19:00">7:00 PM</option>
+                </select>
+            </div>
+
+            <div id="errorMessage" class="error-message"></div>
+
+            <div class="btn-container">
+                <a href="InstructorList.html" class="btn">View Instructor List</a>
+                <button onclick="registerInstructor()" class="btn">Register Instructor</button>
+            </div>
+        </div>
+    </div>
+
     <script type="module">
         // Firebase SDK imports
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
@@ -12,12 +276,12 @@
 
         // IMPORTANT: Ensure this Firebase config is correct for your project!
         const firebaseConfig = {
-            apiKey: "AIzaSyDeqxzp_-kKjM3hPr6CLGfTn38e4swSKbo", // From your other files
-            authDomain: "room-management-system-8e899.firebaseapp.com",
-            projectId: "room-management-system-8e899",
-            storageBucket: "room-management-system-8e899.appspot.com",
-            messagingSenderId: "667821278853",
-            appId: "1:667821278853:web:a3a80c985073772670cbec"
+            apiKey: "AIzaSyDeqxzp_-kKjM3hPr6CLGfTn38e4swSKbo", // <<< YOUR FIREBASE API KEY
+            authDomain: "room-management-system-8e899.firebaseapp.com", // <<< YOUR AUTH DOMAIN
+            projectId: "room-management-system-8e899", // <<< YOUR PROJECT ID
+            storageBucket: "room-management-system-8e899.appspot.com", // <<< YOUR STORAGE BUCKET
+            messagingSenderId: "667821278853", // <<< YOUR MESSAGING SENDER ID
+            appId: "1:667821278853:web:a3a80c985073772670cbec" // <<< YOUR APP ID
         };
 
         // Initialize Firebase
@@ -25,7 +289,7 @@
         const db = getFirestore(app);
         const instructorsCollectionRef = collection(db, "instructors");
 
-        // --- Your existing DOM element selections ---
+        // DOM element selections
         const nameInput = document.getElementById('name');
         const subjectInput = document.getElementById('subject');
         const courseSelect = document.getElementById('course');
@@ -34,31 +298,26 @@
         const daySelect = document.getElementById('day');
         const timeStartSelect = document.getElementById('timeStart');
         const timeEndSelect = document.getElementById('timeEnd');
-        const errorMessageDiv = document.getElementById('errorMessage');
+        const errorMessageDiv = document.getElementById('errorMessage'); // Corrected variable name
 
-        // --- Your existing event listeners ---
+        // Event listeners
         timeStartSelect.addEventListener('change', validateTimeRange);
         timeEndSelect.addEventListener('change', validateTimeRange);
         
-        // --- Expose registerInstructor to global scope for the button ---
+        // Expose registerInstructor to global scope for the button's onclick attribute
         window.registerInstructor = registerInstructor;
 
-
-        // --- Your existing helper functions (showError, clearError, clearForm, formatTimeRange, validateTimeRange) ---
-        // (These can remain largely the same, ensure they are defined within this module script or accessible)
-
         function validateTimeRange() {
-            const startTime = timeStartSelect.value;
-            const endTime = timeEndSelect.value;
+            const startTime = timeStartSelect.value; // e.g., "7:00"
+            const endTime = timeEndSelect.value;   // e.g., "8:00"
 
             if (startTime && endTime) {
-                // Convert "HH:MM" to a comparable number (e.g., 7:00 -> 7, 13:00 -> 13)
-                const start = parseInt(startTime.split(':')[0], 10);
-                const end = parseInt(endTime.split(':')[0], 10);
+                const startHour = parseInt(startTime.split(':')[0], 10);
+                const endHour = parseInt(endTime.split(':')[0], 10);
 
-                if (end <= start) {
+                if (endHour <= startHour) {
                     showError("End time must be later than start time");
-                    timeEndSelect.value = '';
+                    timeEndSelect.value = ''; // Reset invalid end time
                 } else {
                     clearError();
                 }
@@ -84,24 +343,21 @@
             daySelect.value = '';
             timeStartSelect.value = '';
             timeEndSelect.value = '';
+            clearError(); // Also clear any error messages
         }
         
-        function formatTimeDisplay(timeValue) { // Renamed to avoid conflict if you have another formatTimeRange
+        function formatTimeDisplay(timeValue) { // Helper to format HH:MM to AM/PM
+            if (!timeValue) return "";
             const hour = parseInt(timeValue.split(':')[0], 10);
-            const minutes = timeValue.split(':')[1] || "00"; // Should be 00 from select
-            if (hour < 12) {
-                return `${hour}:${minutes} AM`;
-            } else if (hour === 12) {
-                return `12:${minutes} PM`;
-            } else {
-                return `${hour - 12}:${minutes} PM`;
-            }
+            const minutes = timeValue.split(':')[1] || "00";
+            if (hour === 0) return `12:${minutes} AM`; // Midnight case
+            if (hour < 12) return `${hour}:${minutes} AM`;
+            if (hour === 12) return `12:${minutes} PM`;
+            return `${hour - 12}:${minutes} PM`;
         }
 
-
-        // --- Modified registerInstructor function for Firebase ---
         async function registerInstructor() {
-            clearError(); // Clear previous errors
+            clearError(); 
 
             const name = nameInput.value.trim();
             const subject = subjectInput.value.trim();
@@ -109,15 +365,14 @@
             const year = yearSelect.value;
             const section = sectionSelect.value;
             const day = daySelect.value;
-            const timeStart = timeStartSelect.value; // e.g., "7:00"
-            const timeEnd = timeEndSelect.value;     // e.g., "8:00"
+            const timeStart = timeStartSelect.value; 
+            const timeEnd = timeEndSelect.value;     
 
             if (!name || !subject || !course || !year || !section || !day || !timeStart || !timeEnd) {
                 showError("Please fill in all required fields.");
                 return;
             }
             
-            // Ensure end time is after start time (already handled by validateTimeRange, but good to double check)
             const startHour = parseInt(timeStart.split(':')[0], 10);
             const endHour = parseInt(timeEnd.split(':')[0], 10);
             if (endHour <= startHour) {
@@ -125,10 +380,6 @@
                  return;
             }
 
-
-            // Store time as HH:MM for easier querying range, display can be formatted.
-            // For simplicity, we'll store the string values directly for now.
-            // More robust: store as minutes from midnight or timestamp objects.
             const instructorData = {
                 name,
                 subject,
@@ -136,11 +387,10 @@
                 year,
                 section,
                 day,
-                timeStart, // "7:00"
-                timeEnd,   // "8:00"
-                // For display purposes, you can generate this on the fly in InstructorList.html
-                // or store it:
-                // timeRangeDisplay: `${formatTimeDisplay(timeStart)} - ${formatTimeDisplay(timeEnd)}` 
+                timeStart, 
+                timeEnd,   
+                // You can add a combined display field if you want, or generate it on list page
+                // timeRangeDisplay: `${formatTimeDisplay(timeStart)} - ${formatTimeDisplay(timeEnd)}`
             };
 
             try {
@@ -155,21 +405,20 @@
                     const existing = docSnap.data();
                     const existingStartHour = parseInt(existing.timeStart.split(':')[0], 10);
                     const existingEndHour = parseInt(existing.timeEnd.split(':')[0], 10);
-                    // Check for overlap: (newStart < existingEnd) AND (newEnd > existingStart)
                     if (startHour < existingEndHour && endHour > existingStartHour) {
                         showError(`This instructor (${name}) already has a class from ${formatTimeDisplay(existing.timeStart)} to ${formatTimeDisplay(existing.timeEnd)} on ${day}.`);
                         return;
                     }
                 }
 
-                // 2. Check if this specific class already has this specific subject (case-insensitive check is harder with basic queries)
-                // Firestore queries are case-sensitive. A common workaround is to store a lowercase version of the field.
-                // For now, we'll do a case-sensitive check. If you need case-insensitive, we'd add e.g., `subject_lowercase`.
+                // 2. Check if this specific class already has this specific subject (Case-sensitive)
+                // To make it case-insensitive, you'd typically store a lowercase version of 'subject'
+                // and query against that. For now, it's case-sensitive.
                 const subjectInClassQuery = query(instructorsCollectionRef,
                     where("course", "==", course),
                     where("year", "==", year),
                     where("section", "==", section),
-                    where("subject", "==", subject) // Case-sensitive
+                    where("subject", "==", subject) 
                 );
                 const subjectInClassSnapshot = await getDocs(subjectInClassQuery);
                 if (!subjectInClassSnapshot.empty) {
@@ -187,9 +436,7 @@
                 const classTimeSnapshot = await getDocs(classTimeConflictQuery);
                 for (const docSnap of classTimeSnapshot.docs) {
                     const existing = docSnap.data();
-                     // Don't conflict with self if editing (add this logic if/when editing is implemented)
-                    // if (docSnap.id === editingInstructorId) continue; 
-
+                    // (If implementing edit, add: if (docSnap.id === editingInstructorId) continue;)
                     const existingStartHour = parseInt(existing.timeStart.split(':')[0], 10);
                     const existingEndHour = parseInt(existing.timeEnd.split(':')[0], 10);
                     if (startHour < existingEndHour && endHour > existingStartHour) {
@@ -198,14 +445,13 @@
                     }
                 }
 
-                // All Firebase validations passed, add the new instructor
                 await addDoc(instructorsCollectionRef, instructorData);
                 alert('Instructor registered successfully with Firebase!');
                 clearForm();
 
             } catch (error) {
                 console.error("Error registering instructor: ", error);
-                showError("Failed to register instructor. Check console for details. " + error.message);
+                showError("Failed to register instructor. Check console for details. Error: " + error.message);
             }
         }
     </script>
