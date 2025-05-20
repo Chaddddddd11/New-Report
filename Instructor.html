@@ -215,25 +215,11 @@
                 </select>
             </div>
 
-                        <div class="form-group">
-                <label for="day">Day*</label>
-                <select id="day" required>
-                    <option value="">Select Day</option>
-                    <option value="Monday">Monday</option>
-                    <option value="Tuesday">Tuesday</option>
-                    <option value="Wednesday">Wednesday</option>
-                    <option value="Thursday">Thursday</option>
-                    <option value="Friday">Friday</option>
-                    <option value="Saturday">Saturday</option>
-                </select>
-            </div>
-
             <div class="form-group">
                 <label for="time">Time (1-hour slots)*</label>
                 <select id="time" required>
                     <option value="">Select Time Slot</option>
                     <!-- Options will be populated by JavaScript -->
-                    <!-- Example: <option value="07:00-08:00">7:00 AM - 8:00 AM</option> -->
                 </select>
             </div>
 
@@ -280,41 +266,57 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
         const instructorsCollectionRef = collection(db, "instructors");
+        // const roomsCollectionRef = collection(db, "rooms"); // Will add later for room logic
 
-        // DOM element selections
+        // --- MODIFIED DOM Element Selections ---
         const nameInput = document.getElementById('name');
         const subjectInput = document.getElementById('subject');
         const courseSelect = document.getElementById('course');
         const yearSelect = document.getElementById('year');
         const sectionSelect = document.getElementById('section');
         const daySelect = document.getElementById('day');
-        const timeStartSelect = document.getElementById('timeStart');
-        const timeEndSelect = document.getElementById('timeEnd');
-        const errorMessageDiv = document.getElementById('errorMessage'); // Corrected variable name
+        const timeSelect = document.getElementById('time'); // NEW
+        const roomAvailableSelect = document.getElementById('roomAvailable'); // NEW
+        const errorMessageDiv = document.getElementById('errorMessage');
 
-        // Event listeners
-        timeStartSelect.addEventListener('change', validateTimeRange);
-        timeEndSelect.addEventListener('change', validateTimeRange);
-        
         // Expose registerInstructor to global scope for the button's onclick attribute
         window.registerInstructor = registerInstructor;
 
-        function validateTimeRange() {
-            const startTime = timeStartSelect.value; // e.g., "7:00"
-            const endTime = timeEndSelect.value;   // e.g., "8:00"
+        // --- Helper Functions ---
 
-            if (startTime && endTime) {
-                const startHour = parseInt(startTime.split(':')[0], 10);
-                const endHour = parseInt(endTime.split(':')[0], 10);
+        // NEW: Function to populate the time dropdown
+        function populateTimeSlots() {
+            const startTime = 7; // 7 AM
+            const endTime = 17;  // Loops up to 16, so last slot is 16:00-17:00 (4PM-5PM)
 
-                if (endHour <= startHour) {
-                    showError("End time must be later than start time");
-                    timeEndSelect.value = ''; // Reset invalid end time
-                } else {
-                    clearError();
-                }
+            for (let hour = startTime; hour < endTime; hour++) {
+                const startHourPadded = String(hour).padStart(2, '0'); // "07"
+                const endHourPadded = String(hour + 1).padStart(2, '0'); // "08"
+                
+                const timeSlotValue = `${startHourPadded}:00-${endHourPadded}:00`; // e.g., "07:00-08:00"
+                
+                let displayStartHour = hour % 12;
+                if (displayStartHour === 0) displayStartHour = 12; 
+                const displayStartAmPm = hour < 12 ? 'AM' : 'PM';
+                
+                let displayEndHour = (hour + 1) % 12;
+                if (displayEndHour === 0) displayEndHour = 12;
+                let displayEndAmPm = (hour + 1) < 12 || (hour + 1) === 24 ? 'AM' : 'PM';
+                if ((hour + 1) === 12) displayEndAmPm = 'PM';
+                
+                const timeSlotText = `${displayStartHour}:00 ${displayStartAmPm} - ${displayEndHour}:00 ${displayEndAmPm}`;
+
+                const option = document.createElement('option');
+                option.value = timeSlotValue;
+                option.textContent = timeSlotText;
+                timeSelect.appendChild(option);
             }
         }
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            populateTimeSlots();
+            // Event listeners for dynamic room population will be added later
+        });
 
         function showError(message) {
             errorMessageDiv.textContent = message;
@@ -333,19 +335,26 @@
             yearSelect.value = '';
             sectionSelect.value = '';
             daySelect.value = '';
-            timeStartSelect.value = '';
-            timeEndSelect.value = '';
-            clearError(); // Also clear any error messages
+            timeSelect.value = ''; 
+            roomAvailableSelect.value = ''; 
+            roomAvailableSelect.innerHTML = '<option value="">Select Day and Time first</option>';
+            roomAvailableSelect.disabled = true; 
+            clearError();
         }
         
-        function formatTimeDisplay(timeValue) { // Helper to format HH:MM to AM/PM
-            if (!timeValue) return "";
-            const hour = parseInt(timeValue.split(':')[0], 10);
-            const minutes = timeValue.split(':')[1] || "00";
-            if (hour === 0) return `12:${minutes} AM`; // Midnight case
-            if (hour < 12) return `${hour}:${minutes} AM`;
-            if (hour === 12) return `12:${minutes} PM`;
-            return `${hour - 12}:${minutes} PM`;
+        function formatTimeDisplay(timeValue) { // timeValue is HH:MM
+            if (!timeValue || !timeValue.includes(':')) return "Invalid Time";
+            const [hourStr, minuteStr] = timeValue.split(':');
+            let hour = parseInt(hourStr, 10);
+            const minutes = parseInt(minuteStr, 10);
+
+            if (isNaN(hour) || isNaN(minutes)) return "Invalid Time";
+            
+            const ampm = hour >= 12 ? 'PM' : 'AM';
+            hour = hour % 12;
+            hour = hour ? hour : 12; 
+            const minutePadded = String(minutes).padStart(2, '0');
+            return `${hour}:${minutePadded} ${ampm}`;
         }
 
         async function registerInstructor() {
@@ -357,20 +366,22 @@
             const year = yearSelect.value;
             const section = sectionSelect.value;
             const day = daySelect.value;
-            const timeStart = timeStartSelect.value; 
-            const timeEnd = timeEndSelect.value;     
+            const timeSlot = timeSelect.value; 
+            const roomName = roomAvailableSelect.value; 
 
-            if (!name || !subject || !course || !year || !section || !day || !timeStart || !timeEnd) {
-                showError("Please fill in all required fields.");
+            if (!name || !subject || !course || !year || !section || !day || !timeSlot || !roomName) {
+                showError("Please fill in all required fields, including Time and Room.");
                 return;
             }
             
+            if (!timeSlot.includes('-') || !timeSlot.includes(':')) {
+                showError("Invalid time slot format selected.");
+                return;
+            }
+            const [timeStart, timeEnd] = timeSlot.split('-');
+
             const startHour = parseInt(timeStart.split(':')[0], 10);
             const endHour = parseInt(timeEnd.split(':')[0], 10);
-            if (endHour <= startHour) {
-                 showError("End time must be later than start time.");
-                 return;
-            }
 
             const instructorData = {
                 name,
@@ -381,12 +392,10 @@
                 day,
                 timeStart, 
                 timeEnd,   
-                // You can add a combined display field if you want, or generate it on list page
-                // timeRangeDisplay: `${formatTimeDisplay(timeStart)} - ${formatTimeDisplay(timeEnd)}`
+                roomName,
             };
 
             try {
-                // --- Conflict Validation using Firestore Queries ---
                 // 1. Check if instructor is teaching at any overlapping time on the same day
                 const instructorTimeConflictQuery = query(instructorsCollectionRef, 
                     where("name", "==", name), 
@@ -395,17 +404,17 @@
                 const instructorTimeSnapshot = await getDocs(instructorTimeConflictQuery);
                 for (const docSnap of instructorTimeSnapshot.docs) {
                     const existing = docSnap.data();
-                    const existingStartHour = parseInt(existing.timeStart.split(':')[0], 10);
-                    const existingEndHour = parseInt(existing.timeEnd.split(':')[0], 10);
-                    if (startHour < existingEndHour && endHour > existingStartHour) {
-                        showError(`This instructor (${name}) already has a class from ${formatTimeDisplay(existing.timeStart)} to ${formatTimeDisplay(existing.timeEnd)} on ${day}.`);
-                        return;
+                    if (existing.timeStart && existing.timeEnd) {
+                        const existingStartHour = parseInt(existing.timeStart.split(':')[0], 10);
+                        const existingEndHour = parseInt(existing.timeEnd.split(':')[0], 10);
+                        if (startHour < existingEndHour && endHour > existingStartHour) {
+                            showError(`This instructor (${name}) already has a class from ${formatTimeDisplay(existing.timeStart)} to ${formatTimeDisplay(existing.timeEnd)} on ${day}.`);
+                            return;
+                        }
                     }
                 }
 
-                // 2. Check if this specific class already has this specific subject (Case-sensitive)
-                // To make it case-insensitive, you'd typically store a lowercase version of 'subject'
-                // and query against that. For now, it's case-sensitive.
+                // 2. Check if this specific class already has this specific subject
                 const subjectInClassQuery = query(instructorsCollectionRef,
                     where("course", "==", course),
                     where("year", "==", year),
@@ -428,12 +437,31 @@
                 const classTimeSnapshot = await getDocs(classTimeConflictQuery);
                 for (const docSnap of classTimeSnapshot.docs) {
                     const existing = docSnap.data();
-                    // (If implementing edit, add: if (docSnap.id === editingInstructorId) continue;)
-                    const existingStartHour = parseInt(existing.timeStart.split(':')[0], 10);
-                    const existingEndHour = parseInt(existing.timeEnd.split(':')[0], 10);
-                    if (startHour < existingEndHour && endHour > existingStartHour) {
-                        showError(`${course} ${year}-${section} already has a class ("${existing.subject}") from ${formatTimeDisplay(existing.timeStart)} to ${formatTimeDisplay(existing.timeEnd)} on ${day}.`);
-                        return;
+                    if (existing.timeStart && existing.timeEnd) {
+                        const existingStartHour = parseInt(existing.timeStart.split(':')[0], 10);
+                        const existingEndHour = parseInt(existing.timeEnd.split(':')[0], 10);
+                        if (startHour < existingEndHour && endHour > existingStartHour) {
+                            showError(`${course} ${year}-${section} already has a class ("${existing.subject}") from ${formatTimeDisplay(existing.timeStart)} to ${formatTimeDisplay(existing.timeEnd)} on ${day}.`);
+                            return;
+                        }
+                    }
+                }
+                
+                // 4. Check if the selected room is already booked at the selected day/time by ANY instructor
+                const roomBookingConflictQuery = query(instructorsCollectionRef,
+                    where("roomName", "==", roomName),
+                    where("day", "==", day)
+                );
+                const roomBookingSnapshot = await getDocs(roomBookingConflictQuery);
+                for (const docSnap of roomBookingSnapshot.docs) {
+                    const existingBooking = docSnap.data();
+                    if (existingBooking.timeStart && existingBooking.timeEnd) {
+                        const existingStartHour = parseInt(existingBooking.timeStart.split(':')[0], 10);
+                        const existingEndHour = parseInt(existingBooking.timeEnd.split(':')[0], 10);
+                        if (startHour < existingEndHour && endHour > existingStartHour) {
+                             showError(`Room "${roomName}" is already booked by instructor ${existingBooking.name} for subject "${existingBooking.subject}" from ${formatTimeDisplay(existingBooking.timeStart)} to ${formatTimeDisplay(existingBooking.timeEnd)} on ${day}.`);
+                            return;
+                        }
                     }
                 }
 
