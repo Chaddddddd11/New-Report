@@ -1,12 +1,21 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Room Registration</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Room List</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; background: #f9f9f9; }
+    h1 { text-align: center; }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: center; }
+    th { background-color: #eee; }
+    button { padding: 5px 10px; margin: 2px; }
+    .actions { white-space: nowrap; }
+  </style>
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-    import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+    import { getFirestore, collection, getDocs, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyDeqxzp_-kKjM3hPr6CLGfTn38e4swSKbo",
@@ -20,55 +29,26 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
-    window.registerRoom = async function() {
-      const roomName = document.getElementById('roomName').value.trim();
-      const day = document.getElementById('day').value;
-      const time = document.getElementById('time').value;
-      const capacity = document.getElementById('capacity').value.trim();
-
-      if (!roomName || !day || !time || !capacity) {
-        alert("Please fill in all required fields.");
-        return;
-      }
-
-      if (!/^[0-9]+$/.test(capacity)) {
-        alert("Capacity must be a number.");
-        return;
-      }
-
-      try {
-        await addDoc(collection(db, "rooms"), {
-          roomName,
-          day,
-          time,
-          capacity: parseInt(capacity)
-        });
-
-        alert("Room registered successfully!");
-        clearForm();
-        loadRooms();
-      } catch (error) {
-        console.error("Error saving room:", error);
-        alert("Failed to register room. Please try again.");
-      }
-    }
-
-    window.loadRooms = async function() {
-      const tableBody = document.getElementById("roomTableBody");
-      tableBody.innerHTML = "";
+    async function loadRooms() {
+      const tableBody = document.getElementById('roomTableBody');
+      tableBody.innerHTML = '';
       const querySnapshot = await getDocs(collection(db, "rooms"));
+
       querySnapshot.forEach((docSnap) => {
         const room = docSnap.data();
-        const row = `<tr>
+        const tr = document.createElement('tr');
+
+        tr.innerHTML = `
           <td>${room.roomName}</td>
           <td>${room.day}</td>
           <td>${room.time}</td>
           <td>${room.capacity}</td>
-          <td>
+          <td class="actions">
             <button onclick="deleteRoom('${docSnap.id}')">Delete</button>
           </td>
-        </tr>`;
-        tableBody.innerHTML += row;
+        `;
+
+        tableBody.appendChild(tr);
       });
     }
 
@@ -79,28 +59,12 @@
       }
     }
 
-    function clearForm() {
-      document.getElementById('roomName').value = "";
-      document.getElementById('day').value = "";
-      document.getElementById('time').value = "";
-      document.getElementById('capacity').value = "";
-    }
-
-    window.onload = loadRooms;
+    window.addEventListener('DOMContentLoaded', loadRooms);
   </script>
 </head>
 <body>
-  <h1>Room Registration</h1>
-  <form onsubmit="event.preventDefault(); registerRoom();">
-    <label>Room Name: <input type="text" id="roomName"></label><br>
-    <label>Day: <input type="text" id="day"></label><br>
-    <label>Time: <input type="text" id="time"></label><br>
-    <label>Capacity: <input type="number" id="capacity"></label><br>
-    <button type="submit">Register Room</button>
-  </form>
-
-  <h2>Registered Rooms</h2>
-  <table border="1">
+  <h1>Room List</h1>
+  <table>
     <thead>
       <tr>
         <th>Room Name</th>
