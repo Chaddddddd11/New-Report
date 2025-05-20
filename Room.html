@@ -1,16 +1,17 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Room Registration</title>
+
+  <!-- Firebase -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
     import {
       getFirestore,
       collection,
       addDoc,
-      getDocs,
       updateDoc,
       doc
     } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
@@ -33,26 +34,40 @@
       const time = document.getElementById('time').value;
       const capacity = document.getElementById('capacity').value.trim();
 
+      const errorContainer = document.getElementById('errorContainer');
+
       if (!roomName || !day || !time || !capacity) {
-        showError("Please fill in all required fields.");
+        errorContainer.textContent = "Please fill in all required fields.";
         return;
       }
 
       if (!/^\d+$/.test(capacity)) {
-        showError("Capacity must be a number.");
+        errorContainer.textContent = "Capacity must be a number.";
         return;
       }
 
-      const room = { roomName, day, time, capacity };
-
       try {
-        await addDoc(collection(db, "rooms"), room);
+        const urlParams = new URLSearchParams(window.location.search);
+        const isEdit = urlParams.get('edit') === 'true';
+        const editId = urlParams.get('id');
+
+        const roomData = { roomName, day, time, capacity };
+
+        if (isEdit && editId) {
+          const docRef = doc(db, "rooms", editId);
+          await updateDoc(docRef, roomData);
+        } else {
+          await addDoc(collection(db, "rooms"), roomData);
+        }
+
         window.location.href = 'RoomList.html';
       } catch (error) {
-        showError("Error saving room: " + error);
+        errorContainer.textContent = "Failed to save room. Please try again.";
+        console.error("Error saving room:", error);
       }
-    }
+    };
   </script>
+
   <style>
     :root {
       --primary-color: #d92323;
@@ -152,6 +167,10 @@
       margin-top: 15px;
     }
 
+    .time-slots label {
+      margin-top: 10px;
+    }
+
     button {
       background-color: var(--primary-color);
       color: white;
@@ -189,6 +208,15 @@
       .container {
         padding: 10px;
       }
+
+      form {
+        padding: 20px;
+      }
+
+      .form-group {
+        margin-bottom: 20px;
+      }
+
       .back-button {
         position: static;
         margin-bottom: 20px;
@@ -199,29 +227,28 @@
 <body>
   <div class="container">
     <button class="back-button" onclick="window.location.href='index.html'">Back to Home</button>
-
     <header>
       <h1 id="formTitle">Room Registration</h1>
     </header>
 
     <div id="errorContainer" class="error"></div>
 
-    <form id="roomForm" onsubmit="event.preventDefault(); registerRoom();">
+    <form id="roomForm">
       <div class="form-group">
         <label>Room Name:</label>
-        <input type="text" id="roomName" placeholder="Enter room name" required>
+        <input type="text" id="roomName" required placeholder="Enter room name" />
       </div>
 
       <div class="form-group">
         <label>Select Day:</label>
         <select id="day" onchange="toggleTimeSlots(this.value)" required>
           <option value="">Select Day</option>
-          <option value="Monday">Monday</option>
-          <option value="Tuesday">Tuesday</option>
-          <option value="Wednesday">Wednesday</option>
-          <option value="Thursday">Thursday</option>
-          <option value="Friday">Friday</option>
-          <option value="Saturday">Saturday</option>
+          <option>Monday</option>
+          <option>Tuesday</option>
+          <option>Wednesday</option>
+          <option>Thursday</option>
+          <option>Friday</option>
+          <option>Saturday</option>
         </select>
       </div>
 
@@ -244,12 +271,12 @@
 
       <div class="form-group">
         <label>Room Capacity:</label>
-        <input type="text" id="capacity" placeholder="Enter capacity (e.g., 25 students)" required>
+        <input type="text" id="capacity" required placeholder="Enter capacity (e.g., 25 students)" />
       </div>
 
       <div>
         <button type="submit">Register Room</button>
-        <button type="button" onclick="roomForm.reset(); document.getElementById('timeSlots').style.display='none'; showError('');">Clear Form</button>
+        <button type="button" onclick="roomForm.reset(); document.getElementById('timeSlots').style.display = 'none';">Clear Form</button>
       </div>
     </form>
 
@@ -258,23 +285,33 @@
     </div>
   </div>
 
-  <script>
-    function toggleTimeSlots(day) {
+  <script type="module">
+    // Toggle time slot visibility
+    window.toggleTimeSlots = function(day) {
       const timeSlotsDiv = document.getElementById('timeSlots');
-      const timeSelect = document.getElementById('time');
-      if (day) {
-        timeSlotsDiv.style.display = 'block';
-        timeSelect.required = true;
-      } else {
-        timeSlotsDiv.style.display = 'none';
-        timeSelect.required = false;
-        timeSelect.value = '';
-      }
-    }
+      timeSlotsDiv.style.display = day ? 'block' : 'none';
+      document.getElementById('time').required = !!day;
+    };
 
-    function showError(message) {
-      document.getElementById('errorContainer').textContent = message;
-    }
+    // Load form if in edit mode
+    window.addEventListener('DOMContentLoaded', () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const isEdit = urlParams.get('edit') === 'true';
+
+      if (isEdit) {
+        document.getElementById('formTitle').textContent = 'Edit Room';
+        document.getElementById('roomName').value = urlParams.get('roomName') || '';
+        document.getElementById('day').value = urlParams.get('day') || '';
+        document.getElementById('time').value = urlParams.get('time') || '';
+        document.getElementById('capacity').value = urlParams.get('capacity') || '';
+        toggleTimeSlots(urlParams.get('day'));
+      }
+
+      document.getElementById('roomForm').addEventListener('submit', function(event) {
+        event.preventDefault();
+        registerRoom();
+      });
+    });
   </script>
 </body>
 </html>
