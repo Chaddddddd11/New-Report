@@ -37,11 +37,11 @@
           const data = docSnap.data();
           const row = document.createElement("tr");
           row.innerHTML = `
-            <td>${data.RoomName}</td>
-            <td>${data.Day}</td>
-            <td>${data.Time}</td>
-            <td>${data.Capacity}</td>
-            <td><button onclick="deleteRoom(\"${docSnap.id}\")">Delete</button></td>
+            <td>${data.roomName}</td>
+            <td>${data.day}</td>
+            <td>${data.time}</td>
+            <td>${data.capacity}</td>
+            <td><button class="delete-btn" onclick="deleteRoom(\"${docSnap.id}\")">Delete</button></td>
           `;
           tableBody.appendChild(row);
         });
@@ -65,16 +65,43 @@
     window.onload = fetchRooms;
   </script>
   <style>
+    :root {
+      --primary-color: #d92323;
+      --secondary-color: #ffcc00;
+      --background-color: #f5f5f5;
+      --text-color: #333;
+    }
+
     body {
       font-family: Arial, sans-serif;
-      background-color: #f4f4f4;
+      background-color: var(--background-color);
       margin: 0;
       padding: 20px;
     }
+
     h1 {
       text-align: center;
-      color: #333;
+      color: var(--primary-color);
+      margin-bottom: 30px;
     }
+
+    .back-button {
+      display: inline-block;
+      margin-bottom: 20px;
+      padding: 10px 20px;
+      background-color: var(--secondary-color);
+      border: none;
+      border-radius: 5px;
+      color: #000;
+      text-decoration: none;
+      font-weight: bold;
+      transition: background-color 0.3s;
+    }
+
+    .back-button:hover {
+      background-color: #e6b800;
+    }
+
     table {
       width: 100%;
       border-collapse: collapse;
@@ -82,29 +109,34 @@
       background-color: #fff;
       box-shadow: 0 0 10px rgba(0,0,0,0.1);
     }
+
     th, td {
       padding: 12px;
       text-align: left;
       border-bottom: 1px solid #ccc;
     }
+
     th {
-      background-color: #007BFF;
+      background-color: var(--primary-color);
       color: white;
     }
-    button {
-      background-color: #dc3545;
+
+    .delete-btn {
+      background-color: var(--primary-color);
       color: white;
       border: none;
       padding: 6px 12px;
       cursor: pointer;
       border-radius: 4px;
     }
-    button:hover {
-      background-color: #c82333;
+
+    .delete-btn:hover {
+      background-color: #b31a1a;
     }
   </style>
 </head>
 <body>
+  <a href="index.html" class="back-button">&larr; Back to Home</a>
   <h1>Room List</h1>
   <table>
     <thead>
