@@ -199,6 +199,7 @@
         <div class="controls">
             <a href="index.html" class="btn">Back to Main Menu</a>
             <a href="Instructor.html" class="btn">Register New Instructor</a>
+            <button id="cleanupInstructorsBtn" class="btn" style="background-color: var(--danger-color);">Clean Up Instructors by Room</button>
         </div>
         <div class="header">
             <h1>Registered Instructors</h1>
@@ -600,6 +601,86 @@
             if (event.target == editModal) {
                 closeModal();
             }
+        }
+
+
+        // Helper to manage loading message display for cleanup function
+        const setLoadingCleanupState = (isLoading, message = '') => {
+            if (isLoading) {
+                loadingMessage.textContent = message;
+                loadingMessage.style.display = 'block';
+                emptyMessage.style.display = 'none';
+            } else {
+                loadingMessage.style.display = 'none';
+            }
+        };
+
+        // --- Function to clean up instructors with invalid rooms ---
+        async function cleanupInstructorsByRoom() {
+            if (!confirm('This will check all instructors and delete those assigned to rooms not found in the Firebase "rooms" collection, or with no room assigned. Are you sure you want to proceed?')) {
+                alert('Cleanup cancelled.');
+                return;
+            }
+
+            setLoadingCleanupState(true, 'Performing cleanup...');
+
+            try {
+                const roomsCollectionRef = collection(db, "rooms");
+                const roomsSnapshot = await getDocs(roomsCollectionRef);
+                const validRoomNames = new Set(roomsSnapshot.docs.map(docSnap => docSnap.data().name));
+                // console.log('Valid room names from Firebase:', Array.from(validRoomNames)); // Kept for debugging
+
+                if (validRoomNames.size === 0) {
+                    alert('No rooms found in the Firebase "rooms" collection. Cannot perform cleanup. Please register rooms first.');
+                    setLoadingCleanupState(false);
+                    return;
+                }
+
+                const instructorsSnapshot = await getDocs(instructorsCollectionRef);
+                const instructorsToDelete = instructorsSnapshot.docs
+                    .map(docSnap => ({ id: docSnap.id, ...docSnap.data() })) // Combine ID with data
+                    .filter(instructorData => {
+                        const roomName = instructorData.roomName ? instructorData.roomName.trim() : '';
+                        return !roomName || !validRoomNames.has(roomName);
+                    })
+                    .map(inst => ({ // Map to the structure needed for the confirmation message and deletion
+                        id: inst.id,
+                        name: inst.name,
+                        room: (inst.roomName ? inst.roomName.trim() : '') || 'No Room Assigned'
+                    }));
+
+                if (instructorsToDelete.length === 0) {
+                    alert('No instructors found with invalid or missing room assignments. Your instructor list is clean regarding room assignments!');
+                    setLoadingCleanupState(false);
+                    return;
+                }
+
+                const confirmationList = instructorsToDelete.map(inst => `  - ${inst.name} (Room: '${inst.room}')`).join('\n');
+                const confirmationDialogMessage = `Found ${instructorsToDelete.length} instructor(s) with invalid/missing room assignments:\n${confirmationList}\n\nAre you sure you want to delete these instructor entries?`;
+
+                if (!confirm(confirmationDialogMessage)) {
+                    alert('Cleanup cancelled by user.');
+                    setLoadingCleanupState(false);
+                    return;
+                }
+
+                const deletePromises = instructorsToDelete.map(instructor => deleteDoc(doc(db, "instructors", instructor.id)));
+                await Promise.all(deletePromises);
+
+                alert(`Successfully deleted ${instructorsToDelete.length} instructor(s) with invalid/missing room assignments.`);
+            } catch (error) {
+                console.error("Error during cleanup: ", error);
+                alert('An error occurred during the cleanup process. Please check the console for details.');
+            } finally {
+                setLoadingCleanupState(false);
+            }
+        }
+
+        const cleanupBtn = document.getElementById('cleanupInstructorsBtn');
+        if (cleanupBtn) {
+            cleanupBtn.addEventListener('click', cleanupInstructorsByRoom);
+        } else {
+            console.error('Cleanup button not found');
         }
 
         // Expose to global for older onclick attributes if any were missed (best to remove those in HTML)
