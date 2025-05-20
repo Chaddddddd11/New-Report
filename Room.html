@@ -271,6 +271,7 @@
         const editId = urlParams.get('id');
 
         const roomData = { roomName, day, time, capacity: parseInt(capacity, 10) }; // Store capacity as a number
+        console.log("Attempting to save roomData:", roomData); // <-- ADD THIS LINE
 
         if (isEdit && editId) {
           const docRef = doc(db, "rooms", editId);
