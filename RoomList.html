@@ -83,6 +83,32 @@
         font-weight: bold;
     }
     #loadingMessage { text-align: center; padding: 20px; font-style: italic; }
+    /* Modal Styles */
+    .modal {
+      position: fixed; z-index: 1; left: 0; top: 0; width: 100%; height: 100%;
+      overflow: auto; background-color: rgba(0,0,0,0.4);
+      padding-top: 60px;
+    }
+    .modal-content {
+      background-color: #fefefe; margin: 5% auto; padding: 20px;
+      border: 1px solid #888; width: 80%; max-width: 500px; border-radius: 10px;
+    }
+    .close-button {
+      color: #aaa; float: right; font-size: 28px; font-weight: bold;
+    }
+    .close-button:hover, .close-button:focus {
+      color: black; text-decoration: none; cursor: pointer;
+    }
+    .modal-content div { margin-bottom: 15px; }
+    .modal-content label { display: block; margin-bottom: 5px; }
+    .modal-content input[type="text"], .modal-content input[type="number"] {
+      width: calc(100% - 22px); padding: 10px; border: 1px solid #ccc; border-radius: 5px;
+    }
+    .modal-content button {
+        background-color: var(--primary-color); color: white; padding: 10px 15px;
+        border: none; border-radius: 5px; cursor: pointer; font-size: 1em;
+    }
+    .modal-content button:hover { background-color: #b81e1e; }
     @media (max-width: 600px) {
       .room-item { flex-direction: column; align-items: flex-start; }
       .room-actions { margin-top: 10px; width: 100%; }
@@ -107,6 +133,24 @@
       </div>
       <p id="loadingMessage">Loading rooms...</p>
     </div>
+
+    <!-- Modal for Editing Room -->
+    <div id="editRoomModal" class="modal" style="display:none;">
+      <div class="modal-content">
+        <span class="close-button" onclick="closeEditModal()">&times;</span>
+        <h2>Edit Room</h2>
+        <input type="hidden" id="editRoomId">
+        <div>
+          <label for="editRoomName">Room Name:</label>
+          <input type="text" id="editRoomName" required>
+        </div>
+        <div>
+          <label for="editRoomCapacity">Capacity:</label>
+          <input type="number" id="editRoomCapacity" required>
+        </div>
+        <button onclick="saveRoomChanges()">Save Changes</button>
+      </div>
+    </div>
   </div>
 
   <script type="module">
@@ -115,9 +159,11 @@
     import {
       getFirestore,
       collection,
-      // doc, // Not directly used for deleting/editing rooms in this revised version
-      // deleteDoc, // Removed for this version
-      onSnapshot // For real-time updates
+      doc, 
+      deleteDoc,
+      updateDoc, // Added for editing
+      onSnapshot,
+      query // Added for querying rooms collection
     } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
     // IMPORTANT: Copy your Firebase config object here!
@@ -137,21 +183,9 @@
     const roomListDiv = document.getElementById('roomList');
     const loadingMessage = document.getElementById('loadingMessage');
 
-    // Define all available rooms and their capacities
-    // This should be consistent with the one in Instructor.html
-    const allCampusRooms = [
-        { name: "CL1 (Computer Laboratory 1)", capacity: 30 },
-        { name: "CL2 (Computer Laboratory 2)", capacity: 35 },
-        { name: "CL3 (Computer Laboratory 3)", capacity: 30 },
-        { name: "MDH (Multi-Disciplinary Hall)", capacity: 100 },
-        { name: "AVR (Audio-Visual Room)", capacity: 50 },
-        { name: "Room 201", capacity: 40 },
-        { name: "Room 202", capacity: 40 },
-        { name: "Room 203", capacity: 35 },
-        { name: "Room 301", capacity: 45 },
-        { name: "Room 302", capacity: 25 }
-    ];
-    
+    const roomsCollectionRef = collection(db, "rooms");
+    const instructorsCollectionRef = collection(db, "instructors"); // To check room usage
+
     // Helper function to escape HTML to prevent XSS (Keep as is)
     function escapeHTML(str) {
         if (str === null || str === undefined) return '';
@@ -160,89 +194,168 @@
         return div.innerHTML;
     }
 
-    // MODIFIED: Function to render room usage status
-    function renderRoomUsage(instructorSchedulesSnapshot) {
+    // Function to render rooms from Firebase and their usage
+    function renderRoomsAndUsage(roomsSnapshot, instructorSchedulesSnapshot) {
       roomListDiv.innerHTML = ''; // Clear existing list
-      
-      const roomUsageCounts = {}; // { roomName: count }
+      loadingMessage.style.display = 'none';
 
+      const roomUsageCounts = {}; // { roomName: count }
       instructorSchedulesSnapshot.forEach((docSnap) => {
         const schedule = docSnap.data();
-        if (schedule.roomName) {
+        if (schedule.roomName) { // Assuming room name is stored in instructor schedules
           roomUsageCounts[schedule.roomName] = (roomUsageCounts[schedule.roomName] || 0) + 1;
         }
       });
 
-      if (allCampusRooms.length === 0) {
-        loadingMessage.textContent = 'No campus rooms defined in the script.';
+      if (roomsSnapshot.empty) {
+        loadingMessage.textContent = 'No rooms found in the database. Please register rooms first.';
         loadingMessage.style.display = 'block';
         return;
       }
 
-      allCampusRooms.forEach((room) => {
-        const usageCount = roomUsageCounts[room.name] || 0;
+      roomsSnapshot.forEach((roomDoc) => {
+        const room = roomDoc.data();
+        const roomId = roomDoc.id;
+        // Assuming room documents have 'name' and 'capacity' fields.
+        // If your fields are different, please adjust room.name and room.capacity below.
+        const roomName = room.name || 'Unnamed Room'; 
+        const roomCapacity = room.capacity || 'N/A';
+
+        const usageCount = roomUsageCounts[roomName] || 0;
         const roomElement = document.createElement('div');
         roomElement.classList.add('room-item');
         
         let statusText = 'Free';
-        let statusClass = 'status-free'; // You'll need to define .status-free and .status-used in CSS
+        let statusClass = 'status-free';
 
         if (usageCount > 0) {
           statusText = 'In Use';
           statusClass = 'status-used';
         }
 
-        // Display basic room info and its usage status
         roomElement.innerHTML = 
-          '<div class="room-details">' +
-            '<p><strong>Name:</strong> ' + escapeHTML(room.name) + '</p>' +
-            '<p><strong>Capacity:</strong> ' + escapeHTML(room.capacity) + ' students</p>' +
-            '<p><strong>Status:</strong> <span class="' + statusClass + '">' + escapeHTML(statusText) + '</span></p>' +
-            '<p><strong>Scheduled Classes:</strong> ' + escapeHTML(usageCount) + '</p>' +
-          '</div>' +
-          '<div class="room-actions">' +
-            // Edit/Delete buttons for room *definitions* are complex here.
-            // For now, we're just showing usage based on instructor schedules.
-            // '<button class="view-schedule-button" data-roomname="' + escapeHTML(room.name) + '">View Schedule</button>' + // Future enhancement
-          '</div>';
+          `<div class="room-details">
+            <p><strong>Name:</strong> ${escapeHTML(roomName)}</p>
+            <p><strong>Capacity:</strong> ${escapeHTML(roomCapacity.toString())} students</p>
+            <p><strong>Status:</strong> <span class="${statusClass}">${escapeHTML(statusText)}</span></p>
+            <p><strong>Scheduled Classes:</strong> ${escapeHTML(usageCount.toString())}</p>
+          </div>
+          <div class="room-actions">
+            <button class="edit-button" data-id="${roomId}" data-name="${escapeHTML(roomName)}" data-capacity="${escapeHTML(roomCapacity.toString())}">Edit</button>
+            <button class="delete-button" data-id="${roomId}">Delete</button>
+          </div>`;
+        
         roomListDiv.appendChild(roomElement);
-      });
-      loadingMessage.style.display = 'none';
-      // attachActionListeners(); // Re-evaluate if action listeners are needed for this view
+
+        // Add event listeners for edit and delete buttons
+        roomElement.querySelector('.edit-button').addEventListener('click', function() {
+            openEditModal(this.dataset.id, this.dataset.name, this.dataset.capacity);
+        });
+        roomElement.querySelector('.delete-button').addEventListener('click', function() {
+            handleDeleteRoom(this.dataset.id);
+        });
+      }); // End of roomsSnapshot.forEach
+    } // End of renderRoomsAndUsage function
+
+    // Modal functions
+    const editModal = document.getElementById('editRoomModal');
+    const editRoomIdInput = document.getElementById('editRoomId');
+    const editRoomNameInput = document.getElementById('editRoomName');
+    const editRoomCapacityInput = document.getElementById('editRoomCapacity');
+
+    window.openEditModal = (id, name, capacity) => {
+        editRoomIdInput.value = id;
+        editRoomNameInput.value = name;
+        editRoomCapacityInput.value = capacity;
+        editModal.style.display = 'block';
+    };
+
+    window.closeEditModal = () => {
+        editModal.style.display = 'none';
+    };
+
+    window.saveRoomChanges = async () => {
+        const id = editRoomIdInput.value;
+        const name = editRoomNameInput.value.trim();
+        const capacity = parseInt(editRoomCapacityInput.value, 10);
+
+        if (!name || isNaN(capacity) || capacity <= 0) {
+            alert('Please enter a valid room name and capacity.');
+            return;
+        }
+
+        const roomRef = doc(db, "rooms", id);
+        try {
+            await updateDoc(roomRef, {
+                name: name,
+                capacity: capacity
+            });
+            alert('Room updated successfully!');
+            closeEditModal();
+            // Real-time listener will update the UI
+        } catch (error) {
+            console.error("Error updating room: ", error);
+            alert('Error updating room. Check console.');
+        }
+    };
+
+    // Delete room function
+    window.handleDeleteRoom = async (roomId) => {
+        if (confirm('Are you sure you want to delete this room? This action cannot be undone.')) {
+            const roomRef = doc(db, "rooms", roomId);
+            try {
+                await deleteDoc(roomRef);
+                alert('Room deleted successfully!');
+                // Real-time listener will update the UI
+            } catch (error) {
+                console.error("Error deleting room: ", error);
+                alert('Error deleting room. Check console.');
+            }
+        }
+    };
+
+    // Fetch rooms and instructor schedules to determine usage
+    // We use two separate onSnapshot listeners and combine their results
+    let currentRoomsSnapshot = null;
+    let currentInstructorsSnapshot = null;
+
+    onSnapshot(query(roomsCollectionRef), (roomsSnapshot) => {
+        currentRoomsSnapshot = roomsSnapshot;
+        if (currentInstructorsSnapshot) {
+            renderRoomsAndUsage(currentRoomsSnapshot, currentInstructorsSnapshot);
+        }
+    }, (error) => {
+        console.error("Error fetching rooms: ", error);
+        loadingMessage.textContent = 'Error loading rooms data.';
+        loadingMessage.style.display = 'block';
+    });
+
+    onSnapshot(query(instructorsCollectionRef), (instructorsSnapshot) => {
+        currentInstructorsSnapshot = instructorsSnapshot;
+        if (currentRoomsSnapshot) {
+            renderRoomsAndUsage(currentRoomsSnapshot, currentInstructorsSnapshot);
+        }
+    }, (error) => {
+        console.error("Error fetching instructor schedules: ", error);
+        loadingMessage.textContent = 'Error loading room usage data.';
+        loadingMessage.style.display = 'block';
+    });
+  </script>
+      if (confirm('Are you sure you want to delete this room?')) {
+        try {
+          await deleteDoc(doc(db, "rooms", roomId));
+          // No need to call fetchAndDisplayRooms() here if using onSnapshot,
+          // as the list will update automatically.
+          alert('Room deleted successfully!');
+        } catch (error) {
+          console.error("Error deleting room: ", error);
+          alert('Failed to delete room. Please try again.');
+        }
+      }
     }
 
-    // MODIFIED: Function to listen for instructor schedules
-    function listenForRoomUsage() {
-      loadingMessage.textContent = 'Loading room usage...';
-      loadingMessage.style.display = 'block';
-
-      // Listen to the 'instructors' collection
-      const instructorsCollectionRef = collection(db, "instructors"); 
-      onSnapshot(instructorsCollectionRef, (querySnapshot) => {
-        renderRoomUsage(querySnapshot);
-      }, (error) => {
-        console.error("Error listening for instructor schedules: ", error);
-        loadingMessage.textContent = 'Failed to load room usage. Please try refreshing.';
-      });
-    }
-
-    // Remove or comment out attachActionListeners, handleEdit, handleDelete if not managing room *definitions* here
-    /*
-    function attachActionListeners() {
-      // ... (original code for edit/delete if they were for "rooms" collection)
-    }
-
-    function handleEdit(event) {
-      // ...
-    }
-
-    async function handleDelete(event) {
-      // ...
-    }
-    */
-
-    // Initial call to listen for instructor schedules to determine room usage
-    document.addEventListener('DOMContentLoaded', listenForRoomUsage);
+    // Initial call to listen for rooms when the page loads
+    document.addEventListener('DOMContentLoaded', listenForRooms);
   </script>
 </body>
 </html>
