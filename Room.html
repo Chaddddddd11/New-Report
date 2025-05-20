@@ -5,69 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Room Registration</title>
 
-  <!-- Firebase -->
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-    import {
-      getFirestore,
-      collection,
-      addDoc,
-      updateDoc,
-      doc
-    } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-
-    const firebaseConfig = {
-      apiKey: "AIzaSyDeqxzp_-kKjM3hPr6CLGfTn38e4swSKbo",
-      authDomain: "room-management-system-8e899.firebaseapp.com",
-      projectId: "room-management-system-8e899",
-      storageBucket: "room-management-system-8e899.appspot.com",
-      messagingSenderId: "667821278853",
-      appId: "1:667821278853:web:a3a80c985073772670cbec"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-
-    window.registerRoom = async function () {
-      const roomName = document.getElementById('roomName').value.trim();
-      const day = document.getElementById('day').value;
-      const time = document.getElementById('time').value;
-      const capacity = document.getElementById('capacity').value.trim();
-
-      const errorContainer = document.getElementById('errorContainer');
-
-      if (!roomName || !day || !time || !capacity) {
-        errorContainer.textContent = "Please fill in all required fields.";
-        return;
-      }
-
-      if (!/^\d+$/.test(capacity)) {
-        errorContainer.textContent = "Capacity must be a number.";
-        return;
-      }
-
-      try {
-        const urlParams = new URLSearchParams(window.location.search);
-        const isEdit = urlParams.get('edit') === 'true';
-        const editId = urlParams.get('id');
-
-        const roomData = { roomName, day, time, capacity };
-
-        if (isEdit && editId) {
-          const docRef = doc(db, "rooms", editId);
-          await updateDoc(docRef, roomData);
-        } else {
-          await addDoc(collection(db, "rooms"), roomData);
-        }
-
-        window.location.href = 'RoomList.html';
-      } catch (error) {
-        errorContainer.textContent = "Failed to save room. Please try again.";
-        console.error("Error saving room:", error);
-      }
-    };
-  </script>
-
   <style>
     :root {
       --primary-color: #d92323;
@@ -285,33 +222,93 @@
     </div>
   </div>
 
+  <!-- ✅ JavaScript Moved to End for Proper DOM Access -->
   <script type="module">
-    // Toggle time slot visibility
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import {
+      getFirestore,
+      collection,
+      addDoc,
+      updateDoc,
+      doc
+    } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDeqxzp_-kKjM3hPr6CLGfTn38e4swSKbo",
+      authDomain: "room-management-system-8e899.firebaseapp.com",
+      projectId: "room-management-system-8e899",
+      storageBucket: "room-management-system-8e899.appspot.com", // ✅ FIXED HERE
+      messagingSenderId: "667821278853",
+      appId: "1:667821278853:web:a3a80c985073772670cbec"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    async function registerRoom() {
+      const roomName = document.getElementById('roomName').value.trim();
+      const day = document.getElementById('day').value;
+      const time = document.getElementById('time').value;
+      const capacity = document.getElementById('capacity').value.trim();
+      const errorContainer = document.getElementById('errorContainer');
+
+      errorContainer.textContent = "";
+
+      if (!roomName || !day || !time || !capacity) {
+        errorContainer.textContent = "Please fill in all required fields.";
+        return;
+      }
+
+      if (!/^\d+$/.test(capacity)) {
+        errorContainer.textContent = "Capacity must be a number.";
+        return;
+      }
+
+      try {
+        const urlParams = new URLSearchParams(window.location.search);
+        const isEdit = urlParams.get('edit') === 'true';
+        const editId = urlParams.get('id');
+
+        const roomData = { roomName, day, time, capacity };
+
+        if (isEdit && editId) {
+          const docRef = doc(db, "rooms", editId);
+          await updateDoc(docRef, roomData);
+        } else {
+          await addDoc(collection(db, "rooms"), roomData);
+        }
+
+        window.location.href = 'RoomList.html';
+      } catch (error) {
+        errorContainer.textContent = "Failed to save room. Please try again.";
+        console.error("Error saving room:", error);
+      }
+    }
+
+    // Set up event listeners
+    document.getElementById('roomForm').addEventListener('submit', function(event) {
+      event.preventDefault();
+      registerRoom();
+    });
+
     window.toggleTimeSlots = function(day) {
       const timeSlotsDiv = document.getElementById('timeSlots');
       timeSlotsDiv.style.display = day ? 'block' : 'none';
       document.getElementById('time').required = !!day;
     };
 
-    // Load form if in edit mode
-    window.addEventListener('DOMContentLoaded', () => {
-      const urlParams = new URLSearchParams(window.location.search);
-      const isEdit = urlParams.get('edit') === 'true';
+    // Load form data in edit mode
+    const urlParams = new URLSearchParams(window.location.search);
+    const isEdit = urlParams.get('edit') === 'true';
 
-      if (isEdit) {
-        document.getElementById('formTitle').textContent = 'Edit Room';
-        document.getElementById('roomName').value = urlParams.get('roomName') || '';
-        document.getElementById('day').value = urlParams.get('day') || '';
-        document.getElementById('time').value = urlParams.get('time') || '';
-        document.getElementById('capacity').value = urlParams.get('capacity') || '';
-        toggleTimeSlots(urlParams.get('day'));
-      }
-
-      document.getElementById('roomForm').addEventListener('submit', function(event) {
-        event.preventDefault();
-        registerRoom();
-      });
-    });
+    if (isEdit) {
+      document.getElementById('formTitle').textContent = 'Edit Room';
+      document.getElementById('roomName').value = urlParams.get('roomName') || '';
+      document.getElementById('day').value = urlParams.get('day') || '';
+      document.getElementById('time').value = urlParams.get('time') || '';
+      document.getElementById('capacity').value = urlParams.get('capacity') || '';
+      window.toggleTimeSlots(urlParams.get('day'));
+    }
   </script>
 </body>
 </html>
