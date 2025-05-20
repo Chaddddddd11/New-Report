@@ -257,9 +257,19 @@
                         <option value="BSPublicAdministration">BSPubAd (Bachelor of Science in Public Administration)</option>
                     </select>
                 </div>
-                 <div class="form-group">
-                    <label for="editYearSection">Year & Section (e.g., 1A, 2B):</label>
-                    <input type="text" id="editYearSection" placeholder="e.g., 1A, 2B" required>
+                <div class="form-group">
+                    <label for="editYearLevel">Year Level:</label>
+                    <select id="editYearLevel" required>
+                        <option value="">Select Year Level</option>
+                        <!-- Options populated by JS -->
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="editSection">Section:</label>
+                    <select id="editSection" required>
+                        <option value="">Select Section</option>
+                        <!-- Options populated by JS -->
+                    </select>
                 </div>
                 <div class="form-group">
                     <label for="editDay">Day:</label>
@@ -336,8 +346,19 @@
         const editDaySelect = document.getElementById('editDay');
         const editTimeSelect = document.getElementById('editTime');
         const editRoomNameSelect = document.getElementById('editRoomName');
+        const editYearLevelSelect = document.getElementById('editYearLevel'); // New
+        const editSectionSelect = document.getElementById('editSection'); // New
 
         // Data for dynamic dropdowns (consistent with Instructor.html)
+        const yearLevels = [
+            { value: '1', text: '1st Year' },
+            { value: '2', text: '2nd Year' },
+            { value: '3', text: '3rd Year' },
+            { value: '4', text: '4th Year' }
+            // Add { value: '5', text: '5th Year' } if needed for some courses
+        ];
+        const sections = ['A', 'B', 'C', 'D', 'E', 'F', 'G']; // Extend if more sections exist
+
         const allRooms = [
             { name: "CL1 (Computer Laboratory 1)", capacity: 30 },
             { name: "CL2 (Computer Laboratory 2)", capacity: 35 },
@@ -523,12 +544,39 @@
             editInstructorNameInput.value = instructor.name || '';
             editSubjectInput.value = instructor.subject || '';
             editCourseSelect.value = instructor.course || '';
-            editYearSectionInput.value = instructor.yearSection || '';
+            // Removed: editYearSectionInput.value = instructor.yearSection || '';
             editDaySelect.value = instructor.day || '';
             
             populateTimeSelect(editTimeSelect, instructor.time || '');
-            // Initial population of rooms
-            populateRoomSelectForEdit(instructor.day, instructor.time, instructor.course, instructor.yearSection, instructor.roomName || '', instructor.id);
+
+            // Populate Year Level dropdown
+            editYearLevelSelect.innerHTML = '<option value="">Select Year Level</option>';
+            yearLevels.forEach(yl => {
+                const option = document.createElement('option');
+                option.value = yl.value;
+                option.textContent = yl.text;
+                editYearLevelSelect.appendChild(option);
+            });
+
+            // Populate Section dropdown
+            editSectionSelect.innerHTML = '<option value="">Select Section</option>';
+            sections.forEach(sec => {
+                const option = document.createElement('option');
+                option.value = sec;
+                option.textContent = sec;
+                editSectionSelect.appendChild(option);
+            });
+
+            // Parse existing yearSection and set dropdowns
+            const currentYearSectionValue = instructor.yearSection || '';
+            const yearMatch = currentYearSectionValue.match(/^(\d+)/); // Extracts leading digits
+            const sectionMatch = currentYearSectionValue.match(/([A-Za-z]+)$/); // Extracts trailing letters
+
+            editYearLevelSelect.value = (yearMatch && yearMatch[1]) ? yearMatch[1] : '';
+            editSectionSelect.value = (sectionMatch && sectionMatch[1]) ? sectionMatch[1].toUpperCase() : '';
+            
+            // Initial population of rooms - pass the original full yearSection string
+            populateRoomSelectForEdit(instructor.day, instructor.time, instructor.course, currentYearSectionValue, instructor.roomName || '', instructor.id);
             
             editModal.style.display = "block";
         }
@@ -538,17 +586,23 @@
         }
 
         // Add event listeners to relevant fields in the edit modal to update room availability
-        [editDaySelect, editTimeSelect, editCourseSelect, editYearSectionInput].forEach(el => {
+        [editDaySelect, editTimeSelect, editCourseSelect, editYearLevelSelect, editSectionSelect].forEach(el => {
             el.addEventListener('change', () => {
                 const currentInstructorId = editInstructorIdInput.value;
-                 // Pass the original selected room name for comparison to allow keeping it if still valid
                 const originalSelectedRoom = editRoomNameSelect.value; 
+                const currentYear = editYearLevelSelect.value;
+                const currentSection = editSectionSelect.value;
+                let combinedYearSection = '';
+                if (currentYear && currentSection) {
+                    combinedYearSection = currentYear + currentSection;
+                }
+
                 populateRoomSelectForEdit(
                     editDaySelect.value,
                     editTimeSelect.value,
                     editCourseSelect.value,
-                    editYearSectionInput.value,
-                    originalSelectedRoom, // Pass the currently selected room in the dropdown
+                    combinedYearSection, // Use the newly combined year and section
+                    originalSelectedRoom, 
                     currentInstructorId
                 );
             });
@@ -561,13 +615,18 @@
                 name: editInstructorNameInput.value.trim(),
                 subject: editSubjectInput.value.trim(),
                 course: editCourseSelect.value,
-                yearSection: editYearSectionInput.value.trim().toUpperCase(),
+                yearSection: (editYearLevelSelect.value && editSectionSelect.value) ? (editYearLevelSelect.value + editSectionSelect.value) : '',
                 day: editDaySelect.value,
                 time: editTimeSelect.value,
                 roomName: editRoomNameSelect.value
             };
 
-            if (!updatedData.name || !updatedData.subject || !updatedData.course || !updatedData.yearSection || !updatedData.day || !updatedData.time || !updatedData.roomName) {
+            if (!updatedData.name || !updatedData.subject || !updatedData.course || !editYearLevelSelect.value || !editSectionSelect.value || !updatedData.day || !updatedData.time || !updatedData.roomName) {
+                // Reconstruct yearSection for the check to be sure
+                updatedData.yearSection = (editYearLevelSelect.value && editSectionSelect.value) ? (editYearLevelSelect.value + editSectionSelect.value) : ''; 
+                if (!updatedData.yearSection) { alert("Year Level and Section are required."); return; } 
+            }
+            if (!updatedData.name || !updatedData.subject || !updatedData.course || !updatedData.yearSection || !updatedData.day || !updatedData.time || !updatedData.roomName) { // Double check all fields
                 alert("All fields are required.");
                 return;
             }
