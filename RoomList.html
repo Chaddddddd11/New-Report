@@ -108,7 +108,8 @@
       collection,
       getDocs,
       doc,
-      deleteDoc
+      deleteDoc,
+      onSnapshot // For real-time updates
     } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
     // IMPORTANT: Copy your Firebase config object here!
@@ -128,44 +129,58 @@
     const roomListDiv = document.getElementById('roomList');
     const loadingMessage = document.getElementById('loadingMessage');
 
-    // Function to fetch and display rooms
-    async function fetchAndDisplayRooms() {
+    // Function to render rooms to the DOM
+    function renderRooms(querySnapshot) {
       roomListDiv.innerHTML = ''; // Clear existing list
+      if (querySnapshot.empty) {
+        loadingMessage.textContent = 'No rooms registered yet.';
+        loadingMessage.style.display = 'block';
+        return;
+      }
+
+      querySnapshot.forEach((docSnap) => {
+        const room = docSnap.data();
+        const roomId = docSnap.id;
+        const roomElement = document.createElement('div');
+        roomElement.classList.add('room-item');
+        // Using standard string concatenation or careful template literals
+        roomElement.innerHTML =
+          '<div class="room-details">' +
+            '<p><strong>Name:</strong> ' + escapeHTML(room.roomName) + '</p>' +
+            '<p><strong>Day:</strong> ' + escapeHTML(room.day) + '</p>' +
+            '<p><strong>Time:</strong> ' + escapeHTML(room.time) + '</p>' +
+            '<p><strong>Capacity:</strong> ' + escapeHTML(String(room.capacity)) + ' students</p>' +
+          '</div>' +
+          '<div class="room-actions">' +
+            '<button class="edit-button" data-id="' + escapeHTML(roomId) + '" data-roomname="' + escapeHTML(room.roomName) + '" data-day="' + escapeHTML(room.day) + '" data-time="' + escapeHTML(room.time) + '" data-capacity="' + escapeHTML(String(room.capacity)) + '">Edit</button>' +
+            '<button class="delete-button" data-id="' + escapeHTML(roomId) + '">Delete</button>' +
+          '</div>';
+        roomListDiv.appendChild(roomElement);
+      });
+      loadingMessage.style.display = 'none';
+      attachActionListeners();
+    }
+    
+    // Helper function to escape HTML to prevent XSS
+    function escapeHTML(str) {
+        const div = document.createElement('div');
+        div.appendChild(document.createTextNode(str));
+        return div.innerHTML;
+    }
+
+
+    // Function to set up real-time listener for rooms
+    function listenForRooms() {
       loadingMessage.textContent = 'Loading rooms...';
       loadingMessage.style.display = 'block';
 
-      try {
-        const querySnapshot = await getDocs(collection(db, "rooms"));
-        if (querySnapshot.empty) {
-          loadingMessage.textContent = 'No rooms registered yet.';
-          return;
-        }
-
-        querySnapshot.forEach((docSnap) => {
-          const room = docSnap.data();
-          const roomId = docSnap.id;
-          const roomElement = document.createElement('div');
-          roomElement.classList.add('room-item');
-          roomElement.innerHTML = \`
-            <div class="room-details">
-              <p><strong>Name:</strong> \${room.roomName}</p>
-              <p><strong>Day:</strong> \${room.day}</p>
-              <p><strong>Time:</strong> \${room.time}</p>
-              <p><strong>Capacity:</strong> \${room.capacity} students</p>
-            </div>
-            <div class="room-actions">
-              <button class="edit-button" data-id="\${roomId}">Edit</button>
-              <button class="delete-button" data-id="\${roomId}">Delete</button>
-            </div>
-          \`;
-          roomListDiv.appendChild(roomElement);
-        });
-        loadingMessage.style.display = 'none';
-        attachActionListeners();
-      } catch (error) {
-        console.error("Error fetching rooms: ", error);
-        loadingMessage.textContent = 'Failed to load rooms. Please try again.';
-      }
+      const roomsCollectionRef = collection(db, "rooms");
+      onSnapshot(roomsCollectionRef, (querySnapshot) => {
+        renderRooms(querySnapshot);
+      }, (error) => {
+        console.error("Error listening for room updates: ", error);
+        loadingMessage.textContent = 'Failed to load rooms in real-time. Please try refreshing.';
+      });
     }
 
     // Function to attach event listeners to edit and delete buttons
@@ -182,35 +197,17 @@
     }
 
     // Handle Edit
-    async function handleEdit(event) {
-      const roomId = event.target.dataset.id;
-      // To redirect to edit, we need the room's current data.
-      // For simplicity here, we'll fetch it again, though in a more complex app
-      // you might already have it or fetch it more selectively.
-      // This example assumes your room_registration.html can pre-fill from URL params.
-
-      // This part is tricky because getDoc is not imported above. We should improve this.
-      // For now, let's find the room data from the displayed element if possible,
-      // or ideally, we'd fetch it directly or pass it along.
-      // The simplest way to pass all data is to re-query it if necessary or reconstruct from UI (less ideal)
-      // Let's reconstruct the params from the UI for simplicity, assuming room_registration.html handles them.
-      
-      const roomItemElement = event.target.closest('.room-item');
-      const details = roomItemElement.querySelector('.room-details');
-      const roomName = details.children[0].textContent.replace('Name: ', '').trim();
-      const day = details.children[1].textContent.replace('Day: ', '').trim();
-      const time = details.children[2].textContent.replace('Time: ', '').trim();
-      const capacity = details.children[3].textContent.replace('Capacity: ', '').replace(' students', '').trim();
-
+    function handleEdit(event) {
+      const button = event.target;
       const queryParams = new URLSearchParams({
         edit: 'true',
-        id: roomId,
-        roomName: roomName,
-        day: day,
-        time: time,
-        capacity: capacity
+        id: button.dataset.id,
+        roomName: button.dataset.roomname,
+        day: button.dataset.day,
+        time: button.dataset.time,
+        capacity: button.dataset.capacity
       });
-      window.location.href = \`room_registration.html?\${queryParams.toString()}\`;
+      window.location.href = 'room_registration.html?' + queryParams.toString();
     }
 
     // Handle Delete
@@ -219,8 +216,9 @@
       if (confirm('Are you sure you want to delete this room?')) {
         try {
           await deleteDoc(doc(db, "rooms", roomId));
+          // No need to call fetchAndDisplayRooms() here if using onSnapshot,
+          // as the list will update automatically.
           alert('Room deleted successfully!');
-          fetchAndDisplayRooms(); // Refresh the list
         } catch (error) {
           console.error("Error deleting room: ", error);
           alert('Failed to delete room. Please try again.');
@@ -228,8 +226,8 @@
       }
     }
 
-    // Initial call to fetch rooms when the page loads
-    document.addEventListener('DOMContentLoaded', fetchAndDisplayRooms);
+    // Initial call to listen for rooms when the page loads
+    document.addEventListener('DOMContentLoaded', listenForRooms);
   </script>
 </body>
 </html>
