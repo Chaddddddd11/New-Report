@@ -319,26 +319,37 @@
             }
         }
 
-        // Function to fetch rooms from Firestore
+        // Function to fetch rooms from Firestore with detailed logging
         async function fetchRooms() {
+            console.log('1. Starting to fetch rooms from Firestore...');
             try {
-                console.log('Fetching rooms from Firestore...');
-                const querySnapshot = await getDocs(collection(db, 'rooms'));
+                console.log('2. Accessing Firestore collection...');
+                const roomsRef = collection(db, 'rooms');
+                console.log('3. Getting documents...');
+                const querySnapshot = await getDocs(roomsRef);
+                
+                console.log('4. Processing documents...');
+                console.log(`5. Found ${querySnapshot.size} room documents`);
+                
                 const rooms = [];
                 querySnapshot.forEach((doc) => {
+                    console.log(`6. Processing document ${doc.id}:`, doc.data());
                     const data = doc.data();
-                    if (data.name && data.capacity) {
+                    if (data && data.name) {
                         rooms.push({
                             id: doc.id,
                             name: data.name,
                             capacity: parseInt(data.capacity) || 0
                         });
+                    } else {
+                        console.warn('Skipping invalid room document:', doc.id, data);
                     }
                 });
-                console.log('Fetched rooms:', rooms);
+                
+                console.log('7. Final rooms array:', rooms);
                 return rooms;
             } catch (error) {
-                console.error("Error fetching rooms: ", error);
+                console.error('Error in fetchRooms:', error);
                 return [];
             }
         }
@@ -388,23 +399,38 @@
 
         // Initialize the page
         document.addEventListener('DOMContentLoaded', async () => {
-            console.log('DOM fully loaded');
+            console.log('=== PAGE INITIALIZATION STARTED ===');
             try {
-                // Load all rooms and instructors initially
+                console.log('1. Initializing Firebase...');
+                console.log('Firebase app initialized:', app.name);
+                
+                // Load all rooms
+                console.log('2. Loading rooms...');
                 allRooms = await fetchRooms();
+                console.log('3. Loaded rooms:', allRooms);
+                
+                // Load all instructors
+                console.log('4. Loading instructors...');
                 allInstructors = await fetchAllInstructors();
+                console.log('5. Loaded instructors:', allInstructors.length);
                 
                 // Set up event listeners for fields that affect room availability
+                console.log('6. Setting up event listeners...');
                 const fields = ['course', 'year', 'section', 'day', 'timeStart', 'timeEnd'];
                 fields.forEach(field => {
                     const element = document.getElementById(field);
                     if (element) {
                         element.addEventListener('change', updateAvailableRooms);
+                        console.log(`   - Added listener for ${field}`);
+                    } else {
+                        console.warn(`   - Could not find element: ${field}`);
                     }
                 });
                 
                 // Initial room population
+                console.log('7. Updating available rooms...');
                 await updateAvailableRooms();
+                console.log('=== PAGE INITIALIZATION COMPLETE ===');
             } catch (error) {
                 console.error('Error initializing page:', error);
             }
@@ -426,8 +452,12 @@
         
         // Function to update available rooms based on current selections
         async function updateAvailableRooms() {
+            console.log('=== UPDATING AVAILABLE ROOMS ===');
             const roomSelect = document.getElementById('room');
-            if (!roomSelect) return;
+            if (!roomSelect) {
+                console.error('Room select element not found!');
+                return;
+            }
             
             const course = document.getElementById('course').value;
             const year = document.getElementById('year').value;
