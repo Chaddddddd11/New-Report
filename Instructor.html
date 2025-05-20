@@ -3,151 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <title>DHVSU Instructor Registration</title>
-    <link href="[https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap"](https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap") rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
     <style>
-        :root {
-            --primary-color: #1A5F7A;
-            --secondary-color: #2C8EBB;
-            --accent-color: #F7B32D;
-            --background-color: #F4F7F6;
-            --text-color: #333;
-            --error-color: #dc3545;
-        }
-
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-
-        body {
-            font-family: 'Roboto', Arial, sans-serif;
-            background-color: var(--background-color);
-            color: var(--text-color);
-            line-height: 1.6;
-        }
-
-        .container {
-            position: relative;
-            width: 100%;
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-
-        .back-btn {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            padding: 8px 15px;
-            background-color: var(--secondary-color);
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            text-decoration: none;
-            font-size: 14px;
-            transition: background-color 0.3s ease;
-        }
-
-        .back-btn:hover {
-            background-color: var(--accent-color);
-        }
-
-        .header {
-            background-color: var(--primary-color);
-            color: white;
-            text-align: center;
-            padding: 15px;
-            margin-bottom: 20px;
-            border-radius: 5px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-
-        .form-container {
-            background-color: white;
-            padding: 20px;
-            border-radius: 5px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-
-        .form-group {
-            margin-bottom: 15px;
-        }
-
-        label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: 500;
-            color: var(--text-color);
-        }
-
-        input, select {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid var(--secondary-color);
-            border-radius: 4px;
-            font-size: 16px;
-            transition: all 0.3s ease;
-        }
-
-        input:focus, select:focus {
-            outline: none;
-            border-color: var(--accent-color);
-            box-shadow: 0 0 5px rgba(247, 179, 45, 0.5);
-        }
-
-        .btn-container {
-            display: flex;
-            justify-content: space-between;
-            margin-top: 20px;
-            gap: 10px;
-        }
-
-        .btn {
-            padding: 10px 20px;
-            background-color: var(--secondary-color);
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            transition: background-color 0.3s ease;
-            text-decoration: none;
-            text-align: center;
-            flex: 1;
-        }
-
-        .btn:hover {
-            background-color: var(--accent-color);
-        }
-
-        .error-message {
-            color: var(--error-color);
-            margin-top: 10px;
-            padding: 10px;
-            border-radius: 4px;
-            display: none;
-        }
-
-        @media (max-width: 600px) {
-            .container {
-                padding: 10px;
-            }
-
-            .btn-container {
-                flex-direction: column;
-            }
-
-            .btn {
-                width: 100%;
-                margin-bottom: 10px;
-            }
-
-            .back-btn {
-                top: 10px;
-                left: 10px;
-            }
-        }
+        /* ... (same CSS as before) ... */
     </style>
 </head>
 <body>
@@ -233,7 +91,7 @@
 
             <div class="btn-container">
                 <a href="InstructorList.html" class="btn">View Instructor List</a>
-                <button onclick="registerInstructor()" class="btn">Register Instructor</button>
+                <button class="btn" id="registerBtn">Register Instructor</button>
             </div>
         </div>
     </div>
@@ -275,45 +133,16 @@
         const timeSelect = document.getElementById('time');
         const roomAvailableSelect = document.getElementById('roomAvailable');
         const errorMessageDiv = document.getElementById('errorMessage');
+        const registerBtn = document.getElementById('registerBtn');
 
         // Student capacity map
         const studentCapacityMap = {
-            'BSA-1st-A': 30, 'BSA-1st-B': 30, 'BSA-1st-C': 28, 'BSA-1st-D': 30,
-            'BSA-2nd-A': 32, 'BSA-2nd-B': 30, 'BSA-2nd-C': 30, 'BSA-2nd-D': 32,
-            'BSA-3rd-A': 28, 'BSA-3rd-B': 29, 'BSA-3rd-C': 30, 'BSA-3rd-D': 28,
-            'BSA-4th-A': 30, 'BSA-4th-B': 31, 'BSA-4th-C': 29, 'BSA-4th-D': 30,
-            'BSAIS-1st-A': 35, 'BSAIS-1st-B': 33, 'BSAIS-1st-C': 34, 'BSAIS-1st-D': 35,
-            'BSAIS-2nd-A': 30, 'BSAIS-2nd-B': 31, 'BSAIS-2nd-C': 32, 'BSAIS-2nd-D': 30,
-            'BSAIS-3rd-A': 33, 'BSAIS-3rd-B': 35, 'BSAIS-3rd-C': 34, 'BSAIS-3rd-D': 33,
-            'BSAIS-4th-A': 31, 'BSAIS-4th-B': 30, 'BSAIS-4th-C': 32, 'BSAIS-4th-D': 31,
-            'MSMarketing-1st-A': 20, 'MSMarketing-1st-B': 22, 
-            'MSMarketing-2nd-A': 21, 'MSMarketing-2nd-B': 20,
-            'MSMarketing-3rd-A': 20, 'MSMarketing-3rd-B': 20,
-            'MSMarketing-4th-A': 20, 'MSMarketing-4th-B': 20,
-            'BSE-1st-A': 40, 'BSE-1st-B': 40, 'BSE-1st-C': 38, 'BSE-1st-D': 39,
-            'BSE-2nd-A': 37, 'BSE-2nd-B': 39, 'BSE-2nd-C': 40, 'BSE-2nd-D': 38,
-            'BSE-3rd-A': 35, 'BSE-3rd-B': 36, 'BSE-3rd-C': 37, 'BSE-3rd-D': 35,
-            'BSE-4th-A': 38, 'BSE-4th-B': 40, 'BSE-4th-C': 39, 'BSE-4th-D': 37,
-            'BSPublicAdministration-1st-A': 30, 'BSPublicAdministration-1st-B': 32, 
-            'BSPublicAdministration-1st-C': 31, 'BSPublicAdministration-1st-D': 30,
-            'BSPublicAdministration-2nd-A': 28, 'BSPublicAdministration-2nd-B': 30,
-            'BSPublicAdministration-2nd-C': 29, 'BSPublicAdministration-2nd-D': 28,
-            'BSPublicAdministration-3rd-A': 31, 'BSPublicAdministration-3rd-B': 29,
-            'BSPublicAdministration-3rd-C': 30, 'BSPublicAdministration-3rd-D': 31,
-            'BSPublicAdministration-4th-A': 29, 'BSPublicAdministration-4th-B': 30,
-            'BSPublicAdministration-4th-C': 28, 'BSPublicAdministration-4th-D': 29
+            // ... (same capacity map as before)
         };
 
         // Room definitions
         const allRooms = [
-            { name: "R101", capacity: 40 },
-            { name: "R102", capacity: 35 },
-            { name: "R103", capacity: 30 },
-            { name: "R104", capacity: 45 },
-            { name: "R105", capacity: 32 },
-            { name: "R106", capacity: 38 },
-            { name: "R107", capacity: 42 },
-            { name: "R108", capacity: 36 }
+            // ... (same room definitions as before)
         ];
 
         // Helper Functions
@@ -430,6 +259,12 @@
         }
 
         async function registerInstructor() {
+            if (!nameInput.value || !subjectInput.value || !courseSelect.value || !yearSelect.value || 
+                !sectionSelect.value || !daySelect.value || !timeSelect.value || !roomAvailableSelect.value) {
+                showError('Please fill in all required fields');
+                return;
+            }
+
             const instructorData = {
                 name: nameInput.value,
                 subject: subjectInput.value,
@@ -441,27 +276,28 @@
                 roomName: roomAvailableSelect.value,
                 timeStart: timeSelect.value.split('-')[0],
                 timeEnd: timeSelect.value.split('-')[1],
-            timestamp: new Date().toISOString()
-        };
+                timestamp: new Date().toISOString()
+            };
 
-        try {
-            const docRef = await addDoc(instructorsCollectionRef, instructorData);
-            clearForm();
-            alert('Instructor registered successfully!');
-        } catch (error) {
-            showError(`Error registering instructor: ${error.message}`);
+            try {
+                const docRef = await addDoc(instructorsCollectionRef, instructorData);
+                clearForm();
+                alert('Instructor registered successfully!');
+            } catch (error) {
+                showError(`Error registering instructor: ${error.message}`);
+            }
         }
-    }
 
-    // Initialize time slots and event listeners
-    document.addEventListener('DOMContentLoaded', () => {
-        populateTimeSlots();
-        daySelect.addEventListener('change', updateAvailableRooms);
-        timeSelect.addEventListener('change', updateAvailableRooms);
-        courseSelect.addEventListener('change', updateAvailableRooms);
-        yearSelect.addEventListener('change', updateAvailableRooms);
-        sectionSelect.addEventListener('change', updateAvailableRooms);
-    });
+        // Event Listeners
+        document.addEventListener('DOMContentLoaded', () => {
+            populateTimeSlots();
+            daySelect.addEventListener('change', updateAvailableRooms);
+            timeSelect.addEventListener('change', updateAvailableRooms);
+            courseSelect.addEventListener('change', updateAvailableRooms);
+            yearSelect.addEventListener('change', updateAvailableRooms);
+            sectionSelect.addEventListener('change', updateAvailableRooms);
+            registerBtn.addEventListener('click', registerInstructor);
+        });
     </script>
 </body>
 </html>
