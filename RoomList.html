@@ -3,19 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Room List</title>
+  <title>Registered Room List</title>
   <style>
     body {
       font-family: Arial, sans-serif;
-      background-color: #f4f4f4;
+      background-color: #f9f9f9;
       margin: 0;
       padding: 0;
-    }
-
-    .container {
-      max-width: 1000px;
-      margin: auto;
-      padding: 20px;
     }
 
     header {
@@ -23,89 +17,66 @@
       color: white;
       padding: 20px;
       text-align: center;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 20px auto;
+      padding: 20px;
+      background: white;
       border-radius: 10px;
-      margin-bottom: 30px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
     }
 
-    h1 {
-      margin: 0;
-    }
-
-    .actions {
-      display: flex;
-      justify-content: space-between;
-      margin-bottom: 20px;
-    }
-
-    .actions button {
-      padding: 10px 20px;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-      font-size: 1em;
-    }
-
-    .back-button {
-      background-color: #ffcc00;
-    }
-
-    .add-button {
-      background-color: #d92323;
-      color: white;
+    h2 {
+      text-align: center;
+      color: #d92323;
     }
 
     table {
       width: 100%;
       border-collapse: collapse;
-      background: white;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-      border-radius: 10px;
-      overflow: hidden;
+      margin-top: 20px;
     }
 
     th, td {
-      padding: 12px;
+      padding: 12px 15px;
+      border: 1px solid #ddd;
       text-align: left;
-      border-bottom: 1px solid #ddd;
     }
 
     th {
-      background-color: #f4f4f4;
+      background-color: #f2f2f2;
+      color: #333;
     }
 
-    tr:hover {
-      background-color: #f1f1f1;
+    tr:nth-child(even) {
+      background-color: #f9f9f9;
     }
 
-    .edit-btn, .delete-btn {
-      padding: 5px 10px;
-      margin-right: 5px;
-      border: none;
-      border-radius: 3px;
-      cursor: pointer;
-    }
-
-    .edit-btn {
+    .back-button {
+      display: inline-block;
+      margin-top: 20px;
+      padding: 10px 20px;
       background-color: #ffcc00;
+      color: #333;
+      text-decoration: none;
+      border-radius: 5px;
+      transition: background-color 0.3s;
     }
 
-    .delete-btn {
-      background-color: #d92323;
-      color: white;
+    .back-button:hover {
+      background-color: #e6b800;
     }
   </style>
 </head>
 <body>
+  <header>
+    <h1>Registered Rooms</h1>
+  </header>
+
   <div class="container">
-    <header>
-      <h1>Registered Rooms</h1>
-    </header>
-
-    <div class="actions">
-      <button class="back-button" onclick="navigateTo('index.html')">Back to Home</button>
-      <button class="add-button" onclick="navigateTo('Room.html')">Add New Room</button>
-    </div>
-
+    <h2>Room Schedule List</h2>
     <table id="roomTable">
       <thead>
         <tr>
@@ -113,70 +84,49 @@
           <th>Day</th>
           <th>Time</th>
           <th>Capacity</th>
-          <th>Actions</th>
         </tr>
       </thead>
-      <tbody></tbody>
+      <tbody>
+        <!-- Room rows will be added here dynamically -->
+      </tbody>
     </table>
+
+    <a href="Room.html" class="back-button">Back to Register</a>
   </div>
 
   <script>
-    const sheetUrl = "https://script.google.com/macros/s/AKfycbx1CA4hRI2k4ATlz77Vjgz2O3HxYdVvaKlwVZ2ilNkqWIij9MlrMEBD_6AdKbhrgOBi/exec";
+    const sheetURL = "https://script.google.com/macros/s/AKfycbxgKco7sHsWwYaysINo3IcvlCaomNkFdEoobvXp92Y/dev";
 
-    function navigateTo(page) {
-      window.location.href = page;
-    }
+    fetch(sheetURL)
+      .then(response => response.json())
+      .then(data => {
+        const tableBody = document.querySelector("#roomTable tbody");
 
-    function fetchRooms() {
-      fetch(sheetUrl)
-        .then(res => res.json())
-        .then(data => {
-          const tbody = document.querySelector("#roomTable tbody");
-          tbody.innerHTML = "";
-          data.forEach((room, index) => {
-            const tr = document.createElement("tr");
-            tr.innerHTML = `
-              <td><input value="${room.roomName}" data-index="${index}" class="edit-roomName"></td>
-              <td><input value="${room.day}" data-index="${index}" class="edit-day"></td>
-              <td><input value="${room.time}" data-index="${index}" class="edit-time"></td>
-              <td><input value="${room.capacity}" data-index="${index}" class="edit-capacity"></td>
-              <td>
-                <button class="edit-btn" onclick="updateRoom(${index})">Save</button>
-                <button class="delete-btn" onclick="deleteRoom(${index})">Delete</button>
-              </td>
+        if (!data || !Array.isArray(data)) {
+          tableBody.innerHTML = '<tr><td colspan="4">No data available</td></tr>';
+          return;
+        }
+
+        if (data.length === 0) {
+          tableBody.innerHTML = '<tr><td colspan="4">No rooms registered yet</td></tr>';
+        } else {
+          data.forEach(room => {
+            const row = document.createElement("tr");
+            row.innerHTML = `
+              <td>${room["Room Name"] || ""}</td>
+              <td>${room.Day || ""}</td>
+              <td>${room.Time || ""}</td>
+              <td>${room.Capacity || ""}</td>
             `;
-            tbody.appendChild(tr);
+            tableBody.appendChild(row);
           });
-        });
-    }
-
-    function updateRoom(index) {
-      const room = {
-        index,
-        roomName: document.querySelector(`.edit-roomName[data-index='${index}']`).value,
-        day: document.querySelector(`.edit-day[data-index='${index}']`).value,
-        time: document.querySelector(`.edit-time[data-index='${index}']`).value,
-        capacity: document.querySelector(`.edit-capacity[data-index='${index}']`).value
-      };
-
-      fetch(sheetUrl + "?action=update", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(room)
-      }).then(() => fetchRooms());
-    }
-
-    function deleteRoom(index) {
-      if (!confirm("Are you sure you want to delete this room?")) return;
-
-      fetch(sheetUrl + "?action=delete", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ index })
-      }).then(() => fetchRooms());
-    }
-
-    window.onload = fetchRooms;
+        }
+      })
+      .catch(error => {
+        console.error("Error fetching data:", error);
+        const tableBody = document.querySelector("#roomTable tbody");
+        tableBody.innerHTML = '<tr><td colspan="4">Failed to load data</td></tr>';
+      });
   </script>
 </body>
 </html>
