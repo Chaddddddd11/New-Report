@@ -2,22 +2,118 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Room List</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Registered Rooms</title>
+  <style>
+    :root {
+      --primary-color: #d92323;
+      --secondary-color: #ffcc00;
+      --background-color: #f5f5f5;
+      --text-color: #333;
+      --danger-color: #dc3545;
+      --edit-color: #28a745;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Arial', sans-serif;
+      background-color: var(--background-color);
+      color: var(--text-color);
+      line-height: 1.6;
+      padding: 20px;
+    }
+    .container { max-width: 900px; margin: 0 auto; }
+    header {
+      background-color: var(--primary-color);
+      color: white;
+      padding: 15px 20px;
+      text-align: center;
+      margin-bottom: 30px;
+      border-radius: 10px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    h1 { font-size: 2em; }
+    .navigation-buttons { margin-bottom: 20px; }
+    button {
+      padding: 10px 15px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 0.9em;
+      transition: background-color 0.3s;
+      margin-right: 10px;
+    }
+    .nav-button {
+      background-color: var(--secondary-color);
+      color: var(--text-color);
+    }
+    .nav-button:hover { background-color: #e6b800; }
+    .room-list-container {
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    .room-item {
+      border-bottom: 1px solid #eee;
+      padding: 15px 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .room-item:last-child { border-bottom: none; }
+    .room-details { flex-grow: 1; }
+    .room-details p { margin-bottom: 5px; }
+    .room-details strong { color: var(--primary-color); }
+    .room-actions button {
+      margin-left: 10px;
+      color: white;
+    }
+    .edit-button { background-color: var(--edit-color); }
+    .edit-button:hover { background-color: #218838; }
+    .delete-button { background-color: var(--danger-color); }
+    .delete-button:hover { background-color: #c82333; }
+    #loadingMessage { text-align: center; padding: 20px; font-style: italic; }
+    @media (max-width: 600px) {
+      .room-item { flex-direction: column; align-items: flex-start; }
+      .room-actions { margin-top: 10px; width: 100%; }
+      .room-actions button { width: calc(50% - 5px); }
+      .room-actions button:first-child { margin-right: 10px; margin-left: 0;}
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Registered Rooms</h1>
+    </header>
 
-  <!-- Firebase & Firestore Setup -->
+    <div class="navigation-buttons">
+      <button class="nav-button" onclick="window.location.href='room_registration.html'">Back to Room Registration</button>
+    </div>
+
+    <div class="room-list-container">
+      <div id="roomList">
+        <!-- Room items will be injected here by JavaScript -->
+      </div>
+      <p id="loadingMessage">Loading rooms...</p>
+    </div>
+  </div>
+
   <script type="module">
+    // Firebase SDK imports
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
     import {
       getFirestore,
       collection,
       getDocs,
-      deleteDoc,
-      doc
+      doc,
+      deleteDoc
     } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
+    // IMPORTANT: Copy your Firebase config object here!
     const firebaseConfig = {
-      apiKey: "AIzaSyDeqxzp_-kKjM3hPr6CLGfTn38e4swSKbo",
+      apiKey: "AIzaSyDeqxzp_-kKjM3hPr6CLGfTn38e4swSKbo", // From your room_registration.html
       authDomain: "room-management-system-8e899.firebaseapp.com",
       projectId: "room-management-system-8e899",
       storageBucket: "room-management-system-8e899.appspot.com",
@@ -25,140 +121,115 @@
       appId: "1:667821278853:web:a3a80c985073772670cbec"
     };
 
+    // Initialize Firebase
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
-    async function fetchRooms() {
-      const tableBody = document.getElementById("roomTableBody");
-      tableBody.innerHTML = "<tr><td colspan='5'>Loading...</td></tr>";
+    const roomListDiv = document.getElementById('roomList');
+    const loadingMessage = document.getElementById('loadingMessage');
+
+    // Function to fetch and display rooms
+    async function fetchAndDisplayRooms() {
+      roomListDiv.innerHTML = ''; // Clear existing list
+      loadingMessage.textContent = 'Loading rooms...';
+      loadingMessage.style.display = 'block';
 
       try {
         const querySnapshot = await getDocs(collection(db, "rooms"));
-        tableBody.innerHTML = "";
+        if (querySnapshot.empty) {
+          loadingMessage.textContent = 'No rooms registered yet.';
+          return;
+        }
+
         querySnapshot.forEach((docSnap) => {
-          const data = docSnap.data();
-          const row = document.createElement("tr");
-          row.innerHTML = `
-            <td>${data.roomName}</td>
-            <td>${data.day}</td>
-            <td>${data.time}</td>
-            <td>${data.capacity}</td>
-            <td><button class="delete-btn" data-id="${docSnap.id}">Delete</button></td>
-          `;
-          tableBody.appendChild(row);
+          const room = docSnap.data();
+          const roomId = docSnap.id;
+          const roomElement = document.createElement('div');
+          roomElement.classList.add('room-item');
+          roomElement.innerHTML = \`
+            <div class="room-details">
+              <p><strong>Name:</strong> \${room.roomName}</p>
+              <p><strong>Day:</strong> \${room.day}</p>
+              <p><strong>Time:</strong> \${room.time}</p>
+              <p><strong>Capacity:</strong> \${room.capacity} students</p>
+            </div>
+            <div class="room-actions">
+              <button class="edit-button" data-id="\${roomId}">Edit</button>
+              <button class="delete-button" data-id="\${roomId}">Delete</button>
+            </div>
+          \`;
+          roomListDiv.appendChild(roomElement);
         });
-
-        // Attach click listeners AFTER rows are rendered
-        document.querySelectorAll(".delete-btn").forEach(button => {
-          button.addEventListener("click", async () => {
-            const id = button.getAttribute("data-id");
-            if (confirm("Are you sure you want to delete this room?")) {
-              try {
-                await deleteDoc(doc(db, "rooms", id));
-                fetchRooms(); // Reload list
-              } catch (error) {
-                console.error("Error deleting room:", error);
-              }
-            }
-          });
-        });
-
+        loadingMessage.style.display = 'none';
+        attachActionListeners();
       } catch (error) {
-        console.error("Error fetching rooms:", error);
-        tableBody.innerHTML = "<tr><td colspan='5'>Failed to load data.</td></tr>";
+        console.error("Error fetching rooms: ", error);
+        loadingMessage.textContent = 'Failed to load rooms. Please try again.';
       }
     }
 
-    window.addEventListener("DOMContentLoaded", fetchRooms);
+    // Function to attach event listeners to edit and delete buttons
+    function attachActionListeners() {
+      const editButtons = document.querySelectorAll('.edit-button');
+      editButtons.forEach(button => {
+        button.addEventListener('click', handleEdit);
+      });
+
+      const deleteButtons = document.querySelectorAll('.delete-button');
+      deleteButtons.forEach(button => {
+        button.addEventListener('click', handleDelete);
+      });
+    }
+
+    // Handle Edit
+    async function handleEdit(event) {
+      const roomId = event.target.dataset.id;
+      // To redirect to edit, we need the room's current data.
+      // For simplicity here, we'll fetch it again, though in a more complex app
+      // you might already have it or fetch it more selectively.
+      // This example assumes your room_registration.html can pre-fill from URL params.
+
+      // This part is tricky because getDoc is not imported above. We should improve this.
+      // For now, let's find the room data from the displayed element if possible,
+      // or ideally, we'd fetch it directly or pass it along.
+      // The simplest way to pass all data is to re-query it if necessary or reconstruct from UI (less ideal)
+      // Let's reconstruct the params from the UI for simplicity, assuming room_registration.html handles them.
+      
+      const roomItemElement = event.target.closest('.room-item');
+      const details = roomItemElement.querySelector('.room-details');
+      const roomName = details.children[0].textContent.replace('Name: ', '').trim();
+      const day = details.children[1].textContent.replace('Day: ', '').trim();
+      const time = details.children[2].textContent.replace('Time: ', '').trim();
+      const capacity = details.children[3].textContent.replace('Capacity: ', '').replace(' students', '').trim();
+
+      const queryParams = new URLSearchParams({
+        edit: 'true',
+        id: roomId,
+        roomName: roomName,
+        day: day,
+        time: time,
+        capacity: capacity
+      });
+      window.location.href = \`room_registration.html?\${queryParams.toString()}\`;
+    }
+
+    // Handle Delete
+    async function handleDelete(event) {
+      const roomId = event.target.dataset.id;
+      if (confirm('Are you sure you want to delete this room?')) {
+        try {
+          await deleteDoc(doc(db, "rooms", roomId));
+          alert('Room deleted successfully!');
+          fetchAndDisplayRooms(); // Refresh the list
+        } catch (error) {
+          console.error("Error deleting room: ", error);
+          alert('Failed to delete room. Please try again.');
+        }
+      }
+    }
+
+    // Initial call to fetch rooms when the page loads
+    document.addEventListener('DOMContentLoaded', fetchAndDisplayRooms);
   </script>
-
-  <style>
-    :root {
-      --primary-color: #d92323;
-      --secondary-color: #ffcc00;
-      --background-color: #f5f5f5;
-      --text-color: #333;
-    }
-
-    body {
-      font-family: Arial, sans-serif;
-      background-color: var(--background-color);
-      margin: 0;
-      padding: 20px;
-    }
-
-    h1 {
-      text-align: center;
-      color: var(--primary-color);
-      margin-bottom: 30px;
-    }
-
-    .back-button {
-      display: inline-block;
-      margin-bottom: 20px;
-      padding: 10px 20px;
-      background-color: var(--secondary-color);
-      border: none;
-      border-radius: 5px;
-      color: #000;
-      text-decoration: none;
-      font-weight: bold;
-      transition: background-color 0.3s;
-    }
-
-    .back-button:hover {
-      background-color: #e6b800;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 20px;
-      background-color: #fff;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
-    }
-
-    th, td {
-      padding: 12px;
-      text-align: left;
-      border-bottom: 1px solid #ccc;
-    }
-
-    th {
-      background-color: var(--primary-color);
-      color: white;
-    }
-
-    .delete-btn {
-      background-color: var(--primary-color);
-      color: white;
-      border: none;
-      padding: 6px 12px;
-      cursor: pointer;
-      border-radius: 4px;
-    }
-
-    .delete-btn:hover {
-      background-color: #b31a1a;
-    }
-  </style>
-</head>
-<body>
-  <a href="index.html" class="back-button">&larr; Back to Home</a>
-  <h1>Room List</h1>
-  <table>
-    <thead>
-      <tr>
-        <th>Room Name</th>
-        <th>Day</th>
-        <th>Time</th>
-        <th>Capacity</th>
-        <th>Actions</th>
-      </tr>
-    </thead>
-    <tbody id="roomTableBody">
-      <tr><td colspan="5">Loading...</td></tr>
-    </tbody>
-  </table>
 </body>
 </html>
