@@ -1,517 +1,397 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>Instructor List</title>
-  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
-  <style>
-    :root {
-        --primary-color: #1A5F7A;
-        --secondary-color: #2C8EBB;
-        --accent-color: #F7B32D;
-        --background-color: #F4F7F6;
-        --text-color: #333;
-        --error-color: #dc3545;
-    }
-    body {
-      font-family: 'Roboto', sans-serif;
-      background-color: var(--background-color);
-      margin: 0;
-      padding: 20px;
-      color: var(--text-color);
-    }
+    <meta charset="UTF-8">
+    <title>DHVSU Instructor List</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #1A5F7A;
+            --secondary-color: #2C8EBB;
+            --accent-color: #F7B32D;
+            --background-color: #F4F7F6;
+            --text-color: #333;
+            --error-color: #dc3545;
+            --table-header-bg: #E9ECEF;
+            --table-border-color: #DEE2E6;
+        }
 
-    .header {
-      background-color: var(--primary-color);
-      color: white;
-      text-align: center;
-      padding: 15px;
-      margin-bottom: 20px;
-      border-radius: 5px;
-    }
+        body {
+            font-family: 'Roboto', Arial, sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+        }
 
-    .btn-nav-container {
-      margin-bottom: 20px;
-      display: flex;
-      gap: 10px; /* Adds space between buttons */
-    }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
 
-    .btn {
-      display: inline-block;
-      padding: 10px 20px;
-      background-color: var(--secondary-color);
-      color: white;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-      text-decoration: none;
-      transition: background-color 0.3s ease;
-      font-size: 14px;
-    }
+        .header {
+            text-align: center;
+            color: var(--primary-color);
+            margin-bottom: 20px;
+        }
 
-    .btn:hover {
-      background-color: var(--accent-color);
-    }
+        .controls {
+            margin-bottom: 20px;
+            text-align: left;
+        }
 
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      background-color: white;
-      border-radius: 5px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-      margin-bottom: 20px; /* Added margin for spacing */
-    }
+        .btn {
+            padding: 10px 20px;
+            background-color: var(--secondary-color);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            text-decoration: none;
+            font-size: 16px;
+            transition: background-color 0.3s ease;
+            margin-right: 10px;
+        }
 
-    th, td {
-      padding: 12px 15px;
-      text-align: left;
-      border-bottom: 1px solid #ddd;
-    }
+        .btn:hover {
+            background-color: var(--accent-color);
+        }
+        
+        .btn-danger {
+            background-color: var(--error-color);
+        }
+        .btn-danger:hover {
+            background-color: #c82333;
+        }
 
-    th {
-      background-color: var(--secondary-color);
-      color: white;
-    }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
 
-    td:last-child { /* Ensure action buttons have enough space */
-        white-space: nowrap;
-    }
+        th, td {
+            border: 1px solid var(--table-border-color);
+            padding: 12px;
+            text-align: left;
+            vertical-align: middle;
+        }
 
-    .action-btn {
-      margin-right: 5px; /* Space between action buttons */
-      padding: 6px 12px;
-      border: none;
-      border-radius: 4px; /* Consistent border-radius */
-      cursor: pointer;
-      font-size: 13px; /* Slightly smaller font for action buttons */
-      color: white;
-      transition: background-color 0.2s ease;
-    }
-    .action-btn:last-child {
-        margin-right: 0;
-    }
+        th {
+            background-color: var(--table-header-bg);
+            font-weight: 500;
+            color: var(--primary-color);
+        }
 
+        tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
 
-    .edit-btn {
-      background-color: var(--accent-color);
-    }
-    .edit-btn:hover {
-      background-color: #e09f1f; /* Darker accent */
-    }
+        .actions-cell button {
+            margin-right: 5px;
+            padding: 6px 10px;
+            font-size: 14px;
+        }
 
-    .delete-btn {
-      background-color: var(--error-color);
-    }
-     .delete-btn:hover {
-      background-color: #c82333; /* Darker error */
-    }
+        .loading-message, .empty-message {
+            text-align: center;
+            padding: 20px;
+            font-style: italic;
+            color: #6c757d;
+        }
 
+        /* Basic Modal Styles for Edit */
+        .modal {
+            display: none; 
+            position: fixed; 
+            z-index: 1000; 
+            left: 0;
+            top: 0;
+            width: 100%; 
+            height: 100%; 
+            overflow: auto; 
+            background-color: rgba(0,0,0,0.4);
+        }
 
-    .modal {
-      display: none;
-      position: fixed;
-      z-index: 1000; /* Ensure modal is on top */
-      top: 0; left: 0;
-      width: 100%; height: 100%;
-      background: rgba(0,0,0,0.6); /* Slightly darker overlay */
-      justify-content: center;
-      align-items: center;
-      overflow-y: auto; /* Allow scrolling if content is too tall */
-    }
+        .modal-content {
+            background-color: #fefefe;
+            margin: 10% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 600px;
+            border-radius: 8px;
+            position: relative;
+        }
 
-    .modal-content {
-      background: white;
-      padding: 25px;
-      border-radius: 8px;
-      width: 90%;
-      max-width: 550px; /* Slightly wider modal */
-      box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-    }
-    
-    .modal-content h3 {
-        margin-top: 0;
-        margin-bottom: 20px;
-        color: var(--primary-color);
-        text-align: center;
-    }
+        .close-btn {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
 
-    .modal-content label {
-        display: block;
-        margin-bottom: 5px;
-        font-weight: 500;
-        color: var(--text-color);
-    }
+        .close-btn:hover,
+        .close-btn:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
 
-    .modal-content input, .modal-content select {
-      width: 100%;
-      padding: 10px;
-      margin-bottom: 15px;
-      border: 1px solid #ccc;
-      border-radius: 4px;
-      font-size: 1rem;
-    }
-    
-    .modal-content input:focus, .modal-content select:focus {
-        border-color: var(--accent-color);
-        box-shadow: 0 0 0 0.2rem rgba(247, 179, 45, 0.25);
-        outline: none;
-    }
-
-
-    .modal-buttons {
-      text-align: right;
-      margin-top: 20px; /* Add space above buttons */
-    }
-
-    .modal-buttons button {
-      margin-left: 10px;
-      padding: 10px 20px; /* Standard button padding */
-    }
-    
-    .modal-error-message {
-        color: var(--error-color);
-        margin-top: 10px;
-        padding: 10px;
-        border-radius: 4px;
-        background-color: #f8d7da; /* Light red background for errors */
-        border: 1px solid #f5c6cb; /* Red border for errors */
-        display: none; /* Hidden by default */
-        text-align: center;
-    }
-
-
-    /* Responsive Table Adjustments */
-    @media (max-width: 768px) { /* Adjusted breakpoint */
-      table, thead, tbody, th, td, tr {
-        display: block;
-      }
-      
-      thead tr {
-        position: absolute;
-        top: -9999px;
-        left: -9999px;
-      }
-
-      tr { border: 1px solid #ccc; margin-bottom: 10px; } /* Add border to rows */
-
-      td {
-        border: none;
-        border-bottom: 1px solid #eee; /* Lighter border for cells */
-        position: relative;
-        padding-left: 50%; /* Space for label */
-        padding-top: 10px;
-        padding-bottom: 10px;
-        text-align: right; /* Align data to the right */
-      }
-
-      td::before {
-        content: attr(data-label);
-        position: absolute;
-        left: 10px; /* Position label to the left */
-        width: calc(50% - 20px); /* Adjust width of label */
-        padding-right: 10px;
-        font-weight: bold;
-        text-align: left; /* Align label text to the left */
-      }
-      td:last-child::before { /* Remove label for actions column */
-        content: ""; 
-      }
-       td:last-child { /* Center action buttons on mobile */
-        text-align: center;
-        padding-left: 15px; /* Reset padding for action cell */
-      }
-    }
-  </style>
+    </style>
 </head>
 <body>
-  <div class="header">
-    <h1>Enrolled Instructors</h1>
-  </div>
+    <div class="container">
+        <div class="controls">
+            <a href="Instructor.html" class="btn">Register New Instructor</a>
+            <a href="index.html" class="btn">Back to Main Menu</a>
+        </div>
+        <div class="header">
+            <h1>Registered Instructor List</h1>
+        </div>
 
-  <div class="btn-nav-container">
-    <a href="Instructor.html" class="btn">← Back to Instructor Registration</a>
-    <a href="index.html" class="btn">Back to Schedule System</a>
-  </div>
-
-  <table id="instructorTable">
-    <thead>
-      <tr>
-        <th>Name</th>
-        <th>Subject</th>
-        <th>Course</th>
-        <th>Year</th>
-        <th>Section</th>
-        <th>Day</th>
-        <th>Time</th>
-        <th>Actions</th>
-      </tr>
-    </thead>
-    <tbody>
-      <!-- Instructor data will be populated here by JavaScript -->
-    </tbody>
-  </table>
-
-  <!-- Modal for editing -->
-  <div id="editModal" class="modal">
-    <div class="modal-content">
-      <h3>Edit Instructor Schedule</h3>
-      
-      <input type="hidden" id="editDocId"> <!-- To store document ID -->
-
-      <label for="editName">Instructor Name:</label>
-      <input type="text" id="editName" placeholder="Name">
-
-      <label for="editSubject">Subject:</label>
-      <input type="text" id="editSubject" placeholder="Subject">
-
-      <label for="editCourse">Course:</label>
-      <input type="text" id="editCourse" placeholder="Course">
-      <!-- For better UX, these could be selects, but text inputs for simplicity -->
-
-      <label for="editYear">Year:</label>
-      <input type="text" id="editYear" placeholder="Year">
-      
-      <label for="editSection">Section:</label>
-      <input type="text" id="editSection" placeholder="Section">
-
-      <label for="editDay">Day:</label>
-      <input type="text" id="editDay" placeholder="Day">
-
-      <label for="editTimeStart">Time Start (e.g., 7:00):</label>
-      <input type="text" id="editTimeStart" placeholder="HH:MM (24-hour format like 07:00, 13:00)">
-
-      <label for="editTimeEnd">Time End (e.g., 8:00):</label>
-      <input type="text" id="editTimeEnd" placeholder="HH:MM (24-hour format like 08:00, 14:00)">
-      
-      <div id="modalErrorMessage" class="modal-error-message"></div>
-
-      <div class="modal-buttons">
-        <button class="btn delete-btn" onclick="closeModal()" style="background-color: #6c757d;">Cancel</button>
-        <button class="btn" onclick="saveEdit()">Save Changes</button>
-      </div>
+        <table id="instructorTable">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Subject</th>
+                    <th>Course</th>
+                    <th>Year</th>
+                    <th>Section</th>
+                    <th>Day</th>
+                    <th>Time Start</th>
+                    <th>Time End</th>
+                    <th>Room</th> <!-- ADDED ROOM HEADER -->
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="instructorTableBody">
+                <!-- Rows will be populated by JavaScript -->
+            </tbody>
+        </table>
+        <div id="loadingMessage" class="loading-message" style="display:none;">Loading instructors...</div>
+        <div id="emptyMessage" class="empty-message" style="display:none;">No instructors registered yet.</div>
     </div>
-  </div>
 
-  <script type="module">
-    // Firebase SDK imports
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-    import { 
-        getFirestore, 
-        collection, 
-        onSnapshot, // For real-time updates
-        doc, 
-        updateDoc, 
-        deleteDoc,
-        query,
-        where,
-        getDocs // For conflict checking during edit
-    } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+    <!-- Edit Modal -->
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeModal()">&times;</span>
+            <h2>Edit Instructor</h2>
+            <input type="hidden" id="editDocId">
+            <div class="form-group">
+                <label for="editName">Name:</label>
+                <input type="text" id="editName" required>
+            </div>
+            <div class="form-group">
+                <label for="editSubject">Subject:</label>
+                <input type="text" id="editSubject" required>
+            </div>
+            <!-- Add other fields as needed: Course, Year, Section, Day, Time, Room -->
+            <!-- For simplicity, keeping it to Name and Subject for this example -->
+             <div class="form-group">
+                <label for="editRoomName">Room:</label>
+                <input type="text" id="editRoomName" required>
+            </div>
+            <button onclick="saveChanges()" class="btn">Save Changes</button>
+        </div>
+    </div>
 
-    // IMPORTANT: Ensure this Firebase config is correct for your project!
-    const firebaseConfig = {
-        apiKey: "AIzaSyDeqxzp_-kKjM3hPr6CLGfTn38e4swSKbo", // <<< YOUR FIREBASE API KEY
-        authDomain: "room-management-system-8e899.firebaseapp.com", // <<< YOUR AUTH DOMAIN
-        projectId: "room-management-system-8e899", // <<< YOUR PROJECT ID
-        storageBucket: "room-management-system-8e899.appspot.com", // <<< YOUR STORAGE BUCKET
-        messagingSenderId: "667821278853", // <<< YOUR MESSAGING SENDER ID
-        appId: "1:667821278853:web:a3a80c985073772670cbec" // <<< YOUR APP ID
-    };
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+        import { 
+            getFirestore, 
+            collection, 
+            onSnapshot, // For real-time updates
+            doc, 
+            deleteDoc,
+            updateDoc, // For editing
+            query,
+            orderBy // Optional: to order the list
+        } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-    // Initialize Firebase
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-    const instructorsCollectionRef = collection(db, "instructors");
-
-    // DOM Elements
-    const tbody = document.querySelector("#instructorTable tbody");
-    const editModal = document.getElementById("editModal");
-    const editDocIdInput = document.getElementById("editDocId");
-    const editNameInput = document.getElementById("editName");
-    const editSubjectInput = document.getElementById("editSubject");
-    const editCourseInput = document.getElementById("editCourse");
-    const editYearInput = document.getElementById("editYear");
-    const editSectionInput = document.getElementById("editSection");
-    const editDayInput = document.getElementById("editDay");
-    const editTimeStartInput = document.getElementById("editTimeStart");
-    const editTimeEndInput = document.getElementById("editTimeEnd");
-    const modalErrorMessageDiv = document.getElementById("modalErrorMessage");
-
-
-    // --- Helper Functions ---
-    function formatTimeDisplay(timeValue) { // Formats "HH:MM" to AM/PM display
-        if (!timeValue || !timeValue.includes(':')) return "Invalid Time";
-        const [hourStr, minuteStr] = timeValue.split(':');
-        const hour = parseInt(hourStr, 10);
-        const minutes = parseInt(minuteStr, 10);
-
-        if (isNaN(hour) || isNaN(minutes)) return "Invalid Time";
-
-        const ampm = hour >= 12 ? 'PM' : 'AM';
-        const formattedHour = hour % 12 === 0 ? 12 : hour % 12; // Convert 0 or 12 to 12
-        return `${formattedHour}:${minutes < 10 ? '0' : ''}${minutes} ${ampm}`;
-    }
-
-    function formatTimeRangeForDisplay(timeStart, timeEnd) {
-        if (!timeStart || !timeEnd) return "N/A";
-        return `${formatTimeDisplay(timeStart)} - ${formatTimeDisplay(timeEnd)}`;
-    }
-
-    function showModalError(message) {
-        modalErrorMessageDiv.textContent = message;
-        modalErrorMessageDiv.style.display = 'block';
-    }
-
-    function clearModalError() {
-        modalErrorMessageDiv.textContent = '';
-        modalErrorMessageDiv.style.display = 'none';
-    }
-
-    // --- Real-time Data Loading and Rendering ---
-    onSnapshot(instructorsCollectionRef, (snapshot) => {
-        tbody.innerHTML = ""; // Clear existing rows
-        if (snapshot.empty) {
-            tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;">No instructors registered yet.</td></tr>';
-            return;
-        }
-        snapshot.docs.forEach(docSnap => {
-            const instructor = docSnap.data();
-            const docId = docSnap.id;
-            const row = document.createElement("tr");
-
-            row.innerHTML = `
-                <td data-label="Name">${instructor.name}</td>
-                <td data-label="Subject">${instructor.subject}</td>
-                <td data-label="Course">${instructor.course}</td>
-                <td data-label="Year">${instructor.year}</td>
-                <td data-label="Section">${instructor.section}</td>
-                <td data-label="Day">${instructor.day}</td>
-                <td data-label="Time">${formatTimeRangeForDisplay(instructor.timeStart, instructor.timeEnd)}</td>
-                <td data-label="Actions">
-                    <button class="action-btn edit-btn" onclick="openEditModal('${docId}', '${instructor.name}', '${instructor.subject}', '${instructor.course}', '${instructor.year}', '${instructor.section}', '${instructor.day}', '${instructor.timeStart}', '${instructor.timeEnd}')">Edit</button>
-                    <button class="action-btn delete-btn" onclick="deleteInstructorConfirmation('${docId}')">Delete</button>
-                </td>
-            `;
-            tbody.appendChild(row);
-        });
-    }, (error) => {
-        console.error("Error fetching instructors: ", error);
-        tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;">Error loading data. Check console.</td></tr>';
-    });
-
-    // --- Modal Management ---
-    window.openEditModal = (docId, name, subject, course, year, section, day, timeStart, timeEnd) => {
-        clearModalError();
-        editDocIdInput.value = docId;
-        editNameInput.value = name;
-        editSubjectInput.value = subject;
-        editCourseInput.value = course;
-        editYearInput.value = year;
-        editSectionInput.value = section;
-        editDayInput.value = day;
-        editTimeStartInput.value = timeStart;
-        editTimeEndInput.value = timeEnd;
-        editModal.style.display = "flex";
-    }
-
-    window.closeModal = () => {
-        editModal.style.display = "none";
-        clearModalError();
-    }
-
-    // --- CRUD Operations ---
-    window.saveEdit = async () => {
-        clearModalError();
-        const docId = editDocIdInput.value;
-        const updatedName = editNameInput.value.trim();
-        const updatedSubject = editSubjectInput.value.trim();
-        const updatedCourse = editCourseInput.value.trim();
-        const updatedYear = editYearInput.value.trim();
-        const updatedSection = editSectionInput.value.trim();
-        const updatedDay = editDayInput.value.trim();
-        const updatedTimeStart = editTimeStartInput.value.trim(); // Should be HH:MM
-        const updatedTimeEnd = editTimeEndInput.value.trim();   // Should be HH:MM
-
-        if (!docId || !updatedName || !updatedSubject || !updatedCourse || !updatedYear || !updatedSection || !updatedDay || !updatedTimeStart || !updatedTimeEnd) {
-            showModalError("All fields are required.");
-            return;
-        }
-
-        // Basic time validation (HH:MM format and end > start)
-        const timeRegex = /^([01]\d|2[0-3]):([0-5]\d)$/;
-        if (!timeRegex.test(updatedTimeStart) || !timeRegex.test(updatedTimeEnd)) {
-            showModalError("Time must be in HH:MM (24-hour) format (e.g., 07:00 or 14:30).");
-            return;
-        }
-        
-        const startHour = parseInt(updatedTimeStart.split(':')[0], 10);
-        const endHour = parseInt(updatedTimeEnd.split(':')[0], 10);
-        const startMinutes = parseInt(updatedTimeStart.split(':')[1], 10);
-        const endMinutes = parseInt(updatedTimeEnd.split(':')[1], 10);
-
-        if (endHour < startHour || (endHour === startHour && endMinutes <= startMinutes)) {
-            showModalError("End time must be later than start time.");
-            return;
-        }
-        
-        const updatedData = {
-            name: updatedName,
-            subject: updatedSubject,
-            course: updatedCourse,
-            year: updatedYear,
-            section: updatedSection,
-            day: updatedDay,
-            timeStart: updatedTimeStart,
-            timeEnd: updatedTimeEnd
+        // IMPORTANT: Use your actual Firebase config
+        const firebaseConfig = {
+            apiKey: "AIzaSyDeqxzp_-kKjM3hPr6CLGfTn38e4swSKbo", // <<< YOUR FIREBASE API KEY
+            authDomain: "room-management-system-8e899.firebaseapp.com", // <<< YOUR AUTH DOMAIN
+            projectId: "room-management-system-8e899", // <<< YOUR PROJECT ID
+            storageBucket: "room-management-system-8e899.appspot.com", // <<< YOUR STORAGE BUCKET
+            messagingSenderId: "667821278853", // <<< YOUR MESSAGING SENDER ID
+            appId: "1:667821278853:web:a3a80c985073772670cbec" // <<< YOUR APP ID
         };
 
-        // --- Advanced Conflict Validation (Placeholder - Implement similar to Instructor.html if needed) ---
-        // This is complex because you need to check for conflicts *excluding the current document*.
-        // Example: Check if another instructor (not this one) has a time conflict.
-        //
-        // const instructorTimeConflictQuery = query(instructorsCollectionRef,
-        //     where("name", "==", updatedName),
-        //     where("day", "==", updatedDay)
-        // );
-        // const instructorTimeSnapshot = await getDocs(instructorTimeConflictQuery);
-        // for (const docSnap of instructorTimeSnapshot.docs) {
-        //     if (docSnap.id === docId) continue; // Skip self
-        //     const existing = docSnap.data();
-        //     const existingStartHour = parseInt(existing.timeStart.split(':')[0], 10);
-        //     // ... rest of conflict logic ...
-        //     showModalError(`Conflict: This instructor already has another class...`);
-        //     return;
-        // }
-        // Similar checks for subjectInClass and classTimeConflict, always excluding docId.
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const instructorsCollectionRef = collection(db, "instructors");
 
-        try {
-            const docRef = doc(db, "instructors", docId);
-            await updateDoc(docRef, updatedData);
-            alert("Instructor details updated successfully!");
-            closeModal();
-        } catch (error) {
-            console.error("Error updating instructor: ", error);
-            showModalError("Failed to update. Error: " + error.message);
-        }
-    };
+        const tableBody = document.getElementById('instructorTableBody');
+        const loadingMessage = document.getElementById('loadingMessage');
+        const emptyMessage = document.getElementById('emptyMessage');
+        
+        // Edit Modal Elements
+        const editModal = document.getElementById('editModal');
+        const editDocIdInput = document.getElementById('editDocId');
+        const editNameInput = document.getElementById('editName');
+        const editSubjectInput = document.getElementById('editSubject');
+        const editRoomNameInput = document.getElementById('editRoomName'); // For editing room
 
-    window.deleteInstructorConfirmation = (docId) => {
-        if (confirm("Are you sure you want to delete this instructor's schedule?")) {
-            deleteInstructor(docId);
-        }
-    };
-    
-    async function deleteInstructor(docId) { // Actual delete function, not exposed directly
-        try {
-            const docRef = doc(db, "instructors", docId);
-            await deleteDoc(docRef);
-            alert("Instructor schedule deleted successfully.");
-            // No need to re-render, onSnapshot handles it
-        } catch (error) {
-            console.error("Error deleting instructor: ", error);
-            alert("Failed to delete instructor. Error: " + error.message);
-        }
-    }
+        // Expose functions to global scope for onclick attributes
+        window.openEditModal = openEditModal;
+        window.closeModal = closeModal;
+        window.saveChanges = saveChanges;
+        window.deleteInstructor = deleteInstructor;
 
-  </script>
+
+        function formatTimeDisplay(timeValue) { // Helper for display
+            if (!timeValue || !timeValue.includes(':')) return timeValue || "N/A"; // Return original or N/A
+            const [hourStr, minuteStr] = timeValue.split(':');
+            let hour = parseInt(hourStr, 10);
+            const minutes = parseInt(minuteStr, 10);
+
+            if (isNaN(hour) || isNaN(minutes)) return timeValue; // Return original if parsing fails
+            
+            const ampm = hour >= 12 ? 'PM' : 'AM';
+            hour = hour % 12;
+            hour = hour ? hour : 12; // the hour '0' should be '12'
+            const minutePadded = String(minutes).padStart(2, '0');
+            return `${hour}:${minutePadded} ${ampm}`;
+        }
+
+
+        function populateInstructorTable(instructors) {
+            tableBody.innerHTML = ''; // Clear existing rows
+            if (instructors.length === 0) {
+                emptyMessage.style.display = 'block';
+                loadingMessage.style.display = 'none';
+                return;
+            }
+            emptyMessage.style.display = 'none';
+            loadingMessage.style.display = 'none';
+
+            instructors.forEach(instructor => {
+                const row = tableBody.insertRow();
+                row.insertCell().textContent = instructor.name || 'N/A';
+                row.insertCell().textContent = instructor.subject || 'N/A';
+                row.insertCell().textContent = instructor.course || 'N/A';
+                row.insertCell().textContent = instructor.year || 'N/A';
+                row.insertCell().textContent = instructor.section || 'N/A';
+                row.insertCell().textContent = instructor.day || 'N/A';
+                row.insertCell().textContent = formatTimeDisplay(instructor.timeStart) || 'N/A';
+                row.insertCell().textContent = formatTimeDisplay(instructor.timeEnd) || 'N/A';
+                row.insertCell().textContent = instructor.roomName || 'N/A'; // MODIFIED: Display roomName
+
+                const actionsCell = row.insertCell();
+                actionsCell.classList.add('actions-cell');
+                
+                const editButton = document.createElement('button');
+                editButton.textContent = 'Edit';
+                editButton.classList.add('btn');
+                editButton.onclick = () => openEditModal(instructor);
+                actionsCell.appendChild(editButton);
+
+                const deleteButton = document.createElement('button');
+                deleteButton.textContent = 'Delete';
+                deleteButton.classList.add('btn', 'btn-danger');
+                deleteButton.onclick = () => deleteInstructor(instructor.id);
+                actionsCell.appendChild(deleteButton);
+            });
+        }
+
+        // Listen for real-time updates
+        loadingMessage.style.display = 'block';
+        const q = query(instructorsCollectionRef, orderBy("name")); // Optional: order by name
+
+        onSnapshot(q, (querySnapshot) => {
+            const instructors = [];
+            querySnapshot.forEach((doc) => {
+                instructors.push({ id: doc.id, ...doc.data() });
+            });
+            populateInstructorTable(instructors);
+        }, (error) => {
+            console.error("Error fetching instructors: ", error);
+            loadingMessage.textContent = 'Error loading data.';
+            emptyMessage.style.display = 'none';
+        });
+
+        // --- Edit Functionality ---
+        function openEditModal(instructor) {
+            editDocIdInput.value = instructor.id;
+            editNameInput.value = instructor.name || '';
+            editSubjectInput.value = instructor.subject || '';
+            editRoomNameInput.value = instructor.roomName || ''; // Populate room for editing
+            // Populate other fields if you add them to the modal
+            editModal.style.display = "block";
+        }
+
+        function closeModal() {
+            editModal.style.display = "none";
+        }
+
+        async function saveChanges() {
+            const docId = editDocIdInput.value;
+            const updatedData = {
+                name: editNameInput.value.trim(),
+                subject: editSubjectInput.value.trim(),
+                roomName: editRoomNameInput.value.trim() // Save updated room name
+                // Add other fields from the modal here
+            };
+
+            if (!updatedData.name || !updatedData.subject || !updatedData.roomName) {
+                alert("Name, Subject, and Room cannot be empty.");
+                return;
+            }
+
+            try {
+                const docRef = doc(db, "instructors", docId);
+                await updateDoc(docRef, updatedData);
+                alert("Instructor updated successfully!");
+                closeModal();
+            } catch (error) {
+                console.error("Error updating instructor: ", error);
+                alert("Failed to update instructor. " + error.message);
+            }
+        }
+        
+        // --- Delete Functionality ---
+        async function deleteInstructor(docId) {
+            if (!confirm("Are you sure you want to delete this instructor record?")) {
+                return;
+            }
+            try {
+                await deleteDoc(doc(db, "instructors", docId));
+                alert("Instructor deleted successfully!");
+                // The onSnapshot listener will automatically update the table
+            } catch (error) {
+                console.error("Error deleting instructor: ", error);
+                alert("Failed to delete instructor. " + error.message);
+            }
+        }
+
+        // Close modal if user clicks outside of it
+        window.onclick = function(event) {
+            if (event.target == editModal) {
+                closeModal();
+            }
+        }
+
+    </script>
 </body>
 </html>
