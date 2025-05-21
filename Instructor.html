@@ -453,13 +453,13 @@
                 return;
             }
             
-            const day = document.getElementById('day').value;
+            const selectedDay = document.getElementById('day').value;
             const classTime = classTimeSelect.value;
             const course = courseSelect.value;
             const year = yearSelect.value;
             const section = sectionSelect.value;
             
-            if (!day || !classTime || !course || !year || !section) {
+            if (!selectedDay || !classTime || !course || !year || !section) {
                 roomSelect.innerHTML = '<option value="">Select all fields first</option>';
                 return;
             }
@@ -471,33 +471,44 @@
                 // Get student capacity for the selected course/year/section
                 const studentCapacity = studentCapacityMap[course]?.[year]?.[section] || 0;
                 
-                // Get all instructors to check for room availability
+                // Get all instructors and rooms
                 const [instructorsSnapshot, roomsSnapshot] = await Promise.all([
                     db.collection('Instructors').get(),
                     db.collection('rooms').get()
                 ]);
-                
-                // Collect all rooms
-                const allRooms = [];
-                roomsSnapshot.forEach(doc => {
-                    const data = doc.data();
-                    allRooms.push({
-                        id: doc.id,
-                        name: data.roomName || `Room ${doc.id}`,
-                        capacity: parseInt(data.capacity) || 0
-                    });
-                });
                 
                 // Parse selected time (24-hour format)
                 const [selectedStart, selectedEnd] = classTime.split('-').map(t => t.trim());
                 const newStart = timeToMinutes(selectedStart);
                 const newEnd = timeToMinutes(selectedEnd);
                 
-                // Find rooms that are already booked at this time
-                const bookedRooms = new Set();
+                // Create a map of room schedules
+                const roomSchedules = new Map();
+                
+                // First, process all rooms to initialize their schedules
+                roomsSnapshot.forEach(doc => {
+                    const data = doc.data();
+                    roomSchedules.set(data.roomName, {
+                        id: doc.id,
+                        name: data.roomName,
+                        capacity: parseInt(data.capacity) || 0,
+                        day: data.day || '',
+                        time: data.time || '',
+                        isBooked: false
+                    });
+                });
+                
+                // Then, mark rooms as booked based on instructor schedules
                 instructorsSnapshot.forEach(doc => {
                     const instructor = doc.data();
-                    if (instructor.day === day && instructor.time) {
+                    if (!instructor.roomName || !instructor.day || !instructor.time) return;
+                    
+                    // Only process if the instructor is assigned to a room
+                    const roomSchedule = roomSchedules.get(instructor.roomName);
+                    if (!roomSchedule) return;
+                    
+                    // If the instructor is assigned to this room on the selected day
+                    if (instructor.day === selectedDay) {
                         const [instructorTimeRange] = instructor.time.split(' - ').map(t => t.trim());
                         const [instructorStart, instructorEnd] = instructorTimeRange.split('-').map(t => {
                             const [h, m] = t.trim().split(':');
@@ -506,15 +517,21 @@
                         
                         // Check for time overlap
                         if (newStart < instructorEnd && newEnd > instructorStart) {
-                            bookedRooms.add(instructor.roomName);
+                            roomSchedule.isBooked = true;
                         }
                     }
                 });
                 
-                // Filter available rooms based on capacity and availability
-                const availableRooms = allRooms.filter(room => 
-                    room.capacity >= studentCapacity && 
-                    !bookedRooms.has(room.name)
+                // Filter available rooms based on:
+                // 1. Room's assigned day matches selected day
+                // 2. Room's time slot matches selected time
+                // 3. Room has sufficient capacity
+                // 4. Room is not already booked
+                const availableRooms = Array.from(roomSchedules.values()).filter(room => 
+                    room.day === selectedDay &&
+                    room.time === classTime &&
+                    room.capacity >= studentCapacity &&
+                    !room.isBooked
                 );
                 
                 // Update room select
