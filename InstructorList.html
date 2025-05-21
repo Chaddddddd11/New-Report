@@ -4,104 +4,163 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Instructor List - DHVSU</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --primary-color: #1A5F7A;
+            --secondary-color: #2C8EBB;
+            --accent-color: #F7B32D;
+            --background-color: #F4F7F6;
+            --text-color: #333;
+        }
+
         body {
             font-family: 'Roboto', Arial, sans-serif;
             margin: 0;
             padding: 20px;
-            background-color: #e9f5f4; /* Light teal/blue background */
-            color: #333;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
+            background-color: var(--background-color);
+            color: var(--text-color);
         }
+
         .container {
-            width: 95%;
             max-width: 1300px;
+            margin: 0 auto;
             background-color: #fff;
             padding: 25px;
             border-radius: 8px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
-        .header-title {
+
+        .header {
             text-align: center;
-            color: #005f73; /* Darker blue-green */
-            margin-bottom: 0; /* Adjusted for flex layout */
-            flex-grow: 1; /* Allows title to take space */
+            margin-bottom: 30px;
+            color: var(--primary-color);
         }
+
         .controls {
-            width: 100%;
-            margin-bottom: 20px;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 10px;
         }
+
         .btn {
             padding: 10px 20px;
-            background-color: #0a9396; /* Complementary teal */
+            background-color: var(--secondary-color);
             color: white;
             border: none;
-            border-radius: 5px;
+            border-radius: 4px;
             cursor: pointer;
             text-decoration: none;
             font-size: 16px;
-            transition: background-color 0.3s ease;
+            transition: all 0.3s ease;
         }
+
         .btn:hover {
-            background-color: #94d2bd; /* Lighter accent */
-            color: #005f73;
+            background-color: var(--accent-color);
+            transform: translateY(-2px);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
         }
+
         table {
             width: 100%;
             border-collapse: collapse;
             margin-top: 20px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            background: white;
         }
+
         th, td {
-            border: 1px solid #90e0ef; /* Light teal for borders */
+            border: 1px solid #e0e0e0;
             padding: 12px 15px;
             text-align: left;
-            vertical-align: middle;
         }
+
         th {
-            background-color: #cae9ff; /* Light blue for table headers */
+            background-color: var(--primary-color);
+            color: white;
             font-weight: 500;
-            color: #005f73;
             text-transform: uppercase;
-            font-size: 0.9em;
+            font-size: 0.85em;
+            letter-spacing: 0.5px;
         }
+
         tr:nth-child(even) {
-            background-color: #f8f9fa;
+            background-color: #f9f9f9;
         }
+
         tr:hover {
-            background-color: #e0f7fa; /* Light hover effect */
+            background-color: #f0f8ff;
         }
-        .actions-cell button {
-            padding: 6px 12px;
-            margin-right: 5px;
+
+        .actions {
+            display: flex;
+            gap: 5px;
+        }
+
+        .btn-edit {
+            background-color: #198754;
+            color: white;
+            border: none;
             border-radius: 4px;
+            padding: 6px 12px;
             cursor: pointer;
             font-size: 0.85em;
-            border: none;
-            color: white;
+            transition: all 0.2s;
         }
-        .edit-btn { background-color: #2a9d8f; /* Teal for edit */ }
-        .edit-btn:hover { background-color: #238174; }
+
+        .btn-edit:hover {
+            background-color: #157347;
+            transform: translateY(-1px);
+        }
+
         .loading-message, .empty-message {
             text-align: center;
-            padding: 20px;
-            font-style: italic;
-            color: #555;
+            padding: 30px;
+            font-size: 1.1em;
+            color: #666;
+        }
+
+        .error-message {
+            background-color: #ffebee;
+            color: #c62828;
+            padding: 10px 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+            
+            .controls {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            table {
+                display: block;
+                overflow-x: auto;
+            }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="controls">
-            <a href="index.html" class="btn">Back to Main Menu</a>
-            <h1 class="header-title">Registered Instructors</h1>
-            <a href="Instructor.html" class="btn">Register New Instructor</a>
+        <div class="header">
+            <h1>Registered Instructors</h1>
         </div>
+
+        <div class="controls">
+            <a href="index.html" class="btn">← Back to Main Menu</a>
+            <a href="Instructor.html" class="btn">+ Register New Instructor</a>
+        </div>
+
+        <div id="errorMessage" class="error-message"></div>
         
         <div id="instructorTableContainer">
             <table>
@@ -114,7 +173,7 @@
                         <th>Section</th>
                         <th>Day</th>
                         <th>Time</th>
-                        <th>Room Name</th>
+                        <th>Room</th>
                         <th>Actions</th>
                     </tr>
                 </thead>
@@ -123,634 +182,145 @@
                 </tbody>
             </table>
             <div id="loadingMessage" class="loading-message">Loading instructors...</div>
-            <div id="emptyMessage" class="empty-message" style="display: none;">No instructors found.</div>
+            <div id="emptyMessage" class="empty-message" style="display: none;">No instructors found. Click "Register New Instructor" to add one.</div>
         </div>
     </div>
 
-    <script type="module">
-        // Import Firebase modules
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-        import { getFirestore, collection, getDocs, doc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-
-        // --- IMPORTANT: REPLACE WITH YOUR ACTUAL FIREBASE CONFIGURATION --- 
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+    <script>
+        // Your web app's Firebase configuration
         const firebaseConfig = {
-            apiKey: "YOUR_API_KEY",
-            authDomain: "YOUR_AUTH_DOMAIN",
-            projectId: "YOUR_PROJECT_ID", // e.g., "dhvsu-scheduling-system"
-            storageBucket: "YOUR_STORAGE_BUCKET",
-            messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-            appId: "YOUR_APP_ID"
+            apiKey: "AIzaSyDeqxzp_-kKjM3hPr6CLGfTn38e4swSKbo",
+            authDomain: "room-management-system-8e899.firebaseapp.com",
+            projectId: "room-management-system-8e899",
+            storageBucket: "room-management-system-8e899.appspot.com",
+            messagingSenderId: "667821278853",
+            appId: "1:667821278853:web:a3a80c985073772670cbec"
         };
-        // --- END OF FIREBASE CONFIGURATION --- 
 
         // Initialize Firebase
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-        const instructorsCollectionRef = collection(db, "Instructors");
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
 
+        // DOM Elements
         const instructorTableBody = document.getElementById('instructorTableBody');
         const loadingMessage = document.getElementById('loadingMessage');
         const emptyMessage = document.getElementById('emptyMessage');
+        const errorMessage = document.getElementById('errorMessage');
 
-        async function displayInstructors() {
-            loadingMessage.style.display = 'block';
-            emptyMessage.style.display = 'none';
+        // Display all instructors in the table
+        function displayInstructors(instructors) {
             instructorTableBody.innerHTML = ''; // Clear existing rows
-
-            try {
-                const querySnapshot = await getDocs(instructorsCollectionRef);
-                if (querySnapshot.empty) {
-                    emptyMessage.style.display = 'block';
-                } else {
-                    querySnapshot.forEach((docSnap) => {
-                        const instructor = docSnap.data();
-                        const row = instructorTableBody.insertRow();
-                        
-                        row.insertCell().textContent = instructor.name || 'N/A';
-                        row.insertCell().textContent = instructor.subject || 'N/A';
-                        row.insertCell().textContent = instructor.course || 'N/A';
-                        row.insertCell().textContent = instructor.year || 'N/A';
-                        row.insertCell().textContent = instructor.section || 'N/A';
-                        row.insertCell().textContent = instructor.day || 'N/A';
-                        row.insertCell().textContent = instructor.time || 'N/A';
-                        row.insertCell().textContent = instructor.roomName || 'N/A';
-                        
-                        const actionsCell = row.insertCell();
-                        actionsCell.classList.add('actions-cell');
-                        
-                        const editButton = document.createElement('button');
-                        editButton.textContent = 'Edit';
-                        editButton.classList.add('edit-btn');
-                        editButton.onclick = () => handleEditInstructor(docSnap.id);
-                        actionsCell.appendChild(editButton);
-                    });
-                }
-            } catch (error) {
-                console.error("Error fetching instructors: ", error);
-                emptyMessage.textContent = 'Error loading data. Please check console and Firebase configuration.';
-                emptyMessage.style.display = 'block';
-            } finally {
-                loadingMessage.style.display = 'none';
-            }
-        }
-
-        function handleEditInstructor(instructorId) {
-            if (!instructorId) {
-                console.error('No instructor ID provided for edit');
-                alert('Cannot edit instructor: ID missing.');
-                return;
-            }
-            // Redirect to EditInstructor.html with the instructorId as a query parameter
-            window.location.href = `EditInstructor.html?id=${instructorId}`;
-        }
-
-        // Expose functions to global window object if they need to be called from inline HTML later
-        window.handleEditInstructor = handleEditInstructor; 
-
-        // Initial display of instructors when the page loads
-        document.addEventListener('DOMContentLoaded', () => {
-            if (firebaseConfig.apiKey === "YOUR_API_KEY") {
-                alert("IMPORTANT: Firebase configuration is not set. Please update it in InstructorList.html.");
-                loadingMessage.style.display = 'none';
-                emptyMessage.textContent = 'Firebase not configured. Please edit the InstructorList.html file.';
-                emptyMessage.style.display = 'block';
-                return;
-            }
-            displayInstructors();
-        });
-
-    </script>
-</body>
-</html>
-                        <option value="Friday">Friday</option>
-                        <option value="Saturday">Saturday</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="editTime">Time:</label>
-                    <select id="editTime" required>
-                        <!-- Time slots will be populated by JS -->
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="editRoomName">Room:</label>
-                    <select id="editRoomName" required>
-                        <!-- Rooms will be populated by JS -->
-                    </select>
-                </div>
-                <div class="modal-actions">
-                    <button type="submit" class="btn">Save Changes</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-        import {
-            getFirestore,
-            collection,
-            doc,
-            deleteDoc,
-            onSnapshot,
-            getDocs,
-            updateDoc,
-            query,
-            where,
-            orderBy
-        } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-
-        // IMPORTANT: Use your actual Firebase config
-        const firebaseConfig = {
-            apiKey: "AIzaSyDeqxzp_-kKjM3hPr6CLGfTn38e4swSKbo", // <<< YOUR FIREBASE API KEY
-            authDomain: "room-management-system-8e899.firebaseapp.com", // <<< YOUR AUTH DOMAIN
-            projectId: "room-management-system-8e899", // <<< YOUR PROJECT ID
-            storageBucket: "room-management-system-8e899.appspot.com", // <<< YOUR STORAGE BUCKET
-            messagingSenderId: "667821278853", // <<< YOUR MESSAGING SENDER ID
-            appId: "1:667821278853:web:a3a80c985073772670cbec" // <<< YOUR APP ID
-        };
-
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-        // Updated to match the actual collection name in Firestore
-        const instructorsCollectionRef = collection(db, "/Instructors");
-
-        const tableBody = document.getElementById('instructorTableBody');
-        const loadingMessage = document.getElementById('loadingMessage');
-        const emptyMessage = document.getElementById('emptyMessage');
-        const editModal = document.getElementById('editInstructorModal');
-        const editForm = document.getElementById('editInstructorForm');
-        const closeModalBtn = editModal?.querySelector('.close-btn');
-
-        // Function to check if collection exists and is accessible
-        async function checkCollectionExists(collectionRef) {
-            try {
-                const querySnapshot = await getDocs(collectionRef);
-                return {
-                    exists: !querySnapshot.empty,
-                    size: querySnapshot.size,
-                    docs: querySnapshot.docs.map(doc => doc.id)
-                };
-            } catch (error) {
-                console.error('Error checking collection:', error);
-                return { error: error.message };
-            }
-        }
-
-        // Initial fetch of instructors
-        async function fetchInstructors() {
-            try {
-                console.log('Starting to fetch instructors...');
-                loadingMessage.style.display = 'block';
-                emptyMessage.style.display = 'none';
-                
-                // First check if collection exists and is accessible
-                const collectionCheck = await checkCollectionExists(instructorsCollectionRef);
-                console.log('Collection check:', collectionCheck);
-                
-                if (collectionCheck.error) {
-                    throw new Error(`Cannot access collection: ${collectionCheck.error}`);
-                }
-                
-                if (collectionCheck.size === 0) {
-                    console.log('No instructors found in the collection');
-                    loadingMessage.style.display = 'none';
-                    emptyMessage.style.display = 'block';
-                    emptyMessage.textContent = 'No instructors registered yet.';
-                    return;
-                }
-                
-                const querySnapshot = await getDocs(instructorsCollectionRef);
-                console.log('Query snapshot received:', querySnapshot);
-                
-                const instructors = [];
-                
-                querySnapshot.forEach((doc) => {
-                    console.log('Processing document:', doc.id, doc.data());
-                    const data = doc.data();
-                    instructors.push({
-                        id: doc.id,
-                        name: data.name || 'N/A',
-                        subject: data.subject || 'N/A',
-                        course: data.course || 'N/A',
-                        year: data.year || 'N/A',
-                        section: data.section || 'N/A',
-                        day: data.day || 'N/A',
-                        time: data.time || 'N/A',
-                        roomName: data.roomName || 'No room assigned',
-                        roomCapacity: data.roomCapacity || 0
-                    });
-                });
-                
-                console.log('Fetched instructors:', instructors);
-                populateInstructorTable(instructors);
-            } catch (error) {
-                console.error('Error in fetchInstructors:', error);
-                loadingMessage.style.display = 'none';
-                emptyMessage.style.display = 'block';
-                emptyMessage.textContent = `Error: ${error.message}. Please check console for details.`;
-            }
-        }
-        
-        // Set up real-time listener for instructors
-        console.log('Setting up real-time listener...');
-        onSnapshot(instructorsCollectionRef, (snapshot) => {
-            console.log('Real-time update received:', snapshot);
-            const instructors = [];
-            snapshot.forEach((doc) => {
-                console.log('Processing real-time doc:', doc.id, doc.data());
-                const data = doc.data();
-                instructors.push({
-                    id: doc.id,
-                    name: data.name || 'N/A',
-                    subject: data.subject || 'N/A',
-                    course: data.course || 'N/A',
-                    year: data.year || 'N/A',
-                    section: data.section || 'N/A',
-                    day: data.day || 'N/A',
-                    time: data.time || 'N/A',
-                    roomName: data.roomName || 'No room assigned',
-                    roomCapacity: data.roomCapacity || 0
-                });
-            });
-            console.log('Real-time instructors update:', instructors);
-            populateInstructorTable(instructors);
-        }, (error) => {
-            console.error('Error setting up instructor listener:', error);
-            loadingMessage.style.display = 'none';
-            emptyMessage.style.display = 'block';
-            emptyMessage.textContent = 'Error loading instructors. Please refresh the page.';
-        });
-        
-        // Initial fetch
-        fetchInstructors();
-
-        // Edit Modal Form Fields
-        const editInstructorIdInput = document.getElementById('editInstructorId');
-        const editInstructorNameInput = document.getElementById('editInstructorName');
-        const editSubjectInput = document.getElementById('editSubject');
-        const editCourseSelect = document.getElementById('editCourse');
-        const editYearSectionInput = document.getElementById('editYearSection');
-        const editDaySelect = document.getElementById('editDay');
-        const editTimeSelect = document.getElementById('editTime');
-        const editRoomNameSelect = document.getElementById('editRoomName');
-        const editYearLevelSelect = document.getElementById('editYearLevel'); // New
-        const editSectionSelect = document.getElementById('editSection'); // New
-
-        // Data for dynamic dropdowns (consistent with Instructor.html)
-        const yearLevels = [
-            { value: '1', text: '1st Year' },
-            { value: '2', text: '2nd Year' },
-            { value: '3', text: '3rd Year' },
-            { value: '4', text: '4th Year' }
-            // Add { value: '5', text: '5th Year' } if needed for some courses
-        ];
-        const sections = ['A', 'B', 'C', 'D', 'E', 'F', 'G']; // Extend if more sections exist
-
-        const allRooms = [
-            { name: "CL1 (Computer Laboratory 1)", capacity: 30 },
-            { name: "CL2 (Computer Laboratory 2)", capacity: 35 },
-            { name: "CL3 (Computer Laboratory 3)", capacity: 30 },
-            { name: "MDH (Multi-Disciplinary Hall)", capacity: 100 },
-            { name: "AVR (Audio-Visual Room)", capacity: 50 },
-            { name: "Room 201", capacity: 40 },
-            { name: "Room 202", capacity: 40 },
-            { name: "Room 203", capacity: 35 },
-            { name: "Room 301", capacity: 45 },
-            { name: "Room 302", capacity: 25 }
-        ];
-
-        const studentCapacityMap = {
-            'BSA-1A': 30, 'BSA-1B': 30, 'BSA-1C': 30, 'BSA-1D': 30, 'BSA-1E': 30, 'BSA-1F': 30, 'BSA-1G': 30,
-            'BSA-2A': 25, 'BSA-2B': 25, 'BSA-2C': 25, 'BSA-2D': 25, 'BSA-2E': 25, 'BSA-2F': 25, 'BSA-2G': 25,
-            'BSA-3A': 20, 'BSA-3B': 20, 'BSA-3C': 20, 'BSA-3D': 20, 'BSA-3E': 20, 'BSA-3F': 20, 'BSA-3G': 20,
-            'BSA-4A': 15, 'BSA-4B': 15, 'BSA-4C': 15, 'BSA-4D': 15, 'BSA-4E': 15, 'BSA-4F': 15, 'BSA-4G': 15,
-            'BSBA-1A': 30, 'BSBA-1B': 30, 'BSBA-1C': 30, 'BSBA-1D': 30, 'BSBA-1E': 30, 'BSBA-1F': 30, 'BSBA-1G': 30,
-            'BSBA-2A': 25, 'BSBA-2B': 25, 'BSBA-2C': 25, 'BSBA-2D': 25, 'BSBA-2E': 25, 'BSBA-2F': 25, 'BSBA-2G': 25,
-            'BSBA-3A': 20, 'BSBA-3B': 20, 'BSBA-3C': 20, 'BSBA-3D': 20, 'BSBA-3E': 20, 'BSBA-3F': 20, 'BSBA-3G': 20,
-            'BSBA-4A': 15, 'BSBA-4B': 15, 'BSBA-4C': 15, 'BSBA-4D': 15, 'BSBA-4E': 15, 'BSBA-4F': 15, 'BSBA-4G': 15,
-            'BSCS-1A': 30, 'BSCS-1B': 30, 'BSCS-1C': 30, 'BSCS-1D': 30, 'BSCS-1E': 30, 'BSCS-1F': 30, 'BSCS-1G': 30,
-            'BSCS-2A': 25, 'BSCS-2B': 25, 'BSCS-2C': 25, 'BSCS-2D': 25, 'BSCS-2E': 25, 'BSCS-2F': 25, 'BSCS-2G': 25,
-            'BSCS-3A': 20, 'BSCS-3B': 20, 'BSCS-3C': 20, 'BSCS-3D': 20, 'BSCS-3E': 20, 'BSCS-3F': 20, 'BSCS-3G': 20,
-            'BSCS-4A': 15, 'BSCS-4B': 15, 'BSCS-4C': 15, 'BSCS-4D': 15, 'BSCS-4E': 15, 'BSCS-4F': 15, 'BSCS-4G': 15,
-            'BSEE-1A': 30, 'BSEE-1B': 30, 'BSEE-1C': 30, 'BSEE-1D': 30, 'BSEE-1E': 30, 'BSEE-1F': 30, 'BSEE-1G': 30,
-            'BSEE-2A': 25, 'BSEE-2B': 25, 'BSEE-2C': 25, 'BSEE-2D': 25, 'BSEE-2E': 25, 'BSEE-2F': 25, 'BSEE-2G': 25,
-            'BSEE-3A': 20, 'BSEE-3B': 20, 'BSEE-3C': 20, 'BSEE-3D': 20, 'BSEE-3E': 20, 'BSEE-3F': 20, 'BSEE-3G': 20,
-            'BSEE-4A': 15, 'BSEE-4B': 15, 'BSEE-4C': 15, 'BSEE-4D': 15, 'BSEE-4E': 15, 'BSEE-4F': 15, 'BSEE-4G': 15,
-            'BSECE-1A': 30, 'BSECE-1B': 30, 'BSECE-1C': 30, 'BSECE-1D': 30, 'BSECE-1E': 30, 'BSECE-1F': 30, 'BSECE-1G': 30,
-            'BSECE-2A': 25, 'BSECE-2B': 25, 'BSECE-2C': 25, 'BSECE-2D': 25, 'BSECE-2E': 25, 'BSECE-2F': 25, 'BSECE-2G': 25,
-            'BSECE-3A': 20, 'BSECE-3B': 20, 'BSECE-3C': 20, 'BSECE-3D': 20, 'BSECE-3E': 20, 'BSECE-3F': 20, 'BSECE-3G': 20,
-            'BSECE-4A': 15, 'BSECE-4B': 15, 'BSECE-4C': 15, 'BSECE-4D': 15, 'BSECE-4E': 15, 'BSECE-4F': 15, 'BSECE-4G': 15,
-            'BSIT-1A': 30, 'BSIT-1B': 30, 'BSIT-1C': 30, 'BSIT-1D': 30, 'BSIT-1E': 30, 'BSIT-1F': 30, 'BSIT-1G': 30,
-            'BSIT-2A': 25, 'BSIT-2B': 25, 'BSIT-2C': 25, 'BSIT-2D': 25, 'BSIT-2E': 25, 'BSIT-2F': 25, 'BSIT-2G': 25,
-            'BSIT-3A': 20, 'BSIT-3B': 20, 'BSIT-3C': 20, 'BSIT-3D': 20, 'BSIT-3E': 20, 'BSIT-3F': 20, 'BSIT-3G': 20,
-            'BSIT-4A': 15, 'BSIT-4B': 15, 'BSIT-4C': 15, 'BSIT-4D': 15, 'BSIT-4E': 15, 'BSIT-4F': 15, 'BSIT-4G': 15,
-            'BSME-1A': 30, 'BSME-1B': 30, 'BSME-1C': 30, 'BSME-1D': 30, 'BSME-1E': 30, 'BSME-1F': 30, 'BSME-1G': 30,
-            'BSME-2A': 25, 'BSME-2B': 25, 'BSME-2C': 25, 'BSME-2D': 25, 'BSME-2E': 25, 'BSME-2F': 25, 'BSME-2G': 25,
-            'BSME-3A': 20, 'BSME-3B': 20, 'BSME-3C': 20, 'BSME-3D': 20, 'BSME-3E': 20, 'BSME-3F': 20, 'BSME-3G': 20,
-            'BSME-4A': 15, 'BSME-4B': 15, 'BSME-4C': 15, 'BSME-4D': 15, 'BSME-4E': 15, 'BSME-4F': 15, 'BSME-4G': 15,
-            'BSPublicAdministration-1A': 30, 'BSPublicAdministration-1B': 30, 'BSPublicAdministration-1C': 30, 'BSPublicAdministration-1D': 30, 'BSPublicAdministration-1E': 30, 'BSPublicAdministration-1F': 30, 'BSPublicAdministration-1G': 30,
-            'BSPublicAdministration-2A': 25, 'BSPublicAdministration-2B': 25, 'BSPublicAdministration-2C': 25, 'BSPublicAdministration-2D': 25, 'BSPublicAdministration-2E': 25, 'BSPublicAdministration-2F': 25, 'BSPublicAdministration-2G': 25,
-            'BSPublicAdministration-3A': 20, 'BSPublicAdministration-3B': 20, 'BSPublicAdministration-3C': 20, 'BSPublicAdministration-3D': 20, 'BSPublicAdministration-3E': 20, 'BSPublicAdministration-3F': 20, 'BSPublicAdministration-3G': 20,
-            'BSPublicAdministration-4A': 15, 'BSPublicAdministration-4B': 15, 'BSPublicAdministration-4C': 15, 'BSPublicAdministration-4D': 15, 'BSPublicAdministration-4E': 15, 'BSPublicAdministration-4F': 15, 'BSPublicAdministration-4G': 15
-        };
-
-        function generateTimeSlots() {
-            const slots = [];
-            for (let i = 7; i < 19; i++) { // 7 AM to 6 PM (18:00-19:00 slot ends at 19:00)
-                const startHour = String(i).padStart(2, '0');
-                const endHour = String(i + 1).padStart(2, '0');
-                slots.push(`${startHour}:00-${endHour}:00`);
-            }
-            return slots;
-        }
-        const timeSlots = generateTimeSlots();
-
-        function populateTimeSelect(selectElement, selectedTime) {
-            selectElement.innerHTML = '<option value="">Select Time</option>'; // Clear and add default
-            timeSlots.forEach(slot => {
-                const option = document.createElement('option');
-                option.value = slot;
-                option.textContent = slot;
-                if (slot === selectedTime) {
-                    option.selected = true;
-                }
-                selectElement.appendChild(option);
-            });
-        }
-
-        async function populateRoomSelectForEdit(selectedDay, selectedTime, currentCourse, currentYearSection, selectedRoomName, currentInstructorId) {
-            editRoomNameSelect.innerHTML = '<option value="">Loading rooms...</option>';
-            const courseYearSectionKey = `${currentCourse}-${currentYearSection}`.toUpperCase();
-            const requiredCapacity = studentCapacityMap[courseYearSectionKey] || 0;
-            let availableRoomsForSelect = [];
-
-            if (!selectedDay || !selectedTime || !currentCourse || !currentYearSection) {
-                editRoomNameSelect.innerHTML = '<option value="">Select Day, Time, Course, and Year/Section first</option>';
-                return;
-            }
             
-            const instructorDocs = await getDocs(instructorsCollectionRef);
-            const bookings = [];
-            instructorDocs.forEach(docSnapshot => {
-                // Only consider other instructors' bookings or this instructor's other bookings
-                if (docSnapshot.id !== currentInstructorId) {
-                     bookings.push(docSnapshot.data());
-                }
-            });
-
-            allRooms.forEach(room => {
-                if (room.capacity >= requiredCapacity) {
-                    const isBooked = bookings.some(b => 
-                        b.roomName === room.name && 
-                        b.day === selectedDay && 
-                        b.time === selectedTime
-                    );
-                    // The room is available if it's not booked by OTHERS at the selected time/day OR if it's the room currently assigned to this instructor for this slot
-                    if (!isBooked || room.name === selectedRoomName) { 
-                        availableRoomsForSelect.push(room);
-                    }
-                }
-            });
-
-            editRoomNameSelect.innerHTML = '<option value="">Select Room</option>';
-            if (availableRoomsForSelect.length > 0) {
-                availableRoomsForSelect.forEach(room => {
-                    const option = document.createElement('option');
-                    option.value = room.name;
-                    option.textContent = `${room.name} (Capacity: ${room.capacity})`;
-                    if (room.name === selectedRoomName) {
-                        option.selected = true;
-                    }
-                    editRoomNameSelect.appendChild(option);
-                });
-            } else {
-                editRoomNameSelect.innerHTML += '<option value="" disabled selected>No rooms available for selected criteria</option>';
-            }
-             // Re-select the original room if it's in the list and should be shown
-            if (selectedRoomName && editRoomNameSelect.querySelector(`option[value="${selectedRoomName}"]`)) {
-                editRoomNameSelect.value = selectedRoomName;
-            }
-        }
-
-        function populateInstructorTable(instructors) {
-            tableBody.innerHTML = ''; 
             if (instructors.length === 0) {
                 emptyMessage.style.display = 'block';
-                loadingMessage.style.display = 'none';
-                tableBody.innerHTML = `<tr><td colspan="9" style="text-align:center;">No instructors registered yet.</td></tr>`;
                 return;
             }
             
-            // Sort instructors by name for better readability
-            instructors.sort((a, b) => a.name.localeCompare(b.name));
             emptyMessage.style.display = 'none';
-            loadingMessage.style.display = 'none';
-
+            
+            // Sort instructors by name
+            instructors.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+            
             instructors.forEach(instructor => {
-                const row = tableBody.insertRow();
+                const row = document.createElement('tr');
                 
-                // Format the display data
-                const formattedTime = instructor.time ? instructor.time.replace(' - ', ' - ') : 'N/A';
-                const yearSection = `${instructor.year} - ${instructor.section}`;
+                // Format the display values
+                const yearDisplay = instructor.year ? 
+                    `${instructor.year}${instructor.year.endsWith('st') || instructor.year.endsWith('nd') || 
+                    instructor.year.endsWith('rd') || instructor.year.endsWith('th') ? '' : ' Year'}` : 'N/A';
                 
-                // Add cells with instructor data
-                row.insertCell().textContent = instructor.name;
-                row.insertCell().textContent = instructor.subject;
-                row.insertCell().textContent = instructor.course;
-                row.insertCell().textContent = yearSection;
-                row.insertCell().textContent = instructor.day;
-                row.insertCell().textContent = formattedTime;
-                row.insertCell().textContent = instructor.roomName || 'No room assigned';
-                row.insertCell().textContent = instructor.roomCapacity || 'N/A';
+                row.innerHTML = `
+                    <td>${instructor.name || 'N/A'}</td>
+                    <td>${instructor.subject || 'N/A'}</td>
+                    <td>${instructor.course || 'N/A'}</td>
+                    <td>${yearDisplay}</td>
+                    <td>${instructor.section ? `Section ${instructor.section}` : 'N/A'}</td>
+                    <td>${instructor.day || 'N/A'}</td>
+                    <td>${instructor.time || 'N/A'}</td>
+                    <td>${instructor.roomName || 'N/A'}</td>
+                    <td class="actions">
+                        <button class="btn-edit" data-id="${instructor.id}">Edit</button>
+                    </td>
+                `;
                 
-                // Add action buttons
-                const actionsCell = row.insertCell();
-                actionsCell.className = 'actions-cell';
-                
-                const editBtn = document.createElement('button');
-                editBtn.className = 'edit-btn';
-                editBtn.textContent = 'Edit';
-                editBtn.onclick = () => {
-                    window.location.href = `EditInstructor.html?id=${instructor.id}`;
-                };
-                
-                const deleteBtn = document.createElement('button');
-                deleteBtn.className = 'delete-btn';
-                deleteBtn.textContent = 'Delete';
-                deleteBtn.onclick = () => deleteInstructor(instructor.id);
-                
-                actionsCell.appendChild(editBtn);
-                actionsCell.appendChild(deleteBtn);
+                instructorTableBody.appendChild(row);
+            });
+            
+            // Add event listeners to edit buttons
+            document.querySelectorAll('.btn-edit').forEach(button => {
+                button.addEventListener('click', (e) => {
+                    const instructorId = e.target.getAttribute('data-id');
+                    if (instructorId) {
+                        window.location.href = `EditInstructor.html?id=${instructorId}`;
+                    }
+                });
             });
         }
-
-        async function deleteInstructor(instructorId) {
-            if (!confirm('Are you sure you want to delete this instructor?')) {
-                return;
-            }
-
-            try {
-                await deleteDoc(doc(db, "/Instructors", instructorId));
-                // The real-time listener will automatically update the table
-            } catch (error) {
-                console.error('Error deleting instructor:', error);
-                alert('Failed to delete instructor. Please try again.');
-            }
-        }
-
-        function closeModal() {
-            editModal.style.display = "none";
-        }
-
-        // Add event listeners to relevant fields in the edit modal to update room availability
-        [editDaySelect, editTimeSelect, editCourseSelect, editYearLevelSelect, editSectionSelect].forEach(el => {
-            el.addEventListener('change', () => {
-                const currentInstructorId = editInstructorIdInput.value;
-                const originalSelectedRoom = editRoomNameSelect.value; 
-                const currentYear = editYearLevelSelect.value;
-                const currentSection = editSectionSelect.value;
-                let combinedYearSection = '';
-                if (currentYear && currentSection) {
-                    combinedYearSection = currentYear + currentSection;
-                }
-
-                populateRoomSelectForEdit(
-                    editDaySelect.value,
-                    editTimeSelect.value,
-                    editCourseSelect.value,
-                    combinedYearSection, // Use the newly combined year and section
-                    originalSelectedRoom, 
-                    currentInstructorId
-                );
-            });
-        });
-
-        editForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const docId = editInstructorIdInput.value;
-            const updatedData = {
-                name: editInstructorNameInput.value.trim(),
-                subject: editSubjectInput.value.trim(),
-                course: editCourseSelect.value,
-                yearSection: (editYearLevelSelect.value && editSectionSelect.value) ? (editYearLevelSelect.value + editSectionSelect.value) : '',
-                day: editDaySelect.value,
-                time: editTimeSelect.value,
-                roomName: editRoomNameSelect.value
-            };
-
-            if (!updatedData.name || !updatedData.subject || !updatedData.course || !editYearLevelSelect.value || !editSectionSelect.value || !updatedData.day || !updatedData.time || !updatedData.roomName) {
-                // Reconstruct yearSection for the check to be sure
-                updatedData.yearSection = (editYearLevelSelect.value && editSectionSelect.value) ? (editYearLevelSelect.value + editSectionSelect.value) : ''; 
-                if (!updatedData.yearSection) { alert("Year Level and Section are required."); return; } 
-            }
-            if (!updatedData.name || !updatedData.subject || !updatedData.course || !updatedData.yearSection || !updatedData.day || !updatedData.time || !updatedData.roomName) { // Double check all fields
-                alert("All fields are required.");
-                return;
-            }
-
-            try {
-                const docRef = doc(db, "instructors", docId);
-                await updateDoc(docRef, updatedData);
-                alert("Instructor updated successfully!");
-                closeModal();
-            } catch (error) {
-                console.error("Error updating instructor: ", error);
-                alert("Failed to update instructor. " + error.message);
-            }
-        });
         
-        closeModalBtn.onclick = closeModal;
-        window.onclick = function(event) {
-            if (editModal && event.target == editModal) {
-                closeModal();
-            }
+        // Show error message
+        function showError(message) {
+            errorMessage.textContent = message;
+            errorMessage.style.display = 'block';
+            setTimeout(() => {
+                errorMessage.style.display = 'none';
+            }, 5000);
         }
-
-
-        // Helper to manage loading message display for cleanup function
-        const setLoadingCleanupState = (isLoading, message = '') => {
-            if (isLoading) {
-                loadingMessage.textContent = message;
-                loadingMessage.style.display = 'block';
-                emptyMessage.style.display = 'none';
-            } else {
-                loadingMessage.style.display = 'none';
-            }
-        };
-
-        // --- Function to clean up instructors with invalid rooms ---
-        async function cleanupInstructorsByRoom() {
-            if (!confirm('This will check all instructors and delete those assigned to rooms not found in the Firebase "rooms" collection, or with no room assigned. Are you sure you want to proceed?')) {
-                alert('Cleanup cancelled.');
-                return;
-            }
-
-            setLoadingCleanupState(true, 'Performing cleanup...');
-
-            try {
-                const roomsCollectionRef = collection(db, "rooms");
-                const roomsSnapshot = await getDocs(roomsCollectionRef);
-                const validRoomNames = new Set(roomsSnapshot.docs.map(docSnap => docSnap.data().name));
-                // console.log('Valid room names from Firebase:', Array.from(validRoomNames)); // Kept for debugging
-
-                if (validRoomNames.size === 0) {
-                    alert('No rooms found in the Firebase "rooms" collection. Cannot perform cleanup. Please register rooms first.');
-                    setLoadingCleanupState(false);
-                    return;
-                }
-
-                const instructorsSnapshot = await getDocs(instructorsCollectionRef);
-                const instructorsToDelete = instructorsSnapshot.docs
-                    .map(docSnap => ({ id: docSnap.id, ...docSnap.data() })) // Combine ID with data
-                    .filter(instructorData => {
-                        const roomName = instructorData.roomName ? instructorData.roomName.trim() : '';
-                        return !roomName || !validRoomNames.has(roomName);
-                    })
-                    .map(inst => ({ // Map to the structure needed for the confirmation message and deletion
-                        id: inst.id,
-                        name: inst.name,
-                        room: (inst.roomName ? inst.roomName.trim() : '') || 'No Room Assigned'
-                    }));
-
-                if (instructorsToDelete.length === 0) {
-                    alert('No instructors found with invalid or missing room assignments. Your instructor list is clean regarding room assignments!');
-                    setLoadingCleanupState(false);
-                    return;
-                }
-
-                const confirmationList = instructorsToDelete.map(inst => `  - ${inst.name} (Room: '${inst.room}')`).join('\n');
-                const confirmationDialogMessage = `Found ${instructorsToDelete.length} instructor(s) with invalid/missing room assignments:\n${confirmationList}\n\nAre you sure you want to delete these instructor entries?`;
-
-                if (!confirm(confirmationDialogMessage)) {
-                    alert('Cleanup cancelled by user.');
-                    setLoadingCleanupState(false);
-                    return;
-                }
-
-                const deletePromises = instructorsToDelete.map(instructor => deleteDoc(doc(db, "instructors", instructor.id)));
-                await Promise.all(deletePromises);
-
-                alert(`Successfully deleted ${instructorsToDelete.length} instructor(s) with invalid/missing room assignments.`);
-            } catch (error) {
-                console.error("Error during cleanup: ", error);
-                alert('An error occurred during the cleanup process. Please check the console for details.');
-            } finally {
-                setLoadingCleanupState(false);
-            }
+        
+        // Fetch instructors from Firestore
+        function fetchInstructors() {
+            loadingMessage.style.display = 'block';
+            emptyMessage.style.display = 'none';
+            
+            db.collection('Instructors')
+                .get()
+                .then((querySnapshot) => {
+                    const instructors = [];
+                    querySnapshot.forEach((doc) => {
+                        instructors.push({
+                            id: doc.id,
+                            ...doc.data()
+                        });
+                    });
+                    displayInstructors(instructors);
+                })
+                .catch((error) => {
+                    console.error('Error getting instructors: ', error);
+                    showError('Error loading instructors. Please try again.');
+                })
+                .finally(() => {
+                    loadingMessage.style.display = 'none';
+                });
         }
-
-        const cleanupBtn = document.getElementById('cleanupInstructorsBtn');
-        if (cleanupBtn) {
-            cleanupBtn.addEventListener('click', cleanupInstructorsByRoom);
-        } else {
-            console.error('Cleanup button not found');
+        
+        // Set up real-time listener for instructor updates
+        function setupRealtimeListener() {
+            db.collection('Instructors')
+                .onSnapshot((querySnapshot) => {
+                    const instructors = [];
+                    querySnapshot.forEach((doc) => {
+                        instructors.push({
+                            id: doc.id,
+                            ...doc.data()
+                        });
+                    });
+                    displayInstructors(instructors);
+                }, (error) => {
+                    console.error('Error in real-time listener: ', error);
+                    showError('Error receiving updates. Please refresh the page.');
+                });
         }
-
-        // Expose to global for older onclick attributes if any were missed (best to remove those in HTML)
-        window.openEditModal = openEditModal; 
-        window.deleteInstructor = deleteInstructor;
-
+        
+        // Initialize the page
+        document.addEventListener('DOMContentLoaded', () => {
+            // Fetch instructors when the page loads
+            fetchInstructors();
+            
+            // Set up real-time updates
+            setupRealtimeListener();
+        });
     </script>
 </body>
 </html>
