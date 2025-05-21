@@ -327,40 +327,6 @@
       }
     };
 
-    // Enable/disable year and section selects based on course selection
-    courseSelect.addEventListener('change', function() {
-      const selectedCourse = this.value;
-      
-      // Enable year select when course is selected
-      yearSelect.disabled = !selectedCourse;
-      sectionSelect.disabled = true; // Reset section when course changes
-      
-      // Reset year and section
-      yearSelect.value = '';
-      sectionSelect.value = '';
-      
-      // Update student capacity display
-      updateStudentCapacity();
-    });
-
-    // Enable section select when year is selected
-    yearSelect.addEventListener('change', function() {
-      const selectedYear = this.value;
-      sectionSelect.disabled = !selectedYear;
-      
-      // Reset section when year changes
-      sectionSelect.value = '';
-      
-      // Update student capacity display
-      updateStudentCapacity();
-    });
-
-    // Update schedule when section is selected
-    sectionSelect.addEventListener('change', function() {
-      updateStudentCapacity();
-      renderSchedule();
-    });
-
     // Function to update student capacity display
     function updateStudentCapacity() {
       const course = courseSelect.value;
@@ -424,6 +390,18 @@
     }
 
     // Render the schedule
+    // Helper function to normalize time format
+    function normalizeTime(timeStr) {
+      if (!timeStr) return '';
+      // Convert various time formats to HH:00-HH:00
+      return timeStr
+        .replace(/\s+/g, '')  // Remove all whitespace
+        .replace(/(\d{1,2}):(\d{2})/g, (match, hh, mm) => 
+          `${String(hh).padStart(2, '0')}:00` // Convert to HH:00 format
+        )
+        .replace(/(\d{2}:00)(\d{2}:00)/, '$1-$2'); // Add hyphen between times
+    }
+
     function renderSchedule() {
       console.log('Rendering schedule...');
       const timeSlots = [];
@@ -435,16 +413,13 @@
       }
       console.log('Time slots:', timeSlots);
       
-      // Clear the schedule body
+      // Clear the schedule body once
       scheduleBody.innerHTML = '';
       
       // Get selected values
       const selectedCourse = courseSelect.value;
       const selectedYear = yearSelect.value;
       const selectedSection = sectionSelect.value;
-      
-      // Clear the schedule body
-      scheduleBody.innerHTML = '';
       
       // If no course, year, or section is selected, show empty schedule with time slots
       if (!selectedCourse || !selectedYear || !selectedSection) {
@@ -489,21 +464,24 @@
           
           // Find if there's an instructor for this day and time
           const scheduledInstructor = sectionInstructors.find(instructor => {
-            // Normalize time format for comparison
-            const instructorTime = instructor.time 
-              ? instructor.time.replace(/\s+/g, '').replace(/:\d{2}/g, ':00')
-              : '';
-            const timeMatch = instructorTime === timeSlot;
-            const dayMatch = instructor.day && instructor.day.toLowerCase() === day.toLowerCase();
+            if (!instructor.time || !instructor.day) return false;
+            
+            // Normalize both times for comparison
+            const normalizedInstructorTime = normalizeTime(instructor.time);
+            const normalizedSlotTime = timeSlot; // Already in correct format
+            
+            const timeMatch = normalizedInstructorTime === normalizedSlotTime;
+            const dayMatch = instructor.day.toLowerCase() === day.toLowerCase();
             
             if (timeMatch && dayMatch) {
-              console.log('Found matching instructor:', { 
-                instructor, 
-                timeSlot, 
-                day,
-                instructorTime,
-                matches: timeMatch && dayMatch
-              }); // Debug log
+              console.log('Matched instructor:', { 
+                instructor: instructor.name,
+                subject: instructor.subject,
+                day: instructor.day,
+                time: instructor.time,
+                normalizedTime: normalizedInstructorTime,
+                slotTime: normalizedSlotTime
+              });
             }
             
             return timeMatch && dayMatch;
@@ -564,78 +542,23 @@
     }
 
     // Set up real-time listener for instructors
-    const q = query(instructorsCollectionRef);
-    const unsubscribe = onSnapshot(q, (querySnapshot) => {
-      allInstructorsData = []; // Clear previous data
-      
-      querySnapshot.forEach((doc) => {
-        const data = doc.data();
-        // Ensure time format matches our time slots (HH:00-HH:00)
-        if (data.time) {
-          // Convert time format from "HH:MM - HH:MM" to "HH:00-HH:00"
-          data.time = data.time
-            .replace(/\s+/g, '')  // Remove all whitespace
-            .replace(/:\d{2}/g, ':00') // Convert any minutes to :00
-            .replace(/(\d{2}):00(\d{2}):00/g, '$1:00-$2:00'); // Format as HH:00-HH:00
-        }
-        allInstructorsData.push({ 
-          id: doc.id, 
-          ...data,
-          // Ensure all required fields have default values
-          name: data.name || 'N/A',
-          subject: data.subject || 'N/A',
-          roomName: data.roomName || 'TBA',
-          day: data.day || ''
-        });
-      });
-      
-      console.log('Instructors loaded:', allInstructorsData); // Debug log
-      renderSchedule(); // Re-render schedule with new data
-    }, (error) => {
-      console.error("Error setting up instructor listener:", error);
-    });
-
-    // Update section select to fetch and display data when selection changes
-    sectionSelect.addEventListener('change', async () => {
-      const course = courseSelect.value;
-      const year = yearSelect.value;
-      const section = sectionSelect.value;
-      
-      if (course && year && section) {
-        const displayKey = `${course} ${year}-${section}`;
-        courseSummary.textContent = displayKey;
-        await renderSchedule();
-      } else {
-        courseSummary.textContent = '----';
-        renderSchedule();
-      }
-    });
-
-    // Set up event listeners when the DOM is fully loaded
-    document.addEventListener('DOMContentLoaded', function() {
-      // Initialize the schedule
-      initializeSchedule();
-      
-      // Set up Firebase real-time listener
-      setupFirebaseListener();
-    });
-    
-    // Set up Firebase real-time listener
     function setupFirebaseListener() {
       const q = query(instructorsCollectionRef);
-      onSnapshot(q, (querySnapshot) => {
-        allInstructorsData = [];
+      const unsubscribe = onSnapshot(q, (querySnapshot) => {
+        allInstructorsData = []; // Clear previous data
+        
         querySnapshot.forEach((doc) => {
           const data = doc.data();
-          // Normalize time format
+          // Ensure time format matches our time slots (HH:00-HH:00)
           if (data.time) {
+            // Convert time format from "HH:MM - HH:MM" to "HH:00-HH:00"
             data.time = data.time
-              .replace(/\s+/g, '')
-              .replace(/:\d{2}/g, ':00')
-              .replace(/(\d{2}:\d{2})(\d{2}:\d{2})/g, '$1-$2');
+              .replace(/\s+/g, '')  // Remove all whitespace
+              .replace(/:\d{2}/g, ':00') // Convert any minutes to :00
+              .replace(/(\d{2}):00(\d{2}):00/g, '$1:00-$2:00'); // Format as HH:00-HH:00
           }
-          allInstructorsData.push({
-            id: doc.id,
+          allInstructorsData.push({ 
+            id: doc.id, 
             name: data.name || 'N/A',
             subject: data.subject || 'N/A',
             roomName: data.roomName || 'TBA',
@@ -646,15 +569,28 @@
             section: data.section || ''
           });
         });
-        renderSchedule();
+        
+        console.log('Instructors loaded:', allInstructorsData);
+        renderSchedule(); // Re-render schedule with new data
       }, (error) => {
-        console.error('Error in Firebase listener:', error);
+        console.error("Error setting up instructor listener:", error);
       });
+      
+      return unsubscribe;
     }
 
-    // Clean up the listener when the page is unloaded
-    window.addEventListener('beforeunload', () => {
-      if (unsubscribe) unsubscribe();
+    // Set up event listeners when the DOM is fully loaded
+    document.addEventListener('DOMContentLoaded', function() {
+      // Initialize the schedule first to set up UI event handlers
+      initializeSchedule();
+      
+      // Then set up Firebase real-time listener
+      const unsubscribe = setupFirebaseListener();
+      
+      // Clean up the listener when the page is unloaded
+      window.addEventListener('beforeunload', () => {
+        if (unsubscribe) unsubscribe();
+      });
     });
   </script>
 </body>
