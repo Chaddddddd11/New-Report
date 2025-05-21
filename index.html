@@ -424,10 +424,25 @@
           const cell = document.createElement('td');
           
           const scheduledInstructor = allInstructorsData.find(instructor => {
+            // Debug log to see what's being compared
+            console.log('Checking instructor:', {
+              instructorCourse: instructor.course,
+              selectedCourse,
+              instructorYear: instructor.year,
+              selectedYear: selectedYearValue,
+              instructorSection: instructor.section,
+              selectedSection,
+              instructorDay: instructor.day,
+              day,
+              instructorTime: instructor.time,
+              timeSlot
+            });
+            
             return instructor.course === selectedCourse &&
-                   instructor.yearSection === targetYearSection && // Match combined yearSection
+                   instructor.year === selectedYearValue &&
+                   instructor.section === selectedSection &&
                    instructor.day === day &&
-                   instructor.time === timeSlot; // Direct match for time slot
+                   instructor.time === timeSlot;
           });
 
           if (scheduledInstructor) {
@@ -570,14 +585,13 @@
 
     const q = query(instructorsCollectionRef);
     onSnapshot(q, (querySnapshot) => {
-        allInstructorsData = []; // Clear previous data
-        querySnapshot.forEach((doc) => {
-            allInstructorsData.push({ id: doc.id, ...doc.data() });
-        });
-        updateInstructorCards(); // Update display when data changes
-        });
-        console.log("Fetched instructors from Firebase:", allInstructorsData);
-        renderSchedule(); // Re-render schedule with new data
+      allInstructorsData = []; // Clear previous data
+      querySnapshot.forEach((doc) => {
+        allInstructorsData.push({ id: doc.id, ...doc.data() });
+      });
+      console.log("Fetched instructors from Firebase:", allInstructorsData);
+      updateInstructorCards(); // Update display when data changes
+      renderSchedule(); // Re-render schedule with new data
     }, (error) => {
         console.error("Error fetching instructors from Firebase: ", error);
         scheduleBody.innerHTML = `<tr><td colspan="7">Error loading schedule data. Check console.</td></tr>`;
