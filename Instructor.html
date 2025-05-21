@@ -362,63 +362,32 @@
                 console.log('1. Initializing Firebase...');
                 console.log('Firebase app initialized:', app.name);
                 
-                // Initialize Firebase Storage
-                console.log('2. Initializing Firebase Storage...');
-                const storage = firebase.storage();
-                const storageRef = storage.ref();
-                const roomsRef = storageRef.child('rooms');
-                
+                // Fetch rooms from Firestore
+                console.log('2. Fetching rooms from Firestore...');
                 try {
-                    console.log('2.1 Fetching room folders from Storage...');
-                    const roomFolders = await roomsRef.listAll();
+                    const roomsSnapshot = await db.collection('rooms').get();
                     allRooms = [];
                     
-                    // Process each room folder
-                    for (const folderRef of roomFolders.prefixes) {
-                        try {
-                            console.log(`2.2 Processing room folder: ${folderRef.name}`);
-                            
-                            // Get room details (assuming there's a document in Firestore with the same ID as the folder name)
-                            try {
-                                const roomDoc = await db.collection('rooms').doc(folderRef.name).get();
-                                if (roomDoc.exists) {
-                                    const roomData = roomDoc.data();
-                                    allRooms.push({
-                                        id: folderRef.name,
-                                        name: roomData.name || `Room ${folderRef.name}`,
-                                        capacity: parseInt(roomData.capacity) || 0,
-                                        path: folderRef.fullPath
-                                    });
-                                    console.log(`2.3 Found room in Firestore:`, folderRef.name);
-                                } else {
-                                    // If no document in Firestore, just use the folder name
-                                    allRooms.push({
-                                        id: folderRef.name,
-                                        name: `Room ${folderRef.name}`,
-                                        capacity: 0,
-                                        path: folderRef.fullPath
-                                    });
-                                    console.log(`2.3 No Firestore doc for room:`, folderRef.name);
-                                }
-                            } catch (firestoreErr) {
-                                console.error('Error fetching room details from Firestore:', firestoreErr);
-                                // Continue with just the folder name if Firestore fails
-                                allRooms.push({
-                                    id: folderRef.name,
-                                    name: `Room ${folderRef.name}`,
-                                    capacity: 0,
-                                    path: folderRef.fullPath
-                                });
-                            }
-                        } catch (folderErr) {
-                            console.error(`Error processing room folder ${folderRef.name}:`, folderErr);
-                        }
-                    }
+                    roomsSnapshot.forEach(doc => {
+                        const data = doc.data();
+                        console.log('2.1 Processing room:', doc.id, data);
+                        
+                        // Create room object with default values
+                        const room = {
+                            id: doc.id,
+                            name: data.roomName || `Room ${doc.id}`,
+                            capacity: parseInt(data.capacity) || 0,
+                            day: data.day || '',
+                            time: data.time || ''
+                        };
+                        
+                        allRooms.push(room);
+                    });
                     
-                    console.log('2.4 Final rooms list:', allRooms);
+                    console.log('2.2 Loaded rooms from Firestore:', allRooms);
                     
                     if (allRooms.length === 0) {
-                        console.warn('No room folders found in Storage. Please check if the rooms are properly uploaded.');
+                        console.warn('No rooms found in Firestore. Please check your database.');
                     }
                 } catch (error) {
                     console.error('Error loading rooms from Firestore:', error);
