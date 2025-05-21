@@ -282,6 +282,23 @@
 
         window.registerInstructor = registerInstructor;
 
+        // Initialize time slots and event listeners when the page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            try {
+                populateTimeSlots();
+                // Set up event listeners for form inputs
+                const formInputs = [daySelect, timeSelect, courseSelect, yearSelect, sectionSelect];
+                formInputs.forEach(input => {
+                    input.addEventListener('change', updateAvailableRooms);
+                });
+                // Initial update of available rooms
+                updateAvailableRooms();
+            } catch (error) {
+                console.error("Error initializing form:", error);
+                showError("Failed to initialize form. Please refresh the page.");
+            }
+        });
+
         // Data Definitions
         const studentCapacityMap = {
             'BSA-1st-A': 30, 'BSA-1st-B': 30, 'BSA-1st-C': 28, 'BSA-1st-D': 30,
@@ -327,29 +344,40 @@
 
         // Helper Functions
         function populateTimeSlots() {
-            const startTime = 7; 
-            const endTime = 17;  
+            try {
+                const startTime = 7; // 7 AM
+                const endTime = 17;  // 5 PM
+                
+                // Clear existing options except the first one
+                while (timeSelect.options.length > 1) {
+                    timeSelect.remove(1);
+                }
 
-            for (let hour = startTime; hour < endTime; hour++) {
-                const startHourPadded = String(hour).padStart(2, '0'); 
-                const endHourPadded = String(hour + 1).padStart(2, '0');
-                const timeSlotValue = ${startHourPadded}:00-${endHourPadded}:00;
-                
-                let displayStartHour = hour % 12;
-                if (displayStartHour === 0) displayStartHour = 12; 
-                const displayStartAmPm = hour < 12 ? 'AM' : 'PM';
-                
-                let displayEndHour = (hour + 1) % 12;
-                if (displayEndHour === 0) displayEndHour = 12;
-                let displayEndAmPm = (hour + 1) < 12 || (hour + 1) === 24 ? 'AM' : 'PM';
-                if ((hour + 1) === 12) displayEndAmPm = 'PM';
-                
-                const timeSlotText = ${displayStartHour}:00 ${displayStartAmPm} - ${displayEndHour}:00 ${displayEndAmPm};
+                for (let hour = startTime; hour < endTime; hour++) {
+                    const startHourPadded = String(hour).padStart(2, '0'); 
+                    const endHourPadded = String(hour + 1).padStart(2, '0');
+                    const timeSlotValue = `${startHourPadded}:00-${endHourPadded}:00`;
+                    
+                    // Format display time (12-hour format with AM/PM)
+                    let displayStartHour = hour % 12;
+                    if (displayStartHour === 0) displayStartHour = 12; 
+                    const displayStartAmPm = hour < 12 ? 'AM' : 'PM';
+                    
+                    let displayEndHour = (hour + 1) % 12;
+                    if (displayEndHour === 0) displayEndHour = 12;
+                    let displayEndAmPm = (hour + 1) < 12 || (hour + 1) === 24 ? 'AM' : 'PM';
+                    if ((hour + 1) === 12) displayEndAmPm = 'PM';
+                    
+                    const timeSlotText = `${displayStartHour}:00 ${displayStartAmPm} - ${displayEndHour}:00 ${displayEndAmPm}`;
 
-                const option = document.createElement('option');
-                option.value = timeSlotValue;
-                option.textContent = timeSlotText;
-                timeSelect.appendChild(option);
+                    const option = document.createElement('option');
+                    option.value = timeSlotValue;
+                    option.textContent = timeSlotText;
+                    timeSelect.appendChild(option);
+                }
+            } catch (error) {
+                console.error("Error populating time slots:", error);
+                showError("Failed to load time slots. Please refresh the page.");
             }
         }
 
@@ -387,7 +415,7 @@
             hour = hour % 12;
             hour = hour ? hour : 12; 
             const minutePadded = String(minutes).padStart(2, '0');
-            return ${hour}:${minutePadded} ${ampm};
+            return `${hour}:${minutePadded} ${ampm}`;
         }
 
         async function updateAvailableRooms() {
@@ -411,11 +439,19 @@
             const startHour = parseInt(timeStartStr.split(':')[0], 10);
             const endHour = parseInt(timeEndStr.split(':')[0], 10);
 
-            const classKey = ${selectedCourse}-${selectedYear}-${selectedSection};
+            // Format: 'Course-Year-Section' (e.g., 'BSE-1st-A')
+            const yearMap = {
+                '1': '1st',
+                '2': '2nd',
+                '3': '3rd',
+                '4': '4th'
+            };
+            const formattedYear = yearMap[selectedYear] || selectedYear;
+            const classKey = `${selectedCourse}-${formattedYear}-${selectedSection}`;
             const studentsInClass = studentCapacityMap[classKey];
 
             if (studentsInClass === undefined) {
-                showError(Student capacity not defined for ${selectedCourse} ${selectedYear}-${selectedSection}. Please check configuration.);
+                showError(`Student capacity not defined for ${selectedCourse} ${selectedYear}-${selectedSection}. Please check configuration.`);
                 roomAvailableSelect.innerHTML = '<option value="">Error: Set class capacity</option>';
                 return;
             }
@@ -448,13 +484,13 @@
                     availableRooms.forEach(room => {
                         const option = document.createElement('option');
                         option.value = room.name;
-                        option.textContent = ${room.name} (Capacity: ${room.capacity});
+                        option.textContent = `${room.name} (Capacity: ${room.capacity})`;
                         roomAvailableSelect.appendChild(option);
                     });
                     roomAvailableSelect.disabled = false;
                 } else {
                     roomAvailableSelect.innerHTML = '<option value="">No Rooms Available</option>';
-                    showError(No available rooms for ${studentsInClass} students on ${selectedDay} at ${selectedTimeSlot}. Check capacity or existing bookings.);
+                    showError(`No available rooms for ${studentsInClass} students on ${selectedDay} at ${selectedTimeSlot}. Check capacity or existing bookings.`);
                 }
 
             } catch (error) {
@@ -464,15 +500,7 @@
             }
         }
 
-        document.addEventListener('DOMContentLoaded', () => {
-            populateTimeSlots();
-            daySelect.addEventListener('change', updateAvailableRooms);
-            timeSelect.addEventListener('change', updateAvailableRooms);
-            courseSelect.addEventListener('change', updateAvailableRooms);
-            yearSelect.addEventListener('change', updateAvailableRooms);
-            sectionSelect.addEventListener('change', updateAvailableRooms);
-            updateAvailableRooms(); 
-        });
+        // Event listeners are now initialized in the first DOMContentLoaded handler
 
         async function registerInstructor() {
             clearError(); 
@@ -525,7 +553,7 @@
                         const existingStartHour = parseInt(existing.timeStart.split(':')[0], 10);
                         const existingEndHour = parseInt(existing.timeEnd.split(':')[0], 10);
                         if (startHour < existingEndHour && endHour > existingStartHour) {
-                            showError(This instructor (${name}) already has a class from ${formatTimeDisplay(existing.timeStart)} to ${formatTimeDisplay(existing.timeEnd)} on ${day}.);
+                            showError(`This instructor (${name}) already has a class from ${formatTimeDisplay(existing.timeStart)} to ${formatTimeDisplay(existing.timeEnd)} on ${day}.`);
                             return;
                         }
                     }
@@ -539,7 +567,7 @@
                 );
                 const subjectInClassSnapshot = await getDocs(subjectInClassQuery);
                 if (!subjectInClassSnapshot.empty) {
-                    showError(The subject "${subject}" is already assigned to ${course} ${year}-${section}.);
+                    showError(`The subject "${subject}" is already assigned to ${course} ${year}-${section}.`);
                     return;
                 }
 
@@ -556,7 +584,7 @@
                         const existingStartHour = parseInt(existing.timeStart.split(':')[0], 10);
                         const existingEndHour = parseInt(existing.timeEnd.split(':')[0], 10);
                         if (startHour < existingEndHour && endHour > existingStartHour) {
-                            showError(${course} ${year}-${section} already has a class ("${existing.subject}") from ${formatTimeDisplay(existing.timeStart)} to ${formatTimeDisplay(existing.timeEnd)} on ${day}.);
+                            showError(`${course} ${year}-${section} already has a class ("${existing.subject}") from ${formatTimeDisplay(existing.timeStart)} to ${formatTimeDisplay(existing.timeEnd)} on ${day}.`);
                             return;
                         }
                     }
@@ -574,7 +602,7 @@
                         const existingStartHour = parseInt(existingBooking.timeStart.split(':')[0], 10);
                         const existingEndHour = parseInt(existingBooking.timeEnd.split(':')[0], 10);
                         if (startHour < existingEndHour && endHour > existingStartHour) {
-                             showError(Room "${roomName}" was just booked by instructor ${existingBooking.name} for subject "${existingBooking.subject}" from ${formatTimeDisplay(existingBooking.timeStart)} to ${formatTimeDisplay(existingBooking.timeEnd)} on ${day}. Please select another room or time.);
+                             showError(`Room "${roomName}" was just booked by instructor ${existingBooking.name} for subject "${existingBooking.subject}" from ${formatTimeDisplay(existingBooking.timeStart)} to ${formatTimeDisplay(existingBooking.timeEnd)} on ${day}. Please select another room or time.`);
                             updateAvailableRooms(); // Refresh room list
                             return;
                         }
