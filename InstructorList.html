@@ -629,19 +629,7 @@
                 editBtn.className = 'edit-btn';
                 editBtn.textContent = 'Edit';
                 editBtn.onclick = () => {
-                    const params = new URLSearchParams({
-                        id: instructor.id,
-                        name: instructor.name || '',
-                        subject: instructor.subject || '',
-                        course: instructor.course || '',
-                        year: instructor.year || '',
-                        section: instructor.section || '',
-                        day: instructor.day || '',
-                        time: instructor.time || '',
-                        roomName: instructor.roomName || ''
-                    });
-                    
-                    window.location.href = `Instructor.html?${params.toString()}`;
+                    window.location.href = `EditInstructor.html?id=${instructor.id}`;
                 };
                 
                 const deleteBtn = document.createElement('button');
