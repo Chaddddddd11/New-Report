@@ -249,18 +249,9 @@
     </div>
 
     <!-- Firebase App (the core Firebase SDK) is always required and must be listed first -->
-    <script type="module">
-        // Import the functions you need from the SDKs you need
-        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-        import { 
-            getFirestore, 
-            collection, 
-            getDocs,
-            addDoc,
-            query,
-            where
-        } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
-
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+    <script>
         // Your web app's Firebase configuration
         const firebaseConfig = {
             apiKey: "AIzaSyDeqxzp_-kKjM3hPr6CLGfTn38e4swSKbo",
@@ -272,17 +263,19 @@
         };
 
         // Initialize Firebase
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
+        const app = firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        
+        // Make these available globally
+        window.db = db;
+        window.firebase = firebase;
 
         // Function to fetch rooms from Firestore with detailed logging
         async function fetchRooms() {
             console.log('1. Starting to fetch rooms from Firestore...');
             try {
                 console.log('2. Accessing Firestore collection...');
-                const roomsRef = collection(db, 'rooms');
-                console.log('3. Getting documents...');
-                const querySnapshot = await getDocs(roomsRef);
+                const querySnapshot = await db.collection('rooms').get();
                 
                 console.log('4. Processing documents...');
                 console.log(`5. Found ${querySnapshot.size} room documents`);
@@ -551,11 +544,14 @@
 
                 // Get all instructors for validation
                 console.log('Fetching instructors for validation...');
-                const instructorsSnapshot = await getDocs(collection(db, 'instructors'));
-                const instructors = instructorsSnapshot.docs.map(doc => ({
-                    id: doc.id,
-                    ...doc.data()
-                }));
+                const instructorsSnapshot = await db.collection('/Instructors').get();
+                const instructors = [];
+                instructorsSnapshot.forEach(doc => {
+                    instructors.push({
+                        id: doc.id,
+                        ...doc.data()
+                    });
+                });
                 console.log(`Fetched ${instructors.length} instructors for validation`);
 
                 // 1. Check for time conflicts with existing instructors in the same room
@@ -643,7 +639,7 @@
                 console.log('Instructor data to save:', instructorData);
                 
                 try {
-                    const docRef = await addDoc(collection(db, 'instructors'), instructorData);
+                    const docRef = await db.collection('/Instructors').add(instructorData);
                     console.log('Instructor registered with ID: ', docRef.id);
                     
                     // Show success message
