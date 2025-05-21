@@ -390,11 +390,40 @@
     const studentCapacityDisplay = document.getElementById('studentCapacityDisplay');
     const scheduleBody = document.getElementById('scheduleBody');
     
-    // Initialize the schedule on page load
-    renderSchedule();
+    // Function to initialize the schedule
+    function initializeSchedule() {
+      renderSchedule();
+      
+      // Set up event listeners
+      courseSelect.addEventListener('change', handleCourseChange);
+      yearSelect.addEventListener('change', handleYearChange);
+      sectionSelect.addEventListener('change', handleSectionChange);
+    }
+    
+    function handleCourseChange() {
+      const selectedCourse = this.value;
+      yearSelect.disabled = !selectedCourse;
+      sectionSelect.disabled = true;
+      yearSelect.value = '';
+      sectionSelect.value = '';
+      updateStudentCapacity();
+      renderSchedule();
+    }
+    
+    function handleYearChange() {
+      const selectedYear = this.value;
+      sectionSelect.disabled = !selectedYear;
+      sectionSelect.value = '';
+      updateStudentCapacity();
+      renderSchedule();
+    }
+    
+    function handleSectionChange() {
+      updateStudentCapacity();
+      renderSchedule();
+    }
 
-
-
+    // Render the schedule
     function renderSchedule() {
       console.log('Rendering schedule...');
       const timeSlots = [];
@@ -409,30 +438,24 @@
       // Clear the schedule body
       scheduleBody.innerHTML = '';
       
-      // If no course, year, or section is selected, show empty schedule
-      if (!courseSelect.value || !yearSelect.value || !sectionSelect.value) {
-        timeSlots.forEach(timeSlot => {
-          const row = document.createElement('tr');
-          row.innerHTML = `
-            <td>${timeSlot}</td>
-            <td></td><td></td><td></td><td></td><td></td><td></td>
-          `;
-          scheduleBody.appendChild(row);
-        });
-        return;
-      }
-
+      // Get selected values
       const selectedCourse = courseSelect.value;
       const selectedYear = yearSelect.value;
       const selectedSection = sectionSelect.value;
       
-      scheduleBody.innerHTML = ''; // Clear previous schedule
-
+      // Clear the schedule body
+      scheduleBody.innerHTML = '';
+      
+      // If no course, year, or section is selected, show empty schedule with time slots
       if (!selectedCourse || !selectedYear || !selectedSection) {
-        // Show empty schedule if not all filters are selected
         timeSlots.forEach(timeSlot => {
           const row = document.createElement('tr');
-          row.innerHTML = `<td>${timeSlot}</td><td></td><td></td><td></td><td></td><td></td><td></td>`;
+          const cells = [timeSlot];
+          // Add 6 empty cells for each day
+          for (let i = 0; i < 6; i++) {
+            cells.push('');
+          }
+          row.innerHTML = cells.map(cell => `<td>${cell}</td>`).join('');
           scheduleBody.appendChild(row);
         });
         return;
@@ -590,33 +613,44 @@
 
     // Set up event listeners when the DOM is fully loaded
     document.addEventListener('DOMContentLoaded', function() {
-      // Initial render
-      renderSchedule();
+      // Initialize the schedule
+      initializeSchedule();
       
-      // Add event listeners for course, year, and section changes
-      courseSelect.addEventListener('change', function() {
-        const selectedCourse = this.value;
-        yearSelect.disabled = !selectedCourse;
-        sectionSelect.disabled = true;
-        yearSelect.value = '';
-        sectionSelect.value = '';
-        updateStudentCapacity();
-        renderSchedule();
-      });
-      
-      yearSelect.addEventListener('change', function() {
-        const selectedYear = this.value;
-        sectionSelect.disabled = !selectedYear;
-        sectionSelect.value = '';
-        updateStudentCapacity();
-        renderSchedule();
-      });
-      
-      sectionSelect.addEventListener('change', function() {
-        updateStudentCapacity();
-        renderSchedule();
-      });
+      // Set up Firebase real-time listener
+      setupFirebaseListener();
     });
+    
+    // Set up Firebase real-time listener
+    function setupFirebaseListener() {
+      const q = query(instructorsCollectionRef);
+      onSnapshot(q, (querySnapshot) => {
+        allInstructorsData = [];
+        querySnapshot.forEach((doc) => {
+          const data = doc.data();
+          // Normalize time format
+          if (data.time) {
+            data.time = data.time
+              .replace(/\s+/g, '')
+              .replace(/:\d{2}/g, ':00')
+              .replace(/(\d{2}:\d{2})(\d{2}:\d{2})/g, '$1-$2');
+          }
+          allInstructorsData.push({
+            id: doc.id,
+            name: data.name || 'N/A',
+            subject: data.subject || 'N/A',
+            roomName: data.roomName || 'TBA',
+            day: data.day || '',
+            time: data.time || '',
+            course: data.course || '',
+            year: data.year || '',
+            section: data.section || ''
+          });
+        });
+        renderSchedule();
+      }, (error) => {
+        console.error('Error in Firebase listener:', error);
+      });
+    }
 
     // Clean up the listener when the page is unloaded
     window.addEventListener('beforeunload', () => {
