@@ -483,7 +483,7 @@
                 // Get rooms that are already booked for this time slot
                 const conflictingRooms = new Set();
                 allInstructors.forEach(instructor => {
-                    if (instructor.day === selectedDay && instructor.time === selectedTime) {
+                    if (instructor.day === selectedDay && instructor.time === selectedTime && instructor.roomName) {
                         conflictingRooms.add(instructor.roomName);
                     }
                 });
@@ -494,12 +494,13 @@
                 // Add suitable and available rooms
                 let availableRooms = 0;
                 suitableRooms.forEach(room => {
-                    if (!conflictingRooms.has(room.name) || room.name === currentRoom) {
+                    const roomName = room.roomName || room.name; // Handle both property names
+                    if (!conflictingRooms.has(roomName) || roomName === currentRoom) {
                         const option = new Option(
-                            `${room.name} (Capacity: ${room.capacity})`,
-                            room.name
+                            `${roomName} (Capacity: ${room.capacity})`,
+                            roomName
                         );
-                        if (room.name === currentRoom) {
+                        if (roomName === currentRoom) {
                             option.selected = true;
                         }
                         roomSelect.add(option);
@@ -519,8 +520,11 @@
                 
                 // If current room is not in the list but exists, add it back
                 if (currentRoom && !Array.from(roomSelect.options).some(opt => opt.value === currentRoom)) {
+                    // Find the room in allRooms to get its capacity
+                    const roomInfo = allRooms.find(r => (r.roomName === currentRoom || r.name === currentRoom));
+                    const capacity = roomInfo ? roomInfo.capacity : 'N/A';
                     const option = new Option(
-                        `${currentRoom} (Previously assigned)`,
+                        `${currentRoom} (Capacity: ${capacity}) (Previously assigned)`,
                         currentRoom
                     );
                     option.selected = true;
