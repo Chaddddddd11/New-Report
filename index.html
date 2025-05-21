@@ -290,10 +290,18 @@
     const db = getFirestore(app);
     
     // Collection reference with correct case sensitivity
-    const instructorsCollectionRef = collection(db, 'Instructors');
+    const instructorsCollectionRef = collection(db, "Instructor");
     
     // Store all instructors data
     let allInstructorsData = []; // To store all instructors from Firebase
+
+    // Map between display years and database years
+    const yearMapping = {
+      '1st': '1',
+      '2nd': '2',
+      '3rd': '3',
+      '4th': '4'
+    };
 
     // Student capacity map (course -> year -> section -> capacity)
     const studentCapacityMap = {
@@ -434,13 +442,14 @@
         return;
       }
 
-      // Filter instructors for the selected course, year, and section
+      // Find all instructors for the selected course, year, and section
+      const dbYear = yearMapping[selectedYear];
       const sectionInstructors = allInstructorsData.filter(instructor => 
         instructor.course === selectedCourse &&
-        instructor.year === selectedYear &&
+        instructor.year === dbYear &&
         instructor.section === selectedSection
       );
-
+      
       console.log('Filtered instructors:', sectionInstructors);
 
       // Create a row for each time slot
