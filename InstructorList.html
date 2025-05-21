@@ -475,7 +475,11 @@
 
         // No need for time validation since we're using fixed 1-hour slots
         function validateTimeRange() {
-            // Always valid since we're using predefined time slots
+            const classTime = classTimeSelect.value;
+            if (!classTime) {
+                showError('Please select a class time');
+                return false;
+            }
             clearError();
             return true;
         }
@@ -497,44 +501,62 @@
             yearSelect.value = '';
             sectionSelect.value = '';
             document.getElementById('day').value = '';
-            timeStartSelect.value = '';
-            timeEndSelect.value = '';
+            classTimeSelect.value = '';
+            if (roomSelect) roomSelect.innerHTML = '<option value="">Select a room</option>';
         }
 
         async function registerInstructor() {
-            console.log('Starting instructor registration...');
+            console.log('=== STARTING INSTRUCTOR REGISTRATION ===');
             
-            // Get form values
-            const name = document.getElementById('name').value.trim();
-            const subject = document.getElementById('subject').value.trim();
-            const course = courseSelect.value;
-            const year = yearSelect.value;
-            const section = sectionSelect.value;
-            const day = document.getElementById('day').value;
-            const classTime = classTimeSelect.value;
-            const room = roomSelect ? roomSelect.value : '';
-            
-            // Split the class time into start and end times
-            const [timeStart, timeEnd] = classTime.split('-').map(t => t.trim());
-            const timeRange = `${timeStart} - ${timeEnd}`;
-
-            // Validate all required fields
-            if (!name || !subject || !course || !year || !section || !day || !classTime || !room) {
-                showError("Please fill in all required fields.");
-                return;
-            }
-
-            // Get the selected room's capacity
-            const selectedRoom = Array.from(roomSelect.options).find(opt => opt.value === room);
-            const roomCapacity = selectedRoom ? parseInt(selectedRoom.getAttribute('data-capacity')) || 0 : 0;
-
             try {
+                // Get form values
+                const name = document.getElementById('name').value.trim();
+                const subject = document.getElementById('subject').value.trim();
+                const course = courseSelect.value;
+                const year = yearSelect.value;
+                const section = sectionSelect.value;
+                const day = document.getElementById('day').value;
+                const classTime = classTimeSelect.value;
+                const room = roomSelect ? roomSelect.value : '';
+                
+                console.log('Form values:', { name, subject, course, year, section, day, classTime, room });
+                
+                // Split the class time into start and end times
+                if (!classTime) {
+                    throw new Error('Class time is required');
+                }
+                const [timeStart, timeEnd] = classTime.split('-').map(t => t.trim());
+                const timeRange = `${timeStart} - ${timeEnd}`;
+
+                // Validate all required fields
+                const requiredFields = [
+                    { value: name, field: 'name', name: 'Instructor Name' },
+                    { value: subject, field: 'subject', name: 'Subject' },
+                    { value: course, field: 'course', name: 'Course' },
+                    { value: year, field: 'year', name: 'Year' },
+                    { value: section, field: 'section', name: 'Section' },
+                    { value: day, field: 'day', name: 'Day' },
+                    { value: classTime, field: 'classTime', name: 'Class Time' },
+                    { value: room, field: 'room', name: 'Room' }
+                ];
+
+                const missingField = requiredFields.find(field => !field.value);
+                if (missingField) {
+                    throw new Error(`${missingField.name} is required`);
+                }
+
+                // Get the selected room's capacity
+                const selectedRoom = Array.from(roomSelect.options).find(opt => opt.value === room);
+                const roomCapacity = selectedRoom ? parseInt(selectedRoom.getAttribute('data-capacity')) || 0 : 0;
+
                 // Get all instructors for validation
+                console.log('Fetching instructors for validation...');
                 const instructorsSnapshot = await getDocs(collection(db, 'instructors'));
                 const instructors = instructorsSnapshot.docs.map(doc => ({
                     id: doc.id,
                     ...doc.data()
                 }));
+                console.log(`Fetched ${instructors.length} instructors for validation`);
 
                 // 1. Check for time conflicts with existing instructors in the same room
                 const hasRoomConflict = instructors.some(instructor => {
@@ -550,11 +572,17 @@
                     const newEnd = timeToMinutes(timeEnd);
                     
                     // Check for time overlap
-                    return (newStart < existingEnd && newEnd > existingStart);
+                    const isConflict = (newStart < existingEnd && newEnd > existingStart);
+                    if (isConflict) {
+                        console.log('Room conflict found:', { instructor, newStart, newEnd, existingStart, existingEnd });
+                    }
+                    return isConflict;
                 });
 
                 if (hasRoomConflict) {
-                    showError("This room is already booked at the selected time.");
+                    const errorMsg = "This room is already booked at the selected time.";
+                    console.error(errorMsg);
+                    showError(errorMsg);
                     return;
                 }
 
@@ -568,14 +596,19 @@
                     const existingStart = timeToMinutes(instructorStart);
                     const existingEnd = timeToMinutes(instructorEnd);
 
-                    return newStart < existingEnd && newEnd > existingStart;
+                    const isConflict = (newStart < existingEnd && newEnd > existingStart);
+                    if (isConflict) {
+                        console.log('Instructor time conflict found:', { instructor, newStart, newEnd, existingStart, existingEnd });
+                    }
+                    return isConflict;
                 });
 
                 if (hasInstructorTimeConflict) {
-                    showError("This instructor already has a class scheduled at this time on this day.");
+                    const errorMsg = "This instructor already has a class scheduled at this time on this day.";
+                    console.error(errorMsg);
+                    showError(errorMsg);
                     return;
                 }
-
 
                 // 3. Check if this specific class already has this specific subject
                 const hasSubjectInClass = instructors.some(instructor => 
@@ -586,13 +619,15 @@
                 );
 
                 if (hasSubjectInClass) {
-                    showError("This subject is already assigned to this class.");
+                    const errorMsg = "This subject is already assigned to this class.";
+                    console.error(errorMsg);
+                    showError(errorMsg);
                     return;
                 }
 
                 // Save to Firestore
                 console.log('Saving instructor to Firestore...');
-                const docRef = await addDoc(collection(db, 'instructors'), {
+                const instructorData = {
                     name,
                     subject,
                     course,
@@ -603,18 +638,35 @@
                     roomName: room,
                     roomCapacity: roomCapacity,
                     timestamp: new Date().toISOString()
-                });
+                };
                 
-                console.log('Instructor registered with ID: ', docRef.id);
-                alert('Instructor registered successfully!');
-                clearForm();
-                clearError();
+                console.log('Instructor data to save:', instructorData);
                 
-                // Refresh the instructors list after successful registration
-                allInstructors = await fetchAllInstructors();
+                try {
+                    const docRef = await addDoc(collection(db, 'instructors'), instructorData);
+                    console.log('Instructor registered with ID: ', docRef.id);
+                    
+                    // Show success message
+                    alert('Instructor registered successfully!');
+                    
+                    // Clear the form
+                    clearForm();
+                    clearError();
+                    
+                    // Refresh the instructors list after successful registration
+                    console.log('Refreshing instructors list...');
+                    allInstructors = await fetchAllInstructors();
+                    console.log('Instructors list refreshed. Total instructors:', allInstructors.length);
+                    
+                } catch (dbError) {
+                    console.error('Database error:', dbError);
+                    throw new Error('Failed to save to database: ' + dbError.message);
+                }
             } catch (error) {
                 console.error('Error in registerInstructor:', error);
-                showError('Error registering instructor: ' + (error.message || 'Unknown error'));
+                showError('Error: ' + (error.message || 'Failed to register instructor'));
+            } finally {
+                console.log('=== INSTRUCTOR REGISTRATION COMPLETE ===');
             }
         }
 
