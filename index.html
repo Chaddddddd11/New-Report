@@ -385,19 +385,19 @@
     // Course configuration with years and sections
     const courseConfig = {
       'BSA': {
-        years: ['1', '2', '3', '4'],
+        years: [1, 2, 3, 4],
         sections: ['A', 'B', 'C', 'D']
       },
       'BSAIS': {
-        years: ['1', '2', '3', '4'],
+        years: [1, 2, 3, 4],
         sections: ['A', 'B']
       },
       'BSE': {
-        years: ['1', '2', '3', '4'],
+        years: [1, 2, 3, 4],
         sections: ['A', 'B']
       },
       'BSPublicAdministration': {
-        years: ['1', '2', '3', '4'],
+        years: [1, 2, 3, 4],
         sections: ['A', 'B']
       }
     };
@@ -463,14 +463,16 @@
       sectionSelect.innerHTML = '<option value="">-- Select Section --</option>';
       
       if (selectedCourse) {
-        // Add years 1-4 for all courses
-        for (let i = 1; i <= 4; i++) {
+        // Add years from courseConfig
+        const years = courseConfig[selectedCourse]?.years || [];
+        years.forEach(year => {
           const option = document.createElement('option');
-          option.value = i.toString();
-          option.textContent = `Year ${i}`;
+          option.value = year;
+          option.textContent = `Year ${year}`;
           yearSelect.appendChild(option);
-        }
+        });
       }
+      
       sectionSelect.disabled = true;
       yearSelect.value = '';
       sectionSelect.value = '';
@@ -487,9 +489,8 @@
       
       if (selectedYear) {
         const selectedCourse = courseSelect.value;
-        // Add sections A-D for BSA, A-B for others
-        const maxSections = selectedCourse === 'BSA' ? 4 : 2;
-        const sections = ['A', 'B', 'C', 'D'].slice(0, maxSections);
+        // Get sections from courseConfig
+        const sections = courseConfig[selectedCourse]?.sections || [];
         
         sections.forEach(section => {
           const option = document.createElement('option');
@@ -498,6 +499,7 @@
           sectionSelect.appendChild(option);
         });
       }
+      
       sectionSelect.value = '';
       updateStudentCapacity();
       renderSchedule();
