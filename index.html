@@ -439,12 +439,18 @@
     
     // Function to initialize the schedule
     function initializeSchedule() {
-      renderSchedule();
+      console.log('Initializing schedule...');
       
       // Set up event listeners
       courseSelect.addEventListener('change', handleCourseChange);
       yearSelect.addEventListener('change', handleYearChange);
       sectionSelect.addEventListener('change', handleSectionChange);
+      
+      // Initial state
+      yearSelect.disabled = true;
+      sectionSelect.disabled = true;
+      
+      console.log('Schedule initialization complete');
     }
     
     function handleCourseChange() {
@@ -527,7 +533,14 @@
 
     // Render the schedule based on selected filters
     function renderSchedule() {
-      console.log('Rendering schedule...');
+      console.log('Rendering schedule with data:', allInstructorsData.length, 'instructors');
+      
+      // Get selected filters
+      const selectedCourse = courseSelect.value;
+      const selectedYear = yearSelect.value;
+      const selectedSection = sectionSelect.value;
+      
+      console.log('Current filters - Course:', selectedCourse, 'Year:', selectedYear, 'Section:', selectedSection);
       
       // Generate time slots from 07:00 to 17:00 (5:00 PM)
       const timeSlots = [];
@@ -539,11 +552,6 @@
       
       // Clear the schedule body
       scheduleBody.innerHTML = '';
-      
-      // Get selected values
-      const selectedCourse = courseSelect.value;
-      const selectedYear = yearSelect.value;
-      const selectedSection = sectionSelect.value;
       
       // If no course, year, or section is selected, show empty schedule
       if (!selectedCourse || !selectedYear || !selectedSection) {
@@ -779,11 +787,16 @@
 
     // Set up event listeners when the DOM is fully loaded
     document.addEventListener('DOMContentLoaded', function() {
-      // Initialize the schedule first to set up UI event handlers
+      console.log('DOM fully loaded, initializing...');
+      
+      // Initialize the UI first
       initializeSchedule();
       
       // Then set up Firebase real-time listener
       const unsubscribe = setupFirebaseListener();
+      
+      // Initial render with empty data
+      renderSchedule();
       
       // Clean up the listener when the page is unloaded
       window.addEventListener('beforeunload', () => {
