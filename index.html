@@ -147,7 +147,6 @@
       color: #666;
       font-style: italic;
     }
-    }
 
     label {
       display: block;
@@ -428,6 +427,18 @@
       });
 
       console.log(`Found ${sectionInstructors.length} instructors for ${selectedCourse}-${selectedYear}${selectedSection}`);
+      console.log('Section instructors:', sectionInstructors);
+
+      if (sectionInstructors.length === 0) {
+        console.log('No instructors found for the selected filters');
+        // Still show the time slots but with empty cells
+        timeSlots.forEach(timeSlot => {
+          const row = document.createElement('tr');
+          row.innerHTML = `<td>${timeSlot}</td><td></td><td></td><td></td><td></td><td></td><td></td>`;
+          scheduleBody.appendChild(row);
+        });
+        return;
+      }
 
       // Create a row for each time slot
       timeSlots.forEach(timeSlot => {
@@ -446,7 +457,13 @@
             const dayMatch = instructor.day === day;
             
             if (timeMatch && dayMatch) {
-              console.log('Found matching schedule:', { instructor, timeSlot, day });
+              console.log('Found matching schedule:', { 
+                instructor: instructor.name, 
+                timeSlot, 
+                day,
+                subject: instructor.subject,
+                room: instructor.roomName
+              });
               return true;
             }
             
@@ -592,12 +609,24 @@
     sectionSelect.addEventListener('change', updateInstructorCards);
 
     const q = query(instructorsCollectionRef);
+    console.log("Setting up Firestore listener...");
     onSnapshot(q, (querySnapshot) => {
+      console.log("Received snapshot from Firestore");
       allInstructorsData = []; // Clear previous data
+      
+      if (querySnapshot.empty) {
+        console.log("No documents found in 'instructors' collection");
+      } else {
+        console.log(`Found ${querySnapshot.size} instructor documents`);
+      }
+      
       querySnapshot.forEach((doc) => {
-        allInstructorsData.push({ id: doc.id, ...doc.data() });
+        const data = doc.data();
+        console.log(`Instructor data for ${doc.id}:`, data);
+        allInstructorsData.push({ id: doc.id, ...data });
       });
-      console.log("Fetched instructors from Firebase:", allInstructorsData);
+      
+      console.log("All instructors data:", allInstructorsData);
       updateInstructorCards(); // Update display when data changes
       renderSchedule(); // Re-render schedule with new data
     }, (error) => {
