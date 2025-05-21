@@ -516,19 +516,39 @@
                     }
                 });
                 
+                // Normalize time format for comparison (remove extra spaces around dash)
+                const normalizeTime = (timeStr) => {
+                    if (!timeStr) return '';
+                    return timeStr.replace(/\s*-\s*/g, '-');
+                };
+
                 // Filter available rooms based on:
                 // 1. Room's assigned day matches selected day (case-insensitive)
-                // 2. Room's time slot exactly matches selected time
+                // 2. Room's time slot matches selected time (normalized)
                 // 3. Room has sufficient capacity
                 // 4. Room is not already booked
                 const availableRooms = Array.from(roomSchedules.values()).filter(room => {
-                    const dayMatches = room.day && room.day.toLowerCase() === selectedDay.toLowerCase();
-                    const timeMatches = room.time && room.time === classTime;
+                    console.log('Checking room:', room.name, 'day:', room.day, 'time:', room.time);
+                    console.log('Selected day:', selectedDay, 'time:', classTime);
+                    
+                    const dayMatches = room.day && room.day.trim().toLowerCase() === selectedDay.trim().toLowerCase();
+                    const roomTime = normalizeTime(room.time);
+                    const selectedTime = normalizeTime(classTime);
+                    const timeMatches = roomTime && selectedTime && roomTime === selectedTime;
                     const hasCapacity = room.capacity >= studentCapacity;
                     const isAvailable = !room.isBooked;
                     
-                    return dayMatches && timeMatches && hasCapacity && isAvailable;
+                    const isAvailableRoom = dayMatches && timeMatches && hasCapacity && isAvailable;
+                    console.log('Room', room.name, 'available?', isAvailableRoom, 
+                                'dayMatches:', dayMatches, 
+                                'timeMatches:', timeMatches, 
+                                'hasCapacity:', hasCapacity,
+                                'isAvailable:', isAvailable);
+                    
+                    return isAvailableRoom;
                 });
+                
+                console.log('Available rooms after filtering:', availableRooms.map(r => r.name));
                 
                 // Get current room value before clearing the select
                 const currentRoom = roomSelect.value;
