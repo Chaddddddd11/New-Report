@@ -453,6 +453,27 @@
             }
         }
 
+        // Helper function to check if two time ranges overlap
+        function hasTimeOverlap(timeRange1, timeRange2) {
+            if (!timeRange1 || !timeRange2) return false;
+            
+            const [start1, end1] = timeRange1.split('-').map(t => t.trim());
+            const [start2, end2] = timeRange2.split('-').map(t => t.trim());
+            
+            // Convert to minutes since midnight for comparison
+            const toMinutes = (timeStr) => {
+                const [hours, minutes] = timeStr.split(':').map(Number);
+                return hours * 60 + (minutes || 0);
+            };
+            
+            const start1Min = toMinutes(start1);
+            const end1Min = toMinutes(end1);
+            const start2Min = toMinutes(start2);
+            const end2Min = toMinutes(end2);
+            
+            return start1Min < end2Min && end1Min > start2Min;
+        }
+
         // Update available rooms based on current selection
         async function updateAvailableRooms() {
             const selectedDay = daySelect.value;
@@ -466,7 +487,6 @@
             
             // Show loading state
             roomSelect.innerHTML = '<option value="">Checking room availability...</option>';
-
             
             try {
                 // Get student capacity for the selected course/year/section
@@ -483,7 +503,9 @@
                 // Get rooms that are already booked for this time slot
                 const conflictingRooms = new Set();
                 allInstructors.forEach(instructor => {
-                    if (instructor.day === selectedDay && instructor.time === selectedTime && instructor.roomName) {
+                    if (instructor.day === selectedDay && 
+                        instructor.roomName && 
+                        hasTimeOverlap(instructor.time, selectedTime)) {
                         conflictingRooms.add(instructor.roomName);
                     }
                 });
