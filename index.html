@@ -286,14 +286,101 @@
     };
 
     // Initialize Firebase
+    console.log('Initializing Firebase...');
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
     
-    // Collection reference with correct case sensitivity
+    // Collection reference - using the exact case from your Firestore
     const instructorsCollectionRef = collection(db, "Instructor");
+    console.log('Using collection: Instructor');
+    
+    // Make db available in console for debugging
+    window.db = db;
+    window.instructorsCollectionRef = instructorsCollectionRef;
     
     // Store all instructors data
     let allInstructorsData = []; // To store all instructors from Firebase
+    let firebaseInitialized = false;
+
+    const studentCapacityMap = {
+      // BSA Capacities
+      'BSA-1A': 30, 'BSA-1B': 37, 'BSA-1C': 32, 'BSA-1D': 34, 
+      'BSA-1E': 43, 'BSA-1F': 49, 'BSA-1G': 45, 'BSA-1H': 41, 
+      'BSA-1I': 38, 'BSA-1J': 46,
+      'BSA-2A': 38, 'BSA-2B': 44, 'BSA-2C': 46, 'BSA-2D': 34, 
+      'BSA-2E': 39, 'BSA-2F': 35, 'BSA-2G': 47, 'BSA-2H': 31,
+      'BSA-3A': 44, 'BSA-3B': 50, 'BSA-3C': 41, 'BSA-3D': 32, 
+      'BSA-3E': 50, 'BSA-3F': 36, 'BSA-3G': 42, 'BSA-3H': 39,
+      'BSA-4A': 41, 'BSA-4B': 38, 'BSA-4C': 35, 'BSA-4D': 47,
+
+      // BSAIS Capacities
+      'BSAIS-1A': 40, 'BSAIS-1B': 42, 'BSAIS-1C': 32, 'BSAIS-1D': 44, 'BSAIS-1E': 35,
+      'BSAIS-2A': 41, 'BSAIS-2B': 40, 'BSAIS-2C': 50, 'BSAIS-2D': 44, 'BSAIS-2E': 44, 
+      'BSAIS-2F': 43, 'BSAIS-2G': 38,
+      'BSAIS-3A': 42, 'BSAIS-3B': 50, 'BSAIS-3C': 41, 'BSAIS-3D': 47, 'BSAIS-3E': 41, 
+      'BSAIS-3F': 30,
+      'BSAIS-4A': 36, 'BSAIS-4B': 35, 'BSAIS-4C': 45, 'BSAIS-4D': 42, 'BSAIS-4E': 30, 
+      'BSAIS-4F': 32, 'BSAIS-4G': 34,
+
+      // MSMarketing Capacities
+      'MSMarketing-1A': 36, 'MSMarketing-1B': 39, 'MSMarketing-1C': 35, 'MSMarketing-1D': 31, 
+      'MSMarketing-1E': 36, 'MSMarketing-1F': 43, 'MSMarketing-1G': 41, 'MSMarketing-1H': 41,
+      'MSMarketing-2A': 35, 'MSMarketing-2B': 44, 'MSMarketing-2C': 49, 'MSMarketing-2D': 40, 
+      'MSMarketing-2E': 49, 'MSMarketing-2F': 50, 'MSMarketing-2G': 31, 'MSMarketing-2H': 46, 
+      'MSMarketing-2I': 36,
+      'MSMarketing-3A': 42, 'MSMarketing-3B': 43, 'MSMarketing-3C': 36,
+      'MSMarketing-4A': 37, 'MSMarketing-4B': 31, 'MSMarketing-4C': 49, 'MSMarketing-4D': 47, 
+      'MSMarketing-4E': 43, 'MSMarketing-4F': 44, 'MSMarketing-4G': 33, 'MSMarketing-4H': 45, 
+      'MSMarketing-4I': 31,
+
+      // BSE Capacities
+      'BSE-1A': 40, 'BSE-1B': 48, 'BSE-1C': 50,
+      'BSE-2A': 42, 'BSE-2B': 34, 'BSE-2C': 44, 'BSE-2D': 40, 'BSE-2E': 36, 
+      'BSE-2F': 34, 'BSE-2G': 48, 'BSE-2H': 40,
+      'BSE-3A': 39, 'BSE-3B': 32, 'BSE-3C': 44, 'BSE-3D': 50,
+      'BSE-4A': 41, 'BSE-4B': 37, 'BSE-4C': 42, 'BSE-4D': 40, 'BSE-4E': 33, 
+      'BSE-4F': 43, 'BSE-4G': 49, 'BSE-4H': 38,
+
+      // BSPublicAdministration Capacities
+      'BSPublicAdministration-1A': 36, 'BSPublicAdministration-1B': 34, 
+      'BSPublicAdministration-1C': 50, 'BSPublicAdministration-1D': 31,
+      'BSPublicAdministration-2A': 50, 'BSPublicAdministration-2B': 40, 
+      'BSPublicAdministration-2C': 43, 'BSPublicAdministration-2D': 36, 
+      'BSPublicAdministration-2E': 38, 'BSPublicAdministration-2F': 49, 
+      'BSPublicAdministration-2G': 36,
+      'BSPublicAdministration-3A': 37, 'BSPublicAdministration-3B': 30, 
+      'BSPublicAdministration-3C': 33, 'BSPublicAdministration-3D': 38, 
+      'BSPublicAdministration-3E': 48,
+      'BSPublicAdministration-4A': 34, 'BSPublicAdministration-4B': 43, 
+      'BSPublicAdministration-4C': 33, 'BSPublicAdministration-4D': 30, 
+      'BSPublicAdministration-4E': 43, 'BSPublicAdministration-4F': 39, 
+      'BSPublicAdministration-4G': 30,
+    };
+
+    // Course configuration with years and sections - using the more detailed version
+    // The configuration below is used to populate the course, year, and section dropdowns
+    // and to validate the selections
+    
+    // Test Firestore connection immediately
+    console.log('Testing Firestore connection...');
+    const testQuery = query(instructorsCollectionRef, where('name', '!=', ''));
+    getDocs(testQuery).then(snapshot => {
+      console.log(`Firestore connection successful. Found ${snapshot.size} instructor documents.`);
+      if (snapshot.size === 0) {
+        console.warn('No instructor documents found in the collection. Make sure you have data in the "Instructor" collection.');
+      }
+      firebaseInitialized = true;
+    }).catch(error => {
+      console.error('Error connecting to Firestore:', error);
+      console.error('Firestore error code:', error.code);
+      console.error('Firestore error message:', error.message);
+      
+      if (error.code === 'permission-denied') {
+        console.error('Permission denied. Please check your Firestore security rules.');
+      } else if (error.code === 'not-found') {
+        console.error('Collection not found. Make sure the collection name is correct.');
+      }
+    });
 
     // Course configuration with years and sections
     const courseConfig = {
@@ -315,37 +402,8 @@
       }
     };
 
-    // Student capacity map (simplified)
-    const studentCapacityMap = {
-      'BSA': {
-        '1': { 'A': 30, 'B': 30, 'C': 30, 'D': 30 },
-        '2': { 'A': 25, 'B': 25, 'C': 25, 'D': 25 },
-        '3': { 'A': 20, 'B': 20, 'C': 20, 'D': 20 },
-        '4': { 'A': 15, 'B': 15, 'C': 15, 'D': 15 }
-      },
-      'BSAIS': {
-        '1': { 'A': 30, 'B': 30 },
-        '2': { 'A': 25, 'B': 25 },
-        '3': { 'A': 20, 'B': 20 },
-        '4': { 'A': 15, 'B': 15 }
-      },
-      'BSE': {
-        '1': { 'A': 25, 'B': 25 },
-        '2': { 'A': 20, 'B': 20 },
-        '3': { 'A': 15, 'B': 15 },
-        '4': { 'A': 10, 'B': 10 }
-      },
-      'BSPublicAdministration': {
-        '1': { 'A': 25 },
-        '2': { 'A': 20 },
-        '3': { 'A': 15 },
-        '4': { 'A': 10 }
-      },
-      'MSMarketing': {
-        '1': { 'A': 20 },
-        '2': { 'A': 15 }
-      }
-    };
+    // Using the detailed studentCapacityMap that was defined earlier
+    // This map contains specific capacities for each course, year, and section combination
 
     // Function to update student capacity display
     function updateStudentCapacity() {
@@ -354,7 +412,10 @@
       const section = sectionSelect.value;
       
       // Get student capacity for the selected course/year/section
-      const studentCapacity = studentCapacityMap[course]?.[year]?.[section] || 0;
+      // Convert year from '1st' to '1', '2nd' to '2', etc.
+      const yearNumber = year ? year.match(/\d+/)?.[0] || '0' : '0';
+      const mapKey = `${course}-${yearNumber}${section}`;
+      const studentCapacity = studentCapacityMap[mapKey] || 0;
       
       // Update the display
       const capacityContainer = document.getElementById('studentCapacityContainer');
@@ -494,16 +555,28 @@
         return;
       }
 
+      console.log('Filtering instructors with:', {
+        selectedCourse,
+        selectedYear,
+        selectedSection,
+        totalInstructors: allInstructorsData.length
+      });
+      
       // Find all instructors for the selected course, year, and section
       const sectionInstructors = allInstructorsData.filter(instr => {
-        const matches = instr.course === selectedCourse &&
-                      instr.year === selectedYear &&
-                      instr.section === selectedSection;
-        if (matches) {
-          console.log('Matching instructor:', instr);
-        }
-        return matches;
+        const courseMatch = instr.course === selectedCourse;
+        const yearMatch = instr.year === selectedYear;
+        const sectionMatch = instr.section === selectedSection;
+        
+        console.log(`Checking instructor: ${instr.name} | ` +
+                   `Course: ${instr.course} (${courseMatch ? '✓' : '✗'}) | ` +
+                   `Year: ${instr.year} (${yearMatch ? '✓' : '✗'}) | ` +
+                   `Section: ${instr.section} (${sectionMatch ? '✓' : '✗'})`);
+        
+        return courseMatch && yearMatch && sectionMatch;
       });
+      
+      console.log(`Found ${sectionInstructors.length} matching instructors`);
       
       console.log('Filtered instructors:', sectionInstructors);
 
@@ -595,50 +668,113 @@
 
     // Set up real-time listener for instructors
     function setupFirebaseListener() {
-      const q = query(instructorsCollectionRef);
-      const unsubscribe = onSnapshot(q, (querySnapshot) => {
-        allInstructorsData = []; // Clear previous data
-        
-        querySnapshot.forEach((doc) => {
-          const data = doc.data();
-          if (!data) return;
-          
-          // Normalize the time format to HH:00-HH:00
-          let normalizedTime = '';
-          if (data.time) {
-            // Handle different time formats (e.g., '7:00-8:00' or '07:00 - 08:00')
-            const times = data.time.split('-').map(part => {
-              const [h, m = '00'] = part.trim().split(':');
-              return `${h.padStart(2, '0')}:${m.padStart(2, '0')}`.substring(0, 5);
-            });
-            normalizedTime = times.join('-');
-          }
-          
-          // Create instructor object with normalized data
-          const instructor = {
-            id: doc.id,
-            name: data.name || 'N/A',
-            subject: data.subject || 'N/A',
-            roomName: data.roomName || 'TBA',
-            day: data.day ? data.day.trim() : '',
-            time: normalizedTime,
-            course: data.course || '',
-            year: data.year || '',
-            section: data.section || ''
-          };
-          
-          allInstructorsData.push(instructor);
-          
-          console.log('Instructor loaded:', instructor);
-        });
-        
-        console.log('All instructors loaded. Total:', allInstructorsData.length);
-        renderSchedule(); // Re-render schedule with new data
-      }, (error) => {
-        console.error("Error setting up instructor listener:", error);
-      });
+      console.log('Setting up Firebase listener...');
       
-      return unsubscribe;
+      if (!firebaseInitialized) {
+        console.warn('Firebase not fully initialized yet, but setting up listener anyway...');
+      }
+      
+      try {
+        console.log('Creating query for collection...');
+        const q = query(instructorsCollectionRef);
+        console.log('Setting up onSnapshot listener...');
+        
+        const unsubscribe = onSnapshot(q, 
+          // Success callback
+          (querySnapshot) => {
+            console.log('Received snapshot from Firestore');
+            if (!querySnapshot) {
+              console.error('Query snapshot is null or undefined');
+              return;
+            }
+            
+            console.log(`Received ${querySnapshot.size} documents from Firestore`);
+            allInstructorsData = []; // Clear previous data
+            
+            if (querySnapshot.empty) {
+              console.warn('No documents found in the collection');
+              renderSchedule();
+              return;
+            }
+            
+            querySnapshot.forEach((doc) => {
+              if (!doc.exists()) {
+                console.warn('Document does not exist:', doc.id);
+                return;
+              }
+              
+              const data = doc.data();
+              if (!data) {
+                console.warn('Document data is empty for document:', doc.id);
+                return;
+              }
+              
+              console.log('Processing document:', doc.id, data);
+              
+              // Normalize the time format to HH:00-HH:00
+              let normalizedTime = '';
+              if (data.time) {
+                try {
+                  // Handle different time formats (e.g., '7:00-8:00' or '07:00 - 08:00')
+                  const times = data.time.split('-').map(part => {
+                    const [h, m = '00'] = part.trim().split(':');
+                    return `${h.padStart(2, '0')}:${m.padStart(2, '0')}`.substring(0, 5);
+                  });
+                  normalizedTime = times.join('-');
+                } catch (error) {
+                  console.error('Error normalizing time:', error, 'Time string was:', data.time);
+                  normalizedTime = data.time; // Use original if normalization fails
+                }
+              }
+              
+              const instructor = {
+                id: doc.id,
+                name: data.name || 'N/A',
+                subject: data.subject || 'N/A',
+                roomName: data.roomName || 'TBA',
+                day: data.day ? data.day.trim() : '',
+                time: normalizedTime,
+                course: data.course || '',
+                year: data.year || '',
+                section: data.section || ''
+              };
+              
+              allInstructorsData.push(instructor);
+              console.log('Added instructor to allInstructorsData:', {
+                id: instructor.id,
+                name: instructor.name,
+                course: instructor.course,
+                year: instructor.year,
+                section: instructor.section,
+                day: instructor.day,
+                time: instructor.time,
+                subject: instructor.subject
+              });
+            });
+            
+            console.log('All instructors loaded. Total:', allInstructorsData.length);
+            firebaseInitialized = true;
+            renderSchedule(); // Re-render schedule with new data
+          },
+          // Error callback
+          (error) => {
+            console.error("Error in Firestore listener:", error);
+            console.error('Error code:', error.code);
+            console.error('Error message:', error.message);
+            
+            if (error.code === 'permission-denied') {
+              console.error('Permission denied. Please check your Firestore security rules.');
+            } else if (error.code === 'not-found') {
+              console.error('Collection not found. Make sure the collection name is correct.');
+            }
+          }
+        );
+        
+        return unsubscribe;
+      } catch (error) {
+        console.error('Error setting up Firestore listener:', error);
+        return () => {}; // Return empty cleanup function
+      }
     }
 
     // Set up event listeners when the DOM is fully loaded
