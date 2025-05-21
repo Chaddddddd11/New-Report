@@ -322,8 +322,9 @@
                     sectionSelect.value = data.section || '';
                     daySelect.value = data.day || '';
                     
-                    if (data.timeStart && data.timeEnd) {
-                        const timeValue = `${data.timeStart}-${data.timeEnd}`;
+                    if (data.time) {
+                        // Handle both old format (timeStart/timeEnd) and new format (time)
+                        const timeValue = data.time || `${data.timeStart}-${data.timeEnd}`;
                         let timeOptionExists = Array.from(timeSelect.options).some(opt => opt.value === timeValue);
                         if(timeOptionExists) {
                            timeSelect.value = timeValue;
@@ -920,6 +921,9 @@
                     return;
                 }
                 
+                // Combine timeStart and timeEnd into a single time string
+                const time = `${timeStart}-${timeEnd}`;
+                
                 const instructorData = {
                     name,
                     subject,
@@ -927,8 +931,7 @@
                     year,
                     section,
                     day,
-                    timeStart, // Store as HH:MM
-                    timeEnd,   // Store as HH:MM
+                    time, // Store as 'HH:00-HH:00'
                     roomName,
                     timestamp: new Date() // For ordering or tracking
                 };
