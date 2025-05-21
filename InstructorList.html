@@ -307,12 +307,13 @@
         import {
             getFirestore,
             collection,
-            getDocs, // Added for initial room availability check if needed, otherwise onSnapshot is primary
             doc,
-            updateDoc,
             deleteDoc,
             onSnapshot,
+            getDocs,
+            updateDoc,
             query,
+            where,
             orderBy
         } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
@@ -597,9 +598,16 @@
                 actionsCell.appendChild(editBtn);
                 actionsCell.appendChild(deleteBtn);
             });
-            
-            populateTimeSelect(editTimeSelect, instructor.time || '');
+        }
 
+        function openEditModal(instructor) {
+            editInstructorIdInput.value = instructor.id;
+            editInstructorNameInput.value = instructor.name || '';
+            editSubjectInput.value = instructor.subject || '';
+            editCourseSelect.value = instructor.course || '';
+            editDaySelect.value = instructor.day || '';
+            editTimeSelect.value = instructor.time || '';
+            
             // Set year and section
             editYearLevelSelect.value = instructor.year || '';
             editSectionSelect.value = instructor.section || '';
@@ -622,19 +630,42 @@
                 editSectionSelect.appendChild(option);
             });
 
-            // Parse existing yearSection and set dropdowns
-            const currentYearSectionValue = instructor.yearSection || '';
-            const yearMatch = currentYearSectionValue.match(/^(\d+)/); // Extracts leading digits
-            const sectionMatch = currentYearSectionValue.match(/([A-Za-z]+)$/); // Extracts trailing letters
-
-            editYearLevelSelect.value = (yearMatch && yearMatch[1]) ? yearMatch[1] : '';
-            editSectionSelect.value = (sectionMatch && sectionMatch[1]) ? sectionMatch[1].toUpperCase() : '';
+            // Set the selected values
+            if (instructor.year) editYearLevelSelect.value = instructor.year;
+            if (instructor.section) editSectionSelect.value = instructor.section;
             
-            // Initial population of rooms - pass the original full yearSection string
-            populateRoomSelectForEdit(instructor.day, instructor.time, instructor.course, currentYearSectionValue, instructor.roomName || '', instructor.id);
+            // Populate rooms
+            const currentYearSectionValue = instructor.year && instructor.section ? 
+                `${instructor.year}${instructor.section}` : '';
+                
+            populateRoomSelectForEdit(
+                instructor.day,
+                instructor.time,
+                instructor.course,
+                currentYearSectionValue,
+                instructor.roomName || '',
+                instructor.id
+            );
             
+            // Show the modal
             editModal.style.display = "block";
         }
+
+
+        async function deleteInstructor(instructorId) {
+            if (!confirm('Are you sure you want to delete this instructor?')) {
+                return;
+            }
+
+            try {
+                await deleteDoc(doc(db, "/Instructors", instructorId));
+                // The real-time listener will automatically update the table
+            } catch (error) {
+                console.error('Error deleting instructor:', error);
+                alert('Failed to delete instructor. Please try again.');
+            }
+        }
+
 
         function closeModal() {
             editModal.style.display = "none";
