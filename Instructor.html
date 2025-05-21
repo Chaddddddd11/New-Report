@@ -361,19 +361,45 @@
                 
                 // Load all rooms from Firestore
                 console.log('2. Loading rooms from Firestore...');
-                const roomsSnapshot = await db.collection('rooms').get();
-                allRooms = [];
-                roomsSnapshot.forEach(doc => {
-                    const data = doc.data();
-                    if (data && data.name) {
-                        allRooms.push({
-                            id: doc.id,
-                            name: data.name,
-                            capacity: parseInt(data.capacity) || 0
+                try {
+                    const roomsSnapshot = await db.collection('rooms').get();
+                    allRooms = [];
+                    roomsSnapshot.forEach(doc => {
+                        const data = doc.data();
+                        if (data && data.name) {
+                            allRooms.push({
+                                id: doc.id,
+                                name: data.name,
+                                capacity: parseInt(data.capacity) || 0
+                            });
+                        }
+                    });
+                    console.log('3. Loaded rooms from Firestore:', allRooms);
+                    
+                    // If no rooms found in 'rooms' collection, try 'Rooms' (case-sensitive)
+                    if (allRooms.length === 0) {
+                        console.log('No rooms found in "rooms" collection, trying "Rooms"...');
+                        const roomsSnapshot2 = await db.collection('Rooms').get();
+                        roomsSnapshot2.forEach(doc => {
+                            const data = doc.data();
+                            if (data && data.name) {
+                                allRooms.push({
+                                    id: doc.id,
+                                    name: data.name,
+                                    capacity: parseInt(data.capacity) || 0
+                                });
+                            }
                         });
+                        console.log('3.1 Loaded rooms from "Rooms" collection:', allRooms);
                     }
-                });
-                console.log('3. Loaded rooms:', allRooms);
+                    
+                    // If still no rooms, log an error
+                    if (allRooms.length === 0) {
+                        console.error('No rooms found in Firestore. Please check your database.');
+                    }
+                } catch (error) {
+                    console.error('Error loading rooms from Firestore:', error);
+                }
                 
                 // Set up event listeners for fields that affect student capacity
                 console.log('4. Setting up event listeners...');
