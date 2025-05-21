@@ -187,18 +187,19 @@
                 </select>
             </div>
 
-            <div class="form-group required">
+            <div class="form-group">
                 <label for="section">Section*</label>
                 <select id="section" required>
                     <option value="">Select Section</option>
-                    <option value="A">A</option>
-                    <option value="B">B</option>
-                    <option value="C">C</option>
-                    <option value="D">D</option>
-                    <option value="E">E</option>
-                    <option value="F">F</option>
-                    <option value="G">G</option>
+                    <option value="A">Section A</option>
+                    <option value="B">Section B</option>
+                    <option value="C">Section C</option>
+                    <option value="D">Section D</option>
                 </select>
+            </div>
+
+            <div class="form-group" id="studentCapacityContainer" style="display: none; padding: 10px; background-color: #f8f9fa; border-radius: 4px; margin-bottom: 15px;">
+                <strong>Student Capacity: </strong><span id="studentCapacity">-</span>
             </div>
 
             <div class="form-group required">
@@ -434,12 +435,20 @@
             const course = courseSelect.value;
             const year = yearSelect.value;
             const section = sectionSelect.value;
+            const container = document.getElementById('studentCapacityContainer');
+            const capacityDisplay = document.getElementById('studentCapacity');
             
             if (course && year && section) {
                 const capacity = studentCapacityMap[course]?.[year]?.[section] || 'N/A';
-                const capacityDisplay = document.getElementById('studentCapacity');
                 if (capacityDisplay) {
-                    capacityDisplay.textContent = `Student Capacity: ${capacity}`;
+                    capacityDisplay.textContent = capacity;
+                }
+                if (container) {
+                    container.style.display = 'block';
+                }
+            } else {
+                if (container) {
+                    container.style.display = 'none';
                 }
             }
         }
@@ -454,6 +463,9 @@
                 roomSelect.innerHTML = '<option value="">Select day and time first</option>';
                 return;
             }
+            
+            // Show loading state
+            roomSelect.innerHTML = '<option value="">Checking room availability...</option>';
 
             
             try {
@@ -494,6 +506,12 @@
                         availableRooms++;
                     }
                 });
+                
+                // Sort rooms by name
+                const options = Array.from(roomSelect.options);
+                options.sort((a, b) => a.text.localeCompare(b.text));
+                roomSelect.innerHTML = '';
+                options.forEach(option => roomSelect.add(option));
                 
                 if (availableRooms === 0) {
                     roomSelect.innerHTML = '<option value="">No available rooms for this time slot</option>';
