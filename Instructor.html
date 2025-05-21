@@ -383,26 +383,97 @@
 
         // Function to populate form with instructor data
         function populateFormWithInstructorData(instructor) {
+            console.log('Populating form with instructor data:', instructor);
             if (!instructor) return;
             
-            document.getElementById('name').value = instructor.name;
-            document.getElementById('subject').value = instructor.subject;
-            document.getElementById('course').value = instructor.course;
+            // Set basic fields
+            document.getElementById('name').value = instructor.name || '';
+            document.getElementById('subject').value = instructor.subject || '';
+            document.getElementById('course').value = instructor.course || '';
             
-            if (instructor.year) document.getElementById('year').value = instructor.year;
-            if (instructor.section) document.getElementById('section').value = instructor.section;
-            if (instructor.day) document.getElementById('day').value = instructor.day;
-            if (instructor.time) document.getElementById('classTime').value = instructor.time;
-            // Room will be populated after fetching rooms based on other selections
+            // Set year level if it exists
+            if (instructor.year) {
+                const yearSelect = document.getElementById('year');
+                if (yearSelect) {
+                    yearSelect.value = instructor.year;
+                }
+            }
+            
+            // Set section if it exists
+            if (instructor.section) {
+                const sectionSelect = document.getElementById('section');
+                if (sectionSelect) {
+                    sectionSelect.value = instructor.section;
+                }
+            }
+            
+            // Set day if it exists
+            if (instructor.day) {
+                const daySelect = document.getElementById('day');
+                if (daySelect) {
+                    daySelect.value = instructor.day;
+                }
+            }
+            
+            // Set time if it exists
+            if (instructor.time) {
+                // If time is in format "HH:MM - HH:MM", extract just the start time
+                let timeValue = instructor.time;
+                if (timeValue.includes(' - ')) {
+                    timeValue = timeValue.split(' - ')[0].trim();
+                }
+                const classTimeSelect = document.getElementById('classTime');
+                if (classTimeSelect) {
+                    // Find the option that starts with this time
+                    for (let i = 0; i < classTimeSelect.options.length; i++) {
+                        if (classTimeSelect.options[i].value.startsWith(timeValue)) {
+                            classTimeSelect.selectedIndex = i;
+                            break;
+                        }
+                    }
+                }
+            }
+            
+            // Trigger room update after a short delay to ensure other fields are set
+            setTimeout(() => {
+                updateAvailableRooms();
+                
+                // Set room after rooms are loaded
+                if (instructor.roomName) {
+                    setTimeout(() => {
+                        const roomSelect = document.getElementById('room');
+                        if (roomSelect) {
+                            const roomOption = Array.from(roomSelect.options).find(
+                                opt => opt.value === instructor.roomName
+                            );
+                            if (roomOption) {
+                                roomOption.selected = true;
+                            } else {
+                                // If room not found, add it as an option
+                                const option = document.createElement('option');
+                                option.value = instructor.roomName;
+                                option.textContent = `${instructor.roomName} (Previously assigned)`;
+                                option.selected = true;
+                                roomSelect.appendChild(option);
+                            }
+                        }
+                    }, 500);
+                }
+            }, 100);
             
             // Change the button text to indicate update mode
             const registerBtn = document.getElementById('registerBtn');
-            registerBtn.textContent = 'Update Instructor';
-            registerBtn.dataset.mode = 'update';
-            registerBtn.dataset.instructorId = instructor.id;
+            if (registerBtn) {
+                registerBtn.textContent = 'Update Instructor';
+                registerBtn.dataset.mode = 'update';
+                registerBtn.dataset.instructorId = instructor.id;
+            }
             
             // Change the page title
-            document.querySelector('.header h1').textContent = 'Edit Instructor';
+            const header = document.querySelector('.header h1');
+            if (header) {
+                header.textContent = 'Edit Instructor';
+            }
         }
 
         document.addEventListener('DOMContentLoaded', async () => {
