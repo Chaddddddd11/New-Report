@@ -879,12 +879,24 @@
                         return; // Skip self in update mode for this specific check
                     }
                     const booking = docInstance.data();
-                    if (booking.timeStart && booking.timeEnd) {
-                        const existingStartHour = parseInt(booking.timeStart.split(':')[0], 10);
-                        const existingEndHour = parseInt(booking.timeEnd.split(':')[0], 10);
-                        // Check for overlap
+                    let existingStartHour, existingEndHour;
+                    
+                    // Handle both formats: the new single time field or the old timeStart/timeEnd
+                    if (booking.time) {
+                        // New format: "HH:MM-HH:MM"
+                        const [existingStart, existingEnd] = booking.time.split('-');
+                        existingStartHour = parseInt(existingStart.split(':')[0], 10);
+                        existingEndHour = parseInt(existingEnd.split(':')[0], 10);
+                    } else if (booking.timeStart && booking.timeEnd) {
+                        // Old format: separate timeStart and timeEnd
+                        existingStartHour = parseInt(booking.timeStart.split(':')[0], 10);
+                        existingEndHour = parseInt(booking.timeEnd.split(':')[0], 10);
+                    }
+                    
+                    // Check for overlap if we have valid times
+                    if (existingStartHour !== undefined && existingEndHour !== undefined) {
                         if (startHour < existingEndHour && endHour > existingStartHour) {
-                           hasInstructorConflict = true;
+                            hasInstructorConflict = true;
                         }
                     }
                 });
@@ -906,12 +918,24 @@
                         return; // Skip self in update mode for this specific check (e.g. if only subject changes for same slot)
                     }
                     const booking = docInstance.data();
-                    if (booking.timeStart && booking.timeEnd) {
-                        const existingStartHour = parseInt(booking.timeStart.split(':')[0], 10);
-                        const existingEndHour = parseInt(booking.timeEnd.split(':')[0], 10);
-                        // Check for overlap
+                    let existingStartHour, existingEndHour;
+                    
+                    // Handle both formats: the new single time field or the old timeStart/timeEnd
+                    if (booking.time) {
+                        // New format: "HH:MM-HH:MM"
+                        const [existingStart, existingEnd] = booking.time.split('-');
+                        existingStartHour = parseInt(existingStart.split(':')[0], 10);
+                        existingEndHour = parseInt(existingEnd.split(':')[0], 10);
+                    } else if (booking.timeStart && booking.timeEnd) {
+                        // Old format: separate timeStart and timeEnd
+                        existingStartHour = parseInt(booking.timeStart.split(':')[0], 10);
+                        existingEndHour = parseInt(booking.timeEnd.split(':')[0], 10);
+                    }
+                    
+                    // Check for overlap if we have valid times
+                    if (existingStartHour !== undefined && existingEndHour !== undefined) {
                         if (startHour < existingEndHour && endHour > existingStartHour) {
-                           hasRoomConflict = true;
+                            hasRoomConflict = true;
                         }
                     }
                 });
