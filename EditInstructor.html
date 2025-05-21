@@ -503,14 +503,26 @@
                 // Normalize the selected day for comparison
                 const selectedDayLower = selectedDay.trim().toLowerCase();
                 
-                // 1. First, get all rooms that match the selected day and have sufficient capacity
+                // 1. First, get all rooms for the selected day (single field query doesn't need composite index)
                 const roomsSnapshot = await db.collection('room')
                     .where('day', '==', selectedDay)
-                    .where('capacity', '>=', studentCapacity)
                     .get();
                 
                 console.log('=== ROOMS FROM FIRESTORE ===');
-                console.log('Querying for day:', selectedDay, 'min capacity:', studentCapacity);
+                console.log('Querying for day:', selectedDay);
+                
+                // Filter rooms by capacity in memory
+                const rooms = [];
+                roomsSnapshot.forEach(doc => {
+                    const room = { id: doc.id, ...doc.data() };
+                    // Convert capacity to number for comparison
+                    room.capacity = parseInt(room.capacity) || 0;
+                    if (room.capacity >= studentCapacity) {
+                        rooms.push(room);
+                    }
+                });
+                
+                console.log(`Found ${rooms.length} rooms with sufficient capacity (>= ${studentCapacity})`);
                 
                 // 2. Get all instructors that might be using rooms at this time
                 const [startTime, endTime] = classTime.split('-').map(t => t.trim());
