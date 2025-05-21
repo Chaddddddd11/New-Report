@@ -328,14 +328,78 @@
 
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
-        const instructorsCollectionRef = collection(db, "instructors");
+        // Updated to match the actual collection name in Firestore
+        const instructorsCollectionRef = collection(db, "/Instructors");
 
         const tableBody = document.getElementById('instructorTableBody');
         const loadingMessage = document.getElementById('loadingMessage');
         const emptyMessage = document.getElementById('emptyMessage');
         const editModal = document.getElementById('editInstructorModal');
         const editForm = document.getElementById('editInstructorForm');
-        const closeModalBtn = editModal.querySelector('.close-btn');
+        const closeModalBtn = editModal?.querySelector('.close-btn');
+
+        // Initial fetch of instructors
+        async function fetchInstructors() {
+            try {
+                loadingMessage.style.display = 'block';
+                emptyMessage.style.display = 'none';
+                
+                const querySnapshot = await getDocs(instructorsCollectionRef);
+                const instructors = [];
+                
+                querySnapshot.forEach((doc) => {
+                    const data = doc.data();
+                    instructors.push({
+                        id: doc.id,
+                        name: data.name || 'N/A',
+                        subject: data.subject || 'N/A',
+                        course: data.course || 'N/A',
+                        year: data.year || 'N/A',
+                        section: data.section || 'N/A',
+                        day: data.day || 'N/A',
+                        time: data.time || 'N/A',
+                        roomName: data.roomName || 'No room assigned',
+                        roomCapacity: data.roomCapacity || 0
+                    });
+                });
+                
+                populateInstructorTable(instructors);
+            } catch (error) {
+                console.error('Error fetching instructors:', error);
+                loadingMessage.style.display = 'none';
+                emptyMessage.style.display = 'block';
+                emptyMessage.textContent = 'Error loading instructors. Please try again.';
+            }
+        }
+        
+        // Set up real-time listener for instructors
+        onSnapshot(instructorsCollectionRef, (snapshot) => {
+            const instructors = [];
+            snapshot.forEach((doc) => {
+                const data = doc.data();
+                instructors.push({
+                    id: doc.id,
+                    name: data.name || 'N/A',
+                    subject: data.subject || 'N/A',
+                    course: data.course || 'N/A',
+                    year: data.year || 'N/A',
+                    section: data.section || 'N/A',
+                    day: data.day || 'N/A',
+                    time: data.time || 'N/A',
+                    roomName: data.roomName || 'No room assigned',
+                    roomCapacity: data.roomCapacity || 0
+                });
+            });
+            populateInstructorTable(instructors);
+        }, (error) => {
+            console.error('Error setting up instructor listener:', error);
+            loadingMessage.style.display = 'none';
+            emptyMessage.style.display = 'block';
+            emptyMessage.textContent = 'Error loading instructors. Please refresh the page.';
+        });
+        
+        // Initial fetch
+        fetchInstructors();
 
         // Edit Modal Form Fields
         const editInstructorIdInput = document.getElementById('editInstructorId');
@@ -490,64 +554,55 @@
             if (instructors.length === 0) {
                 emptyMessage.style.display = 'block';
                 loadingMessage.style.display = 'none';
-                tableBody.innerHTML = `<tr><td colspan="8" style="text-align:center;">No instructors registered yet.</td></tr>`;
+                tableBody.innerHTML = `<tr><td colspan="9" style="text-align:center;">No instructors registered yet.</td></tr>`;
                 return;
             }
+            
+            // Sort instructors by name for better readability
+            instructors.sort((a, b) => a.name.localeCompare(b.name));
             emptyMessage.style.display = 'none';
             loadingMessage.style.display = 'none';
 
             instructors.forEach(instructor => {
                 const row = tableBody.insertRow();
-                row.insertCell().textContent = instructor.name || 'N/A';
-                row.insertCell().textContent = instructor.subject || 'N/A';
-                row.insertCell().textContent = instructor.course || 'N/A';
-                row.insertCell().textContent = instructor.yearSection || 'N/A'; // UPDATED
-                row.insertCell().textContent = instructor.day || 'N/A';
-                row.insertCell().textContent = instructor.time || 'N/A'; // UPDATED
-                row.insertCell().textContent = instructor.roomName || 'N/A';
-
-                const actionsCell = row.insertCell();
-                actionsCell.classList.add('actions-cell');
                 
-                const editButton = document.createElement('button');
-                editButton.textContent = 'Edit';
-                editButton.classList.add('btn', 'edit-btn');
-                editButton.onclick = () => openEditModal(instructor);
-                actionsCell.appendChild(editButton);
-
-                const deleteButton = document.createElement('button');
-                deleteButton.textContent = 'Delete';
-                deleteButton.classList.add('btn', 'delete-btn');
-                deleteButton.onclick = () => deleteInstructor(instructor.id);
-                actionsCell.appendChild(deleteButton);
+                // Format the display data
+                const formattedTime = instructor.time ? instructor.time.replace(' - ', ' - ') : 'N/A';
+                const yearSection = `${instructor.year} - ${instructor.section}`;
+                
+                // Add cells with instructor data
+                row.insertCell().textContent = instructor.name;
+                row.insertCell().textContent = instructor.subject;
+                row.insertCell().textContent = instructor.course;
+                row.insertCell().textContent = yearSection;
+                row.insertCell().textContent = instructor.day;
+                row.insertCell().textContent = formattedTime;
+                row.insertCell().textContent = instructor.roomName || 'No room assigned';
+                row.insertCell().textContent = instructor.roomCapacity || 'N/A';
+                
+                // Add action buttons
+                const actionsCell = row.insertCell();
+                actionsCell.className = 'actions-cell';
+                
+                const editBtn = document.createElement('button');
+                editBtn.className = 'edit-btn';
+                editBtn.textContent = 'Edit';
+                editBtn.onclick = () => openEditModal(instructor);
+                
+                const deleteBtn = document.createElement('button');
+                deleteBtn.className = 'delete-btn';
+                deleteBtn.textContent = 'Delete';
+                deleteBtn.onclick = () => deleteInstructor(instructor.id);
+                
+                actionsCell.appendChild(editBtn);
+                actionsCell.appendChild(deleteBtn);
             });
-        }
-
-        loadingMessage.style.display = 'block';
-        const q = query(instructorsCollectionRef, orderBy("name")); 
-
-        onSnapshot(q, (querySnapshot) => {
-            const instructors = [];
-            querySnapshot.forEach((doc) => {
-                instructors.push({ id: doc.id, ...doc.data() });
-            });
-            populateInstructorTable(instructors);
-        }, (error) => {
-            console.error("Error fetching instructors: ", error);
-            loadingMessage.textContent = 'Error loading data.';
-            emptyMessage.style.display = 'none';
-        });
-
-        // --- Edit Functionality ---
-        function openEditModal(instructor) {
-            editInstructorIdInput.value = instructor.id;
-            editInstructorNameInput.value = instructor.name || '';
-            editSubjectInput.value = instructor.subject || '';
-            editCourseSelect.value = instructor.course || '';
-            // Removed: editYearSectionInput.value = instructor.yearSection || '';
-            editDaySelect.value = instructor.day || '';
             
             populateTimeSelect(editTimeSelect, instructor.time || '');
+
+            // Set year and section
+            editYearLevelSelect.value = instructor.year || '';
+            editSectionSelect.value = instructor.section || '';
 
             // Populate Year Level dropdown
             editYearLevelSelect.innerHTML = '<option value="">Select Year Level</option>';
