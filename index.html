@@ -287,16 +287,44 @@
 
     // Initialize Firebase
     console.log('Initializing Firebase...');
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-    
-    // Collection reference - using the exact case from your Firestore
-    const instructorsCollectionRef = collection(db, "Instructor");
-    console.log('Using collection: Instructor');
-    
-    // Make db available in console for debugging
-    window.db = db;
-    window.instructorsCollectionRef = instructorsCollectionRef;
+    try {
+      const app = initializeApp(firebaseConfig);
+      const db = getFirestore(app);
+      
+      // Collection reference - using the exact case from your Firestore
+      const instructorsCollectionRef = collection(db, "Instructor");
+      console.log('Firebase initialized successfully');
+      console.log('Using collection: Instructor');
+      
+      // Test the connection
+      console.log('Testing Firestore connection...');
+      const testQuery = query(instructorsCollectionRef, limit(1));
+      
+      // Make db available in console for debugging
+      window.db = db;
+      window.instructorsCollectionRef = instructorsCollectionRef;
+      
+      // Test the connection by fetching one document
+      getDocs(testQuery).then(snapshot => {
+        console.log(`Firestore connection successful. Found ${snapshot.size} instructor documents.`);
+        if (snapshot.size === 0) {
+          console.warn('No instructor documents found in the collection. Make sure you have data in the "Instructor" collection.');
+        }
+        snapshot.forEach(doc => {
+          console.log('Sample document data:', doc.data());
+        });
+      }).catch(error => {
+        console.error('Error testing Firestore connection:', error);
+        console.error('Error details:', {
+          code: error.code,
+          message: error.message,
+          stack: error.stack
+        });
+      });
+    } catch (error) {
+      console.error('Failed to initialize Firebase:', error);
+      throw error;
+    }
     
     // Store all instructors data
     let allInstructorsData = []; // To store all instructors from Firebase
@@ -687,8 +715,9 @@
     function setupFirebaseListener() {
       console.log('Setting up Firebase listener...');
       
-      if (!firebaseInitialized) {
-        console.warn('Firebase not fully initialized yet, but setting up listener anyway...');
+      if (!window.db) {
+        console.error('Firebase not properly initialized. Cannot set up listener.');
+        return () => {}; // Return empty cleanup function
       }
       
       try {
