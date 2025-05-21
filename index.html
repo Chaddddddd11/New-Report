@@ -412,8 +412,7 @@
       const section = sectionSelect.value;
       
       // Get student capacity for the selected course/year/section
-      // Convert year from '1st' to '1', '2nd' to '2', etc.
-      const yearNumber = year ? year.match(/\d+/)?.[0] || '0' : '0';
+      const yearNumber = year ? year.toString() : '0';
       const mapKey = `${course}-${yearNumber}${section}`;
       const studentCapacity = studentCapacityMap[mapKey] || 0;
       
@@ -574,14 +573,19 @@
       
       // Find all instructors for the selected course, year, and section
       const sectionInstructors = allInstructorsData.filter(instr => {
-        const courseMatch = instr.course === selectedCourse;
-        const yearMatch = instr.year === selectedYear;
-        const sectionMatch = instr.section === selectedSection;
+        // Normalize values for comparison
+        const storageCourse = instr.course;
+        const storageYear = instr.year ? instr.year.toString() : '';
+        const storageSection = instr.section;
+        
+        const courseMatch = storageCourse === selectedCourse;
+        const yearMatch = storageYear === selectedYear.toString();
+        const sectionMatch = storageSection === selectedSection;
         
         console.log(`Checking instructor: ${instr.name} | ` +
-                   `Course: ${instr.course} (${courseMatch ? '✓' : '✗'}) | ` +
-                   `Year: ${instr.year} (${yearMatch ? '✓' : '✗'}) | ` +
-                   `Section: ${instr.section} (${sectionMatch ? '✓' : '✗'})`);
+                   `Course: ${storageCourse} (${courseMatch ? '✓' : '✗'}) | ` +
+                   `Year: ${storageYear} (${yearMatch ? '✓' : '✗'}) | ` +
+                   `Section: ${storageSection} (${sectionMatch ? '✓' : '✗'})`);
         
         return courseMatch && yearMatch && sectionMatch;
       });
@@ -651,10 +655,13 @@
       }
       
       try {
+        // Convert year to number for Firestore query if needed
+        const yearValue = isNaN(selectedYear) ? selectedYear : parseInt(selectedYear, 10);
+        
         const q = query(
           instructorsCollectionRef,
           where('course', '==', selectedCourse),
-          where('year', '==', selectedYear),
+          where('year', '==', yearValue),
           where('section', '==', selectedSection)
         );
         
