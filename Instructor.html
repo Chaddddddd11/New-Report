@@ -426,7 +426,7 @@
         }
 
         // Function to populate form with instructor data
-        function populateFormWithInstructorData(instructor) {
+        async function populateFormWithInstructorData(instructor) {
             console.log('Populating form with instructor data:', instructor);
             if (!instructor) return;
             
@@ -461,49 +461,38 @@
             
             // Set time if it exists
             if (instructor.time) {
-                // If time is in format "HH:MM - HH:MM", extract just the start time
-                let timeValue = instructor.time;
-                if (timeValue.includes(' - ')) {
-                    timeValue = timeValue.split(' - ')[0].trim();
+                const timeValue = instructor.time;
+                let timeOptionExists = Array.from(timeSelect.options).some(opt => opt.value === timeValue);
+                if(timeOptionExists) {
+                   timeSelect.value = timeValue;
+                } else {
+                    console.warn(`Saved time slot ${timeValue} not found in dropdown. Clearing selection.`);
+                    timeSelect.value = ''; 
                 }
-                const classTimeSelect = document.getElementById('classTime');
-                if (classTimeSelect) {
-                    // Find the option that starts with this time
-                    for (let i = 0; i < classTimeSelect.options.length; i++) {
-                        if (classTimeSelect.options[i].value.startsWith(timeValue)) {
-                            classTimeSelect.selectedIndex = i;
-                            break;
-                        }
+            } else {
+                timeSelect.value = '';
+            }
+
+            // Update available rooms and wait for it to complete
+            await updateAvailableRooms(); // Removed setTimeout, added await
+            
+            // Set room after rooms are loaded
+            if (instructor.roomName) {
+                const roomSelect = document.getElementById('room');
+                if (roomSelect) {
+                    const roomOption = Array.from(roomSelect.options).find(
+                        opt => opt.value === instructor.roomName
+                    );
+                    if (roomOption) {
+                        roomOption.selected = true;
+                    } else {
+                        console.warn(`Previously assigned room "${instructor.roomName}" is not in the available options after filtering. It might be unavailable or conflict.`);
+                        showError(`Previously assigned room "${instructor.roomName}" is no longer available or suitable for the selected criteria. Please select a new room if needed.`);
+                        // The roomSelect will show available options or 'No Rooms Available'.
+                        // We don't forcefully add it here if it's not suitable for current criteria.
                     }
                 }
             }
-            
-            // Trigger room update after a short delay to ensure other fields are set
-            setTimeout(() => {
-                updateAvailableRooms();
-                
-                // Set room after rooms are loaded
-                if (instructor.roomName) {
-                    setTimeout(() => {
-                        const roomSelect = document.getElementById('room');
-                        if (roomSelect) {
-                            const roomOption = Array.from(roomSelect.options).find(
-                                opt => opt.value === instructor.roomName
-                            );
-                            if (roomOption) {
-                                roomOption.selected = true;
-                            } else {
-                                // If room not found, add it as an option
-                                const option = document.createElement('option');
-                                option.value = instructor.roomName;
-                                option.textContent = `${instructor.roomName} (Previously assigned)`;
-                                option.selected = true;
-                                roomSelect.appendChild(option);
-                            }
-                        }
-                    }, 500);
-                }
-            }, 100);
             
             // Change the button text to indicate update mode
             const registerBtn = document.getElementById('submitBtn');
@@ -531,7 +520,7 @@
             const instructorData = getUrlParams();
             if (instructorData.id) {
                 console.log('Edit mode - Populating form with instructor data:', instructorData);
-                populateFormWithInstructorData(instructorData);
+                await populateFormWithInstructorData(instructorData);
             }
             try {
                 console.log('1. Initializing Firebase...');
