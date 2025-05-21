@@ -396,53 +396,61 @@
     function renderSchedule() {
       const timeSlots = generateTimeSlots();
       const selectedCourse = courseSelect.value;
-      const selectedYearValue = yearSelect.value; // e.g., "1st", "2nd"
+      const selectedYear = yearSelect.value; // e.g., "1st", "2nd"
       const selectedSection = sectionSelect.value; // e.g., "A", "B"
       
       scheduleBody.innerHTML = ''; // Clear previous schedule
 
-      if (!selectedCourse || !selectedYearValue || !selectedSection) {
-        // Optionally, display a message to select all filters
+      if (!selectedCourse || !selectedYear || !selectedSection) {
+        // Show empty schedule if not all filters are selected
         timeSlots.forEach(timeSlot => {
-            const row = document.createElement('tr');
-            row.innerHTML = `<td>${timeSlot}</td><td></td><td></td><td></td><td></td><td></td><td></td>`;
-            scheduleBody.appendChild(row);
+          const row = document.createElement('tr');
+          row.innerHTML = `<td>${timeSlot}</td><td></td><td></td><td></td><td></td><td></td><td></td>`;
+          scheduleBody.appendChild(row);
         });
         return;
       }
 
-      // Convert selectedYearValue ("1st", "2nd") to numeric part ("1", "2")
-      const yearNumeric = selectedYearValue.match(/\d+/)[0]; 
-      const targetYearSection = `${yearNumeric}${selectedSection}`; // e.g., "1A", "2B"
+      console.log('Rendering schedule for:', { selectedCourse, selectedYear, selectedSection });
+      console.log('All instructors:', allInstructorsData);
 
+      // Find all instructors for the selected course, year, and section
+      const sectionInstructors = allInstructorsData.filter(instructor => {
+        const matches = instructor.course === selectedCourse &&
+                      instructor.year === selectedYear &&
+                      instructor.section === selectedSection;
+        
+        if (matches) {
+          console.log('Matching instructor found:', instructor);
+        }
+        
+        return matches;
+      });
+
+      console.log(`Found ${sectionInstructors.length} instructors for ${selectedCourse}-${selectedYear}${selectedSection}`);
+
+      // Create a row for each time slot
       timeSlots.forEach(timeSlot => {
         const row = document.createElement('tr');
         row.innerHTML = `<td>${timeSlot}</td>`; // Time column
 
         const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+        
+        // For each day, check if there's a class scheduled
         days.forEach(day => {
           const cell = document.createElement('td');
           
-          const scheduledInstructor = allInstructorsData.find(instructor => {
-            // Debug log to see what's being compared
-            console.log('Checking instructor:', {
-              instructorCourse: instructor.course,
-              selectedCourse,
-              instructorYear: instructor.year,
-              selectedYear: selectedYearValue,
-              instructorSection: instructor.section,
-              selectedSection,
-              instructorDay: instructor.day,
-              day,
-              instructorTime: instructor.time,
-              timeSlot
-            });
+          // Find if there's an instructor for this day and time
+          const scheduledInstructor = sectionInstructors.find(instructor => {
+            const timeMatch = instructor.time === timeSlot;
+            const dayMatch = instructor.day === day;
             
-            return instructor.course === selectedCourse &&
-                   instructor.year === selectedYearValue &&
-                   instructor.section === selectedSection &&
-                   instructor.day === day &&
-                   instructor.time === timeSlot;
+            if (timeMatch && dayMatch) {
+              console.log('Found matching schedule:', { instructor, timeSlot, day });
+              return true;
+            }
+            
+            return false;
           });
 
           if (scheduledInstructor) {
