@@ -382,17 +382,21 @@
       }
     }
 
+    // Get DOM elements
     const courseSelect = document.getElementById('course');
     const yearSelect = document.getElementById('year');
     const sectionSelect = document.getElementById('section');
     const courseSummary = document.getElementById('courseSummary');
     const studentCapacityDisplay = document.getElementById('studentCapacityDisplay');
     const scheduleBody = document.getElementById('scheduleBody');
+    
+    // Initialize the schedule on page load
+    renderSchedule();
 
 
 
     function renderSchedule() {
-      console.log('Rendering schedule...'); // Debug log
+      console.log('Rendering schedule...');
       const timeSlots = [];
       // Generate time slots from 7:00 to 17:00 (5:00 PM)
       for (let i = 7; i < 17; i++) {
@@ -400,7 +404,23 @@
         const endHour = String(i + 1).padStart(2, '0');
         timeSlots.push(`${startHour}:00-${endHour}:00`);
       }
-      console.log('Time slots:', timeSlots); // Debug log
+      console.log('Time slots:', timeSlots);
+      
+      // Clear the schedule body
+      scheduleBody.innerHTML = '';
+      
+      // If no course, year, or section is selected, show empty schedule
+      if (!courseSelect.value || !yearSelect.value || !sectionSelect.value) {
+        timeSlots.forEach(timeSlot => {
+          const row = document.createElement('tr');
+          row.innerHTML = `
+            <td>${timeSlot}</td>
+            <td></td><td></td><td></td><td></td><td></td><td></td>
+          `;
+          scheduleBody.appendChild(row);
+        });
+        return;
+      }
 
       const selectedCourse = courseSelect.value;
       const selectedYear = yearSelect.value;
@@ -568,9 +588,34 @@
       }
     });
 
-    // Initialize schedule on page load with empty cells until selections are made
+    // Set up event listeners when the DOM is fully loaded
     document.addEventListener('DOMContentLoaded', function() {
-      renderSchedule(); // Initial render (will be empty until selections)
+      // Initial render
+      renderSchedule();
+      
+      // Add event listeners for course, year, and section changes
+      courseSelect.addEventListener('change', function() {
+        const selectedCourse = this.value;
+        yearSelect.disabled = !selectedCourse;
+        sectionSelect.disabled = true;
+        yearSelect.value = '';
+        sectionSelect.value = '';
+        updateStudentCapacity();
+        renderSchedule();
+      });
+      
+      yearSelect.addEventListener('change', function() {
+        const selectedYear = this.value;
+        sectionSelect.disabled = !selectedYear;
+        sectionSelect.value = '';
+        updateStudentCapacity();
+        renderSchedule();
+      });
+      
+      sectionSelect.addEventListener('change', function() {
+        updateStudentCapacity();
+        renderSchedule();
+      });
     });
 
     // Clean up the listener when the page is unloaded
