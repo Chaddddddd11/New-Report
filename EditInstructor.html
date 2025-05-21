@@ -324,33 +324,65 @@
                 });
         }
 
-        // Load available rooms
+        // Load available rooms based on selected day and time
         async function loadRooms() {
+            const selectedDay = daySelect.value;
+            const selectedTime = classTimeSelect.value;
+            
+            if (!selectedDay || !selectedTime) {
+                roomSelect.innerHTML = '<option value="">Select day and time first</option>';
+                return [];
+            }
+
             try {
-                const querySnapshot = await db.collection('rooms').get();
-                const rooms = [];
-                querySnapshot.forEach((doc) => {
-                    rooms.push({
+                // Get all rooms
+                const roomsSnapshot = await db.collection('rooms').get();
+                const allRooms = [];
+                roomsSnapshot.forEach(doc => {
+                    allRooms.push({
                         id: doc.id,
                         ...doc.data()
                     });
                 });
 
+                // Get all instructors to check for conflicts
+                const instructorsSnapshot = await db.collection('Instructors').get();
+                const conflictingRooms = new Set();
+                
+                instructorsSnapshot.forEach(doc => {
+                    const instructor = doc.data();
+                    // Skip current instructor being edited
+                    if (doc.id === instructorId) return;
+                    
+                    // Check if there's a time and day conflict
+                    if (instructor.day === selectedDay && instructor.time === selectedTime) {
+                        conflictingRooms.add(instructor.roomName);
+                    }
+                });
+
                 // Clear existing options
                 roomSelect.innerHTML = '<option value="">Select Room</option>';
                 
-                // Add rooms to select
-                rooms.forEach(room => {
-                    const option = document.createElement('option');
-                    option.value = room.roomName;
-                    option.textContent = `${room.roomName} (Capacity: ${room.capacity})`;
-                    roomSelect.appendChild(option);
+                // Add available rooms to select
+                let availableRooms = 0;
+                allRooms.forEach(room => {
+                    if (!conflictingRooms.has(room.roomName)) {
+                        const option = document.createElement('option');
+                        option.value = room.roomName;
+                        option.textContent = `${room.roomName} (Capacity: ${room.capacity})`;
+                        roomSelect.appendChild(option);
+                        availableRooms++;
+                    }
                 });
 
-                return rooms;
+                if (availableRooms === 0) {
+                    roomSelect.innerHTML = '<option value="">No available rooms for this time slot</option>';
+                }
+
+                return allRooms;
             } catch (error) {
                 console.error('Error loading rooms:', error);
-                showError('Error loading rooms');
+                showError('Error loading rooms. Please try again.');
                 return [];
             }
         }
@@ -466,6 +498,10 @@
             
             updateBtn.addEventListener('click', updateInstructor);
             deleteBtn.addEventListener('click', deleteInstructor);
+            
+            // Reload rooms when day or time changes
+            daySelect.addEventListener('change', loadRooms);
+            classTimeSelect.addEventListener('change', loadRooms);
             
             // Hide error message when user starts typing/selecting
             const formInputs = document.querySelectorAll('input, select');
