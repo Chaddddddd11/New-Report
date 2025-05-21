@@ -2,57 +2,41 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>DHVSU Registered Instructors</title>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Instructor List - DHVSU</title>
     <style>
-        :root {
-            --primary-color: #005f73; /* Darker blue-green for professionalism */
-            --secondary-color: #0a9396; /* Complementary teal */
-            --accent-color: #94d2bd; /* Lighter accent for highlights */
-            --background-color: #e9f5f4; /* Very light teal/blue for background */
-            --text-color: #333;
-            --danger-color: #ae2012; /* Muted red for delete */
-            --edit-color: #2a9d8f;   /* Teal for edit */
-            --table-header-bg: #cae9ff; /* Light blue for table headers */
-            --table-border-color: #90e0ef; /* Light teal for borders */
-            --modal-bg: rgba(0,0,0,0.6);
-        }
-
         body {
             font-family: 'Roboto', Arial, sans-serif;
-            background-color: var(--background-color);
-            color: var(--text-color);
-            line-height: 1.6;
             margin: 0;
             padding: 20px;
+            background-color: #e9f5f4; /* Light teal/blue background */
+            color: #333;
             display: flex;
             flex-direction: column;
             align-items: center;
         }
-
         .container {
             width: 95%;
-            max-width: 1300px; /* Wider for more columns */
-            background-color: white;
+            max-width: 1300px;
+            background-color: #fff;
             padding: 25px;
             border-radius: 8px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.1);
         }
-
         .header {
             text-align: center;
-            color: var(--primary-color);
+            color: #005f73; /* Darker blue-green */
             margin-bottom: 25px;
         }
-
         .controls {
             margin-bottom: 20px;
-            text-align: left;
+            display: flex;
+            justify-content: space-between; /* Aligns buttons */
+            align-items: center;
         }
-
         .btn {
             padding: 10px 20px;
-            background-color: var(--secondary-color);
+            background-color: #0a9396; /* Complementary teal */
             color: white;
             border: none;
             border-radius: 5px;
@@ -60,43 +44,36 @@
             text-decoration: none;
             font-size: 16px;
             transition: background-color 0.3s ease;
-            margin-right: 10px;
         }
-
         .btn:hover {
-            background-color: var(--accent-color);
-            color: var(--primary-color);
+            background-color: #94d2bd; /* Lighter accent */
+            color: #005f73;
         }
-        
         table {
             width: 100%;
             border-collapse: collapse;
-            margin-bottom: 20px;
+            margin-top: 20px;
             box-shadow: 0 2px 8px rgba(0,0,0,0.05);
         }
-
         th, td {
-            border: 1px solid var(--table-border-color);
+            border: 1px solid #90e0ef; /* Light teal for borders */
             padding: 12px 15px;
             text-align: left;
             vertical-align: middle;
         }
-
         th {
-            background-color: var(--table-header-bg);
+            background-color: #cae9ff; /* Light blue for table headers */
             font-weight: 500;
-            color: var(--primary-color);
+            color: #005f73;
             text-transform: uppercase;
             font-size: 0.9em;
         }
-
         tr:nth-child(even) {
             background-color: #f8f9fa;
         }
         tr:hover {
             background-color: #e0f7fa; /* Light hover effect */
         }
-
         .actions-cell button {
             padding: 6px 12px;
             margin-right: 5px;
@@ -106,91 +83,15 @@
             border: none;
             color: white;
         }
-        .edit-btn { background-color: var(--edit-color); }
+        .edit-btn { background-color: #2a9d8f; /* Teal for edit */ }
         .edit-btn:hover { background-color: #238174; }
-        .delete-btn { background-color: var(--danger-color); }
+        .delete-btn { background-color: #ae2012; /* Muted red for delete */ }
         .delete-btn:hover { background-color: #8a1a0e; }
-
         .loading-message, .empty-message {
             text-align: center;
             padding: 20px;
             font-style: italic;
             color: #555;
-        }
-
-        /* Modal Styles */
-        .modal {
-            display: none; 
-            position: fixed; 
-            z-index: 1000; 
-            left: 0;
-            top: 0;
-            width: 100%; 
-            height: 100%; 
-            overflow: auto; 
-            background-color: var(--modal-bg);
-        }
-
-        .modal-content {
-            background-color: #fefefe;
-            margin: 8% auto; /* Adjusted margin for better centering */
-            padding: 30px;
-            border: 1px solid #888;
-            width: 90%;
-            max-width: 700px; /* Increased max-width for more fields */
-            border-radius: 8px;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.2);
-        }
-        
-        .modal-header {
-            padding-bottom: 15px;
-            border-bottom: 1px solid #eee;
-            margin-bottom: 20px;
-        }
-        .modal-header h2 {
-            margin: 0;
-            color: var(--primary-color);
-        }
-
-        .close-btn {
-            color: #aaa;
-            float: right;
-            font-size: 28px;
-            font-weight: bold;
-            line-height: 1;
-        }
-
-        .close-btn:hover,
-        .close-btn:focus {
-            color: black;
-            text-decoration: none;
-            cursor: pointer;
-        }
-
-        .form-group {
-            margin-bottom: 20px;
-        }
-
-        .form-group label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: 500;
-            color: var(--primary-color);
-        }
-
-        .form-group input[type="text"],
-        .form-group select {
-            width: calc(100% - 24px); /* Full width minus padding */
-            padding: 12px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            font-size: 1em;
-            box-sizing: border-box;
-        }
-
-        .modal-actions {
-            text-align: right;
-            margin-top: 20px;
         }
     </style>
 </head>
@@ -198,12 +99,31 @@
     <div class="container">
         <div class="controls">
             <a href="index.html" class="btn">Back to Main Menu</a>
+            <h1 class="header" style="margin-bottom:0; flex-grow:1; text-align:center;">Registered Instructors</h1>
             <a href="Instructor.html" class="btn">Register New Instructor</a>
-            <button id="cleanupInstructorsBtn" class="btn" style="background-color: var(--danger-color);">Clean Up Instructors by Room</button>
         </div>
-        <div class="header">
-            <h1>Registered Instructors</h1>
-        </div>
+        
+        <div id="instructorTableContainer">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Subject</th>
+                        <th>Course</th>
+                        <th>Year</th>
+                        <th>Section</th>
+                        <th>Day</th>
+                        <th>Time</th>
+                        <th>Room Name</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="instructorTableBody">
+                    <!-- Instructor data will be populated here -->
+                </tbody>
+            </table>
+            <div id="loadingMessage" class="loading-message">Loading instructors...</div>
+            <div id="emptyMessage" class="empty-message" style="display: none;">No instructors found.</div>
 
         <table id="instructorTable">
             <thead>
