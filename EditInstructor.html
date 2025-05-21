@@ -536,16 +536,7 @@
                 // Clear and repopulate room select
                 roomSelect.innerHTML = '';
                 
-                if (availableRooms.length === 0) {
-                    // Add a "No Room Available" option that can be selected
-                    const noRoomOption = document.createElement('option');
-                    noRoomOption.value = 'NO_ROOM_AVAILABLE';
-                    noRoomOption.textContent = 'No Room Available';
-                    roomSelect.appendChild(noRoomOption);
-                    return;
-                }
-                
-                // Add default option
+                // Add default option first
                 const defaultOption = document.createElement('option');
                 defaultOption.value = '';
                 defaultOption.textContent = '-- Select a room --';
@@ -571,6 +562,15 @@
                         option.selected = true;
                         roomSelect.appendChild(option);
                     }
+                }
+                
+                // If no rooms are available (including current room), show "No Room Available"
+                if (roomSelect.options.length === 1 && !roomSelect.value) {
+                    roomSelect.innerHTML = '';
+                    const noRoomOption = document.createElement('option');
+                    noRoomOption.value = 'NO_ROOM_AVAILABLE';
+                    noRoomOption.textContent = 'No Room Available';
+                    roomSelect.appendChild(noRoomOption);
                 }
                 
             } catch (error) {
