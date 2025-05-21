@@ -466,13 +466,12 @@
         async function updateAvailableRooms() {
             console.log('=== UPDATING AVAILABLE ROOMS ===');
             const selectedDay = daySelect.value;
-            const selectedTime = classTimeSelect.value;
-            const currentRoom = roomSelect.value;
+            const classTime = classTimeSelect.value;
             const course = courseSelect.value;
             const year = yearSelect.value;
             const section = sectionSelect.value;
             
-            if (!selectedDay || !selectedTime || !course || !year || !section) {
+            if (!selectedDay || !classTime || !course || !year || !section) {
                 roomSelect.innerHTML = '<option value="">Select all fields first</option>';
                 return;
             }
@@ -484,11 +483,6 @@
                 // Get student capacity for the selected course/year/section
                 const studentCapacity = studentCapacityMap[course]?.[year]?.[section] || 0;
                 
-                // Parse selected time (24-hour format)
-                const [selectedStart, selectedEnd] = selectedTime.split('-').map(t => t.trim());
-                const newStart = timeToMinutes(selectedStart);
-                const newEnd = timeToMinutes(selectedEnd);
-                
                 // Create a map of room schedules
                 const roomSchedules = new Map();
                 
@@ -499,7 +493,8 @@
                         id: room.id,
                         name: roomName,
                         capacity: parseInt(room.capacity) || 0,
-                        isSuitable: parseInt(room.capacity) >= studentCapacity,
+                        day: room.day || '',
+                        time: room.time || '',
                         isBooked: false
                     });
                 });
@@ -513,54 +508,79 @@
                     if (!roomSchedule) return;
                     
                     // If the instructor is assigned to this room on the selected day
-                    if (instructor.day.trim() === selectedDay) {
-                        // Check if the instructor's time overlaps with the selected time
-                        if (instructor.time.trim() === selectedTime) {
+                    if (instructor.day.trim().toLowerCase() === selectedDay.toLowerCase()) {
+                        // Check if the instructor's time matches the selected time
+                        if (instructor.time.trim() === classTime) {
                             roomSchedule.isBooked = true;
                         }
                     }
                 });
                 
-                // Clear and repopulate room select
-                roomSelect.innerHTML = '<option value="">Select Room</option>';
-                
-                // Add available rooms to the dropdown
-                let availableRooms = 0;
-                const sortedRooms = Array.from(roomSchedules.values())
-                    .filter(room => room.isSuitable && (!room.isBooked || room.name === currentRoom))
-                    .sort((a, b) => a.name.localeCompare(b.name));
-                
-                // Add available rooms to the dropdown
-                sortedRooms.forEach(room => {
-                    const isCurrentRoom = room.name === currentRoom;
-                    const isBooked = room.isBooked && isCurrentRoom;
+                // Filter available rooms based on:
+                // 1. Room's assigned day matches selected day (case-insensitive)
+                // 2. Room's time slot exactly matches selected time
+                // 3. Room has sufficient capacity
+                // 4. Room is not already booked
+                const availableRooms = Array.from(roomSchedules.values()).filter(room => {
+                    const dayMatches = room.day && room.day.toLowerCase() === selectedDay.toLowerCase();
+                    const timeMatches = room.time && room.time === classTime;
+                    const hasCapacity = room.capacity >= studentCapacity;
+                    const isAvailable = !room.isBooked;
                     
-                    const option = new Option(
-                        isBooked 
-                            ? `${room.name} (Capacity: ${room.capacity}) (Previously assigned)`
-                            : `${room.name} (Capacity: ${room.capacity})`,
-                        room.name,
-                        false,
-                        isCurrentRoom
-                    );
-                    
-                    roomSelect.add(option);
-                    availableRooms++;
+                    return dayMatches && timeMatches && hasCapacity && isAvailable;
                 });
                 
-                if (availableRooms === 0) {
-                    roomSelect.innerHTML = '<option value="">No available rooms for this time slot</option>';
+                // Get current room value before clearing the select
+                const currentRoom = roomSelect.value;
+                
+                // Clear and repopulate room select
+                roomSelect.innerHTML = '';
+                
+                if (availableRooms.length === 0) {
+                    // Add a "No Room Available" option that can be selected
+                    const noRoomOption = document.createElement('option');
+                    noRoomOption.value = 'NO_ROOM_AVAILABLE';
+                    noRoomOption.textContent = 'No Room Available';
+                    roomSelect.appendChild(noRoomOption);
+                    return;
+                }
+                
+                // Add default option
+                const defaultOption = document.createElement('option');
+                defaultOption.value = '';
+                defaultOption.textContent = '-- Select a room --';
+                roomSelect.appendChild(defaultOption);
+                
+                // Add available rooms
+                availableRooms.forEach(room => {
+                    const option = document.createElement('option');
+                    option.value = room.name;
+                    option.textContent = `${room.name} (Capacity: ${room.capacity})`;
+                    option.setAttribute('data-capacity', room.capacity);
+                    roomSelect.appendChild(option);
+                });
+                
+                // If current room is not in the list but exists, add it back as "Previously assigned"
+                if (currentRoom && !availableRooms.some(room => room.name === currentRoom)) {
+                    const roomInfo = allRooms.find(r => (r.roomName === currentRoom || r.name === currentRoom));
+                    if (roomInfo) {
+                        const option = document.createElement('option');
+                        option.value = currentRoom;
+                        option.textContent = `${currentRoom} (Capacity: ${roomInfo.capacity}) (Previously assigned)`;
+                        option.setAttribute('data-capacity', roomInfo.capacity);
+                        option.selected = true;
+                        roomSelect.appendChild(option);
+                    }
                 }
                 
             } catch (error) {
                 console.error('Error updating available rooms:', error);
-                roomSelect.innerHTML = '<option value="">Error loading rooms</option>';
+                roomSelect.innerHTML = '<option value="">Error loading rooms. Please try again.</option>';
             }
         }
 
         // Update instructor
         async function updateInstructor() {
-            // Validate form
             if (!validateForm()) {
                 return;
             }
