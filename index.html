@@ -254,7 +254,14 @@
   <script type="module">
     // Import the functions you need from the SDKs you need
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-    import { getFirestore, collection, onSnapshot, query } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+    import { 
+      getFirestore, 
+      collection, 
+      onSnapshot, 
+      query, 
+      where, 
+      getDocs 
+    } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
     // Your web app's Firebase configuration (as provided by user)
     const firebaseConfig = {
@@ -418,9 +425,38 @@
       });
     }
 
+    // Function to fetch instructors based on selected filters
+    async function fetchInstructors() {
+      const selectedCourse = courseSelect.value;
+      const selectedYear = yearSelect.value;
+      const selectedSection = sectionSelect.value;
+      
+      if (!selectedCourse || !selectedYear || !selectedSection) {
+        return [];
+      }
+      
+      try {
+        const q = query(
+          instructorsCollectionRef,
+          where('course', '==', selectedCourse),
+          where('year', '==', selectedYear),
+          where('section', '==', selectedSection)
+        );
+        
+        const querySnapshot = await getDocs(q);
+        return querySnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        }));
+      } catch (error) {
+        console.error('Error fetching instructors:', error);
+        return [];
+      }
+    }
+
     // Set up real-time listener for instructors
     const q = query(instructorsCollectionRef);
-    onSnapshot(q, (querySnapshot) => {
+    const unsubscribe = onSnapshot(q, (querySnapshot) => {
       allInstructorsData = []; // Clear previous data
       
       querySnapshot.forEach((doc) => {
@@ -429,13 +465,33 @@
       
       renderSchedule(); // Re-render schedule with new data
     }, (error) => {
-        console.error("Error fetching instructors from Firebase: ", error);
-        scheduleBody.innerHTML = `<tr><td colspan="7">Error loading schedule data. Check console.</td></tr>`;
+      console.error("Error setting up instructor listener:", error);
+    });
+
+    // Update section select to fetch and display data when selection changes
+    sectionSelect.addEventListener('change', async () => {
+      const course = courseSelect.value;
+      const year = yearSelect.value;
+      const section = sectionSelect.value;
+      
+      if (course && year && section) {
+        const displayKey = `${course} ${year}-${section}`;
+        courseSummary.textContent = displayKey;
+        await renderSchedule();
+      } else {
+        courseSummary.textContent = '----';
+        renderSchedule();
+      }
     });
 
     // Initialize schedule on page load with empty cells until selections are made
     document.addEventListener('DOMContentLoaded', function() {
       renderSchedule(); // Initial render (will be empty until selections)
+    });
+
+    // Clean up the listener when the page is unloaded
+    window.addEventListener('beforeunload', () => {
+      if (unsubscribe) unsubscribe();
     });
   </script>
 </body>
