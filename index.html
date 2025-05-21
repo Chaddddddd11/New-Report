@@ -507,7 +507,7 @@
       
       try {
         const q = query(
-          collection(db, 'Instructors'),
+          instructorsCollectionRef,
           where('course', '==', selectedCourse),
           where('year', '==', selectedYear),
           where('section', '==', selectedSection)
