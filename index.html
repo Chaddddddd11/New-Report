@@ -466,15 +466,22 @@
           
           // Find matching instructor for this day and time
           const instructor = sectionInstructors.find(instr => {
-            if (!instr.day || !instr.time) return false;
+            if (!instr.day || !instr.time) {
+              console.log('Instructor missing day or time:', instr);
+              return false;
+            }
             
             // Normalize times for comparison
             const normalizedInstrTime = normalizeTime(instr.time);
             const normalizedSlotTime = timeSlot;
             
+            const dayMatches = instr.day.toLowerCase() === day.toLowerCase();
+            const timeMatches = normalizedInstrTime === normalizedSlotTime;
+            
+            console.log(`Checking instructor: ${instr.name}, Day: ${instr.day} vs ${day} (${dayMatches}), Time: ${normalizedInstrTime} vs ${normalizedSlotTime} (${timeMatches})`);
+            
             // Check if day and time match
-            return instr.day.toLowerCase() === day.toLowerCase() && 
-                   normalizedInstrTime === normalizedSlotTime;
+            return dayMatches && timeMatches;
           });
           
           // If instructor found, fill the cell with their info
