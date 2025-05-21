@@ -223,19 +223,16 @@
                 <label for="classTime">Class Time*</label>
                 <select id="classTime" required>
                     <option value="">Select Class Time</option>
-                    <option value="07:00-08:00">07:00 - 08:00</option>
-                    <option value="08:00-09:00">08:00 - 09:00</option>
-                    <option value="09:00-10:00">09:00 - 10:00</option>
-                    <option value="10:00-11:00">10:00 - 11:00</option>
-                    <option value="11:00-12:00">11:00 - 12:00</option>
-                    <option value="12:00-13:00">12:00 - 13:00</option>
-                    <option value="13:00-14:00">13:00 - 14:00</option>
-                    <option value="14:00-15:00">14:00 - 15:00</option>
-                    <option value="15:00-16:00">15:00 - 16:00</option>
-                    <option value="16:00-17:00">16:00 - 17:00</option>
-                    <option value="17:00-18:00">17:00 - 18:00</option>
-                    <option value="18:00-19:00">18:00 - 19:00</option>
-                    <option value="19:00-20:00">19:00 - 20:00</option>
+                    <option value="7:00-8:00">7:00 AM - 8:00 AM</option>
+                    <option value="8:00-9:00">8:00 AM - 9:00 AM</option>
+                    <option value="9:00-10:00">9:00 AM - 10:00 AM</option>
+                    <option value="10:00-11:00">10:00 AM - 11:00 AM</option>
+                    <option value="11:00-12:00">11:00 AM - 12:00 PM</option>
+                    <option value="12:00-13:00">12:00 PM - 1:00 PM</option>
+                    <option value="13:00-14:00">1:00 PM - 2:00 PM</option>
+                    <option value="14:00-15:00">2:00 PM - 3:00 PM</option>
+                    <option value="15:00-16:00">3:00 PM - 4:00 PM</option>
+                    <option value="16:00-17:00">4:00 PM - 5:00 PM</option>
                 </select>
             </div>
 
@@ -259,25 +256,6 @@
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
-    <!-- Instructor List Table -->
-    <h2 style="margin-top:40px;">Enrolled Instructors</h2>
-    <table id="instructorTable" style="width:100%;border-collapse:collapse;margin-top:10px;">
-      <thead>
-        <tr style="background:#1A5F7A;color:white;">
-          <th>Name</th>
-          <th>Subject</th>
-          <th>Course</th>
-          <th>Year</th>
-          <th>Section</th>
-          <th>Day</th>
-          <th>Time</th>
-          <th>Edit</th>
-        </tr>
-      </thead>
-      <tbody id="instructorTableBody">
-        <!-- Rows will be populated by JS -->
-      </tbody>
-    </table>
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
         import { 
@@ -1002,35 +980,6 @@
             }
             return `${formatTime(start)} - ${formatTime(end)}`;
         }
-        // --- Instructor List Table Population ---
-        import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-        const db2 = getFirestore();
-        async function loadInstructorList() {
-            const tbody = document.getElementById('instructorTableBody');
-            tbody.innerHTML = '<tr><td colspan="8">Loading...</td></tr>';
-            const querySnapshot = await getDocs(collection(db2, "Instructors"));
-            if (querySnapshot.empty) {
-                tbody.innerHTML = '<tr><td colspan="8">No instructors found.</td></tr>';
-                return;
-            }
-            tbody.innerHTML = '';
-            querySnapshot.forEach((doc) => {
-                const d = doc.data();
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                  <td>${d.name || ''}</td>
-                  <td>${d.subject || ''}</td>
-                  <td>${d.course || ''}</td>
-                  <td>${d.year || ''}</td>
-                  <td>${d.section || ''}</td>
-                  <td>${d.day || ''}</td>
-                  <td>${d.time || ''}</td>
-                  <td><a href="EditInstructor.html?id=${doc.id}" style="color:#2C8EBB;">Edit</a></td>
-                `;
-                tbody.appendChild(tr);
-            });
-        }
-        document.addEventListener('DOMContentLoaded', loadInstructorList);
     </script>
 </body>
 </html>
