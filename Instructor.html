@@ -283,14 +283,22 @@
         window.registerInstructor = registerInstructor;
 
         // Initialize time slots and event listeners when the page loads
-        document.addEventListener('DOMContentLoaded', () => {
+        document.addEventListener('DOMContentLoaded', async () => {
             try {
+                // Fetch necessary data in parallel
+                await Promise.all([
+                    fetchRooms(),
+                    fetchStudentCapacities()
+                ]);
+                
                 populateTimeSlots();
+                
                 // Set up event listeners for form inputs
                 const formInputs = [daySelect, timeSelect, courseSelect, yearSelect, sectionSelect];
                 formInputs.forEach(input => {
                     input.addEventListener('change', updateAvailableRooms);
                 });
+                
                 // Initial update of available rooms
                 updateAvailableRooms();
             } catch (error) {
@@ -299,54 +307,45 @@
             }
         });
 
-        // Data Definitions
-        const studentCapacityMap = {
-            'BSA-1st-A': 30, 'BSA-1st-B': 30, 'BSA-1st-C': 28, 'BSA-1st-D': 30,
-            'BSA-2nd-A': 32, 'BSA-2nd-B': 30, 'BSA-2nd-C': 30, 'BSA-2nd-D': 32,
-            'BSA-3rd-A': 28, 'BSA-3rd-B': 29, 'BSA-3rd-C': 30, 'BSA-3rd-D': 28,
-            'BSA-4th-A': 30, 'BSA-4th-B': 31, 'BSA-4th-C': 29, 'BSA-4th-D': 30,
+        // Student capacities will be fetched from Firestore
+        let studentCapacityMap = {};
+        
+        // Fetch student capacities from Firestore
+        async function fetchStudentCapacities() {
+            try {
+                const capacitiesSnapshot = await getDocs(collection(db, "StudentCapacities"));
+                capacitiesSnapshot.docs.forEach(doc => {
+                    studentCapacityMap[doc.id] = doc.data().capacity;
+                });
+                console.log("Fetched student capacities:", studentCapacityMap);
+            } catch (error) {
+                console.error("Error fetching student capacities:", error);
+                showError("Failed to load student capacity data. Please refresh the page.");
+            }
+        }
 
-            'BSAIS-1st-A': 35, 'BSAIS-1st-B': 33, 'BSAIS-1st-C': 34, 'BSAIS-1st-D': 35,
-            'BSAIS-2nd-A': 30, 'BSAIS-2nd-B': 31, 'BSAIS-2nd-C': 32, 'BSAIS-2nd-D': 30,
-            'BSAIS-3rd-A': 33, 'BSAIS-3rd-B': 35, 'BSAIS-3rd-C': 34, 'BSAIS-3rd-D': 33,
-            'BSAIS-4th-A': 31, 'BSAIS-4th-B': 30, 'BSAIS-4th-C': 32, 'BSAIS-4th-D': 31,
-
-            'MSMarketing-1st-A': 20, 'MSMarketing-1st-B': 22, 
-            'MSMarketing-2nd-A': 21, 'MSMarketing-2nd-B': 20,
-            'MSMarketing-3rd-A': 20, 'MSMarketing-3rd-B': 20, // Added 3rd year for MSMarketing
-            'MSMarketing-4th-A': 20, 'MSMarketing-4th-B': 20, // Added 4th year for MSMarketing
-            
-            'BSE-1st-A': 40, 'BSE-1st-B': 40, 'BSE-1st-C': 38, 'BSE-1st-D': 39,
-            'BSE-2nd-A': 37, 'BSE-2nd-B': 39, 'BSE-2nd-C': 40, 'BSE-2nd-D': 38,
-            'BSE-3rd-A': 35, 'BSE-3rd-B': 36, 'BSE-3rd-C': 37, 'BSE-3rd-D': 35,
-            'BSE-4th-A': 38, 'BSE-4th-B': 40, 'BSE-4th-C': 39, 'BSE-4th-D': 37,
-
-            'BSPublicAdministration-1st-A': 30, 'BSPublicAdministration-1st-B': 32, 'BSPublicAdministration-1st-C': 31, 'BSPublicAdministration-1st-D': 30,
-            'BSPublicAdministration-2nd-A': 28, 'BSPublicAdministration-2nd-B': 30, 'BSPublicAdministration-2nd-C': 29, 'BSPublicAdministration-2nd-D': 28,
-            'BSPublicAdministration-3rd-A': 31, 'BSPublicAdministration-3rd-B': 29, 'BSPublicAdministration-3rd-C': 30, 'BSPublicAdministration-3rd-D': 31,
-            'BSPublicAdministration-4th-A': 29, 'BSPublicAdministration-4th-B': 30, 'BSPublicAdministration-4th-C': 28, 'BSPublicAdministration-4th-D': 29,
-            // Add section G if applicable, for example:
-            // 'BSPublicAdministration-4th-G': 30 
-        };
-
-        const allRooms = [
-            { name: "CL1 (Computer Laboratory 1)", capacity: 30 },
-            { name: "CL2 (Computer Laboratory 2)", capacity: 35 },
-            { name: "CL3 (Computer Laboratory 3)", capacity: 30 },
-            { name: "MDH (Multi-Disciplinary Hall)", capacity: 100 },
-            { name: "AVR (Audio-Visual Room)", capacity: 50 },
-            { name: "Room 201", capacity: 40 },
-            { name: "Room 202", capacity: 40 },
-            { name: "Room 203", capacity: 35 },
-            { name: "Room 301", capacity: 45 },
-            { name: "Room 302", capacity: 25 }
-        ];
+        let allRooms = [];
+        
+        // Fetch rooms from Firestore
+        async function fetchRooms() {
+            try {
+                const roomsSnapshot = await getDocs(collection(db, "Rooms"));
+                allRooms = roomsSnapshot.docs.map(doc => ({
+                    id: doc.id,
+                    ...doc.data()
+                }));
+                console.log("Fetched rooms:", allRooms);
+            } catch (error) {
+                console.error("Error fetching rooms:", error);
+                showError("Failed to load room data. Please refresh the page.");
+            }
+        }
 
         // Helper Functions
         function populateTimeSlots() {
             try {
-                const startTime = 7; // 7 AM
-                const endTime = 17;  // 5 PM
+                const startTime = 7;
+                const endTime = 17;
                 
                 // Clear existing options except the first one
                 while (timeSelect.options.length > 1) {
@@ -358,21 +357,9 @@
                     const endHourPadded = String(hour + 1).padStart(2, '0');
                     const timeSlotValue = `${startHourPadded}:00-${endHourPadded}:00`;
                     
-                    // Format display time (12-hour format with AM/PM)
-                    let displayStartHour = hour % 12;
-                    if (displayStartHour === 0) displayStartHour = 12; 
-                    const displayStartAmPm = hour < 12 ? 'AM' : 'PM';
-                    
-                    let displayEndHour = (hour + 1) % 12;
-                    if (displayEndHour === 0) displayEndHour = 12;
-                    let displayEndAmPm = (hour + 1) < 12 || (hour + 1) === 24 ? 'AM' : 'PM';
-                    if ((hour + 1) === 12) displayEndAmPm = 'PM';
-                    
-                    const timeSlotText = `${displayStartHour}:00 ${displayStartAmPm} - ${displayEndHour}:00 ${displayEndAmPm}`;
-
                     const option = document.createElement('option');
                     option.value = timeSlotValue;
-                    option.textContent = timeSlotText;
+                    option.textContent = timeSlotValue;
                     timeSelect.appendChild(option);
                 }
             } catch (error) {
