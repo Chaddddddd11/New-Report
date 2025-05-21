@@ -280,15 +280,32 @@
             appId: "1:667821278853:web:a3a80c985073772670cbec"
         };
 
-        // Initialize Firebase
-        const app = firebase.initializeApp(firebaseConfig);
-        const db = firebase.firestore();
-        const storage = firebase.storage();
-        
-        // Make these available globally
-        window.db = db;
-        window.firebase = firebase;
-        window.storage = storage;
+        // Initialize Firebase (v9+ modular SDK)
+        const app = initializeApp(firebaseConfig); // Uses the imported initializeApp
+        const db = getFirestore(app);            // Uses the imported getFirestore
+        // const storage = getStorage(app); // Uncomment and import getStorage if you use Firebase Storage
+
+        // Firebase Collection References (using v9+ modular SDK)
+        const instructorsCollectionRef = collection(db, 'Instructors');
+        const roomsCollectionRef = collection(db, 'rooms'); // Assuming 'rooms' is the collection name
+
+        // DOM Element References (declared globally here)
+        const nameInput = document.getElementById('name');
+        const subjectInput = document.getElementById('subject');
+        const courseSelect = document.getElementById('course');
+        const yearSelect = document.getElementById('year');
+        const sectionSelect = document.getElementById('section');
+        const daySelect = document.getElementById('day');
+        const timeSelect = document.getElementById('classTime');
+        const roomSelect = document.getElementById('room'); // This was the source of the ReferenceError
+        const roomAvailableSelect = document.getElementById('room'); // Alias for clarity if used interchangeably, or ensure ID is 'room'
+        const errorMessageDiv = document.getElementById('errorMessage');
+        const submitBtn = document.getElementById('submitBtn');
+
+        // Global state variables (example, adjust as needed)
+        let isUpdateMode = false;
+        let currentInstructorId = null;
+        let allRooms = []; // To be populated by fetchRooms, if still used this way
 
         // Function to fetch rooms from Firestore with detailed logging
         async function loadInstructorData(instructorId) {
@@ -372,9 +389,6 @@
                 return [];
             }
         }
-        
-        let allRooms = [];
-        let allInstructors = [];
         
         // Student capacity map (course -> year -> section -> capacity)
         const studentCapacityMap = {
@@ -629,92 +643,121 @@
             }
             
             try {
+                const selectedDay = daySelect.value;
+                const classTime = timeSelect.value;
+                const course = courseSelect.value;
+                const year = yearSelect.value;
+                const section = sectionSelect.value;
+
+                console.log(`[updateAvailableRooms] Selected Criteria: Day='${selectedDay}', Time='${classTime}', Course='${course}', Year='${year}', Section='${section}'`);
+
                 // Show loading state
                 roomSelect.innerHTML = '<option value="">Checking room availability...</option>';
                 
                 // Get student capacity for the selected course/year/section
                 const studentCapacity = studentCapacityMap[course]?.[year]?.[section] || 0;
+                console.log(`[updateAvailableRooms] Required Student Capacity: ${studentCapacity}`);
+
+                if (!selectedDay || !classTime) {
+                    console.log('[updateAvailableRooms] Day or Class Time not selected. Clearing room options.');
+                    roomSelect.innerHTML = '<option value="">Please select Day and Time</option>';
+                    return;
+                }
                 
                 // Get all instructors and rooms
                 const [instructorsSnapshot, roomsSnapshot] = await Promise.all([
                     db.collection('Instructors').get(),
                     db.collection('rooms').get()
                 ]);
+                console.log(`[updateAvailableRooms] Fetched ${instructorsSnapshot.size} instructors and ${roomsSnapshot.size} room documents from Firestore.`);
+
+                let rawRoomsData = [];
+                roomsSnapshot.forEach(doc => rawRoomsData.push({ id: doc.id, ...doc.data() }));
+                console.log('[updateAvailableRooms] Raw rooms data from Firestore:', JSON.parse(JSON.stringify(rawRoomsData)));
+
+                let rawInstructorsData = [];
+                instructorsSnapshot.forEach(doc => rawInstructorsData.push({ id: doc.id, ...doc.data() }));
+                console.log('[updateAvailableRooms] Raw instructors data from Firestore:', JSON.parse(JSON.stringify(rawInstructorsData)));
                 
                 // Parse selected time (24-hour format)
                 const [selectedStart, selectedEnd] = classTime.split('-').map(t => t.trim());
                 const newStart = timeToMinutes(selectedStart);
                 const newEnd = timeToMinutes(selectedEnd);
+                console.log(`[updateAvailableRooms] Parsed selected time: Start=${newStart} mins, End=${newEnd} mins`);
                 
                 // Create a map of room schedules
                 const roomSchedules = new Map();
                 
                 // First, process all rooms to initialize their schedules
+                console.log('[updateAvailableRooms] Processing roomsSnapshot to build roomSchedules:');
                 roomsSnapshot.forEach(doc => {
                     const data = doc.data();
-                    if (!data.roomName || !data.day || !data.time) return; // Skip invalid room entries
+                    console.log(`  Processing room doc ID: ${doc.id}, Data:`, JSON.parse(JSON.stringify(data)));
+                    // THIS IS THE CRITICAL ASSUMPTION: rooms collection HAS day, time, roomName fields
+                    if (!data.roomName || !data.day || !data.time) {
+                        console.warn(`  Skipping room doc ID: ${doc.id} due to missing roomName, day, or time.`);
+                        return;
+                    }
                     
                     roomSchedules.set(data.roomName, {
                         id: doc.id,
                         name: data.roomName,
                         capacity: parseInt(data.capacity) || 0,
-                        day: data.day.trim(),
-                        time: data.time.trim(),
+                        day: data.day.trim(), // Assumes room doc has 'day'
+                        time: data.time.trim(), // Assumes room doc has 'time'
                         isBooked: false
                     });
                 });
+                console.log('[updateAvailableRooms] Constructed roomSchedules map:', JSON.parse(JSON.stringify(Array.from(roomSchedules.entries()))));
                 
                 // Then, mark rooms as booked based on instructor schedules
+                console.log('[updateAvailableRooms] Marking rooms as booked based on instructor schedules:');
                 instructorsSnapshot.forEach(doc => {
                     const instructor = doc.data();
+                    //console.log(`  Checking instructor: ${instructor.name}, Room: ${instructor.roomName}, Day: ${instructor.day}, Time: ${instructor.time}`);
                     if (!instructor.roomName || !instructor.day || !instructor.time) return;
                     
-                    // Only process if the instructor is assigned to a room that exists in our schedule
                     const roomSchedule = roomSchedules.get(instructor.roomName);
-                    if (!roomSchedule) return;
+                    if (!roomSchedule) {
+                        //console.warn(`  Instructor ${instructor.name} assigned to room '${instructor.roomName}' which is not in roomSchedules (or was skipped).`);
+                        return;
+                    }
                     
-                    // If the instructor is assigned to this room on the selected day
-                    if (instructor.day.trim() === selectedDay) {
-                        // Check if the instructor's time overlaps with the selected time
-                        if (instructor.time.trim() === classTime) {
-                            roomSchedule.isBooked = true;
-                        }
+                    if (instructor.day.trim().toLowerCase() === selectedDay.toLowerCase() && instructor.time.trim() === classTime) {
+                        console.log(`  Room '${instructor.roomName}' is booked by instructor '${instructor.name}' for selected slot ${selectedDay} ${classTime}.`);
+                        roomSchedule.isBooked = true;
                     }
                 });
                 
-                // Filter available rooms based on:
-                // 1. Room's assigned day matches selected day (case-insensitive)
-                // 2. Room's time slot exactly matches selected time
-                // 3. Room has sufficient capacity
-                // 4. Room is not already booked
+                console.log('[updateAvailableRooms] Filtering available rooms from roomSchedules:');
                 const availableRooms = Array.from(roomSchedules.values()).filter(room => {
                     const dayMatches = room.day.toLowerCase() === selectedDay.toLowerCase();
                     const timeMatches = room.time === classTime;
                     const hasCapacity = room.capacity >= studentCapacity;
                     const isAvailable = !room.isBooked;
                     
+                    console.log(`  Filtering room '${room.name}': DayMatches=${dayMatches} (RoomDay: ${room.day}, SelectedDay: ${selectedDay}), TimeMatches=${timeMatches} (RoomTime: ${room.time}, SelectedTime: ${classTime}), HasCapacity=${hasCapacity} (RoomCap: ${room.capacity}, ReqCap: ${studentCapacity}), IsAvailable(NotBooked)=${isAvailable}`);
                     return dayMatches && timeMatches && hasCapacity && isAvailable;
                 });
+                console.log('[updateAvailableRooms] Filtered availableRooms:', JSON.parse(JSON.stringify(availableRooms)));
                 
                 // Update room select
                 roomSelect.innerHTML = '';
                 
                 if (availableRooms.length === 0) {
-                    // Add a "No Room Available" option that can be selected
+                    console.log('[updateAvailableRooms] No rooms available after filtering.');
                     const noRoomOption = document.createElement('option');
-                    noRoomOption.value = 'NO_ROOM_AVAILABLE';
+                    noRoomOption.value = 'NO_ROOM_AVAILABLE'; // Ensure this value is handled if it can be submitted
                     noRoomOption.textContent = 'No Room Available';
                     roomSelect.appendChild(noRoomOption);
                     return;
                 }
                 
-                // Add default option
                 const defaultOption = document.createElement('option');
                 defaultOption.value = '';
                 defaultOption.textContent = '-- Select a room --';
                 roomSelect.appendChild(defaultOption);
                 
-                // Add available rooms
                 availableRooms.forEach(room => {
                     const option = document.createElement('option');
                     option.value = room.name;
@@ -722,6 +765,7 @@
                     option.setAttribute('data-capacity', room.capacity);
                     roomSelect.appendChild(option);
                 });
+                console.log('[updateAvailableRooms] Room dropdown populated.');
                 
             } catch (error) {
                 console.error('Error updating available rooms:', error);
