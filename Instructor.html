@@ -465,37 +465,43 @@
             }
             
             try {
+                // Show loading state
+                roomSelect.innerHTML = '<option value="">Checking room availability...</option>';
+                
                 // Get student capacity for the selected course/year/section
                 const studentCapacity = studentCapacityMap[course]?.[year]?.[section] || 0;
                 
                 // Get all instructors to check for room availability
-                const instructorsSnapshot = await db.collection('/Instructors').get();
-                const instructors = [];
-                instructorsSnapshot.forEach(doc => {
-                    instructors.push({
+                const [instructorsSnapshot, roomsSnapshot] = await Promise.all([
+                    db.collection('Instructors').get(),
+                    db.collection('rooms').get()
+                ]);
+                
+                // Collect all rooms
+                const allRooms = [];
+                roomsSnapshot.forEach(doc => {
+                    const data = doc.data();
+                    allRooms.push({
                         id: doc.id,
-                        ...doc.data()
+                        name: data.roomName || `Room ${doc.id}`,
+                        capacity: parseInt(data.capacity) || 0
                     });
                 });
                 
                 // Parse selected time (24-hour format)
                 const [selectedStart, selectedEnd] = classTime.split('-').map(t => t.trim());
-                console.log('Parsing times:', { selectedStart, selectedEnd });
                 const newStart = timeToMinutes(selectedStart);
                 const newEnd = timeToMinutes(selectedEnd);
-                console.log('Converted to minutes:', { newStart, newEnd });
                 
                 // Find rooms that are already booked at this time
                 const bookedRooms = new Set();
-                instructors.forEach(instructor => {
+                instructorsSnapshot.forEach(doc => {
+                    const instructor = doc.data();
                     if (instructor.day === day && instructor.time) {
-                        console.log('Instructor time:', instructor.time);
                         const [instructorTimeRange] = instructor.time.split(' - ').map(t => t.trim());
                         const [instructorStart, instructorEnd] = instructorTimeRange.split('-').map(t => {
-                            const [h, m] = t.trim().split(':').map(Number);
-                            const minutes = h * 60 + (m || 0);
-                            console.log(`Converted instructor time: ${t} -> ${minutes} minutes`);
-                            return minutes;
+                            const [h, m] = t.trim().split(':');
+                            return (parseInt(h) * 60) + (parseInt(m) || 0);
                         });
                         
                         // Check for time overlap
@@ -513,27 +519,34 @@
                 
                 // Update room select
                 roomSelect.innerHTML = '';
+                
                 if (availableRooms.length === 0) {
-                    roomSelect.innerHTML = '<option value="">No available rooms match your criteria</option>';
+                    // Add a "No Room Available" option that can be selected
+                    const noRoomOption = document.createElement('option');
+                    noRoomOption.value = 'NO_ROOM_AVAILABLE';
+                    noRoomOption.textContent = 'No Room Available';
+                    roomSelect.appendChild(noRoomOption);
                     return;
                 }
                 
+                // Add default option
                 const defaultOption = document.createElement('option');
                 defaultOption.value = '';
-                defaultOption.textContent = 'Select a room';
+                defaultOption.textContent = '-- Select a room --';
                 roomSelect.appendChild(defaultOption);
                 
+                // Add available rooms
                 availableRooms.forEach(room => {
                     const option = document.createElement('option');
                     option.value = room.name;
-                    option.textContent = `${room.name} (Cap: ${room.capacity})`;
+                    option.textContent = `${room.name} (Capacity: ${room.capacity})`;
                     option.setAttribute('data-capacity', room.capacity);
                     roomSelect.appendChild(option);
                 });
                 
             } catch (error) {
                 console.error('Error updating available rooms:', error);
-                roomSelect.innerHTML = '<option value="">Error loading rooms</option>';
+                roomSelect.innerHTML = '<option value="">Error loading rooms. Please try again.</option>';
             }
         }
 
