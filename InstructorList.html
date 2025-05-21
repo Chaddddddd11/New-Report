@@ -23,15 +23,17 @@
             border-radius: 8px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.1);
         }
-        .header {
+        .header-title {
             text-align: center;
             color: #005f73; /* Darker blue-green */
-            margin-bottom: 25px;
+            margin-bottom: 0; /* Adjusted for flex layout */
+            flex-grow: 1; /* Allows title to take space */
         }
         .controls {
+            width: 100%;
             margin-bottom: 20px;
             display: flex;
-            justify-content: space-between; /* Aligns buttons */
+            justify-content: space-between;
             align-items: center;
         }
         .btn {
@@ -85,8 +87,6 @@
         }
         .edit-btn { background-color: #2a9d8f; /* Teal for edit */ }
         .edit-btn:hover { background-color: #238174; }
-        .delete-btn { background-color: #ae2012; /* Muted red for delete */ }
-        .delete-btn:hover { background-color: #8a1a0e; }
         .loading-message, .empty-message {
             text-align: center;
             padding: 20px;
@@ -99,7 +99,7 @@
     <div class="container">
         <div class="controls">
             <a href="index.html" class="btn">Back to Main Menu</a>
-            <h1 class="header" style="margin-bottom:0; flex-grow:1; text-align:center;">Registered Instructors</h1>
+            <h1 class="header-title">Registered Instructors</h1>
             <a href="Instructor.html" class="btn">Register New Instructor</a>
         </div>
         
@@ -124,81 +124,104 @@
             </table>
             <div id="loadingMessage" class="loading-message">Loading instructors...</div>
             <div id="emptyMessage" class="empty-message" style="display: none;">No instructors found.</div>
-
-        <table id="instructorTable">
-            <thead>
-                <tr>
-                    <th>Instructor Name</th>
-                    <th>Subject</th>
-                    <th>Course</th>
-                    <th>Year & Section</th> <!-- UPDATED -->
-                    <th>Day</th>
-                    <th>Time</th> <!-- UPDATED -->
-                    <th>Room</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody id="instructorTableBody">
-                <!-- Rows will be populated by JavaScript -->
-            </tbody>
-        </table>
-        <div id="loadingMessage" class="loading-message">Loading instructor data...</div>
-        <div id="emptyMessage" class="empty-message" style="display:none;">No instructors registered yet.</div>
+        </div>
     </div>
 
-    <!-- Edit Instructor Modal -->
-    <div id="editInstructorModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <span class="close-btn">&times;</span>
-                <h2>Edit Instructor Details</h2>
-            </div>
-            <form id="editInstructorForm">
-                <input type="hidden" id="editInstructorId">
-                <div class="form-group">
-                    <label for="editInstructorName">Instructor Name:</label>
-                    <input type="text" id="editInstructorName" required>
-                </div>
-                <div class="form-group">
-                    <label for="editSubject">Subject:</label>
-                    <input type="text" id="editSubject" required>
-                </div>
-                <div class="form-group">
-                    <label for="editCourse">Course:</label>
-                     <select id="editCourse" name="course" required>
-                        <option value="">Select Course</option>
-                        <option value="BSA">BSA (Bachelor of Science in Accountancy)</option>
-                        <option value="BSBA">BSBA (Bachelor of Science in Business Administration)</option>
-                        <option value="BSCS">BSCS (Bachelor of Science in Computer Science)</option>
-                        <option value="BSEE">BSEE (Bachelor of Science in Electrical Engineering)</option>
-                        <option value="BSECE">BSECE (Bachelor of Science in Electronics Engineering)</option>
-                        <option value="BSIT">BSIT (Bachelor of Science in Information Technology)</option>
-                        <option value="BSME">BSME (Bachelor of Science in Mechanical Engineering)</option>
-                        <option value="BSPublicAdministration">BSPubAd (Bachelor of Science in Public Administration)</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="editYearLevel">Year Level:</label>
-                    <select id="editYearLevel" required>
-                        <option value="">Select Year Level</option>
-                        <!-- Options populated by JS -->
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="editSection">Section:</label>
-                    <select id="editSection" required>
-                        <option value="">Select Section</option>
-                        <!-- Options populated by JS -->
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="editDay">Day:</label>
-                    <select id="editDay" required>
-                        <option value="">Select Day</option>
-                        <option value="Monday">Monday</option>
-                        <option value="Tuesday">Tuesday</option>
-                        <option value="Wednesday">Wednesday</option>
-                        <option value="Thursday">Thursday</option>
+    <script type="module">
+        // Import Firebase modules
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+        import { getFirestore, collection, getDocs, doc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+        // --- IMPORTANT: REPLACE WITH YOUR ACTUAL FIREBASE CONFIGURATION --- 
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_AUTH_DOMAIN",
+            projectId: "YOUR_PROJECT_ID", // e.g., "dhvsu-scheduling-system"
+            storageBucket: "YOUR_STORAGE_BUCKET",
+            messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+            appId: "YOUR_APP_ID"
+        };
+        // --- END OF FIREBASE CONFIGURATION --- 
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const instructorsCollectionRef = collection(db, "Instructors");
+
+        const instructorTableBody = document.getElementById('instructorTableBody');
+        const loadingMessage = document.getElementById('loadingMessage');
+        const emptyMessage = document.getElementById('emptyMessage');
+
+        async function displayInstructors() {
+            loadingMessage.style.display = 'block';
+            emptyMessage.style.display = 'none';
+            instructorTableBody.innerHTML = ''; // Clear existing rows
+
+            try {
+                const querySnapshot = await getDocs(instructorsCollectionRef);
+                if (querySnapshot.empty) {
+                    emptyMessage.style.display = 'block';
+                } else {
+                    querySnapshot.forEach((docSnap) => {
+                        const instructor = docSnap.data();
+                        const row = instructorTableBody.insertRow();
+                        
+                        row.insertCell().textContent = instructor.name || 'N/A';
+                        row.insertCell().textContent = instructor.subject || 'N/A';
+                        row.insertCell().textContent = instructor.course || 'N/A';
+                        row.insertCell().textContent = instructor.year || 'N/A';
+                        row.insertCell().textContent = instructor.section || 'N/A';
+                        row.insertCell().textContent = instructor.day || 'N/A';
+                        row.insertCell().textContent = instructor.time || 'N/A';
+                        row.insertCell().textContent = instructor.roomName || 'N/A';
+                        
+                        const actionsCell = row.insertCell();
+                        actionsCell.classList.add('actions-cell');
+                        
+                        const editButton = document.createElement('button');
+                        editButton.textContent = 'Edit';
+                        editButton.classList.add('edit-btn');
+                        editButton.onclick = () => handleEditInstructor(docSnap.id);
+                        actionsCell.appendChild(editButton);
+                    });
+                }
+            } catch (error) {
+                console.error("Error fetching instructors: ", error);
+                emptyMessage.textContent = 'Error loading data. Please check console and Firebase configuration.';
+                emptyMessage.style.display = 'block';
+            } finally {
+                loadingMessage.style.display = 'none';
+            }
+        }
+
+        function handleEditInstructor(instructorId) {
+            if (!instructorId) {
+                console.error('No instructor ID provided for edit');
+                alert('Cannot edit instructor: ID missing.');
+                return;
+            }
+            // Redirect to EditInstructor.html with the instructorId as a query parameter
+            window.location.href = `EditInstructor.html?id=${instructorId}`;
+        }
+
+        // Expose functions to global window object if they need to be called from inline HTML later
+        window.handleEditInstructor = handleEditInstructor; 
+
+        // Initial display of instructors when the page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            if (firebaseConfig.apiKey === "YOUR_API_KEY") {
+                alert("IMPORTANT: Firebase configuration is not set. Please update it in InstructorList.html.");
+                loadingMessage.style.display = 'none';
+                emptyMessage.textContent = 'Firebase not configured. Please edit the InstructorList.html file.';
+                emptyMessage.style.display = 'block';
+                return;
+            }
+            displayInstructors();
+        });
+
+    </script>
+</body>
+</html>
                         <option value="Friday">Friday</option>
                         <option value="Saturday">Saturday</option>
                     </select>
