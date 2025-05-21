@@ -295,43 +295,55 @@
     // Store all instructors data
     let allInstructorsData = []; // To store all instructors from Firebase
 
-    // Map between display years and database years
-    const yearMapping = {
-      '1st': '1',
-      '2nd': '2',
-      '3rd': '3',
-      '4th': '4'
-    };
-
-    // Student capacity map (course -> year -> section -> capacity)
-    const studentCapacityMap = {
+    // Course configuration with years and sections
+    const courseConfig = {
       'BSA': {
-        '1st': { 'A': 30, 'B': 30, 'C': 30, 'D': 30 },
-        '2nd': { 'A': 25, 'B': 25, 'C': 25, 'D': 25 },
-        '3rd': { 'A': 20, 'B': 20, 'C': 20, 'D': 20 },
-        '4th': { 'A': 15, 'B': 15, 'C': 15, 'D': 15 }
+        years: ['1', '2', '3', '4'],
+        sections: ['A', 'B', 'C', 'D']
       },
       'BSAIS': {
-        '1st': { 'A': 30, 'B': 30 },
-        '2nd': { 'A': 25, 'B': 25 },
-        '3rd': { 'A': 20, 'B': 20 },
-        '4th': { 'A': 15, 'B': 15 }
+        years: ['1', '2', '3', '4'],
+        sections: ['A', 'B']
       },
       'BSE': {
-        '1st': { 'A': 25, 'B': 25 },
-        '2nd': { 'A': 20, 'B': 20 },
-        '3rd': { 'A': 15, 'B': 15 },
-        '4th': { 'A': 10, 'B': 10 }
+        years: ['1', '2', '3', '4'],
+        sections: ['A', 'B']
       },
       'BSPublicAdministration': {
-        '1st': { 'A': 25 },
-        '2nd': { 'A': 20 },
-        '3rd': { 'A': 15 },
-        '4th': { 'A': 10 }
+        years: ['1', '2', '3', '4'],
+        sections: ['A', 'B']
+      }
+    };
+
+    // Student capacity map (simplified)
+    const studentCapacityMap = {
+      'BSA': {
+        '1': { 'A': 30, 'B': 30, 'C': 30, 'D': 30 },
+        '2': { 'A': 25, 'B': 25, 'C': 25, 'D': 25 },
+        '3': { 'A': 20, 'B': 20, 'C': 20, 'D': 20 },
+        '4': { 'A': 15, 'B': 15, 'C': 15, 'D': 15 }
+      },
+      'BSAIS': {
+        '1': { 'A': 30, 'B': 30 },
+        '2': { 'A': 25, 'B': 25 },
+        '3': { 'A': 20, 'B': 20 },
+        '4': { 'A': 15, 'B': 15 }
+      },
+      'BSE': {
+        '1': { 'A': 25, 'B': 25 },
+        '2': { 'A': 20, 'B': 20 },
+        '3': { 'A': 15, 'B': 15 },
+        '4': { 'A': 10, 'B': 10 }
+      },
+      'BSPublicAdministration': {
+        '1': { 'A': 25 },
+        '2': { 'A': 20 },
+        '3': { 'A': 15 },
+        '4': { 'A': 10 }
       },
       'MSMarketing': {
-        '1st': { 'A': 20 },
-        '2nd': { 'A': 15 }
+        '1': { 'A': 20 },
+        '2': { 'A': 15 }
       }
     };
 
@@ -378,6 +390,21 @@
       const selectedCourse = this.value;
       yearSelect.disabled = !selectedCourse;
       sectionSelect.disabled = true;
+      
+      // Clear previous options
+      yearSelect.innerHTML = '<option value="">-- Select Year --</option>';
+      sectionSelect.innerHTML = '<option value="">-- Select Section --</option>';
+      
+      if (selectedCourse) {
+        // Add years 1-4 for all courses
+        for (let i = 1; i <= 4; i++) {
+          const option = document.createElement('option');
+          option.value = i.toString();
+          option.textContent = `Year ${i}`;
+          yearSelect.appendChild(option);
+        }
+      }
+      sectionSelect.disabled = true;
       yearSelect.value = '';
       sectionSelect.value = '';
       updateStudentCapacity();
@@ -387,6 +414,23 @@
     function handleYearChange() {
       const selectedYear = this.value;
       sectionSelect.disabled = !selectedYear;
+      
+      // Clear previous options
+      sectionSelect.innerHTML = '<option value="">-- Select Section --</option>';
+      
+      if (selectedYear) {
+        const selectedCourse = courseSelect.value;
+        // Add sections A-D for BSA, A-B for others
+        const maxSections = selectedCourse === 'BSA' ? 4 : 2;
+        const sections = ['A', 'B', 'C', 'D'].slice(0, maxSections);
+        
+        sections.forEach(section => {
+          const option = document.createElement('option');
+          option.value = section;
+          option.textContent = `Section ${section}`;
+          sectionSelect.appendChild(option);
+        });
+      }
       sectionSelect.value = '';
       updateStudentCapacity();
       renderSchedule();
@@ -395,6 +439,14 @@
     function handleSectionChange() {
       updateStudentCapacity();
       renderSchedule();
+      
+      const selectedCourse = courseSelect.value;
+      const selectedYear = yearSelect.value;
+      const selectedSection = sectionSelect.value;
+      
+      if (selectedCourse && selectedYear && selectedSection) {
+        console.log(`Selected: ${selectedCourse} - Year ${selectedYear} - Section ${selectedSection}`);
+      }
     }
 
     // Helper function to normalize time format to HH:00-HH:00
@@ -443,12 +495,15 @@
       }
 
       // Find all instructors for the selected course, year, and section
-      const dbYear = yearMapping[selectedYear];
-      const sectionInstructors = allInstructorsData.filter(instructor => 
-        instructor.course === selectedCourse &&
-        instructor.year === dbYear &&
-        instructor.section === selectedSection
-      );
+      const sectionInstructors = allInstructorsData.filter(instr => {
+        const matches = instr.course === selectedCourse &&
+                      instr.year === selectedYear &&
+                      instr.section === selectedSection;
+        if (matches) {
+          console.log('Matching instructor:', instr);
+        }
+        return matches;
+      });
       
       console.log('Filtered instructors:', sectionInstructors);
 
