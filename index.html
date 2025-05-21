@@ -208,42 +208,30 @@
   
   <h2>DHVSU Automatic Scheduling System</h2>
   
-  <div class="form-group">
-    <label for="course">Course*</label>
-    <select id="course" required>
-      <option value="">Select Course</option>
-      <option value="BSA">BSA</option>
-      <option value="BSAIS">BSAIS</option>
-      <option value="MSMarketing">MS Marketing</option>
-      <option value="BSE">BSE</option>
-      <option value="BSPublicAdministration">BS Public Administration</option>
-    </select>
-  </div>
+  <label for="course">Select Course:</label> 
+  <select id="course"> 
+    <option value="">-- Select Course --</option>
+    <option value="BSA">BSA</option>
+    <option value="BSAIS">BSAIS</option>
+    <option value="BSE">BSE</option>
+    <option value="BSPublicAdministration">BS Public Administration</option>
+  </select>
 
-  <div class="form-group">
-    <label for="year">Year*</label>
-    <select id="year" required disabled>
-      <option value="">Select Year</option>
-      <option value="1st">1st Year</option>
-      <option value="2nd">2nd Year</option>
-      <option value="3rd">3rd Year</option>
-      <option value="4th">4th Year</option>
-    </select>
-  </div>
+  <label for="year">Select Year:</label> 
+  <select id="year" disabled> 
+    <option value="">-- Select Year --</option>
+  </select>
 
-  <div class="form-group">
-    <label for="section">Section*</label>
-    <select id="section" required disabled>
-      <option value="">Select Section</option>
-      <option value="A">Section A</option>
-      <option value="B">Section B</option>
-      <option value="C">Section C</option>
-      <option value="D">Section D</option>
-    </select>
-  </div>
+  <label for="section">Select Section:</label> 
+  <select id="section" disabled> 
+    <option value="">-- Select Section --</option>
+  </select>
 
-  <div id="studentCapacityContainer" style="display: none; padding: 10px; background-color: #f8f9fa; border-radius: 4px; margin-bottom: 15px;">
-    <strong>Student Capacity: </strong><span id="studentCapacity">-</span>
+  <div id="selectionSummary">
+    <span id="courseSummary">----</span>
+    <span>Students Capacity:</span>
+    <span id="studentCapacityDisplay">---</span>
+    <span>Students</span>
   </div>
 
   <table id="scheduleTable">
@@ -288,168 +276,132 @@
     // Initialize Firebase
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
-    
-    // Collection reference with correct case sensitivity
-    const instructorsCollectionRef = collection(db, 'Instructors');
-    
-    // Store all instructors data
+    const instructorsCollectionRef = collection(db, "instructors");
+
     let allInstructorsData = []; // To store all instructors from Firebase
 
-    // Student capacity map (course -> year -> section -> capacity)
-    const studentCapacityMap = {
-      'BSA': {
-        '1st': { 'A': 30, 'B': 30, 'C': 30, 'D': 30 },
-        '2nd': { 'A': 25, 'B': 25, 'C': 25, 'D': 25 },
-        '3rd': { 'A': 20, 'B': 20, 'C': 20, 'D': 20 },
-        '4th': { 'A': 15, 'B': 15, 'C': 15, 'D': 15 }
+    const courseConfig = {
+      BSA: {
+        years: ['1st', '2nd', '3rd', '4th'],
+        sections: { '1st': ['A', 'B', 'C', 'D'], '2nd': ['A', 'B', 'C'], '3rd': ['A', 'B'], '4th': ['A', 'B'] }
       },
-      'BSAIS': {
-        '1st': { 'A': 30, 'B': 30 },
-        '2nd': { 'A': 25, 'B': 25 },
-        '3rd': { 'A': 20, 'B': 20 },
-        '4th': { 'A': 15, 'B': 15 }
+      BSAIS: {
+        years: ['1st', '2nd', '3rd', '4th'],
+        sections: { '1st': ['A', 'B'], '2nd': ['A', 'B'], '3rd': ['A', 'B'], '4th': ['A', 'B'] }
       },
-      'BSE': {
-        '1st': { 'A': 25, 'B': 25 },
-        '2nd': { 'A': 20, 'B': 20 },
-        '3rd': { 'A': 15, 'B': 15 },
-        '4th': { 'A': 10, 'B': 10 }
+      BSE: {
+        years: ['1st', '2nd', '3rd', '4th'],
+        sections: { '1st': ['A', 'B'], '2nd': ['A', 'B'], '3rd': ['A', 'B'], '4th': ['A', 'B'] }
       },
-      'BSPublicAdministration': {
-        '1st': { 'A': 25 },
-        '2nd': { 'A': 20 },
-        '3rd': { 'A': 15 },
-        '4th': { 'A': 10 }
-      },
-      'MSMarketing': {
-        '1st': { 'A': 20 },
-        '2nd': { 'A': 15 }
+      BSPublicAdministration: {
+        years: ['1st', '2nd', '3rd', '4th'],
+        sections: { '1st': ['A', 'B'], '2nd': ['A', 'B'], '3rd': ['A', 'B'], '4th': ['A', 'B'] }
       }
     };
 
-    // Function to update student capacity display
-    function updateStudentCapacity() {
-      const course = courseSelect.value;
-      const year = yearSelect.value;
-      const section = sectionSelect.value;
-      
-      // Get student capacity for the selected course/year/section
-      const studentCapacity = studentCapacityMap[course]?.[year]?.[section] || 0;
-      
-      // Update the display
-      const capacityContainer = document.getElementById('studentCapacityContainer');
-      const capacityDisplay = document.getElementById('studentCapacity');
-      
-      if (studentCapacity > 0) {
-        capacityDisplay.textContent = studentCapacity;
-        capacityContainer.style.display = 'block';
-      } else {
-        capacityContainer.style.display = 'none';
-      }
-    }
-
-    // Get DOM elements
     const courseSelect = document.getElementById('course');
     const yearSelect = document.getElementById('year');
     const sectionSelect = document.getElementById('section');
     const courseSummary = document.getElementById('courseSummary');
     const studentCapacityDisplay = document.getElementById('studentCapacityDisplay');
     const scheduleBody = document.getElementById('scheduleBody');
-    
-    // Function to initialize the schedule
-    function initializeSchedule() {
-      renderSchedule();
-      
-      // Set up event listeners
-      courseSelect.addEventListener('change', handleCourseChange);
-      yearSelect.addEventListener('change', handleYearChange);
-      sectionSelect.addEventListener('change', handleSectionChange);
-    }
-    
-    function handleCourseChange() {
-      const selectedCourse = this.value;
-      yearSelect.disabled = !selectedCourse;
-      sectionSelect.disabled = true;
-      yearSelect.value = '';
-      sectionSelect.value = '';
-      updateStudentCapacity();
-      renderSchedule();
-    }
-    
-    function handleYearChange() {
-      const selectedYear = this.value;
-      sectionSelect.disabled = !selectedYear;
-      sectionSelect.value = '';
-      updateStudentCapacity();
-      renderSchedule();
-    }
-    
-    function handleSectionChange() {
-      updateStudentCapacity();
-      renderSchedule();
-    }
 
-    // Render the schedule
-    // Helper function to normalize time format
+    courseSelect.addEventListener('change', function() {
+      yearSelect.innerHTML = '<option value="">-- Select Year --</option>';
+      sectionSelect.innerHTML = '<option value="">-- Select Section --</option>';
+      
+      const selectedCourse = courseSelect.value;
+
+      if (selectedCourse && courseConfig[selectedCourse]) {
+        yearSelect.disabled = false;
+        const years = courseConfig[selectedCourse].years;
+        years.forEach(year => {
+          const option = document.createElement('option');
+          option.value = year;
+          option.textContent = year;
+          yearSelect.appendChild(option);
+        });
+        sectionSelect.disabled = true;
+      } else {
+        yearSelect.disabled = true;
+        sectionSelect.disabled = true;
+      }
+    });
+
+    yearSelect.addEventListener('change', function() {
+      sectionSelect.innerHTML = '<option value="">-- Select Section --</option>';
+      
+      const selectedCourse = courseSelect.value;
+      const selectedYear = yearSelect.value;
+
+      if (selectedCourse && selectedYear && courseConfig[selectedCourse] && courseConfig[selectedCourse].sections[selectedYear]) {
+        sectionSelect.disabled = false;
+        const sections = courseConfig[selectedCourse].sections[selectedYear];
+        sections.forEach(section => {
+          const option = document.createElement('option');
+          option.value = section;
+          option.textContent = section;
+          sectionSelect.appendChild(option);
+        });
+      }
+    });
+
+    sectionSelect.addEventListener('change', function() {
+      const course = courseSelect.value;
+      const yearValue = yearSelect.value;
+      const section = sectionSelect.value;
+      
+      if (course && yearValue && section) {
+        const displayKey = `${course} ${yearValue}-${section}`;
+        courseSummary.textContent = displayKey;
+      } else {
+        courseSummary.textContent = '----';
+      }
+      
+      renderSchedule();
+    });
+
+    // Helper function to convert time to 24-hour format for comparison
     function normalizeTime(timeStr) {
       if (!timeStr) return '';
-      // Convert various time formats to HH:00-HH:00
-      return timeStr
-        .replace(/\s+/g, '')  // Remove all whitespace
-        .replace(/(\d{1,2}):(\d{2})/g, (match, hh, mm) => 
-          `${String(hh).padStart(2, '0')}:00` // Convert to HH:00 format
-        )
-        .replace(/(\d{2}:00)(\d{2}:00)/, '$1-$2'); // Add hyphen between times
+      // Convert times like '7:00-8:00' to '07:00-08:00'
+      return timeStr.split('-').map(part => {
+        const [hours, minutes] = part.split(':');
+        return `${hours.padStart(2, '0')}:${minutes || '00'}`;
+      }).join('-');
     }
 
     function renderSchedule() {
-      console.log('Rendering schedule...');
       const timeSlots = [];
-      // Generate time slots from 7:00 to 17:00 (5:00 PM)
-      for (let i = 7; i < 17; i++) {
+      // Generate time slots from 07:00 to 19:00 (7 AM to 7 PM)
+      for (let i = 7; i <= 19; i++) {
         const startHour = String(i).padStart(2, '0');
         const endHour = String(i + 1).padStart(2, '0');
         timeSlots.push(`${startHour}:00-${endHour}:00`);
       }
-      console.log('Time slots:', timeSlots);
-      
-      // Clear the schedule body once
-      scheduleBody.innerHTML = '';
-      
-      // Get selected values
+
       const selectedCourse = courseSelect.value;
       const selectedYear = yearSelect.value;
       const selectedSection = sectionSelect.value;
       
-      // If no course, year, or section is selected, show empty schedule with time slots
+      scheduleBody.innerHTML = ''; // Clear previous schedule
+
       if (!selectedCourse || !selectedYear || !selectedSection) {
+        // Show empty schedule if not all filters are selected
         timeSlots.forEach(timeSlot => {
           const row = document.createElement('tr');
-          const cells = [timeSlot];
-          // Add 6 empty cells for each day
-          for (let i = 0; i < 6; i++) {
-            cells.push('');
-          }
-          row.innerHTML = cells.map(cell => `<td>${cell}</td>`).join('');
+          row.innerHTML = `<td>${timeSlot}</td><td></td><td></td><td></td><td></td><td></td><td></td>`;
           scheduleBody.appendChild(row);
         });
         return;
       }
 
       // Find all instructors for the selected course, year, and section
-      const sectionInstructors = allInstructorsData.filter(instructor => {
-        const matches = 
-          instructor.course === selectedCourse &&
-          instructor.year === selectedYear &&
-          instructor.section === selectedSection;
-        
-        if (matches) {
-          console.log('Matching instructor:', instructor); // Debug log
-        }
-        return matches;
-      });
-
-      console.log('Section instructors:', sectionInstructors); // Debug log
+      const sectionInstructors = allInstructorsData.filter(instructor => 
+        instructor.course === selectedCourse &&
+        instructor.year === selectedYear &&
+        instructor.section === selectedSection
+      );
 
       // Create a row for each time slot
       timeSlots.forEach(timeSlot => {
@@ -464,27 +416,14 @@
           
           // Find if there's an instructor for this day and time
           const scheduledInstructor = sectionInstructors.find(instructor => {
-            if (!instructor.time || !instructor.day) return false;
-            
             // Normalize both times for comparison
-            const normalizedInstructorTime = normalizeTime(instructor.time);
-            const normalizedSlotTime = timeSlot; // Already in correct format
+            const normalizedSlot = normalizeTime(timeSlot);
+            const instructorTime = normalizeTime(instructor.time);
             
-            const timeMatch = normalizedInstructorTime === normalizedSlotTime;
-            const dayMatch = instructor.day.toLowerCase() === day.toLowerCase();
-            
-            if (timeMatch && dayMatch) {
-              console.log('Matched instructor:', { 
-                instructor: instructor.name,
-                subject: instructor.subject,
-                day: instructor.day,
-                time: instructor.time,
-                normalizedTime: normalizedInstructorTime,
-                slotTime: normalizedSlotTime
-              });
-            }
-            
-            return timeMatch && dayMatch;
+            // Check if the day matches and the times overlap
+            return instructor.day === day && 
+                   instructorTime && 
+                   instructorTime === normalizedSlot;
           });
 
           if (scheduledInstructor) {
@@ -496,8 +435,6 @@
                 <div class="room">${scheduledInstructor.roomName || 'TBA'}</div>
               </div>
             `;
-          } else {
-            cell.innerHTML = ''; // Empty cell if no class
           }
           row.appendChild(cell);
         });
@@ -517,24 +454,33 @@
       
       try {
         const q = query(
-          collection(db, 'Instructors'),
+          instructorsCollectionRef,
           where('course', '==', selectedCourse),
           where('year', '==', selectedYear),
           where('section', '==', selectedSection)
         );
         
         const querySnapshot = await getDocs(q);
-        return querySnapshot.docs.map(doc => {
+        const instructors = [];
+        
+        querySnapshot.forEach(doc => {
           const data = doc.data();
-          // Ensure time format matches our time slots (HH:00-HH:00)
-          if (data.time && data.time.includes(' - ')) {
-            data.time = data.time.replace(' - ', '-').replace(' ', '');
+          // Ensure time is in 24-hour format
+          if (data.time) {
+            const [start, end] = data.time.split('-');
+            if (start && end) {
+              const formattedStart = start.trim().padStart(5, '0'); // Ensure HH:MM format
+              const formattedEnd = end.trim().padStart(5, '0');
+              data.time = `${formattedStart}-${formattedEnd}`;
+            }
           }
-          return { 
-            id: doc.id, 
-            ...data 
-          };
+          instructors.push({
+            id: doc.id,
+            ...data
+          });
         });
+        
+        return instructors;
       } catch (error) {
         console.error('Error fetching instructors:', error);
         return [];
@@ -542,55 +488,91 @@
     }
 
     // Set up real-time listener for instructors
-    function setupFirebaseListener() {
-      const q = query(instructorsCollectionRef);
-      const unsubscribe = onSnapshot(q, (querySnapshot) => {
-        allInstructorsData = []; // Clear previous data
-        
-        querySnapshot.forEach((doc) => {
-          const data = doc.data();
-          // Ensure time format matches our time slots (HH:00-HH:00)
-          if (data.time) {
-            // Convert time format from "HH:MM - HH:MM" to "HH:00-HH:00"
-            data.time = data.time
-              .replace(/\s+/g, '')  // Remove all whitespace
-              .replace(/:\d{2}/g, ':00') // Convert any minutes to :00
-              .replace(/(\d{2}):00(\d{2}):00/g, '$1:00-$2:00'); // Format as HH:00-HH:00
+    const q = query(instructorsCollectionRef);
+    const unsubscribe = onSnapshot(q, (querySnapshot) => {
+      allInstructorsData = []; // Clear previous data
+      
+      querySnapshot.forEach((doc) => {
+        const data = doc.data();
+        // Ensure time is in 24-hour format
+        if (data.time) {
+          const [start, end] = data.time.split('-');
+          if (start && end) {
+            const formattedStart = start.trim().padStart(5, '0');
+            const formattedEnd = end.trim().padStart(5, '0');
+            data.time = `${formattedStart}-${formattedEnd}`;
           }
-          allInstructorsData.push({ 
-            id: doc.id, 
-            name: data.name || 'N/A',
-            subject: data.subject || 'N/A',
-            roomName: data.roomName || 'TBA',
-            day: data.day || '',
-            time: data.time || '',
-            course: data.course || '',
-            year: data.year || '',
-            section: data.section || ''
-          });
-        });
-        
-        console.log('Instructors loaded:', allInstructorsData);
-        renderSchedule(); // Re-render schedule with new data
-      }, (error) => {
-        console.error("Error setting up instructor listener:", error);
+        }
+        allInstructorsData.push({ id: doc.id, ...data });
       });
       
-      return unsubscribe;
+      // If no course is selected yet, try to auto-select the first available one
+      if (!courseSelect.value && allInstructorsData.length > 0) {
+        const firstInstructor = allInstructorsData[0];
+        if (firstInstructor.course && firstInstructor.year && firstInstructor.section) {
+          // Only update if we have all required fields
+          updateCourseSelection(firstInstructor.course, firstInstructor.year, firstInstructor.section);
+        }
+      }
+      
+      renderSchedule(); // Re-render schedule with new data
+    }, (error) => {
+      console.error("Error setting up instructor listener:", error);
+    });
+    
+    // Helper function to update course selection
+    function updateCourseSelection(course, year, section) {
+      if (courseSelect.value !== course) {
+        courseSelect.value = course;
+        // Trigger change event to update year dropdown
+        const event = new Event('change');
+        courseSelect.dispatchEvent(event);
+      }
+      
+      // Small delay to ensure the year dropdown is populated
+      setTimeout(() => {
+        if (yearSelect.value !== year) {
+          yearSelect.value = year;
+          // Trigger change event to update section dropdown
+          const yearEvent = new Event('change');
+          yearSelect.dispatchEvent(yearEvent);
+        }
+        
+        // Another small delay to ensure the section dropdown is populated
+        setTimeout(() => {
+          if (sectionSelect.value !== section) {
+            sectionSelect.value = section;
+            // Update summary
+            updateSummary(course, year, section);
+          }
+        }, 100);
+      }, 100);
     }
 
-    // Set up event listeners when the DOM is fully loaded
+    // Update section select to fetch and display data when selection changes
+    sectionSelect.addEventListener('change', async () => {
+      const course = courseSelect.value;
+      const year = yearSelect.value;
+      const section = sectionSelect.value;
+      
+      if (course && year && section) {
+        const displayKey = `${course} ${year}-${section}`;
+        courseSummary.textContent = displayKey;
+        await renderSchedule();
+      } else {
+        courseSummary.textContent = '----';
+        renderSchedule();
+      }
+    });
+
+    // Initialize schedule on page load with empty cells until selections are made
     document.addEventListener('DOMContentLoaded', function() {
-      // Initialize the schedule first to set up UI event handlers
-      initializeSchedule();
-      
-      // Then set up Firebase real-time listener
-      const unsubscribe = setupFirebaseListener();
-      
-      // Clean up the listener when the page is unloaded
-      window.addEventListener('beforeunload', () => {
-        if (unsubscribe) unsubscribe();
-      });
+      renderSchedule(); // Initial render (will be empty until selections)
+    });
+
+    // Clean up the listener when the page is unloaded
+    window.addEventListener('beforeunload', () => {
+      if (unsubscribe) unsubscribe();
     });
   </script>
 </body>
