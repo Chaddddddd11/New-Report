@@ -208,30 +208,42 @@
   
   <h2>DHVSU Automatic Scheduling System</h2>
   
-  <label for="course">Select Course:</label> 
-  <select id="course"> 
-    <option value="">-- Select Course --</option>
-    <option value="BSA">BSA</option>
-    <option value="BSAIS">BSAIS</option>
-    <option value="BSE">BSE</option>
-    <option value="BSPublicAdministration">BS Public Administration</option>
-  </select>
+  <div class="form-group">
+    <label for="course">Course*</label>
+    <select id="course" required>
+      <option value="">Select Course</option>
+      <option value="BSA">BSA</option>
+      <option value="BSAIS">BSAIS</option>
+      <option value="MSMarketing">MS Marketing</option>
+      <option value="BSE">BSE</option>
+      <option value="BSPublicAdministration">BS Public Administration</option>
+    </select>
+  </div>
 
-  <label for="year">Select Year:</label> 
-  <select id="year" disabled> 
-    <option value="">-- Select Year --</option>
-  </select>
+  <div class="form-group">
+    <label for="year">Year*</label>
+    <select id="year" required disabled>
+      <option value="">Select Year</option>
+      <option value="1st">1st Year</option>
+      <option value="2nd">2nd Year</option>
+      <option value="3rd">3rd Year</option>
+      <option value="4th">4th Year</option>
+    </select>
+  </div>
 
-  <label for="section">Select Section:</label> 
-  <select id="section" disabled> 
-    <option value="">-- Select Section --</option>
-  </select>
+  <div class="form-group">
+    <label for="section">Section*</label>
+    <select id="section" required disabled>
+      <option value="">Select Section</option>
+      <option value="A">Section A</option>
+      <option value="B">Section B</option>
+      <option value="C">Section C</option>
+      <option value="D">Section D</option>
+    </select>
+  </div>
 
-  <div id="selectionSummary">
-    <span id="courseSummary">----</span>
-    <span>Students Capacity:</span>
-    <span id="studentCapacityDisplay">---</span>
-    <span>Students</span>
+  <div id="studentCapacityContainer" style="display: none; padding: 10px; background-color: #f8f9fa; border-radius: 4px; margin-bottom: 15px;">
+    <strong>Student Capacity: </strong><span id="studentCapacity">-</span>
   </div>
 
   <table id="scheduleTable">
@@ -280,24 +292,92 @@
 
     let allInstructorsData = []; // To store all instructors from Firebase
 
-    const courseConfig = {
-      BSA: {
-        years: ['1st', '2nd', '3rd', '4th'],
-        sections: { '1st': ['A', 'B', 'C', 'D'], '2nd': ['A', 'B', 'C'], '3rd': ['A', 'B'], '4th': ['A', 'B'] }
+    // Student capacity map (course -> year -> section -> capacity)
+    const studentCapacityMap = {
+      'BSA': {
+        '1st': { 'A': 30, 'B': 30, 'C': 30, 'D': 30 },
+        '2nd': { 'A': 25, 'B': 25, 'C': 25, 'D': 25 },
+        '3rd': { 'A': 20, 'B': 20, 'C': 20, 'D': 20 },
+        '4th': { 'A': 15, 'B': 15, 'C': 15, 'D': 15 }
       },
-      BSAIS: {
-        years: ['1st', '2nd', '3rd', '4th'],
-        sections: { '1st': ['A', 'B'], '2nd': ['A', 'B'], '3rd': ['A', 'B'], '4th': ['A', 'B'] }
+      'BSAIS': {
+        '1st': { 'A': 30, 'B': 30 },
+        '2nd': { 'A': 25, 'B': 25 },
+        '3rd': { 'A': 20, 'B': 20 },
+        '4th': { 'A': 15, 'B': 15 }
       },
-      BSE: {
-        years: ['1st', '2nd', '3rd', '4th'],
-        sections: { '1st': ['A', 'B'], '2nd': ['A', 'B'], '3rd': ['A', 'B'], '4th': ['A', 'B'] }
+      'BSE': {
+        '1st': { 'A': 25, 'B': 25 },
+        '2nd': { 'A': 20, 'B': 20 },
+        '3rd': { 'A': 15, 'B': 15 },
+        '4th': { 'A': 10, 'B': 10 }
       },
-      BSPublicAdministration: {
-        years: ['1st', '2nd', '3rd', '4th'],
-        sections: { '1st': ['A', 'B'], '2nd': ['A', 'B'], '3rd': ['A', 'B'], '4th': ['A', 'B'] }
+      'BSPublicAdministration': {
+        '1st': { 'A': 25 },
+        '2nd': { 'A': 20 },
+        '3rd': { 'A': 15 },
+        '4th': { 'A': 10 }
+      },
+      'MSMarketing': {
+        '1st': { 'A': 20 },
+        '2nd': { 'A': 15 }
       }
     };
+
+    // Enable/disable year and section selects based on course selection
+    courseSelect.addEventListener('change', function() {
+      const selectedCourse = this.value;
+      
+      // Enable year select when course is selected
+      yearSelect.disabled = !selectedCourse;
+      sectionSelect.disabled = true; // Reset section when course changes
+      
+      // Reset year and section
+      yearSelect.value = '';
+      sectionSelect.value = '';
+      
+      // Update student capacity display
+      updateStudentCapacity();
+    });
+
+    // Enable section select when year is selected
+    yearSelect.addEventListener('change', function() {
+      const selectedYear = this.value;
+      sectionSelect.disabled = !selectedYear;
+      
+      // Reset section when year changes
+      sectionSelect.value = '';
+      
+      // Update student capacity display
+      updateStudentCapacity();
+    });
+
+    // Update schedule when section is selected
+    sectionSelect.addEventListener('change', function() {
+      updateStudentCapacity();
+      renderSchedule();
+    });
+
+    // Function to update student capacity display
+    function updateStudentCapacity() {
+      const course = courseSelect.value;
+      const year = yearSelect.value;
+      const section = sectionSelect.value;
+      
+      // Get student capacity for the selected course/year/section
+      const studentCapacity = studentCapacityMap[course]?.[year]?.[section] || 0;
+      
+      // Update the display
+      const capacityContainer = document.getElementById('studentCapacityContainer');
+      const capacityDisplay = document.getElementById('studentCapacity');
+      
+      if (studentCapacity > 0) {
+        capacityDisplay.textContent = studentCapacity;
+        capacityContainer.style.display = 'block';
+      } else {
+        capacityContainer.style.display = 'none';
+      }
+    }
 
     const courseSelect = document.getElementById('course');
     const yearSelect = document.getElementById('year');
@@ -306,64 +386,11 @@
     const studentCapacityDisplay = document.getElementById('studentCapacityDisplay');
     const scheduleBody = document.getElementById('scheduleBody');
 
-    courseSelect.addEventListener('change', function() {
-      yearSelect.innerHTML = '<option value="">-- Select Year --</option>';
-      sectionSelect.innerHTML = '<option value="">-- Select Section --</option>';
-      
-      const selectedCourse = courseSelect.value;
 
-      if (selectedCourse && courseConfig[selectedCourse]) {
-        yearSelect.disabled = false;
-        const years = courseConfig[selectedCourse].years;
-        years.forEach(year => {
-          const option = document.createElement('option');
-          option.value = year;
-          option.textContent = year;
-          yearSelect.appendChild(option);
-        });
-        sectionSelect.disabled = true;
-      } else {
-        yearSelect.disabled = true;
-        sectionSelect.disabled = true;
-      }
-    });
-
-    yearSelect.addEventListener('change', function() {
-      sectionSelect.innerHTML = '<option value="">-- Select Section --</option>';
-      
-      const selectedCourse = courseSelect.value;
-      const selectedYear = yearSelect.value;
-
-      if (selectedCourse && selectedYear && courseConfig[selectedCourse] && courseConfig[selectedCourse].sections[selectedYear]) {
-        sectionSelect.disabled = false;
-        const sections = courseConfig[selectedCourse].sections[selectedYear];
-        sections.forEach(section => {
-          const option = document.createElement('option');
-          option.value = section;
-          option.textContent = section;
-          sectionSelect.appendChild(option);
-        });
-      }
-    });
-
-    sectionSelect.addEventListener('change', function() {
-      const course = courseSelect.value;
-      const yearValue = yearSelect.value;
-      const section = sectionSelect.value;
-      
-      if (course && yearValue && section) {
-        const displayKey = `${course} ${yearValue}-${section}`;
-        courseSummary.textContent = displayKey;
-      } else {
-        courseSummary.textContent = '----';
-      }
-      
-      renderSchedule();
-    });
 
     function renderSchedule() {
       const timeSlots = [];
-      for (let i = 7; i < 19; i++) { // 7 AM to 6 PM (18:00-19:00 slot ends at 19:00)
+      for (let i = 7; i < 17; i++) { // 7:00 AM to 5:00 PM (16:00-17:00 slot ends at 17:00)
           const startHour = String(i).padStart(2, '0');
           const endHour = String(i + 1).padStart(2, '0');
           timeSlots.push(`${startHour}:00-${endHour}:00`);
