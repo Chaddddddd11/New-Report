@@ -594,10 +594,10 @@
                     const hasCapacity = room.capacity >= studentCapacity;
                     const isAvailable = !room.isBooked;
                     
-                    const isAvailableRoom = dayMatches && timeMatches && hasCapacity && isAvailable;
+                    const isAvailableRoom = dayMatches && timeOverlaps && hasCapacity && isAvailable;
                     console.log('Room', room.name, 'available?', isAvailableRoom, 
                                 'dayMatches:', dayMatches, 
-                                'timeMatches:', timeMatches, 
+                                'timeOverlaps:', timeOverlaps, 
                                 'hasCapacity:', hasCapacity,
                                 'isAvailable:', isAvailable);
                     
