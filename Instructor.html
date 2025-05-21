@@ -359,9 +359,20 @@
                 console.log('1. Initializing Firebase...');
                 console.log('Firebase app initialized:', app.name);
                 
-                // Load all rooms
-                console.log('2. Loading rooms...');
-                allRooms = await fetchRooms();
+                // Load all rooms from Firestore
+                console.log('2. Loading rooms from Firestore...');
+                const roomsSnapshot = await db.collection('rooms').get();
+                allRooms = [];
+                roomsSnapshot.forEach(doc => {
+                    const data = doc.data();
+                    if (data && data.name) {
+                        allRooms.push({
+                            id: doc.id,
+                            name: data.name,
+                            capacity: parseInt(data.capacity) || 0
+                        });
+                    }
+                });
                 console.log('3. Loaded rooms:', allRooms);
                 
                 // Set up event listeners for fields that affect student capacity
@@ -389,10 +400,15 @@
                 
                 // Initial room population
                 console.log('5. Initializing room selection...');
-                roomSelect.innerHTML = '<option value="">Select course, year, section, day and time</option>';
+                if (roomSelect) {
+                    roomSelect.innerHTML = '<option value="">Select course, year, section, day and time</option>';
+                }
                 console.log('=== PAGE INITIALIZATION COMPLETE ===');
             } catch (error) {
                 console.error('Error initializing page:', error);
+                if (roomSelect) {
+                    roomSelect.innerHTML = '<option value="">Error loading rooms. Please refresh the page.</option>';
+                }
             }
         });
         
