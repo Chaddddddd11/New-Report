@@ -488,12 +488,14 @@
                 // First, process all rooms to initialize their schedules
                 roomsSnapshot.forEach(doc => {
                     const data = doc.data();
+                    if (!data.roomName || !data.day || !data.time) return; // Skip invalid room entries
+                    
                     roomSchedules.set(data.roomName, {
                         id: doc.id,
                         name: data.roomName,
                         capacity: parseInt(data.capacity) || 0,
-                        day: data.day || '',
-                        time: data.time || '',
+                        day: data.day.trim(),
+                        time: data.time.trim(),
                         isBooked: false
                     });
                 });
@@ -503,36 +505,32 @@
                     const instructor = doc.data();
                     if (!instructor.roomName || !instructor.day || !instructor.time) return;
                     
-                    // Only process if the instructor is assigned to a room
+                    // Only process if the instructor is assigned to a room that exists in our schedule
                     const roomSchedule = roomSchedules.get(instructor.roomName);
                     if (!roomSchedule) return;
                     
                     // If the instructor is assigned to this room on the selected day
-                    if (instructor.day === selectedDay) {
-                        const [instructorTimeRange] = instructor.time.split(' - ').map(t => t.trim());
-                        const [instructorStart, instructorEnd] = instructorTimeRange.split('-').map(t => {
-                            const [h, m] = t.trim().split(':');
-                            return (parseInt(h) * 60) + (parseInt(m) || 0);
-                        });
-                        
-                        // Check for time overlap
-                        if (newStart < instructorEnd && newEnd > instructorStart) {
+                    if (instructor.day.trim() === selectedDay) {
+                        // Check if the instructor's time overlaps with the selected time
+                        if (instructor.time.trim() === classTime) {
                             roomSchedule.isBooked = true;
                         }
                     }
                 });
                 
                 // Filter available rooms based on:
-                // 1. Room's assigned day matches selected day
-                // 2. Room's time slot matches selected time
+                // 1. Room's assigned day matches selected day (case-insensitive)
+                // 2. Room's time slot exactly matches selected time
                 // 3. Room has sufficient capacity
                 // 4. Room is not already booked
-                const availableRooms = Array.from(roomSchedules.values()).filter(room => 
-                    room.day === selectedDay &&
-                    room.time === classTime &&
-                    room.capacity >= studentCapacity &&
-                    !room.isBooked
-                );
+                const availableRooms = Array.from(roomSchedules.values()).filter(room => {
+                    const dayMatches = room.day.toLowerCase() === selectedDay.toLowerCase();
+                    const timeMatches = room.time === classTime;
+                    const hasCapacity = room.capacity >= studentCapacity;
+                    const isAvailable = !room.isBooked;
+                    
+                    return dayMatches && timeMatches && hasCapacity && isAvailable;
+                });
                 
                 // Update room select
                 roomSelect.innerHTML = '';
