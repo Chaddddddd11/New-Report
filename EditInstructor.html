@@ -486,6 +486,9 @@
                 // Create a map of room schedules
                 const roomSchedules = new Map();
                 
+                console.log('=== ROOM DATA ===');
+                console.log('All rooms:', allRooms);
+                
                 // First, process all rooms to initialize their schedules
                 allRooms.forEach(room => {
                     const roomName = room.roomName || room.name;
@@ -497,20 +500,40 @@
                         time: room.time || '',
                         isBooked: false
                     });
+                    console.log('Added room to schedules:', roomName, 'day:', room.day, 'time:', room.time);
                 });
+                
+                console.log('=== INSTRUCTOR DATA ===');
+                console.log('All instructors:', allInstructors);
                 
                 // Then, mark rooms as booked based on instructor schedules
                 allInstructors.forEach(instructor => {
-                    if (!instructor.roomName || !instructor.day || !instructor.time) return;
+                    if (!instructor.roomName || !instructor.day || !instructor.time) {
+                        console.log('Skipping instructor - missing data:', instructor);
+                        return;
+                    }
+                    
+                    console.log('Processing instructor:', instructor.name, 'room:', instructor.roomName, 'day:', instructor.day, 'time:', instructor.time);
                     
                     // Only process if the instructor is assigned to a room that exists in our schedule
                     const roomSchedule = roomSchedules.get(instructor.roomName);
-                    if (!roomSchedule) return;
+                    if (!roomSchedule) {
+                        console.log('Room not found in schedules:', instructor.roomName);
+                        return;
+                    }
                     
                     // If the instructor is assigned to this room on the selected day
-                    if (instructor.day.trim().toLowerCase() === selectedDay.toLowerCase()) {
-                        // Check if the instructor's time matches the selected time
-                        if (instructor.time.trim() === classTime) {
+                    const instructorDay = instructor.day.trim().toLowerCase();
+                    const selectedDayLower = selectedDay.toLowerCase();
+                    
+                    console.log(`Comparing days - Instructor: "${instructorDay}", Selected: "${selectedDayLower}"`);
+                    
+                    if (instructorDay === selectedDayLower) {
+                        const instructorTime = instructor.time.trim();
+                        console.log(`Day matches! Comparing times - Instructor: "${instructorTime}", Selected: "${classTime}"`);
+                        
+                        if (instructorTime === classTime) {
+                            console.log(`Marking room as booked: ${instructor.roomName}`);
                             roomSchedule.isBooked = true;
                         }
                     }
