@@ -643,12 +643,7 @@
             }
             
             try {
-                const selectedDay = daySelect.value;
-                const classTime = timeSelect.value;
-                const course = courseSelect.value;
-                const year = yearSelect.value;
-                const section = sectionSelect.value;
-
+                // Values for selectedDay, classTime, course, year, section are already available from lines 634-638
                 console.log(`[updateAvailableRooms] Selected Criteria: Day='${selectedDay}', Time='${classTime}', Course='${course}', Year='${year}', Section='${section}'`);
 
                 // Show loading state
@@ -658,16 +653,17 @@
                 const studentCapacity = studentCapacityMap[course]?.[year]?.[section] || 0;
                 console.log(`[updateAvailableRooms] Required Student Capacity: ${studentCapacity}`);
 
-                if (!selectedDay || !classTime) {
-                    console.log('[updateAvailableRooms] Day or Class Time not selected. Clearing room options.');
-                    roomSelect.innerHTML = '<option value="">Please select Day and Time</option>';
-                    return;
-                }
+                // The check for selectedDay, classTime, course, year, section already happened before this try block (lines 640-643)
+                // if (!selectedDay || !classTime) { // This specific check is also somewhat redundant due to the more comprehensive check at L640
+                //     console.log('[updateAvailableRooms] Day or Class Time not selected. Clearing room options.');
+                //     roomSelect.innerHTML = '<option value="">Please select Day and Time</option>';
+                //     return;
+                // }
                 
-                // Get all instructors and rooms
+                // Get all instructors and rooms using v9+ syntax
                 const [instructorsSnapshot, roomsSnapshot] = await Promise.all([
-                    db.collection('Instructors').get(),
-                    db.collection('rooms').get()
+                    getDocs(instructorsCollectionRef), // Use getDocs with the global collection reference
+                    getDocs(roomsCollectionRef)        // Use getDocs with the global collection reference
                 ]);
                 console.log(`[updateAvailableRooms] Fetched ${instructorsSnapshot.size} instructors and ${roomsSnapshot.size} room documents from Firestore.`);
 
