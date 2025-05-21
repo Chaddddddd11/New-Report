@@ -288,8 +288,11 @@
     // Initialize Firebase
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
-    const instructorsCollectionRef = collection(db, "instructors");
-
+    
+    // Collection reference with correct case sensitivity
+    const instructorsCollectionRef = collection(db, 'Instructors');
+    
+    // Store all instructors data
     let allInstructorsData = []; // To store all instructors from Firebase
 
     // Student capacity map (course -> year -> section -> capacity)
@@ -389,12 +392,15 @@
 
 
     function renderSchedule() {
+      console.log('Rendering schedule...'); // Debug log
       const timeSlots = [];
-      for (let i = 7; i < 17; i++) { // 7:00 AM to 5:00 PM (16:00-17:00 slot ends at 17:00)
-          const startHour = String(i).padStart(2, '0');
-          const endHour = String(i + 1).padStart(2, '0');
-          timeSlots.push(`${startHour}:00-${endHour}:00`);
+      // Generate time slots from 7:00 to 17:00 (5:00 PM)
+      for (let i = 7; i < 17; i++) {
+        const startHour = String(i).padStart(2, '0');
+        const endHour = String(i + 1).padStart(2, '0');
+        timeSlots.push(`${startHour}:00-${endHour}:00`);
       }
+      console.log('Time slots:', timeSlots); // Debug log
 
       const selectedCourse = courseSelect.value;
       const selectedYear = yearSelect.value;
@@ -413,11 +419,19 @@
       }
 
       // Find all instructors for the selected course, year, and section
-      const sectionInstructors = allInstructorsData.filter(instructor => 
-        instructor.course === selectedCourse &&
-        instructor.year === selectedYear &&
-        instructor.section === selectedSection
-      );
+      const sectionInstructors = allInstructorsData.filter(instructor => {
+        const matches = 
+          instructor.course === selectedCourse &&
+          instructor.year === selectedYear &&
+          instructor.section === selectedSection;
+        
+        if (matches) {
+          console.log('Matching instructor:', instructor); // Debug log
+        }
+        return matches;
+      });
+
+      console.log('Section instructors:', sectionInstructors); // Debug log
 
       // Create a row for each time slot
       timeSlots.forEach(timeSlot => {
@@ -431,10 +445,26 @@
           const cell = document.createElement('td');
           
           // Find if there's an instructor for this day and time
-          const scheduledInstructor = sectionInstructors.find(instructor => 
-            instructor.time === timeSlot && 
-            instructor.day === day
-          );
+          const scheduledInstructor = sectionInstructors.find(instructor => {
+            // Normalize time format for comparison
+            const instructorTime = instructor.time 
+              ? instructor.time.replace(/\s+/g, '').replace(/:\d{2}/g, ':00')
+              : '';
+            const timeMatch = instructorTime === timeSlot;
+            const dayMatch = instructor.day && instructor.day.toLowerCase() === day.toLowerCase();
+            
+            if (timeMatch && dayMatch) {
+              console.log('Found matching instructor:', { 
+                instructor, 
+                timeSlot, 
+                day,
+                instructorTime,
+                matches: timeMatch && dayMatch
+              }); // Debug log
+            }
+            
+            return timeMatch && dayMatch;
+          });
 
           if (scheduledInstructor) {
             cell.className = 'occupied-cell';
@@ -445,6 +475,8 @@
                 <div class="room">${scheduledInstructor.roomName || 'TBA'}</div>
               </div>
             `;
+          } else {
+            cell.innerHTML = ''; // Empty cell if no class
           }
           row.appendChild(cell);
         });
@@ -464,17 +496,24 @@
       
       try {
         const q = query(
-          instructorsCollectionRef,
+          collection(db, 'Instructors'),
           where('course', '==', selectedCourse),
           where('year', '==', selectedYear),
           where('section', '==', selectedSection)
         );
         
         const querySnapshot = await getDocs(q);
-        return querySnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        }));
+        return querySnapshot.docs.map(doc => {
+          const data = doc.data();
+          // Ensure time format matches our time slots (HH:00-HH:00)
+          if (data.time && data.time.includes(' - ')) {
+            data.time = data.time.replace(' - ', '-').replace(' ', '');
+          }
+          return { 
+            id: doc.id, 
+            ...data 
+          };
+        });
       } catch (error) {
         console.error('Error fetching instructors:', error);
         return [];
@@ -487,9 +526,27 @@
       allInstructorsData = []; // Clear previous data
       
       querySnapshot.forEach((doc) => {
-        allInstructorsData.push({ id: doc.id, ...doc.data() });
+        const data = doc.data();
+        // Ensure time format matches our time slots (HH:00-HH:00)
+        if (data.time) {
+          // Convert time format from "HH:MM - HH:MM" to "HH:00-HH:00"
+          data.time = data.time
+            .replace(/\s+/g, '')  // Remove all whitespace
+            .replace(/:\d{2}/g, ':00') // Convert any minutes to :00
+            .replace(/(\d{2}):00(\d{2}):00/g, '$1:00-$2:00'); // Format as HH:00-HH:00
+        }
+        allInstructorsData.push({ 
+          id: doc.id, 
+          ...data,
+          // Ensure all required fields have default values
+          name: data.name || 'N/A',
+          subject: data.subject || 'N/A',
+          roomName: data.roomName || 'TBA',
+          day: data.day || ''
+        });
       });
       
+      console.log('Instructors loaded:', allInstructorsData); // Debug log
       renderSchedule(); // Re-render schedule with new data
     }, (error) => {
       console.error("Error setting up instructor listener:", error);
