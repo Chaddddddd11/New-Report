@@ -243,24 +243,23 @@
 
             <div class="btn-container">
                 <a href="InstructorList.html" class="btn">View Instructor List</a>
-                <button onclick="registerInstructor()" class="btn">Register Instructor</button>
+                <button id="registerBtn" class="btn">Register Instructor</button>
             </div>
         </div>
     </div>
 
     <!-- Firebase App (the core Firebase SDK) is always required and must be listed first -->
-    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js"></script>
-
     <script type="module">
         // Import the functions you need from the SDKs you need
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
         import { 
             getFirestore, 
             collection, 
             getDocs,
-            addDoc
-        } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+            addDoc,
+            query,
+            where
+        } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
         // Your web app's Firebase configuration
         const firebaseConfig = {
@@ -275,28 +274,6 @@
         // Initialize Firebase
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
-
-        // Function to fetch rooms from Firestore
-        async function fetchRooms() {
-            try {
-                console.log('Fetching rooms from Firestore...');
-                const querySnapshot = await getDocs(collection(db, 'rooms'));
-                const rooms = [];
-                querySnapshot.forEach((doc) => {
-                    console.log('Room document:', doc.id, '=>', doc.data());
-                    rooms.push({
-                        id: doc.id,
-                        name: doc.data().name,
-                        capacity: doc.data().capacity
-                    });
-                });
-                console.log('Fetched rooms:', rooms);
-                return rooms;
-            } catch (error) {
-                console.error("Error fetching rooms: ", error);
-                return [];
-            }
-        }
 
         // Function to fetch rooms from Firestore with detailed logging
         async function fetchRooms() {
@@ -375,8 +352,11 @@
             }
         };
 
-        // Initialize the page
+        // Set up event listeners
         document.addEventListener('DOMContentLoaded', async () => {
+            // Add click handler for register button
+            document.getElementById('registerBtn').addEventListener('click', registerInstructor);
+            
             console.log('=== PAGE INITIALIZATION STARTED ===');
             try {
                 console.log('1. Initializing Firebase...');
