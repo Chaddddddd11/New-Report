@@ -269,13 +269,10 @@
     import { 
       getFirestore, 
       collection, 
+      onSnapshot, 
       query, 
       where, 
-      getDocs, 
-      onSnapshot,
-      doc,
-      getDoc,
-      limit
+      getDocs 
     } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
     // Your web app's Firebase configuration (as provided by user)
@@ -289,152 +286,46 @@
     };
 
     // Initialize Firebase
-    console.log('Initializing Firebase...');
-    try {
-      const app = initializeApp(firebaseConfig);
-      const db = getFirestore(app);
-      
-      // Collection reference - using the exact case from your Firestore
-      const instructorsCollectionRef = collection(db, "Instructor");
-      console.log('Firebase initialized successfully');
-      console.log('Using collection: Instructor');
-      
-      // Test the connection
-      console.log('Testing Firestore connection...');
-      const testQuery = query(instructorsCollectionRef, limit(1));
-      
-      // Make db available in console for debugging
-      window.db = db;
-      window.instructorsCollectionRef = instructorsCollectionRef;
-      
-      // Test the connection by fetching one document
-      getDocs(testQuery).then(snapshot => {
-        console.log(`Firestore connection successful. Found ${snapshot.size} instructor documents.`);
-        if (snapshot.size === 0) {
-          console.warn('No instructor documents found in the collection. Make sure you have data in the "Instructor" collection.');
-        }
-        snapshot.forEach(doc => {
-          console.log('Sample document data:', doc.data());
-        });
-      }).catch(error => {
-        console.error('Error testing Firestore connection:', error);
-        console.error('Error details:', {
-          code: error.code,
-          message: error.message,
-          stack: error.stack
-        });
-      });
-    } catch (error) {
-      console.error('Failed to initialize Firebase:', error);
-      throw error;
-    }
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    
+    // Collection reference with correct case sensitivity
+    const instructorsCollectionRef = collection(db, 'Instructors');
     
     // Store all instructors data
     let allInstructorsData = []; // To store all instructors from Firebase
-    let firebaseInitialized = false;
 
+    // Student capacity map (course -> year -> section -> capacity)
     const studentCapacityMap = {
-      // BSA Capacities
-      'BSA-1A': 30, 'BSA-1B': 37, 'BSA-1C': 32, 'BSA-1D': 34, 
-      'BSA-1E': 43, 'BSA-1F': 49, 'BSA-1G': 45, 'BSA-1H': 41, 
-      'BSA-1I': 38, 'BSA-1J': 46,
-      'BSA-2A': 38, 'BSA-2B': 44, 'BSA-2C': 46, 'BSA-2D': 34, 
-      'BSA-2E': 39, 'BSA-2F': 35, 'BSA-2G': 47, 'BSA-2H': 31,
-      'BSA-3A': 44, 'BSA-3B': 50, 'BSA-3C': 41, 'BSA-3D': 32, 
-      'BSA-3E': 50, 'BSA-3F': 36, 'BSA-3G': 42, 'BSA-3H': 39,
-      'BSA-4A': 41, 'BSA-4B': 38, 'BSA-4C': 35, 'BSA-4D': 47,
-
-      // BSAIS Capacities
-      'BSAIS-1A': 40, 'BSAIS-1B': 42, 'BSAIS-1C': 32, 'BSAIS-1D': 44, 'BSAIS-1E': 35,
-      'BSAIS-2A': 41, 'BSAIS-2B': 40, 'BSAIS-2C': 50, 'BSAIS-2D': 44, 'BSAIS-2E': 44, 
-      'BSAIS-2F': 43, 'BSAIS-2G': 38,
-      'BSAIS-3A': 42, 'BSAIS-3B': 50, 'BSAIS-3C': 41, 'BSAIS-3D': 47, 'BSAIS-3E': 41, 
-      'BSAIS-3F': 30,
-      'BSAIS-4A': 36, 'BSAIS-4B': 35, 'BSAIS-4C': 45, 'BSAIS-4D': 42, 'BSAIS-4E': 30, 
-      'BSAIS-4F': 32, 'BSAIS-4G': 34,
-
-      // MSMarketing Capacities
-      'MSMarketing-1A': 36, 'MSMarketing-1B': 39, 'MSMarketing-1C': 35, 'MSMarketing-1D': 31, 
-      'MSMarketing-1E': 36, 'MSMarketing-1F': 43, 'MSMarketing-1G': 41, 'MSMarketing-1H': 41,
-      'MSMarketing-2A': 35, 'MSMarketing-2B': 44, 'MSMarketing-2C': 49, 'MSMarketing-2D': 40, 
-      'MSMarketing-2E': 49, 'MSMarketing-2F': 50, 'MSMarketing-2G': 31, 'MSMarketing-2H': 46, 
-      'MSMarketing-2I': 36,
-      'MSMarketing-3A': 42, 'MSMarketing-3B': 43, 'MSMarketing-3C': 36,
-      'MSMarketing-4A': 37, 'MSMarketing-4B': 31, 'MSMarketing-4C': 49, 'MSMarketing-4D': 47, 
-      'MSMarketing-4E': 43, 'MSMarketing-4F': 44, 'MSMarketing-4G': 33, 'MSMarketing-4H': 45, 
-      'MSMarketing-4I': 31,
-
-      // BSE Capacities
-      'BSE-1A': 40, 'BSE-1B': 48, 'BSE-1C': 50,
-      'BSE-2A': 42, 'BSE-2B': 34, 'BSE-2C': 44, 'BSE-2D': 40, 'BSE-2E': 36, 
-      'BSE-2F': 34, 'BSE-2G': 48, 'BSE-2H': 40,
-      'BSE-3A': 39, 'BSE-3B': 32, 'BSE-3C': 44, 'BSE-3D': 50,
-      'BSE-4A': 41, 'BSE-4B': 37, 'BSE-4C': 42, 'BSE-4D': 40, 'BSE-4E': 33, 
-      'BSE-4F': 43, 'BSE-4G': 49, 'BSE-4H': 38,
-
-      // BSPublicAdministration Capacities
-      'BSPublicAdministration-1A': 36, 'BSPublicAdministration-1B': 34, 
-      'BSPublicAdministration-1C': 50, 'BSPublicAdministration-1D': 31,
-      'BSPublicAdministration-2A': 50, 'BSPublicAdministration-2B': 40, 
-      'BSPublicAdministration-2C': 43, 'BSPublicAdministration-2D': 36, 
-      'BSPublicAdministration-2E': 38, 'BSPublicAdministration-2F': 49, 
-      'BSPublicAdministration-2G': 36,
-      'BSPublicAdministration-3A': 37, 'BSPublicAdministration-3B': 30, 
-      'BSPublicAdministration-3C': 33, 'BSPublicAdministration-3D': 38, 
-      'BSPublicAdministration-3E': 48,
-      'BSPublicAdministration-4A': 34, 'BSPublicAdministration-4B': 43, 
-      'BSPublicAdministration-4C': 33, 'BSPublicAdministration-4D': 30, 
-      'BSPublicAdministration-4E': 43, 'BSPublicAdministration-4F': 39, 
-      'BSPublicAdministration-4G': 30,
-    };
-
-    // Course configuration with years and sections - using the more detailed version
-    // The configuration below is used to populate the course, year, and section dropdowns
-    // and to validate the selections
-    
-    // Test Firestore connection immediately
-    console.log('Testing Firestore connection...');
-    const testQuery = query(instructorsCollectionRef, where('name', '!=', ''));
-    getDocs(testQuery).then(snapshot => {
-      console.log(`Firestore connection successful. Found ${snapshot.size} instructor documents.`);
-      if (snapshot.size === 0) {
-        console.warn('No instructor documents found in the collection. Make sure you have data in the "Instructor" collection.');
-      }
-      firebaseInitialized = true;
-    }).catch(error => {
-      console.error('Error connecting to Firestore:', error);
-      console.error('Firestore error code:', error.code);
-      console.error('Firestore error message:', error.message);
-      
-      if (error.code === 'permission-denied') {
-        console.error('Permission denied. Please check your Firestore security rules.');
-      } else if (error.code === 'not-found') {
-        console.error('Collection not found. Make sure the collection name is correct.');
-      }
-    });
-
-    // Course configuration with years and sections
-    const courseConfig = {
       'BSA': {
-        years: [1, 2, 3, 4],
-        sections: ['A', 'B', 'C', 'D']
+        '1st': { 'A': 30, 'B': 30, 'C': 30, 'D': 30 },
+        '2nd': { 'A': 25, 'B': 25, 'C': 25, 'D': 25 },
+        '3rd': { 'A': 20, 'B': 20, 'C': 20, 'D': 20 },
+        '4th': { 'A': 15, 'B': 15, 'C': 15, 'D': 15 }
       },
       'BSAIS': {
-        years: [1, 2, 3, 4],
-        sections: ['A', 'B']
+        '1st': { 'A': 30, 'B': 30 },
+        '2nd': { 'A': 25, 'B': 25 },
+        '3rd': { 'A': 20, 'B': 20 },
+        '4th': { 'A': 15, 'B': 15 }
       },
       'BSE': {
-        years: [1, 2, 3, 4],
-        sections: ['A', 'B']
+        '1st': { 'A': 25, 'B': 25 },
+        '2nd': { 'A': 20, 'B': 20 },
+        '3rd': { 'A': 15, 'B': 15 },
+        '4th': { 'A': 10, 'B': 10 }
       },
       'BSPublicAdministration': {
-        years: [1, 2, 3, 4],
-        sections: ['A', 'B']
+        '1st': { 'A': 25 },
+        '2nd': { 'A': 20 },
+        '3rd': { 'A': 15 },
+        '4th': { 'A': 10 }
+      },
+      'MSMarketing': {
+        '1st': { 'A': 20 },
+        '2nd': { 'A': 15 }
       }
     };
-
-    // Using the detailed studentCapacityMap that was defined earlier
-    // This map contains specific capacities for each course, year, and section combination
 
     // Function to update student capacity display
     function updateStudentCapacity() {
@@ -443,9 +334,7 @@
       const section = sectionSelect.value;
       
       // Get student capacity for the selected course/year/section
-      const yearNumber = year ? year.toString() : '0';
-      const mapKey = `${course}-${yearNumber}${section}`;
-      const studentCapacity = studentCapacityMap[mapKey] || 0;
+      const studentCapacity = studentCapacityMap[course]?.[year]?.[section] || 0;
       
       // Update the display
       const capacityContainer = document.getElementById('studentCapacityContainer');
@@ -469,40 +358,17 @@
     
     // Function to initialize the schedule
     function initializeSchedule() {
-      console.log('Initializing schedule...');
+      renderSchedule();
       
       // Set up event listeners
       courseSelect.addEventListener('change', handleCourseChange);
       yearSelect.addEventListener('change', handleYearChange);
       sectionSelect.addEventListener('change', handleSectionChange);
-      
-      // Initial state
-      yearSelect.disabled = true;
-      sectionSelect.disabled = true;
-      
-      console.log('Schedule initialization complete');
     }
     
     function handleCourseChange() {
       const selectedCourse = this.value;
       yearSelect.disabled = !selectedCourse;
-      sectionSelect.disabled = true;
-      
-      // Clear previous options
-      yearSelect.innerHTML = '<option value="">-- Select Year --</option>';
-      sectionSelect.innerHTML = '<option value="">-- Select Section --</option>';
-      
-      if (selectedCourse) {
-        // Add years from courseConfig
-        const years = courseConfig[selectedCourse]?.years || [];
-        years.forEach(year => {
-          const option = document.createElement('option');
-          option.value = year;
-          option.textContent = `Year ${year}`;
-          yearSelect.appendChild(option);
-        });
-      }
-      
       sectionSelect.disabled = true;
       yearSelect.value = '';
       sectionSelect.value = '';
@@ -513,23 +379,6 @@
     function handleYearChange() {
       const selectedYear = this.value;
       sectionSelect.disabled = !selectedYear;
-      
-      // Clear previous options
-      sectionSelect.innerHTML = '<option value="">-- Select Section --</option>';
-      
-      if (selectedYear) {
-        const selectedCourse = courseSelect.value;
-        // Get sections from courseConfig
-        const sections = courseConfig[selectedCourse]?.sections || [];
-        
-        sections.forEach(section => {
-          const option = document.createElement('option');
-          option.value = section;
-          option.textContent = `Section ${section}`;
-          sectionSelect.appendChild(option);
-        });
-      }
-      
       sectionSelect.value = '';
       updateStudentCapacity();
       renderSchedule();
@@ -538,41 +387,57 @@
     function handleSectionChange() {
       updateStudentCapacity();
       renderSchedule();
-      
-      const selectedCourse = courseSelect.value;
-      const selectedYear = yearSelect.value;
-      const selectedSection = sectionSelect.value;
-      
-      if (selectedCourse && selectedYear && selectedSection) {
-        console.log(`Selected: ${selectedCourse} - Year ${selectedYear} - Section ${selectedSection}`);
-      }
     }
 
     // Helper function to normalize time format to HH:00-HH:00
     function normalizeTime(timeStr) {
       if (!timeStr) return '';
       
-      // Handle different time formats
-      return timeStr
-        .toString() // Ensure it's a string
-        .replace(/\s+/g, '')  // Remove all whitespace
-        .replace(/(\d{1,2}):(\d{2})/g, (match, hh, mm) => {
-          // Convert to HH:00 format
-          return `${String(hh).padStart(2, '0')}:00`;
-        })
-        .replace(/(\d{2}:00)(\d{2}:00)/, '$1-$2'); // Ensure proper hyphen between times
+      console.log(`Normalizing time: ${timeStr}`);
+      
+      // Handle case where time is already in the correct format
+      if (/^\d{2}:00-\d{2}:00$/.test(timeStr)) {
+        return timeStr;
+      }
+      
+      // Handle case where time is in format 'HH:MM-HH:MM'
+      if (/^\d{1,2}:\d{2}-\d{1,2}:\d{2}$/.test(timeStr)) {
+        const [start, end] = timeStr.split('-');
+        const formatPart = part => {
+          const [h, m] = part.split(':');
+          return `${h.padStart(2, '0')}:00`; // Convert to whole hour
+        };
+        return `${formatPart(start)}-${formatPart(end)}`;
+      }
+      
+      // Handle case where time is in format '7:00 AM - 8:00 AM'
+      if (/\d{1,2}:\d{2}\s*[AP]M\s*-\s*\d{1,2}:\d{2}\s*[AP]M/i.test(timeStr)) {
+        const [startPart, endPart] = timeStr.split('-').map(s => s.trim());
+        const formatTime = (timeStr) => {
+          const [time, period] = timeStr.split(' ');
+          let [h, m] = time.split(':').map(Number);
+          if (period.toLowerCase() === 'pm' && h < 12) h += 12;
+          if (period.toLowerCase() === 'am' && h === 12) h = 0;
+          return `${String(h).padStart(2, '0')}:00`;
+        };
+        return `${formatTime(startPart)}-${formatTime(endPart)}`;
+      }
+      
+      // Handle case where time is just a single time (e.g., '7:00')
+      if (/^\d{1,2}:\d{2}$/.test(timeStr)) {
+        const [h] = timeStr.split(':');
+        const hour = parseInt(h, 10);
+        const nextHour = (hour + 1) % 24;
+        return `${String(hour).padStart(2, '0')}:00-${String(nextHour).padStart(2, '0')}:00`;
+      }
+      
+      console.warn(`Unrecognized time format: ${timeStr}`);
+      return '';
     }
 
     // Render the schedule based on selected filters
     function renderSchedule() {
-      console.log('Rendering schedule with data:', allInstructorsData.length, 'instructors');
-      
-      // Get selected filters
-      const selectedCourse = courseSelect.value;
-      const selectedYear = yearSelect.value;
-      const selectedSection = sectionSelect.value;
-      
-      console.log('Current filters - Course:', selectedCourse, 'Year:', selectedYear, 'Section:', selectedSection);
+      console.log('Rendering schedule...');
       
       // Generate time slots from 07:00 to 17:00 (5:00 PM)
       const timeSlots = [];
@@ -585,6 +450,11 @@
       // Clear the schedule body
       scheduleBody.innerHTML = '';
       
+      // Get selected values
+      const selectedCourse = courseSelect.value;
+      const selectedYear = yearSelect.value;
+      const selectedSection = sectionSelect.value;
+      
       // If no course, year, or section is selected, show empty schedule
       if (!selectedCourse || !selectedYear || !selectedSection) {
         timeSlots.forEach(timeSlot => {
@@ -595,34 +465,13 @@
         return;
       }
 
-      console.log('Filtering instructors with:', {
-        selectedCourse,
-        selectedYear,
-        selectedSection,
-        totalInstructors: allInstructorsData.length
-      });
-      
-      // Find all instructors for the selected course, year, and section
-      const sectionInstructors = allInstructorsData.filter(instr => {
-        // Normalize values for comparison
-        const storageCourse = instr.course;
-        const storageYear = instr.year ? instr.year.toString() : '';
-        const storageSection = instr.section;
-        
-        const courseMatch = storageCourse === selectedCourse;
-        const yearMatch = storageYear === selectedYear.toString();
-        const sectionMatch = storageSection === selectedSection;
-        
-        console.log(`Checking instructor: ${instr.name} | ` +
-                   `Course: ${storageCourse} (${courseMatch ? '✓' : '✗'}) | ` +
-                   `Year: ${storageYear} (${yearMatch ? '✓' : '✗'}) | ` +
-                   `Section: ${storageSection} (${sectionMatch ? '✓' : '✗'})`);
-        
-        return courseMatch && yearMatch && sectionMatch;
-      });
-      
-      console.log(`Found ${sectionInstructors.length} matching instructors`);
-      
+      // Filter instructors for the selected course, year, and section
+      const sectionInstructors = allInstructorsData.filter(instructor => 
+        instructor.course === selectedCourse &&
+        instructor.year === selectedYear &&
+        instructor.section === selectedSection
+      );
+
       console.log('Filtered instructors:', sectionInstructors);
 
       // Create a row for each time slot
@@ -639,22 +488,25 @@
           
           // Find matching instructor for this day and time
           const instructor = sectionInstructors.find(instr => {
-            if (!instr.day || !instr.time) {
-              console.log('Instructor missing day or time:', instr);
-              return false;
-            }
+            if (!instr.day || !instr.time) return false;
             
             // Normalize times for comparison
             const normalizedInstrTime = normalizeTime(instr.time);
             const normalizedSlotTime = timeSlot;
             
-            const dayMatches = instr.day.toLowerCase() === day.toLowerCase();
-            const timeMatches = normalizedInstrTime === normalizedSlotTime;
+            console.log(`Checking instructor: ${instr.name}, day: ${instr.day}, time: ${instr.time}`);
+            console.log(`Normalized times - Instructor: ${normalizedInstrTime}, Slot: ${normalizedSlotTime}`);
             
-            console.log(`Checking instructor: ${instr.name}, Day: ${instr.day} vs ${day} (${dayMatches}), Time: ${normalizedInstrTime} vs ${normalizedSlotTime} (${timeMatches})`);
+            // Check if day and time match (case-insensitive day comparison)
+            const dayMatch = instr.day.toLowerCase() === day.toLowerCase();
+            const timeMatch = normalizedInstrTime === normalizedSlotTime;
             
-            // Check if day and time match
-            return dayMatches && timeMatches;
+            if (dayMatch && timeMatch) {
+              console.log(`Match found: ${instr.name} on ${day} at ${timeSlot}`);
+              return true;
+            }
+            
+            return false;
           });
           
           // If instructor found, fill the cell with their info
@@ -686,13 +538,10 @@
       }
       
       try {
-        // Convert year to number for Firestore query if needed
-        const yearValue = isNaN(selectedYear) ? selectedYear : parseInt(selectedYear, 10);
-        
         const q = query(
-          instructorsCollectionRef,
+          collection(db, 'Instructors'),
           where('course', '==', selectedCourse),
-          where('year', '==', yearValue),
+          where('year', '==', selectedYear),
           where('section', '==', selectedSection)
         );
         
@@ -716,128 +565,59 @@
 
     // Set up real-time listener for instructors
     function setupFirebaseListener() {
-      console.log('Setting up Firebase listener...');
-      
-      if (!window.db) {
-        console.error('Firebase not properly initialized. Cannot set up listener.');
-        return () => {}; // Return empty cleanup function
-      }
-      
-      try {
-        console.log('Creating query for collection...');
-        const q = query(instructorsCollectionRef);
-        console.log('Setting up onSnapshot listener...');
+      const q = query(instructorsCollectionRef);
+      const unsubscribe = onSnapshot(q, (querySnapshot) => {
+        allInstructorsData = []; // Clear previous data
         
-        const unsubscribe = onSnapshot(q, 
-          // Success callback
-          (querySnapshot) => {
-            console.log('Received snapshot from Firestore');
-            if (!querySnapshot) {
-              console.error('Query snapshot is null or undefined');
-              return;
-            }
-            
-            console.log(`Received ${querySnapshot.size} documents from Firestore`);
-            allInstructorsData = []; // Clear previous data
-            
-            if (querySnapshot.empty) {
-              console.warn('No documents found in the collection');
-              renderSchedule();
-              return;
-            }
-            
-            querySnapshot.forEach((doc) => {
-              if (!doc.exists()) {
-                console.warn('Document does not exist:', doc.id);
-                return;
-              }
-              
-              const data = doc.data();
-              if (!data) {
-                console.warn('Document data is empty for document:', doc.id);
-                return;
-              }
-              
-              console.log('Processing document:', doc.id, data);
-              
-              // Normalize the time format to HH:00-HH:00
-              let normalizedTime = '';
-              if (data.time) {
-                try {
-                  // Handle different time formats (e.g., '7:00-8:00' or '07:00 - 08:00')
-                  const times = data.time.split('-').map(part => {
-                    const [h, m = '00'] = part.trim().split(':');
-                    return `${h.padStart(2, '0')}:${m.padStart(2, '0')}`.substring(0, 5);
-                  });
-                  normalizedTime = times.join('-');
-                } catch (error) {
-                  console.error('Error normalizing time:', error, 'Time string was:', data.time);
-                  normalizedTime = data.time; // Use original if normalization fails
-                }
-              }
-              
-              const instructor = {
-                id: doc.id,
-                name: data.name || 'N/A',
-                subject: data.subject || 'N/A',
-                roomName: data.roomName || 'TBA',
-                day: data.day ? data.day.trim() : '',
-                time: normalizedTime,
-                course: data.course || '',
-                year: data.year || '',
-                section: data.section || ''
-              };
-              
-              allInstructorsData.push(instructor);
-              console.log('Added instructor to allInstructorsData:', {
-                id: instructor.id,
-                name: instructor.name,
-                course: instructor.course,
-                year: instructor.year,
-                section: instructor.section,
-                day: instructor.day,
-                time: instructor.time,
-                subject: instructor.subject
-              });
+        querySnapshot.forEach((doc) => {
+          const data = doc.data();
+          if (!data) return;
+          
+          // Normalize the time format to HH:00-HH:00
+          let normalizedTime = '';
+          if (data.time) {
+            // Handle different time formats (e.g., '7:00-8:00' or '07:00 - 08:00')
+            const times = data.time.split('-').map(part => {
+              const [h, m = '00'] = part.trim().split(':');
+              return `${h.padStart(2, '0')}:${m.padStart(2, '0')}`.substring(0, 5);
             });
-            
-            console.log('All instructors loaded. Total:', allInstructorsData.length);
-            firebaseInitialized = true;
-            renderSchedule(); // Re-render schedule with new data
-          },
-          // Error callback
-          (error) => {
-            console.error("Error in Firestore listener:", error);
-            console.error('Error code:', error.code);
-            console.error('Error message:', error.message);
-            
-            if (error.code === 'permission-denied') {
-              console.error('Permission denied. Please check your Firestore security rules.');
-            } else if (error.code === 'not-found') {
-              console.error('Collection not found. Make sure the collection name is correct.');
-            }
+            normalizedTime = times.join('-');
           }
-        );
+          
+          // Create instructor object with normalized data
+          const instructor = {
+            id: doc.id,
+            name: data.name || 'N/A',
+            subject: data.subject || 'N/A',
+            roomName: data.roomName || 'TBA',
+            day: data.day ? data.day.trim() : '',
+            time: normalizedTime,
+            course: data.course || '',
+            year: data.year || '',
+            section: data.section || ''
+          };
+          
+          allInstructorsData.push(instructor);
+          
+          console.log('Instructor loaded:', instructor);
+        });
         
-        return unsubscribe;
-      } catch (error) {
-        console.error('Error setting up Firestore listener:', error);
-        return () => {}; // Return empty cleanup function
-      }
+        console.log('All instructors loaded. Total:', allInstructorsData.length);
+        renderSchedule(); // Re-render schedule with new data
+      }, (error) => {
+        console.error("Error setting up instructor listener:", error);
+      });
+      
+      return unsubscribe;
     }
 
     // Set up event listeners when the DOM is fully loaded
     document.addEventListener('DOMContentLoaded', function() {
-      console.log('DOM fully loaded, initializing...');
-      
-      // Initialize the UI first
+      // Initialize the schedule first to set up UI event handlers
       initializeSchedule();
       
       // Then set up Firebase real-time listener
       const unsubscribe = setupFirebaseListener();
-      
-      // Initial render with empty data
-      renderSchedule();
       
       // Clean up the listener when the page is unloaded
       window.addEventListener('beforeunload', () => {
@@ -847,4 +627,3 @@
   </script>
 </body>
 </html>
-
