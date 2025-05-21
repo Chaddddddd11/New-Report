@@ -20,6 +20,26 @@
       background-color: var(--background-color);
     }
 
+    .nav-buttons {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 20px;
+    }
+
+    .nav-button {
+      padding: 10px 20px;
+      background-color: var(--primary-color);
+      color: white;
+      text-decoration: none;
+      border-radius: 4px;
+      font-weight: 500;
+      transition: background-color 0.3s ease;
+    }
+
+    .nav-button:hover {
+      background-color: var(--secondary-color);
+    }
+
     h2 {
       background-color: var(--primary-color);
       color: white;
@@ -181,6 +201,11 @@
   </style>
 </head>
 <body>
+  <div class="nav-buttons">
+    <a href="Instructor.html" class="nav-button">Enroll Instructor</a>
+    <a href="Room.html" class="nav-button">Room Registration</a>
+  </div>
+  
   <h2>DHVSU Automatic Scheduling System</h2>
   
   <label for="course">Select Course:</label> 
