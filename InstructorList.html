@@ -339,16 +339,51 @@
         const editForm = document.getElementById('editInstructorForm');
         const closeModalBtn = editModal?.querySelector('.close-btn');
 
+        // Function to check if collection exists and is accessible
+        async function checkCollectionExists(collectionRef) {
+            try {
+                const querySnapshot = await getDocs(collectionRef);
+                return {
+                    exists: !querySnapshot.empty,
+                    size: querySnapshot.size,
+                    docs: querySnapshot.docs.map(doc => doc.id)
+                };
+            } catch (error) {
+                console.error('Error checking collection:', error);
+                return { error: error.message };
+            }
+        }
+
         // Initial fetch of instructors
         async function fetchInstructors() {
             try {
+                console.log('Starting to fetch instructors...');
                 loadingMessage.style.display = 'block';
                 emptyMessage.style.display = 'none';
                 
+                // First check if collection exists and is accessible
+                const collectionCheck = await checkCollectionExists(instructorsCollectionRef);
+                console.log('Collection check:', collectionCheck);
+                
+                if (collectionCheck.error) {
+                    throw new Error(`Cannot access collection: ${collectionCheck.error}`);
+                }
+                
+                if (collectionCheck.size === 0) {
+                    console.log('No instructors found in the collection');
+                    loadingMessage.style.display = 'none';
+                    emptyMessage.style.display = 'block';
+                    emptyMessage.textContent = 'No instructors registered yet.';
+                    return;
+                }
+                
                 const querySnapshot = await getDocs(instructorsCollectionRef);
+                console.log('Query snapshot received:', querySnapshot);
+                
                 const instructors = [];
                 
                 querySnapshot.forEach((doc) => {
+                    console.log('Processing document:', doc.id, doc.data());
                     const data = doc.data();
                     instructors.push({
                         id: doc.id,
@@ -364,19 +399,23 @@
                     });
                 });
                 
+                console.log('Fetched instructors:', instructors);
                 populateInstructorTable(instructors);
             } catch (error) {
-                console.error('Error fetching instructors:', error);
+                console.error('Error in fetchInstructors:', error);
                 loadingMessage.style.display = 'none';
                 emptyMessage.style.display = 'block';
-                emptyMessage.textContent = 'Error loading instructors. Please try again.';
+                emptyMessage.textContent = `Error: ${error.message}. Please check console for details.`;
             }
         }
         
         // Set up real-time listener for instructors
+        console.log('Setting up real-time listener...');
         onSnapshot(instructorsCollectionRef, (snapshot) => {
+            console.log('Real-time update received:', snapshot);
             const instructors = [];
             snapshot.forEach((doc) => {
+                console.log('Processing real-time doc:', doc.id, doc.data());
                 const data = doc.data();
                 instructors.push({
                     id: doc.id,
@@ -391,6 +430,7 @@
                     roomCapacity: data.roomCapacity || 0
                 });
             });
+            console.log('Real-time instructors update:', instructors);
             populateInstructorTable(instructors);
         }, (error) => {
             console.error('Error setting up instructor listener:', error);
