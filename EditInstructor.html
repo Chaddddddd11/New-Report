@@ -291,7 +291,7 @@
                 return;
             }
 
-            db.collection('instructors').doc(instructorId).get()
+            db.collection('Instructors').doc(instructorId).get()
                 .then((doc) => {
                     if (doc.exists) {
                         const data = doc.data();
@@ -377,7 +377,7 @@
                 };
 
                 // Update instructor in Firestore
-                await db.collection('instructors').doc(instructorId).update(instructorData);
+                await db.collection('Instructors').doc(instructorId).update(instructorData);
                 
                 // Show success message and redirect
                 alert('Instructor updated successfully!');
@@ -396,7 +396,7 @@
             }
 
             try {
-                await db.collection('instructors').doc(instructorId).delete();
+                await db.collection('Instructors').doc(instructorId).delete();
                 alert('Instructor deleted successfully!');
                 window.location.href = 'InstructorList.html';
             } catch (error) {
