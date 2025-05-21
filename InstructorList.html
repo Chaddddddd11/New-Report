@@ -770,19 +770,6 @@
             }
         });
         
-        async function deleteInstructor(docId) {
-            if (!confirm("Are you sure you want to delete this instructor record?")) {
-                return;
-            }
-            try {
-                await deleteDoc(doc(db, "instructors", docId));
-                alert("Instructor deleted successfully!");
-            } catch (error) {
-                console.error("Error deleting instructor: ", error);
-                alert("Failed to delete instructor. " + error.message);
-            }
-        }
-
         closeModalBtn.onclick = closeModal;
         window.onclick = function(event) {
             if (event.target == editModal) {
