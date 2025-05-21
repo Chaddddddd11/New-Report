@@ -285,49 +285,65 @@
         const errorMessage = document.getElementById('errorMessage');
 
         // Load instructor data
-        function loadInstructorData() {
+        async function loadInstructorData() {
             if (!instructorId) {
                 showError('No instructor ID provided');
                 return;
             }
 
-            db.collection('Instructors').doc(instructorId).get()
-                .then((doc) => {
-                    if (doc.exists) {
-                        const data = doc.data();
-                        // Populate form fields
-                        nameInput.value = data.name || '';
-                        subjectInput.value = data.subject || '';
-                        courseSelect.value = data.course || '';
-                        yearSelect.value = data.year || '';
-                        sectionSelect.value = data.section || '';
-                        daySelect.value = data.day || '';
+            try {
+                const doc = await db.collection('Instructors').doc(instructorId).get();
+                
+                if (doc.exists) {
+                    const data = doc.data();
+                    
+                    // Store the original room name before changing any values
+                    const originalRoomName = data.roomName || '';
+                    
+                    // Populate all form fields
+                    nameInput.value = data.name || '';
+                    subjectInput.value = data.subject || '';
+                    courseSelect.value = data.course || '';
+                    yearSelect.value = data.year || '';
+                    sectionSelect.value = data.section || '';
+                    daySelect.value = data.day || '';
+                    classTimeSelect.value = data.time || '';
+                    
+                    // Load rooms with the current day and time
+                    await loadRooms();
+                    
+                    // After rooms are loaded, set the room
+                    if (originalRoomName) {
+                        // Check if the original room is in the dropdown
+                        const roomOption = Array.from(roomSelect.options).find(
+                            option => option.value === originalRoomName
+                        );
                         
-                        // Set time if it exists
-                        if (data.time) {
-                            classTimeSelect.value = data.time;
+                        if (roomOption) {
+                            roomSelect.value = originalRoomName;
+                        } else {
+                            // If room not in dropdown (maybe due to conflict), add it
+                            const option = document.createElement('option');
+                            option.value = originalRoomName;
+                            option.textContent = `${originalRoomName} (Previously assigned)`;
+                            option.selected = true;
+                            roomSelect.add(option);
                         }
-                        
-                        // Load rooms and then set the room
-                        loadRooms().then(() => {
-                            if (data.roomName) {
-                                roomSelect.value = data.roomName;
-                            }
-                        });
-                    } else {
-                        showError('Instructor not found');
                     }
-                })
-                .catch((error) => {
-                    console.error('Error getting instructor:', error);
-                    showError('Error loading instructor data');
-                });
+                } else {
+                    showError('Instructor not found');
+                }
+            } catch (error) {
+                console.error('Error getting instructor:', error);
+                showError('Error loading instructor data');
+            }
         }
 
         // Load available rooms based on selected day and time
         async function loadRooms() {
             const selectedDay = daySelect.value;
             const selectedTime = classTimeSelect.value;
+            const currentRoom = roomSelect.value; // Remember current selection
             
             if (!selectedDay || !selectedTime) {
                 roomSelect.innerHTML = '<option value="">Select day and time first</option>';
@@ -360,16 +376,22 @@
                     }
                 });
 
-                // Clear existing options
-                roomSelect.innerHTML = '<option value="">Select Room</option>';
+                // Clear existing options but keep the first one
+                const firstOption = roomSelect.options[0];
+                roomSelect.innerHTML = '';
+                if (firstOption) roomSelect.appendChild(firstOption);
                 
                 // Add available rooms to select
                 let availableRooms = 0;
                 allRooms.forEach(room => {
-                    if (!conflictingRooms.has(room.roomName)) {
+                    if (!conflictingRooms.has(room.roomName) || room.roomName === currentRoom) {
                         const option = document.createElement('option');
                         option.value = room.roomName;
                         option.textContent = `${room.roomName} (Capacity: ${room.capacity})`;
+                        // If this was the current room, keep it selected
+                        if (room.roomName === currentRoom) {
+                            option.selected = true;
+                        }
                         roomSelect.appendChild(option);
                         availableRooms++;
                     }
