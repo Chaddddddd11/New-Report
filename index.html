@@ -507,19 +507,30 @@
       }
 
       // Filter instructors for the selected course, year, and section
+      console.log('All available instructors data:', allInstructorsData);
+      
       const sectionInstructors = allInstructorsData.filter(instructor => {
-        try {
-          if (!instructor) return false;
-          
-          const courseMatch = instructor.course === selectedCourse;
-          const yearMatch = instructor.year === selectedYear;
-          const sectionMatch = instructor.section === selectedSection;
-          
-          return courseMatch && yearMatch && sectionMatch;
-        } catch (error) {
-          console.error('Error filtering instructor:', error, 'Instructor data:', instructor);
-          return false;
-        }
+        if (!instructor) return false;
+        
+        // Log each instructor's data for debugging
+        console.log('Checking instructor:', {
+          instructorCourse: instructor.course,
+          instructorYear: instructor.year,
+          instructorSection: instructor.section,
+          selectedCourse,
+          selectedYear,
+          selectedSection,
+          courseMatch: String(instructor.course) === String(selectedCourse),
+          yearMatch: String(instructor.year).toLowerCase() === String(selectedYear).toLowerCase(),
+          sectionMatch: String(instructor.section).toUpperCase() === String(selectedSection).toUpperCase()
+        });
+        
+        // Make comparisons case-insensitive and type-flexible
+        const courseMatch = String(instructor.course).toLowerCase() === String(selectedCourse).toLowerCase();
+        const yearMatch = String(instructor.year).toLowerCase() === String(selectedYear).toLowerCase();
+        const sectionMatch = String(instructor.section).toUpperCase() === String(selectedSection).toUpperCase();
+        
+        return courseMatch && yearMatch && sectionMatch;
       });
 
       console.log(`Found ${sectionInstructors.length} instructors for ${selectedCourse} ${selectedYear} year, section ${selectedSection}:`, sectionInstructors);
