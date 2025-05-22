@@ -512,10 +512,17 @@
           // If instructor found, fill the cell with their info
           if (instructor) {
             cell.innerHTML = `
-              <div class="schedule-entry">
-                <div class="subject">${instructor.subject || 'N/A'}</div>
-                <div class="instructor">${instructor.name || 'N/A'}</div>
-                <div class="room">${instructor.roomName || 'TBA'}</div>
+              <div class="schedule-entry" style="
+                padding: 5px;
+                background-color: #e3f2fd;
+                border-radius: 4px;
+                margin: 2px;
+                font-size: 0.9em;
+                border-left: 3px solid #1A5F7A;
+              ">
+                <div style="font-weight: 500; color: #1A5F7A; margin-bottom: 4px;">${instructor.subject || 'N/A'}</div>
+                <div style="font-size: 0.9em; color: #333;">${instructor.name || 'N/A'}</div>
+                <div style="font-size: 0.85em; color: #666; font-style: italic;">${instructor.roomName || 'TBA'}</div>
               </div>
             `;
           }
@@ -611,12 +618,40 @@
       return unsubscribe;
     }
 
+    // Function to handle course change
+    function handleCourseChange() {
+      const course = courseSelect.value;
+      yearSelect.disabled = !course;
+      yearSelect.value = '';
+      sectionSelect.value = '';
+      sectionSelect.disabled = true;
+      renderSchedule();
+    }
+
+    // Function to handle year change
+    function handleYearChange() {
+      const year = yearSelect.value;
+      sectionSelect.disabled = !year;
+      sectionSelect.value = '';
+      renderSchedule();
+    }
+
+    // Function to handle section change
+    function handleSectionChange() {
+      renderSchedule();
+    }
+
     // Set up event listeners when the DOM is fully loaded
     document.addEventListener('DOMContentLoaded', function() {
-      // Initialize the schedule first to set up UI event handlers
-      initializeSchedule();
+      // Set up event listeners for the dropdowns
+      courseSelect.addEventListener('change', handleCourseChange);
+      yearSelect.addEventListener('change', handleYearChange);
+      sectionSelect.addEventListener('change', handleSectionChange);
       
-      // Then set up Firebase real-time listener
+      // Initialize the schedule
+      renderSchedule();
+      
+      // Set up Firebase real-time listener
       const unsubscribe = setupFirebaseListener();
       
       // Clean up the listener when the page is unloaded
