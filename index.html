@@ -10,10 +10,14 @@
       --accent-color: #F7B32D;
       --background-color: #F4F7F6;
       --text-color: #333;
+      --instructor-bg: #e3f2fd;
+      --instructor-name: #1565c0;
+      --instructor-subject: #424242;
+      --instructor-room: #2e7d32;
     }
 
     body {
-      font-family: 'Roboto', Arial, sans-serif;
+      font-family: 'Roboto', sans-serif;
       max-width: 1200px;
       margin: 0 auto;
       padding: 20px;
@@ -90,8 +94,47 @@
 
     #scheduleTable th, #scheduleTable td {
       border: 1px solid #ddd;
-      padding: 8px;
+      padding: 4px;
       text-align: center;
+      min-width: 140px;
+      height: 90px;
+      vertical-align: top;
+      font-size: 0.9em;
+    }
+
+    #scheduleTable th:first-child {
+      width: 100px;
+    }
+
+    .instructor-info {
+      padding: 4px;
+      margin: 2px 0;
+      border-radius: 4px;
+      background-color: var(--instructor-bg);
+      font-size: 0.9em;
+      border-left: 3px solid var(--primary-color);
+    }
+
+    .instructor-name {
+      font-weight: 500;
+      color: var(--instructor-name);
+      font-size: 0.95em;
+    }
+
+    .instructor-subject {
+      color: var(--instructor-subject);
+      font-size: 0.85em;
+      margin: 2px 0;
+    }
+
+    .room {
+      color: var(--instructor-room);
+      font-weight: 500;
+      font-size: 0.8em;
+      background-color: rgba(255, 255, 255, 0.7);
+      border-radius: 3px;
+      padding: 1px 3px;
+      display: inline-block;
     }
 
     #scheduleTable th {
@@ -467,16 +510,28 @@
 
       // Filter instructors for the selected course, year, and section
       const sectionInstructors = allInstructorsData.filter(instructor => {
+        // Debug log to see instructor data
+        console.log('Processing instructor:', instructor);
+        
         // Check if instructor has all required fields
         if (!instructor.course || !instructor.year || !instructor.section || !instructor.day || !instructor.time) {
+          console.log('Skipping instructor - missing required fields:', instructor);
           return false;
         }
         
         // Check if the instructor matches the selected filters
-        return instructor.course === selectedCourse &&
-               instructor.year === selectedYear &&
-               instructor.section === selectedSection;
+        const matches = instructor.course === selectedCourse &&
+                      instructor.year === selectedYear &&
+                      instructor.section === selectedSection;
+        
+        if (!matches) {
+          console.log(`Instructor does not match filters - Course: ${instructor.course} (expected ${selectedCourse}), Year: ${instructor.year} (expected ${selectedYear}), Section: ${instructor.section} (expected ${selectedSection})`);
+        }
+        
+        return matches;
       });
+      
+      console.log('Filtered instructors:', sectionInstructors);
 
       console.log('Filtered instructors:', sectionInstructors);
 
@@ -494,32 +549,56 @@
           
           // Find matching instructors for this day and time (could be multiple)
           const instructors = sectionInstructors.filter(instr => {
-            if (!instr.day || !instr.time) return false;
+            if (!instr.day || !instr.time) {
+              console.log('Skipping instructor - missing day or time:', instr);
+              return false;
+            }
             
-            // Normalize times for comparison
-            const normalizedInstrTime = normalizeTime(instr.time);
-            const normalizedSlotTime = timeSlot;
+            // Check if the day matches (case-insensitive)
+            if (instr.day.toLowerCase() !== day.toLowerCase()) {
+              return false;
+            }
             
-            // Check if day and time match (case-insensitive day comparison)
-            const dayMatch = instr.day.toLowerCase() === day.toLowerCase();
-            const timeMatch = normalizedInstrTime === normalizedSlotTime;
+            // Get the instructor's time range
+            const [startStr, endStr] = instr.time.split('-');
+            if (!startStr || !endStr) {
+              console.log('Invalid time format for instructor:', instr);
+              return false;
+            }
             
-            return dayMatch && timeMatch;
+            // Convert time to minutes for comparison
+            const timeToMinutes = (timeStr) => {
+              const [hours, minutes] = timeStr.split(':').map(Number);
+              return hours * 60 + (minutes || 0);
+            };
+            
+            const slotTime = timeToMinutes(timeSlot);
+            const startTime = timeToMinutes(startStr);
+            const endTime = timeToMinutes(endStr);
+            
+            // Check if the time slot falls within the instructor's time range
+            const isTimeMatch = slotTime >= startTime && slotTime < endTime;
+            
+            if (!isTimeMatch) {
+              console.log(`Time mismatch - Slot: ${timeSlot}, Instructor: ${instr.time}`);
+            }
+            
+            return isTimeMatch;
           });
           
           // If instructors found, fill the cell with their info
           if (instructors.length > 0) {
-            let content = '';
-            instructors.forEach(instructor => {
-              content += `
-                <div class="schedule-entry">
-                  <div class="subject">${instructor.subject || 'N/A'}</div>
-                  <div class="instructor">${instructor.name || 'N/A'}</div>
-                  <div class="room">${instructor.roomName || 'TBA'}</div>
+            const cellContent = instructors.map(instr => {
+              const roomDisplay = instr.roomName ? `<div class="room">${instr.roomName}</div>` : '';
+              return `
+                <div class="instructor-info">
+                  <div class="instructor-name">${instr.name || 'No name'}</div>
+                  <div class="instructor-subject">${instr.subject || 'No subject'}</div>
+                  ${roomDisplay}
                 </div>
               `;
-            });
-            cell.innerHTML = content;
+            }).join('');
+            cell.innerHTML = cellContent;
           }
           
           row.appendChild(cell);
