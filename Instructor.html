@@ -247,7 +247,7 @@
 
             <div class="btn-container">
                 <a href="InstructorList.html" class="btn">View Instructor List</a>
-                <button id="submitBtn" class="btn">Register Instructor</button>
+                <button type="button" id="submitBtn" class="btn">Register Instructor</button>
             </div>
         </div>
     </div>
@@ -970,16 +970,26 @@
                 }
 
                 clearForm();
-                if(submitBtn && !isUpdateMode) submitBtn.textContent = 'Register Instructor'; // Reset for new registrations if needed
-                if(isUpdateMode) {
-                     // For edit mode, after successful update, maybe redirect or clear flags
-                     // The redirect is already set up below.
+                if(submitBtn) {
+                    submitBtn.textContent = isUpdateMode ? 'Update Instructor' : 'Register Instructor';
                 }
-
+                
+                // Show success message
+                const successMessage = isUpdateMode ? 
+                    `Instructor ${name} updated successfully!` : 
+                    `Instructor ${name} registered successfully!`;
+                showError(successMessage); // Using showError for styling
+                
                 // Redirect back to instructor list after a short delay to allow message visibility
                 setTimeout(() => {
-                    window.location.href = 'InstructorList.html';
-                }, 1500); // Slightly longer for success message
+                    try {
+                        window.location.href = 'InstructorList.html';
+                    } catch (e) {
+                        console.error('Error during redirection:', e);
+                        // Fallback to index.html if InstructorList.html fails to load
+                        window.location.href = 'index.html';
+                    }
+                }, 1500);
             } catch (error) {
                 console.error(`Error ${isUpdateMode ? 'updating' : 'saving'} instructor: `, error);
                 showError(`Failed to ${isUpdateMode ? 'update' : 'register'} instructor. Please try again. ${error.message}`);
