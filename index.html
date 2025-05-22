@@ -494,6 +494,7 @@
     // Render the schedule based on selected filters
     function renderSchedule() {
       console.log('=== RENDER SCHEDULE STARTED ===');
+      console.log('Current time:', new Date().toISOString());
       
       // Get the schedule body element
       const scheduleBody = document.getElementById('schedule-body');
@@ -502,11 +503,13 @@
         return;
       }
       
-      console.log('Schedule body element found');
+      console.log('Schedule body element found:', scheduleBody);
       
       // Clear existing schedule
       console.log('Clearing existing schedule...');
+      const previousContent = scheduleBody.innerHTML;
       scheduleBody.innerHTML = '';
+      console.log('Schedule cleared. Previous content:', previousContent || '(empty)');
       
       // Get selected values with null checks
       const selectedCourse = courseSelect ? courseSelect.value : '';
@@ -552,15 +555,18 @@
       
       // Generate time slots from 07:00 to 17:00 (5:00 PM)
       const timeSlots = [];
-      console.log('Generating time slots...');
+      console.log('Generating time slots from 07:00 to 17:00...');
       for (let i = 7; i <= 17; i++) {  // Changed < 17 to <= 17 to include 17:00
         const startHour = String(i).padStart(2, '0');
         const endHour = String(i + 1).padStart(2, '0');
         const timeSlot = `${startHour}:00-${endHour}:00`;
         timeSlots.push(timeSlot);
-        console.log(`Added time slot: ${timeSlot}`);
+        console.log(`  - Added time slot [${timeSlots.length}]: ${timeSlot}`);
       }
-      console.log(`Generated ${timeSlots.length} time slots`, timeSlots);
+      console.log(`Successfully generated ${timeSlots.length} time slots:`, timeSlots);
+      console.log('Time slots array length:', timeSlots.length);
+      console.log('First time slot:', timeSlots[0] || 'N/A');
+      console.log('Last time slot:', timeSlots[timeSlots.length - 1] || 'N/A');
       
       // Filter instructors for the selected course, year, and section
       const sectionInstructors = Array.isArray(allInstructorsData) ? 
@@ -582,53 +588,80 @@
       console.log(`Found ${sectionInstructors.length} matching instructors:`, sectionInstructors);
       
       // Create a row for each time slot
-      console.log('Creating table rows...');
+      console.log('\n--- CREATING TABLE ROWS ---');
+      console.log(`Processing ${timeSlots.length - 1} time slots (skipping last one)...`);
+      
       timeSlots.forEach((timeSlot, index) => {
         // Skip the last time slot since it's the end marker
-        if (index === timeSlots.length - 1) return;
+        if (index === timeSlots.length - 1) {
+          console.log(`Skipping last time slot: ${timeSlot}`);
+          return;
+        }
         
-        console.log(`Creating row for time slot: ${timeSlot}`);
+        console.log(`\n--- Processing time slot [${index + 1}]: ${timeSlot} ---`);
+        
         const row = document.createElement('tr');
+        console.log('Created new table row element:', row);
         
         // Add time slot to the first cell
         const timeCell = document.createElement('td');
         timeCell.textContent = timeSlot;
-        timeCell.style.fontWeight = 'bold'; // Make time more visible
-        timeCell.id = `time-${timeSlot.replace(':', '-')}`; // Add ID for debugging
-        console.log(`Adding time cell: ${timeSlot} with ID: ${timeCell.id}`);
+        timeCell.style.fontWeight = 'bold';
+        timeCell.id = `time-${timeSlot.replace(':', '-')}`;
+        
+        console.log(`Adding time cell with content: "${timeSlot}"`);
+        console.log('Time cell ID:', timeCell.id);
+        console.log('Time cell styles:', {
+          fontWeight: timeCell.style.fontWeight,
+          textContent: timeCell.textContent
+        });
+        
         row.appendChild(timeCell);
-        console.log(`Time cell added to row`);
+        console.log('Time cell added to row. Row now has', row.cells.length, 'cell(s)');
         
         // Days of the week
         const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+        console.log(`Creating cells for ${days.length} days:`, days);
         
         // Create a cell for each day
-        days.forEach(day => {
+        days.forEach((day, dayIndex) => {
+          console.log(`\n--- Processing day [${dayIndex + 1}/${days.length}]: ${day} ---`);
+          
           const cell = document.createElement('td');
+          console.log(`Created cell for ${day}`, cell);
           
           // Find matching instructor for this day and time
           const instructor = sectionInstructors.find(instr => {
             try {
-              if (!instr || !instr.day || !instr.time) return false;
+              if (!instr || !instr.day || !instr.time) {
+                console.log('  - Instructor missing required fields', { id: instr?.id, hasDay: !!instr?.day, hasTime: !!instr?.time });
+                return false;
+              }
               
               // Normalize day comparison (case and whitespace insensitive)
               const normalizedInstrDay = String(instr.day || '').trim().toLowerCase();
               const normalizedDay = String(day || '').trim().toLowerCase();
               const dayMatch = normalizedInstrDay === normalizedDay;
               
-              if (!dayMatch) return false;
+              if (!dayMatch) {
+                console.log(`  - Day mismatch: ${normalizedInstrDay} !== ${normalizedDay}`);
+                return false;
+              }
               
               // Normalize time comparison
               const normalizedInstrTime = normalizeTime(instr.time);
               const normalizedSlotTime = timeSlot;
+              const timeMatch = normalizedInstrTime === normalizedSlotTime;
               
-              console.log('Matching:', {
+              console.log('  - Instructor time match check:', {
                 instructor: instr.name,
-                day: { instr: normalizedInstrDay, current: normalizedDay, match: dayMatch },
-                time: { instr: normalizedInstrTime, slot: normalizedSlotTime, match: normalizedInstrTime === normalizedSlotTime }
+                instructorTime: instr.time,
+                normalizedInstrTime,
+                timeSlot,
+                timeMatch
               });
               
-              return normalizedInstrTime === normalizedSlotTime;
+              return timeMatch;
             } catch (error) {
               console.error('Error matching instructor:', error, instr);
               return false;
@@ -637,6 +670,12 @@
           
           // If instructor found, fill the cell with their info
           if (instructor) {
+            console.log(`  - Found matching instructor for ${day} at ${timeSlot}:`, {
+              name: instructor.name,
+              subject: instructor.subject,
+              room: instructor.roomName
+            });
+            
             cell.innerHTML = `
               <div class="schedule-entry" style="
                 padding: 8px;
@@ -663,17 +702,65 @@
                 </div>
               </div>
             `;
+            console.log('  - Cell content set with instructor info');
+          } else {
+            console.log(`  - No instructor found for ${day} at ${timeSlot}`);
           }
           
-          console.log(`Adding cell for ${day} to row`);
+          console.log(`  - Adding cell for ${day} to row. Current cells in row: ${row.cells.length}`);
           row.appendChild(cell);
-          console.log(`Cell for ${day} added to row`);
+          console.log(`  - Cell for ${day} added. Row now has ${row.cells.length} cells`);
         });
         
-        console.log('Adding row to schedule body:', row);
+        console.log(`\n--- ADDING ROW TO SCHEDULE ---`);
+        console.log('Row details:', {
+          timeSlot,
+          cellCount: row.cells.length,
+          rowContent: row.outerHTML
+        });
+        
         scheduleBody.appendChild(row);
-        console.log('Row added to schedule body');
+        console.log(`Row added to schedule body. Total rows: ${scheduleBody.rows.length}`);
+        console.log('Current schedule body content:', scheduleBody.innerHTML);
       });
+      
+      // Final debug output after all rows are added
+      console.log('\n=== RENDER SCHEDULE COMPLETE ===');
+      console.log('Total rows in schedule body:', scheduleBody.rows.length);
+      
+      // Check if table is visible and properly structured
+      const table = document.getElementById('scheduleTable');
+      if (table) {
+        console.log('Table visibility check:', {
+          display: window.getComputedStyle(table).display,
+          visibility: window.getComputedStyle(table).visibility,
+          opacity: window.getComputedStyle(table).opacity,
+          width: table.offsetWidth,
+          height: table.offsetHeight,
+          hasHeader: table.tHead !== null,
+          hasBody: table.tBodies.length > 0,
+          rowCount: table.rows.length
+        });
+        
+        // Log first few rows for verification
+        console.log('First 3 rows of the table:');
+        Array.from(table.rows).slice(0, 3).forEach((row, i) => {
+          console.log(`Row ${i}:`, {
+            cellCount: row.cells.length,
+            firstCellContent: row.cells[0]?.textContent?.trim() || 'empty',
+            rowHTML: row.outerHTML
+          });
+        });
+      } else {
+        console.error('Table element not found in DOM');
+      }
+      
+      // Verify the table body is properly connected to the table
+      if (scheduleBody.parentNode !== table) {
+        console.error('Schedule body is not properly connected to the table!');
+      }
+      
+      console.log('Render completed at:', new Date().toISOString());
     }
 
     // Function to fetch instructors based on selected filters
@@ -714,68 +801,77 @@
 
     // Set up real-time listener for instructors
     function setupFirebaseListener() {
-      console.log('Setting up Firebase listener...');
-      const q = query(instructorsCollectionRef);
-      
-      const unsubscribe = onSnapshot(q, 
-        // Success callback
-        (querySnapshot) => {
-          console.log('Received snapshot from Firebase');
-          allInstructorsData = []; // Clear previous data
-          
-          // Process each document in the snapshot
-          querySnapshot.forEach((doc) => {
-            const data = doc.data();
-            if (!data) return;
+      return new Promise((resolve) => {
+        console.log('Setting up Firebase listener...');
+        const q = query(instructorsCollectionRef);
+        
+        const unsubscribe = onSnapshot(
+          q,
+          // Success callback
+          (querySnapshot) => {
+            console.log('Received snapshot from Firebase');
+            allInstructorsData = []; // Clear previous data
             
-            // Log the raw data for debugging
-            console.log('Processing document:', doc.id, data);
-            
-            console.log('Processing document:', doc.id, data);
-            
-            // Normalize the time format to HH:00-HH:00
-            let normalizedTime = '';
-            if (data.time) {
-              // Handle different time formats (e.g., '7:00-8:00' or '07:00 - 08:00')
-              try {
-                const times = data.time.split('-').map(part => {
-                  const [h, m = '00'] = part.trim().split(':');
-                  return `${h.padStart(2, '0')}:${m.padStart(2, '0')}`.substring(0, 5);
-                });
-                normalizedTime = times.join('-');
-              } catch (e) {
-                console.error('Error normalizing time:', data.time, e);
-                normalizedTime = data.time; // Use as-is if we can't parse it
+            // Process each document in the snapshot
+            querySnapshot.forEach((doc) => {
+              const data = doc.data();
+              if (!data) return;
+              
+              // Normalize the time format to HH:00-HH:00
+              let normalizedTime = '';
+              if (data.time) {
+                try {
+                  const times = data.time.split('-').map(part => {
+                    const [h, m = '00'] = part.trim().split(':');
+                    return `${h.padStart(2, '0')}:${m.padStart(2, '0')}`.substring(0, 5);
+                  });
+                  normalizedTime = times.join('-');
+                } catch (e) {
+                  console.error('Error normalizing time:', data.time, e);
+                  normalizedTime = data.time; // Use as-is if we can't parse it
+                }
               }
+              
+              // Create instructor object with normalized data
+              const instructor = {
+                id: doc.id,
+                name: data.name || 'N/A',
+                subject: data.subject || 'N/A',
+                roomName: data.roomName || 'TBA',
+                day: data.day ? data.day.trim() : '',
+                time: normalizedTime,
+                course: data.course || '',
+                year: data.year ? String(data.year) : '', // Ensure year is a string
+                section: data.section || ''
+              };
+              
+              allInstructorsData.push(instructor);
+              console.log('Added instructor to allInstructorsData:', instructor);
+            });
+            
+            console.log('All instructors loaded. Total:', allInstructorsData.length);
+            
+            // Resolve the promise with the first data load
+            if (allInstructorsData.length > 0) {
+              resolve(unsubscribe);
             }
             
-            // Create instructor object with normalized data
-            const instructor = {
-              id: doc.id,
-              name: data.name || 'N/A',
-              subject: data.subject || 'N/A',
-              roomName: data.roomName || 'TBA',
-              day: data.day ? data.day.trim() : '',
-              time: normalizedTime,
-              course: data.course || '',
-              year: data.year ? String(data.year) : '', // Ensure year is a string
-              section: data.section || ''
-            };
-            
-            allInstructorsData.push(instructor);
-            console.log('Added instructor to allInstructorsData:', instructor);
-          });
-          
-          console.log('All instructors loaded. Total:', allInstructorsData.length);
-          renderSchedule(); // Re-render schedule with new data
-        },
-        // Error callback
-        (error) => {
-          console.error("Error in Firebase listener:", error);
-        }
-      );
-      
-      return unsubscribe;
+            // Re-render schedule with new data
+            renderSchedule();
+          },
+          // Error callback
+          (error) => {
+            console.error("Error in Firebase listener:", error);
+            // Still resolve to avoid hanging, but with null
+            resolve(null);
+          }
+        );
+        
+        // Set a timeout in case Firebase never responds
+        setTimeout(() => {
+          resolve(unsubscribe);
+        }, 5000);
+      });
     }
 
     // Function to handle course change
@@ -870,25 +966,35 @@
     }
     
     // Set up event listeners when the DOM is fully loaded
-    document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('DOMContentLoaded', async function() {
+      console.log('DOM fully loaded');
+      
       // Set up event listeners for dropdowns
       if (courseSelect) {
+        console.log('Adding change listener to course select');
         courseSelect.addEventListener('change', handleCourseChange);
       }
       if (yearSelect) {
+        console.log('Adding change listener to year select');
         yearSelect.addEventListener('change', handleYearChange);
       }
       if (sectionSelect) {
+        console.log('Adding change listener to section select');
         sectionSelect.addEventListener('change', handleSectionChange);
       }
       
-      // Initial render with empty state
-      renderSchedule();
-      
       // Set up Firebase real-time listener
-      const unsubscribeFirebase = setupFirebaseListener();
+      console.log('Setting up Firebase listener...');
+      let unsubscribeFirebase;
+      try {
+        unsubscribeFirebase = await setupFirebaseListener();
+        console.log('Firebase listener set up successfully');
+      } catch (error) {
+        console.error('Failed to set up Firebase listener:', error);
+      }
       
       // Set up auto-update functionality
+      console.log('Setting up auto-update...');
       const cleanupAutoUpdate = setupAutoUpdate();
       
       // Debug function to check table population
@@ -896,22 +1002,32 @@
         console.log('=== TABLE DEBUG INFO ===');
         const table = document.getElementById('scheduleTable');
         console.log('Table element:', table);
-        console.log('Table rows:', table.rows.length);
-        console.log('Table body rows:', document.querySelectorAll('#schedule-body tr').length);
-        console.log('Table body content:', document.getElementById('schedule-body').innerHTML);
+        console.log('Table rows:', table ? table.rows.length : 0);
+        const scheduleBody = document.getElementById('schedule-body');
+        console.log('Table body rows:', scheduleBody ? scheduleBody.querySelectorAll('tr').length : 0);
+        console.log('Table body content:', scheduleBody ? scheduleBody.innerHTML : 'No schedule body found');
       }
       
-      // Force initial render after a short delay to ensure everything is loaded
+      // Initial render after a short delay to ensure everything is loaded
+      console.log('Scheduling initial render...');
       setTimeout(() => {
+        console.log('Performing initial render...');
         renderSchedule();
         // Debug after rendering
         setTimeout(debugTable, 1000);
-      }, 500);
+      }, 1000);
       
       // Clean up when the page is unloaded
       window.addEventListener('beforeunload', () => {
-        if (unsubscribeFirebase) unsubscribeFirebase();
-        if (cleanupAutoUpdate) cleanupAutoUpdate();
+        console.log('Cleaning up...');
+        if (unsubscribeFirebase && typeof unsubscribeFirebase === 'function') {
+          console.log('Unsubscribing from Firebase...');
+          unsubscribeFirebase();
+        }
+        if (cleanupAutoUpdate && typeof cleanupAutoUpdate === 'function') {
+          console.log('Cleaning up auto-update...');
+          cleanupAutoUpdate();
+        }
       });
     });
   </script>
