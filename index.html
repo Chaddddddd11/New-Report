@@ -363,25 +363,52 @@
     // Function to fetch instructors from InstructorList.html
     async function fetchInstructors() {
       try {
-        const response = await fetch('InstructorList.html');
-        const html = await response.text();
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(html, 'text/html');
-        const tableRows = doc.querySelectorAll('#instructorTableBody tr');
+        // First, load the InstructorList.html in an iframe to ensure JavaScript executes
+        const iframe = document.createElement('iframe');
+        iframe.style.display = 'none';
+        document.body.appendChild(iframe);
         
-        allInstructors = Array.from(tableRows).map(row => ({
-          name: row.cells[0]?.textContent.trim() || '',
-          subject: row.cells[1]?.textContent.trim() || '',
-          course: row.cells[2]?.textContent.trim() || '',
-          year: row.cells[3]?.textContent.trim() || '',
-          section: row.cells[4]?.textContent.trim() || '',
-          day: row.cells[5]?.textContent.trim() || '',
-          time: row.cells[6]?.textContent.trim() || '',
-          room: row.cells[7]?.textContent.trim() || ''
-        }));
-        
-        // Initialize dropdowns with available options
-        updateDropdowns();
+        return new Promise((resolve) => {
+          iframe.onload = async () => {
+            try {
+              // Wait a bit for the data to load
+              await new Promise(resolve => setTimeout(resolve, 1000));
+              
+              // Get the table rows from the iframe
+              const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+              const tableRows = iframeDoc.querySelectorAll('#instructorTableBody tr');
+              
+              allInstructors = Array.from(tableRows).map(row => {
+                const cells = row.querySelectorAll('td');
+                return {
+                  name: cells[0]?.textContent.trim() || '',
+                  subject: cells[1]?.textContent.trim() || '',
+                  course: cells[2]?.textContent.trim() || '',
+                  year: cells[3]?.textContent.trim() || '',
+                  section: cells[4]?.textContent.trim() || '',
+                  day: cells[5]?.textContent.trim() || '',
+                  time: cells[6]?.textContent.trim() || '',
+                  room: cells[7]?.textContent.trim() || ''
+                };
+              }).filter(instructor => instructor.name); // Filter out empty rows
+              
+              console.log('Fetched instructors:', allInstructors);
+              
+              // Initialize dropdowns with available options
+              updateDropdowns();
+              resolve();
+            } catch (error) {
+              console.error('Error parsing instructor data:', error);
+              resolve();
+            } finally {
+              // Clean up
+              document.body.removeChild(iframe);
+            }
+          };
+          
+          // Set the iframe source
+          iframe.src = 'InstructorList.html';
+        });
       } catch (error) {
         console.error('Error fetching instructors:', error);
       }
