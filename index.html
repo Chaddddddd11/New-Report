@@ -332,8 +332,8 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
     
-    // Collection reference with correct case sensitivity
-    const instructorsCollectionRef = collection(db, 'Instructors');
+    // Collection reference
+    const instructorsCollectionRef = collection(db, 'instructors');
     
     // Store all instructors data
     let allInstructorsData = []; // To store all instructors from Firebase
