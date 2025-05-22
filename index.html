@@ -318,22 +318,20 @@
       getDocs 
     } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-    // Your web app's Firebase configuration (as provided by user)
+    // Your web app's Firebase configuration 
     const firebaseConfig = {
       apiKey: "AIzaSyDeqxzp_-kKjM3hPr6CLGfTn38e4swSKbo",
       authDomain: "room-management-system-8e899.firebaseapp.com",
       projectId: "room-management-system-8e899",
-      storageBucket: "room-management-system-8e899.firebasestorage.app", // Using exact value from user
+      storageBucket: "room-management-system-8e899.appspot.com",
       messagingSenderId: "667821278853",
       appId: "1:667821278853:web:a3a80c985073772670cbec"
     };
 
     // Initialize Firebase
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-    
-    // Collection reference
-    const instructorsCollectionRef = collection(db, 'instructors');
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    const instructorsRef = db.collection('Instructors');
     
     // Store all instructors data
     let allInstructorsData = []; // To store all instructors from Firebase
@@ -479,187 +477,133 @@
     }
 
     // Render the schedule based on selected filters
-    function renderSchedule() {
-      console.log('Rendering schedule...');
+    function renderSchedule(instructors = []) {
+      console.log('Rendering schedule with instructors:', instructors);
       
       // Generate time slots from 07:00 to 17:00 (5:00 PM)
       const timeSlots = [];
-      for (let i = 7; i < 17; i++) {
-        const startHour = String(i).padStart(2, '0');
-        const endHour = String(i + 1).padStart(2, '0');
-        timeSlots.push(`${startHour}:00-${endHour}:00`);
-      }
-      
-      // Clear the schedule body
-      scheduleBody.innerHTML = '';
-      
-      // Get selected values
-      const selectedCourse = courseSelect.value;
-      const selectedYear = yearSelect.value;
-      const selectedSection = sectionSelect.value;
-      
-      // If no course, year, or section is selected, show empty schedule
-      if (!selectedCourse || !selectedYear || !selectedSection) {
-        timeSlots.forEach(timeSlot => {
-          const row = document.createElement('tr');
-          row.innerHTML = `<td>${timeSlot}</td><td></td><td></td><td></td><td></td><td></td><td></td>`;
-
-          scheduleBody.appendChild(row);
-        });
-        return;
+      for (let hour = 7; hour <= 17; hour++) {
+        const formattedHour = hour.toString().padStart(2, '0');
+        timeSlots.push(`${formattedHour}:00`);
       }
 
-      // Filter instructors for the selected course, year, and section
-      const sectionInstructors = allInstructorsData.filter(instructor => {
-        // Debug log to see instructor data
-        console.log('Processing instructor:', instructor);
-        
-        // Check if instructor has all required fields
-        if (!instructor.course || !instructor.year || !instructor.section || !instructor.day || !instructor.time) {
-          console.log('Skipping instructor - missing required fields:', instructor);
-          return false;
-        }
-        
-        // Prepare values for comparison (trim and normalize)
-        const instructorCourse = (instructor.course || '').toString().trim().toLowerCase().replace(/\s+/g, '');
-        const selectedCourseNormalized = (selectedCourse || '').toString().trim().toLowerCase().replace(/\s+/g, '');
-        
-        const instructorYear = (instructor.year || '').toString().trim().toLowerCase();
-        const selectedYearNormalized = (selectedYear || '').toString().trim().toLowerCase();
-        
-        const instructorSection = (instructor.section || '').toString().trim().toLowerCase();
-        const selectedSectionNormalized = (selectedSection || '').toString().trim().toLowerCase();
-        
-        // Check if the instructor matches the selected filters
-        const matches = instructorCourse === selectedCourseNormalized &&
-                      instructorYear === selectedYearNormalized &&
-                      instructorSection === selectedSectionNormalized;
-        
-        if (!matches) {
-          console.log(`Instructor does not match filters - Course: ${instructor.course} (expected ${selectedCourse}), Year: ${instructor.year} (expected ${selectedYear}), Section: ${instructor.section} (expected ${selectedSection})`);
-        }
-        
-        return matches;
-      });
-      
-      console.log('Filtered instructors:', sectionInstructors);
+      // Clear existing schedule
+      const scheduleTable = document.getElementById('scheduleTable');
+      scheduleTable.innerHTML = '';
 
-      console.log('Filtered instructors:', sectionInstructors);
+      // Create header row with days of the week
+      const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+      const headerRow = document.createElement('tr');
+      headerRow.innerHTML = '<th>Time</th>' + days.map(day => `<th>${day}</th>`).join('');
+      scheduleTable.appendChild(headerRow);
 
-      // Create a row for each time slot
-      timeSlots.forEach(timeSlot => {
+      // Create rows for each time slot
+      timeSlots.forEach((timeSlot, index) => {
+        const nextHour = (7 + (index + 1) % 24).toString().padStart(2, '0');
+        const timeRange = `${timeSlot} - ${nextHour}:00`;
+        
         const row = document.createElement('tr');
-        row.innerHTML = `<td>${timeSlot}</td>`; // Add time slot cell
+        row.innerHTML = `<td>${timeRange}</td>`; // Add time slot cell
         
         // Days of the week
-        const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-        
-        // Create a cell for each day
         days.forEach(day => {
           const cell = document.createElement('td');
+          cell.dataset.day = day;
+          cell.dataset.time = timeSlot;
           
-          // Find matching instructors for this day and time (could be multiple)
-          const instructors = sectionInstructors.filter(instr => {
-            if (!instr.day || !instr.time) {
-              console.log('Skipping instructor - missing day or time:', instr);
-              return false;
-            }
+          // Find instructors for this time slot and day
+          const matchingInstructors = instructors.filter(instructor => {
+            if (instructor.day !== day) return false;
             
-            // Check if the day matches (case-insensitive)
-            if (instr.day.toLowerCase() !== day.toLowerCase()) {
-              return false;
-            }
+            // Check if instructor's time slot overlaps with current time slot
+            if (!instructor.time) return false;
             
-            // Get the instructor's time range
-            const [startStr, endStr] = instr.time.split('-');
-            if (!startStr || !endStr) {
-              console.log('Invalid time format for instructor:', instr);
-              return false;
-            }
-            
-            // Convert time to minutes for comparison
-            const timeToMinutes = (timeStr) => {
-              const [hours, minutes] = timeStr.split(':').map(Number);
-              return hours * 60 + (minutes || 0);
-            };
-            
-            const slotTime = timeToMinutes(timeSlot);
-            const startTime = timeToMinutes(startStr);
-            const endTime = timeToMinutes(endStr);
-            
-            // Check if the time slot falls within the instructor's time range
-            const isTimeMatch = slotTime >= startTime && slotTime < endTime;
-            
-            if (!isTimeMatch) {
-              console.log(`Time mismatch - Slot: ${timeSlot}, Instructor: ${instr.time}`);
-            }
-            
-            return isTimeMatch;
+            const [instructorStart] = instructor.time.split('-');
+            return instructorStart === timeSlot;
           });
           
-          // If instructors found, fill the cell with their info
-          if (instructors.length > 0) {
-            const cellContent = instructors.map(instr => {
-              const roomDisplay = instr.roomName ? `<div class="room">${instr.roomName}</div>` : '';
-              return `
-                <div class="instructor-info">
-                  <div class="instructor-name">${instr.name || 'No name'}</div>
-                  <div class="instructor-subject">${instr.subject || 'No subject'}</div>
-                  ${roomDisplay}
-                </div>
+          // Display matching instructors
+          if (matchingInstructors.length > 0) {
+            matchingInstructors.forEach(instructor => {
+              const instructorDiv = document.createElement('div');
+              instructorDiv.className = 'schedule-item';
+              instructorDiv.innerHTML = `
+                <div class="instructor-name">${instructor.name || 'N/A'}</div>
+                <div class="subject">${instructor.subject || 'N/A'}</div>
+                <div class="room">${instructor.roomName || 'N/A'}</div>
               `;
-            }).join('');
-            cell.innerHTML = cellContent;
+              cell.appendChild(instructorDiv);
+            });
           }
           
           row.appendChild(cell);
         });
         
-        scheduleBody.appendChild(row);
+        scheduleTable.appendChild(row);
       });
     }
 
     // Function to fetch instructors based on selected filters
     async function fetchInstructors() {
       const selectedCourse = courseSelect.value;
-      
-      // Normalize course name for comparison (remove spaces)
-      const normalizeCourseName = (course) => {
-        if (!course) return '';
-        return course.replace(/\s+/g, '');
-      };
-      
-      const normalizedSelectedCourse = normalizeCourseName(selectedCourse);
       const selectedYear = yearSelect.value;
       const selectedSection = sectionSelect.value;
       
-      if (!selectedCourse || !selectedYear || !selectedSection) {
-        return [];
-      }
+      // Clear previous schedule
+      const scheduleTable = document.getElementById('scheduleTable');
+      scheduleTable.innerHTML = '';
+      
+      // Show loading state
+      const loadingRow = document.createElement('tr');
+      loadingRow.innerHTML = '<td colspan="6" style="text-align: center; padding: 20px;">Loading schedule...</td>';
+      scheduleTable.appendChild(loadingRow);
       
       try {
-        const q = query(
-          collection(db, 'Instructors'),
-          where('course', '==', selectedCourse),
-          where('year', '==', selectedYear),
-          where('section', '==', selectedSection)
-        );
+        // Build query based on selected filters
+        let query = instructorsRef;
         
-        const querySnapshot = await getDocs(q);
-        return querySnapshot.docs.map(doc => {
-          const data = doc.data();
-          // Ensure time format matches our time slots (HH:00-HH:00)
-          if (data.time && data.time.includes(' - ')) {
-            data.time = data.time.replace(' - ', '-').replace(' ', '');
-          }
-          return { 
-            id: doc.id, 
-            ...data 
-          };
+        if (selectedCourse) {
+          query = query.where('course', '==', selectedCourse);
+        }
+        
+        if (selectedYear) {
+          query = query.where('year', '==', selectedYear);
+        }
+        
+        if (selectedSection) {
+          query = query.where('section', '==', selectedSection);
+        }
+        
+        // Execute query
+        const querySnapshot = await query.get();
+        
+        // Clear loading state
+        scheduleTable.innerHTML = '';
+        
+        if (querySnapshot.empty) {
+          const noDataRow = document.createElement('tr');
+          noDataRow.innerHTML = '<td colspan="6" style="text-align: center; padding: 20px;">No schedule found for the selected filters.</td>';
+          scheduleTable.appendChild(noDataRow);
+          return;
+        }
+        
+        // Process and display the schedule
+        const instructors = [];
+        querySnapshot.forEach(doc => {
+          instructors.push({
+            id: doc.id,
+            ...doc.data()
+          });
         });
+        
+        renderSchedule(instructors);
+        
       } catch (error) {
-        console.error('Error fetching instructors:', error);
-        return [];
+        console.error('Error fetching schedule:', error);
+        scheduleTable.innerHTML = '';
+        const errorRow = document.createElement('tr');
+        errorRow.innerHTML = '<td colspan="6" style="text-align: center; padding: 20px; color: red;">Error loading schedule. Please try again.</td>';
+        scheduleTable.appendChild(errorRow);
       }
     }
 
