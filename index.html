@@ -341,11 +341,10 @@
       const capacityDisplay = document.getElementById('studentCapacity');
       
       if (studentCapacity > 0) {
-        const capacityDisplay = document.getElementById('studentCapacity');
         capacityDisplay.textContent = studentCapacity;
-        document.getElementById('studentCapacityDisplay').style.display = 'block';
+        capacityContainer.style.display = 'block';
       } else {
-        document.getElementById('studentCapacityDisplay').style.display = 'none';
+        capacityContainer.style.display = 'none';
       }
     }
 
@@ -357,167 +356,87 @@
     const studentCapacityDisplay = document.getElementById('studentCapacityDisplay');
     const scheduleBody = document.getElementById('scheduleBody');
     
-    // Store all instructors data
-    let allInstructors = [];
-    
-    // Function to fetch instructors from InstructorList.html
-    async function fetchInstructors() {
-      try {
-        // First, load the InstructorList.html in an iframe to ensure JavaScript executes
-        const iframe = document.createElement('iframe');
-        iframe.style.display = 'none';
-        document.body.appendChild(iframe);
-        
-        return new Promise((resolve) => {
-          iframe.onload = async () => {
-            try {
-              // Wait a bit for the data to load
-              await new Promise(resolve => setTimeout(resolve, 1000));
-              
-              // Get the table rows from the iframe
-              const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
-              const tableRows = iframeDoc.querySelectorAll('#instructorTableBody tr');
-              
-              allInstructors = Array.from(tableRows).map(row => {
-                const cells = row.querySelectorAll('td');
-                return {
-                  name: cells[0]?.textContent.trim() || '',
-                  subject: cells[1]?.textContent.trim() || '',
-                  course: cells[2]?.textContent.trim() || '',
-                  year: cells[3]?.textContent.trim() || '',
-                  section: cells[4]?.textContent.trim() || '',
-                  day: cells[5]?.textContent.trim() || '',
-                  time: cells[6]?.textContent.trim() || '',
-                  room: cells[7]?.textContent.trim() || ''
-                };
-              }).filter(instructor => instructor.name); // Filter out empty rows
-              
-              console.log('Fetched instructors:', allInstructors);
-              
-              // Initialize dropdowns with available options
-              updateDropdowns();
-              resolve();
-            } catch (error) {
-              console.error('Error parsing instructor data:', error);
-              resolve();
-            } finally {
-              // Clean up
-              document.body.removeChild(iframe);
-            }
-          };
-          
-          // Set the iframe source
-          iframe.src = 'InstructorList.html';
-        });
-      } catch (error) {
-        console.error('Error fetching instructors:', error);
-      }
-    }
-    
-    // Function to update dropdowns based on available data
-    function updateDropdowns() {
-      // Get unique courses
-      const courses = [...new Set(allInstructors.map(inst => inst.course).filter(Boolean))];
-      updateSelectOptions(courseSelect, courses);
-      
-      // Update year and section based on selected course
-      updateYearOptions();
-    }
-    
-    // Function to update year options based on selected course
-    function updateYearOptions() {
-      const selectedCourse = courseSelect.value;
-      const years = [...new Set(
-        allInstructors
-          .filter(inst => !selectedCourse || inst.course === selectedCourse)
-          .map(inst => inst.year)
-          .filter(Boolean)
-      )];
-      updateSelectOptions(yearSelect, years);
-      updateSectionOptions();
-    }
-    
-    // Function to update section options based on selected course and year
-    function updateSectionOptions() {
-      const selectedCourse = courseSelect.value;
-      const selectedYear = yearSelect.value;
-      
-      const sections = [...new Set(
-        allInstructors
-          .filter(inst => 
-            (!selectedCourse || inst.course === selectedCourse) &&
-            (!selectedYear || inst.year === selectedYear)
-          )
-          .map(inst => inst.section)
-          .filter(Boolean)
-      )];
-      updateSelectOptions(sectionSelect, sections);
-    }
-    
-    // Helper function to update select options
-    function updateSelectOptions(selectElement, options) {
-      const currentValue = selectElement.value;
-      selectElement.innerHTML = '<option value="">Select ' + selectElement.id + '</option>';
-      
-      options.forEach(option => {
-        const optionElement = document.createElement('option');
-        optionElement.value = option;
-        optionElement.textContent = option;
-        selectElement.appendChild(optionElement);
-      });
-      
-      // Restore previous value if it still exists
-      if (options.includes(currentValue)) {
-        selectElement.value = currentValue;
-      }
-    }
-    
     // Function to initialize the schedule
     function initializeSchedule() {
       renderSchedule();
       
-      // Add event listeners for dropdown changes
-      courseSelect.addEventListener('change', updateYearOptions);
-      yearSelect.addEventListener('change', updateSectionOptions);
-      sectionSelect.addEventListener('change', filterInstructors);
-      
-      // Initialize by fetching instructors
-      fetchInstructors();
+      // Set up event listeners
+      courseSelect.addEventListener('change', handleCourseChange);
+      yearSelect.addEventListener('change', handleYearChange);
+      sectionSelect.addEventListener('change', handleSectionChange);
     }
     
-    // Function to filter instructors based on selected filters
-    function filterInstructors() {
-      const selectedCourse = courseSelect.value;
-      const selectedYear = yearSelect.value;
-      const selectedSection = sectionSelect.value;
-      
-      let filteredInstructors = allInstructors;
-      
-      if (selectedCourse) {
-        filteredInstructors = filteredInstructors.filter(instructor => 
-          instructor.course === selectedCourse
-        );
-      }
-      
-      if (selectedYear) {
-        filteredInstructors = filteredInstructors.filter(instructor => 
-          instructor.year === selectedYear
-        );
-      }
-      
-      if (selectedSection) {
-        filteredInstructors = filteredInstructors.filter(instructor => 
-          instructor.section === selectedSection
-        );
-      }
-      
-      console.log('Filtered instructors:', filteredInstructors);
-      
-      renderSchedule(filteredInstructors);
+    function handleCourseChange() {
+      const selectedCourse = this.value;
+      yearSelect.disabled = !selectedCourse;
+      sectionSelect.disabled = true;
+      yearSelect.value = '';
+      sectionSelect.value = '';
+      updateStudentCapacity();
+      renderSchedule();
     }
     
-    // Function to render the schedule
-    function renderSchedule(instructors = allInstructors) {
+    function handleYearChange() {
+      const selectedYear = this.value;
+      sectionSelect.disabled = !selectedYear;
+      sectionSelect.value = '';
+      updateStudentCapacity();
+      renderSchedule();
+    }
+    
+    function handleSectionChange() {
+      updateStudentCapacity();
+      renderSchedule();
+    }
+
+    // Helper function to normalize time format to HH:00-HH:00
+    function normalizeTime(timeStr) {
+      if (!timeStr) return '';
+      
+      console.log(`Normalizing time: ${timeStr}`);
+      
+      // Handle case where time is already in the correct format
+      if (/^\d{2}:00-\d{2}:00$/.test(timeStr)) {
+        return timeStr;
+      }
+      
+      // Handle case where time is in format 'HH:MM-HH:MM'
+      if (/^\d{1,2}:\d{2}-\d{1,2}:\d{2}$/.test(timeStr)) {
+        const [start, end] = timeStr.split('-');
+        const formatPart = part => {
+          const [h, m] = part.split(':');
+          return `${h.padStart(2, '0')}:00`; // Convert to whole hour
+        };
+        return `${formatPart(start)}-${formatPart(end)}`;
+      }
+      
+      // Handle case where time is in format '7:00 AM - 8:00 AM'
+      if (/\d{1,2}:\d{2}\s*[AP]M\s*-\s*\d{1,2}:\d{2}\s*[AP]M/i.test(timeStr)) {
+        const [startPart, endPart] = timeStr.split('-').map(s => s.trim());
+        const formatTime = (timeStr) => {
+          const [time, period] = timeStr.split(' ');
+          let [h, m] = time.split(':').map(Number);
+          if (period.toLowerCase() === 'pm' && h < 12) h += 12;
+          if (period.toLowerCase() === 'am' && h === 12) h = 0;
+          return `${String(h).padStart(2, '0')}:00`;
+        };
+        return `${formatTime(startPart)}-${formatTime(endPart)}`;
+      }
+      
+      // Handle case where time is just a single time (e.g., '7:00')
+      if (/^\d{1,2}:\d{2}$/.test(timeStr)) {
+        const [h] = timeStr.split(':');
+        const hour = parseInt(h, 10);
+        const nextHour = (hour + 1) % 24;
+        return `${String(hour).padStart(2, '0')}:00-${String(nextHour).padStart(2, '0')}:00`;
+      }
+      
+      console.warn(`Unrecognized time format: ${timeStr}`);
+      return '';
+    }
+
+    // Render the schedule based on selected filters
+    function renderSchedule() {
       console.log('Rendering schedule...');
       
       // Generate time slots from 07:00 to 17:00 (5:00 PM)
@@ -531,6 +450,30 @@
       // Clear the schedule body
       scheduleBody.innerHTML = '';
       
+      // Get selected values
+      const selectedCourse = courseSelect.value;
+      const selectedYear = yearSelect.value;
+      const selectedSection = sectionSelect.value;
+      
+      // If no course, year, or section is selected, show empty schedule
+      if (!selectedCourse || !selectedYear || !selectedSection) {
+        timeSlots.forEach(timeSlot => {
+          const row = document.createElement('tr');
+          row.innerHTML = `<td>${timeSlot}</td><td></td><td></td><td></td><td></td><td></td><td></td>`;
+          scheduleBody.appendChild(row);
+        });
+        return;
+      }
+
+      // Filter instructors for the selected course, year, and section
+      const sectionInstructors = allInstructorsData.filter(instructor => 
+        instructor.course === selectedCourse &&
+        instructor.year === selectedYear &&
+        instructor.section === selectedSection
+      );
+
+      console.log('Filtered instructors:', sectionInstructors);
+
       // Create a row for each time slot
       timeSlots.forEach(timeSlot => {
         const row = document.createElement('tr');
@@ -584,8 +527,8 @@
       });
     }
 
-    // Function to filter instructors based on selected filters
-    function filterInstructors() {
+    // Function to fetch instructors based on selected filters
+    async function fetchInstructors() {
       const selectedCourse = courseSelect.value;
       const selectedYear = yearSelect.value;
       const selectedSection = sectionSelect.value;
@@ -595,16 +538,25 @@
       }
       
       try {
-        // Filter instructors based on selected criteria
-        return allInstructors.filter(instructor => 
-          (!selectedCourse || instructor.course === selectedCourse) &&
-          (!selectedYear || instructor.year === selectedYear) &&
-          (!selectedSection || instructor.section === selectedSection)
-        ).map(instructor => ({
-          ...instructor,
-          // Ensure consistent time format
-          time: instructor.time ? instructor.time.replace(' - ', '-').replace(' ', '') : ''
-        }));
+        const q = query(
+          collection(db, 'Instructors'),
+          where('course', '==', selectedCourse),
+          where('year', '==', selectedYear),
+          where('section', '==', selectedSection)
+        );
+        
+        const querySnapshot = await getDocs(q);
+        return querySnapshot.docs.map(doc => {
+          const data = doc.data();
+          // Ensure time format matches our time slots (HH:00-HH:00)
+          if (data.time && data.time.includes(' - ')) {
+            data.time = data.time.replace(' - ', '-').replace(' ', '');
+          }
+          return { 
+            id: doc.id, 
+            ...data 
+          };
+        });
       } catch (error) {
         console.error('Error fetching instructors:', error);
         return [];
