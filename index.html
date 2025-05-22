@@ -441,6 +441,14 @@
     // Render the schedule based on selected filters
     function renderSchedule() {
       console.log('Rendering schedule...');
+      console.log('Total instructors in memory:', allInstructorsData.length);
+      
+      // Get selected values
+      const selectedCourse = courseSelect.value;
+      const selectedYear = yearSelect.value;
+      const selectedSection = sectionSelect.value;
+      
+      console.log('Selected filters - Course:', selectedCourse, 'Year:', selectedYear, 'Section:', selectedSection);
       
       // Generate time slots from 07:00 to 17:00 (5:00 PM)
       const timeSlots = [];
@@ -453,13 +461,9 @@
       // Clear the schedule body
       scheduleBody.innerHTML = '';
       
-      // Get selected values
-      const selectedCourse = courseSelect.value;
-      const selectedYear = yearSelect.value;
-      const selectedSection = sectionSelect.value;
-      
-      // If no course, year, or section is selected, show empty schedule
+      // If any required filter is missing, show empty schedule
       if (!selectedCourse || !selectedYear || !selectedSection) {
+        console.log('Missing filter criteria, showing empty schedule');
         timeSlots.forEach(timeSlot => {
           const row = document.createElement('tr');
           row.innerHTML = `<td>${timeSlot}</td><td></td><td></td><td></td><td></td><td></td><td></td>`;
@@ -469,13 +473,22 @@
       }
 
       // Filter instructors for the selected course, year, and section
-      const sectionInstructors = allInstructorsData.filter(instructor => 
-        instructor.course === selectedCourse &&
-        instructor.year === selectedYear &&
-        instructor.section === selectedSection
-      );
+      const sectionInstructors = allInstructorsData.filter(instructor => {
+        try {
+          if (!instructor) return false;
+          
+          const courseMatch = instructor.course === selectedCourse;
+          const yearMatch = instructor.year === selectedYear;
+          const sectionMatch = instructor.section === selectedSection;
+          
+          return courseMatch && yearMatch && sectionMatch;
+        } catch (error) {
+          console.error('Error filtering instructor:', error, 'Instructor data:', instructor);
+          return false;
+        }
+      });
 
-      console.log('Filtered instructors:', sectionInstructors);
+      console.log(`Found ${sectionInstructors.length} instructors for ${selectedCourse} ${selectedYear} year, section ${selectedSection}:`, sectionInstructors);
 
       // Create a row for each time slot
       timeSlots.forEach(timeSlot => {
@@ -568,64 +581,127 @@
 
     // Set up real-time listener for instructors
     function setupFirebaseListener() {
-      const q = query(instructorsCollectionRef);
-      const unsubscribe = onSnapshot(q, (querySnapshot) => {
-        allInstructorsData = []; // Clear previous data
-        
-        querySnapshot.forEach((doc) => {
-          const data = doc.data();
-          if (!data) return;
-          
-          // Normalize the time format to HH:00-HH:00
-          let normalizedTime = '';
-          if (data.time) {
-            // Handle different time formats (e.g., '7:00-8:00' or '07:00 - 08:00')
-            const times = data.time.split('-').map(part => {
-              const [h, m = '00'] = part.trim().split(':');
-              return `${h.padStart(2, '0')}:${m.padStart(2, '0')}`.substring(0, 5);
-            });
-            normalizedTime = times.join('-');
-          }
-          
-          // Create instructor object with normalized data
-          const instructor = {
-            id: doc.id,
-            name: data.name || 'N/A',
-            subject: data.subject || 'N/A',
-            roomName: data.roomName || 'TBA',
-            day: data.day ? data.day.trim() : '',
-            time: normalizedTime,
-            course: data.course || '',
-            year: data.year || '',
-            section: data.section || ''
-          };
-          
-          allInstructorsData.push(instructor);
-          
-          console.log('Instructor loaded:', instructor);
-        });
-        
-        console.log('All instructors loaded. Total:', allInstructorsData.length);
-        renderSchedule(); // Re-render schedule with new data
-      }, (error) => {
-        console.error("Error setting up instructor listener:", error);
-      });
+      console.log('Setting up Firebase listener...');
       
-      return unsubscribe;
+      if (!window.db) {
+        console.error('Firebase not properly initialized. Cannot set up listener.');
+        return () => {}; // Return empty cleanup function
+      }
+      
+      try {
+        console.log('Creating query for collection...');
+        const q = query(instructorsCollectionRef);
+        console.log('Query created, setting up onSnapshot listener...');
+        
+        const unsubscribe = onSnapshot(q, 
+          // Success callback
+          (querySnapshot) => {
+            console.log('Received data snapshot with', querySnapshot.size, 'documents');
+            allInstructorsData = [];
+            
+            querySnapshot.forEach((doc) => {
+              if (!doc.exists()) {
+                console.warn('Document does not exist:', doc.id);
+                return;
+              }
+              
+              const data = doc.data();
+              if (!data) {
+                console.warn('Document data is empty for document:', doc.id);
+                return;
+              }
+              
+              console.log('Processing document:', doc.id, data);
+              
+              // Normalize time format
+              let normalizedTime = '';
+              if (data.time) {
+                try {
+                  const times = data.time.split('-').map(part => {
+                    const [h, m = '00'] = part.trim().split(':');
+                    return `${h.padStart(2, '0')}:${m.padStart(2, '0')}`.substring(0, 5);
+                  });
+                  normalizedTime = times.join('-');
+                } catch (error) {
+                  console.error('Error normalizing time:', error, 'Time string was:', data.time);
+                  normalizedTime = data.time; // Use original if normalization fails
+                }
+              }
+              
+              // Create instructor object with normalized data
+              const instructor = {
+                id: doc.id,
+                name: data.name || 'N/A',
+                subject: data.subject || 'N/A',
+                roomName: data.roomName || 'TBA',
+                day: data.day ? data.day.trim() : '',
+                time: normalizedTime,
+                course: data.course || '',
+                year: data.year || '',
+                section: data.section || ''
+              };
+              
+              allInstructorsData.push(instructor);
+              console.log('Added instructor:', instructor.name);
+            });
+            
+            console.log('All instructors loaded. Total:', allInstructorsData.length);
+            renderSchedule(); // Re-render schedule with new data
+          },
+          // Error callback
+          (error) => {
+            console.error("Error in Firestore listener:", error);
+            console.error('Error code:', error.code);
+            console.error('Error message:', error.message);
+            
+            if (error.code === 'permission-denied') {
+              console.error('Permission denied. Please check your Firestore security rules.');
+            } else if (error.code === 'not-found') {
+              console.error('Collection not found. Make sure the collection name is correct.');
+            }
+          }
+        );
+        
+        // Return the unsubscribe function
+        return () => {
+          console.log('Unsubscribing from Firestore listener');
+          unsubscribe();
+        };
+        
+      } catch (error) {
+        console.error('Error setting up Firestore listener:', error);
+        return () => {}; // Return empty cleanup function
+      }
     }
 
     // Set up event listeners when the DOM is fully loaded
     document.addEventListener('DOMContentLoaded', function() {
-      // Initialize the schedule first to set up UI event handlers
-      initializeSchedule();
+      console.log('DOM fully loaded, initializing application...');
       
-      // Then set up Firebase real-time listener
-      const unsubscribe = setupFirebaseListener();
-      
-      // Clean up the listener when the page is unloaded
-      window.addEventListener('beforeunload', () => {
-        if (unsubscribe) unsubscribe();
-      });
+      try {
+        // Initialize the schedule first to set up UI event handlers
+        initializeSchedule();
+        
+        // Then set up Firebase real-time listener
+        const unsubscribe = setupFirebaseListener();
+        
+        if (typeof unsubscribe !== 'function') {
+          console.warn('Firebase listener was not properly initialized');
+        } else {
+          // Clean up the listener when the page is unloaded
+          window.addEventListener('beforeunload', () => {
+            console.log('Page unloading, cleaning up...');
+            try {
+              unsubscribe();
+            } catch (error) {
+              console.error('Error during cleanup:', error);
+            }
+          });
+        }
+      } catch (error) {
+        console.error('Error during application initialization:', error);
+        alert('Failed to initialize the application. Please check the console for details.');
+      }
     });
   </script>
 </body>
