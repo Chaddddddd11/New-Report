@@ -257,9 +257,9 @@
       <option value="">Select Course</option>
       <option value="BSA">BSA</option>
       <option value="BSAIS">BSAIS</option>
-      <option value="MSMarketing">MS Marketing</option>
+      <option value="MS Marketing">MS Marketing</option>
       <option value="BSE">BSE</option>
-      <option value="BSPublicAdministration">BS Public Administration</option>
+      <option value="BS Public Administration">BS Public Administration</option>
     </select>
   </div>
 
@@ -503,6 +503,7 @@
         timeSlots.forEach(timeSlot => {
           const row = document.createElement('tr');
           row.innerHTML = `<td>${timeSlot}</td><td></td><td></td><td></td><td></td><td></td><td></td>`;
+
           scheduleBody.appendChild(row);
         });
         return;
@@ -519,10 +520,20 @@
           return false;
         }
         
+        // Prepare values for comparison (trim and normalize)
+        const instructorCourse = (instructor.course || '').toString().trim().toLowerCase().replace(/\s+/g, '');
+        const selectedCourseNormalized = (selectedCourse || '').toString().trim().toLowerCase().replace(/\s+/g, '');
+        
+        const instructorYear = (instructor.year || '').toString().trim().toLowerCase();
+        const selectedYearNormalized = (selectedYear || '').toString().trim().toLowerCase();
+        
+        const instructorSection = (instructor.section || '').toString().trim().toLowerCase();
+        const selectedSectionNormalized = (selectedSection || '').toString().trim().toLowerCase();
+        
         // Check if the instructor matches the selected filters
-        const matches = instructor.course === selectedCourse &&
-                      instructor.year === selectedYear &&
-                      instructor.section === selectedSection;
+        const matches = instructorCourse === selectedCourseNormalized &&
+                      instructorYear === selectedYearNormalized &&
+                      instructorSection === selectedSectionNormalized;
         
         if (!matches) {
           console.log(`Instructor does not match filters - Course: ${instructor.course} (expected ${selectedCourse}), Year: ${instructor.year} (expected ${selectedYear}), Section: ${instructor.section} (expected ${selectedSection})`);
@@ -611,6 +622,14 @@
     // Function to fetch instructors based on selected filters
     async function fetchInstructors() {
       const selectedCourse = courseSelect.value;
+      
+      // Normalize course name for comparison (remove spaces)
+      const normalizeCourseName = (course) => {
+        if (!course) return '';
+        return course.replace(/\s+/g, '');
+      };
+      
+      const normalizedSelectedCourse = normalizeCourseName(selectedCourse);
       const selectedYear = yearSelect.value;
       const selectedSection = sectionSelect.value;
       
