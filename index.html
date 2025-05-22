@@ -466,11 +466,17 @@
       }
 
       // Filter instructors for the selected course, year, and section
-      const sectionInstructors = allInstructorsData.filter(instructor => 
-        instructor.course === selectedCourse &&
-        instructor.year === selectedYear &&
-        instructor.section === selectedSection
-      );
+      const sectionInstructors = allInstructorsData.filter(instructor => {
+        // Check if instructor has all required fields
+        if (!instructor.course || !instructor.year || !instructor.section || !instructor.day || !instructor.time) {
+          return false;
+        }
+        
+        // Check if the instructor matches the selected filters
+        return instructor.course === selectedCourse &&
+               instructor.year === selectedYear &&
+               instructor.section === selectedSection;
+      });
 
       console.log('Filtered instructors:', sectionInstructors);
 
@@ -486,38 +492,34 @@
         days.forEach(day => {
           const cell = document.createElement('td');
           
-          // Find matching instructor for this day and time
-          const instructor = sectionInstructors.find(instr => {
+          // Find matching instructors for this day and time (could be multiple)
+          const instructors = sectionInstructors.filter(instr => {
             if (!instr.day || !instr.time) return false;
             
             // Normalize times for comparison
             const normalizedInstrTime = normalizeTime(instr.time);
             const normalizedSlotTime = timeSlot;
             
-            console.log(`Checking instructor: ${instr.name}, day: ${instr.day}, time: ${instr.time}`);
-            console.log(`Normalized times - Instructor: ${normalizedInstrTime}, Slot: ${normalizedSlotTime}`);
-            
             // Check if day and time match (case-insensitive day comparison)
             const dayMatch = instr.day.toLowerCase() === day.toLowerCase();
             const timeMatch = normalizedInstrTime === normalizedSlotTime;
             
-            if (dayMatch && timeMatch) {
-              console.log(`Match found: ${instr.name} on ${day} at ${timeSlot}`);
-              return true;
-            }
-            
-            return false;
+            return dayMatch && timeMatch;
           });
           
-          // If instructor found, fill the cell with their info
-          if (instructor) {
-            cell.innerHTML = `
-              <div class="schedule-entry">
-                <div class="subject">${instructor.subject || 'N/A'}</div>
-                <div class="instructor">${instructor.name || 'N/A'}</div>
-                <div class="room">${instructor.roomName || 'TBA'}</div>
-              </div>
-            `;
+          // If instructors found, fill the cell with their info
+          if (instructors.length > 0) {
+            let content = '';
+            instructors.forEach(instructor => {
+              content += `
+                <div class="schedule-entry">
+                  <div class="subject">${instructor.subject || 'N/A'}</div>
+                  <div class="instructor">${instructor.name || 'N/A'}</div>
+                  <div class="room">${instructor.roomName || 'TBA'}</div>
+                </div>
+              `;
+            });
+            cell.innerHTML = content;
           }
           
           row.appendChild(cell);
@@ -573,31 +575,52 @@
           const data = doc.data();
           if (!data) return;
           
-          // Normalize the time format to HH:00-HH:00
-          let normalizedTime = '';
-          if (data.time) {
-            // Handle different time formats (e.g., '7:00-8:00' or '07:00 - 08:00')
-            const times = data.time.split('-').map(part => {
-              const [h, m = '00'] = part.trim().split(':');
-              return `${h.padStart(2, '0')}:${m.padStart(2, '0')}`.substring(0, 5);
-            });
-            normalizedTime = times.join('-');
+          try {
+            // Normalize the time format to HH:00-HH:00
+            let normalizedTime = '';
+            if (data.time) {
+              // Handle different time formats (e.g., '7:00-8:00' or '07:00 - 08:00' or '7:00 AM - 8:00 AM')
+              let times = [];
+              if (data.time.includes(' - ')) {
+                // Handle '7:00 AM - 8:00 AM' format
+                const [startPart, endPart] = data.time.split(' - ');
+                const formatTime = (timeStr) => {
+                  const [time, period] = timeStr.split(' ');
+                  let [h, m = '00'] = time.split(':');
+                  h = parseInt(h, 10);
+                  if (period && period.toLowerCase() === 'pm' && h < 12) h += 12;
+                  if (period && period.toLowerCase() === 'am' && h === 12) h = 0;
+                  return `${String(h).padStart(2, '0')}:${m.padStart(2, '0')}`.substring(0, 5);
+                };
+                times = [formatTime(startPart), formatTime(endPart)];
+              } else {
+                // Handle '7:00-8:00' or '07:00-08:00' format
+                times = data.time.split('-').map(part => {
+                  const [h, m = '00'] = part.trim().split(':');
+                  return `${h.padStart(2, '0')}:${m.padStart(2, '0')}`.substring(0, 5);
+                });
+              }
+              normalizedTime = times.join('-');
+            }
+            
+            // Create instructor object with normalized data
+            const instructor = {
+              id: doc.id,
+              name: data.name || 'N/A',
+              subject: data.subject || 'N/A',
+              roomName: data.roomName || data.room || 'TBA', // Handle both roomName and room fields
+              day: data.day ? data.day.trim() : '',
+              time: normalizedTime,
+              course: data.course || '',
+              year: data.year || '',
+              section: data.section || ''
+            };
+            
+            console.log('Adding instructor to data:', instructor);
+            allInstructorsData.push(instructor);
+          } catch (error) {
+            console.error('Error processing instructor data:', error, data);
           }
-          
-          // Create instructor object with normalized data
-          const instructor = {
-            id: doc.id,
-            name: data.name || 'N/A',
-            subject: data.subject || 'N/A',
-            roomName: data.roomName || 'TBA',
-            day: data.day ? data.day.trim() : '',
-            time: normalizedTime,
-            course: data.course || '',
-            year: data.year || '',
-            section: data.section || ''
-          };
-          
-          allInstructorsData.push(instructor);
           
           console.log('Instructor loaded:', instructor);
         });
