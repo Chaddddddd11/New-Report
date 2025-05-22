@@ -251,11 +251,14 @@
       }
       
       // Add year options based on the selected course
-      const years = ['1st', '2nd', '3rd', '4th', '5th'];
+      // Using numbers to match the Firestore data format
+      const years = ['1', '2', '3', '4', '5'];
       years.forEach(year => {
         const option = document.createElement('option');
         option.value = year;
-        option.textContent = year + ' Year';
+        // Display as '1st Year', '2nd Year', etc.
+        const suffix = year === '1' ? 'st' : year === '2' ? 'nd' : year === '3' ? 'rd' : 'th';
+        option.textContent = `${year}${suffix} Year`;
         yearSelect.appendChild(option);
       });
       
