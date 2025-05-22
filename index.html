@@ -245,7 +245,7 @@
 </head>
 <body>
   <div class="nav-buttons">
-    <a href="Instructor.html" class="nav-button">Enroll Instructor</a>
+    <a href="InstructorList.html" class="nav-button">Enroll Instructor</a>
     <a href="Room.html" class="nav-button">Room Registration</a>
   </div>
   
@@ -644,72 +644,130 @@
       }
     }
 
+    /**
+     * Normalizes time string to HH:00-HH:00 format
+     * @param {string} timeStr - Time string in various formats
+     * @returns {string} Normalized time string in HH:00-HH:00 format
+     */
+    function normalizeTimeString(timeStr) {
+      if (!timeStr) return '';
+      
+      try {
+        // Handle '7:00 AM - 8:00 AM' format
+        if (timeStr.includes(' - ')) {
+          const [startPart, endPart] = timeStr.split(' - ');
+          const formatTime = (timeStr) => {
+            const [time, period] = timeStr.split(' ');
+            let [h, m = '00'] = time.split(':');
+            h = parseInt(h, 10);
+            if (period && period.toLowerCase() === 'pm' && h < 12) h += 12;
+            if (period && period.toLowerCase() === 'am' && h === 12) h = 0;
+            return `${String(h).padStart(2, '0')}:${m.padStart(2, '0')}`.substring(0, 5);
+          };
+          return `${formatTime(startPart)}-${formatTime(endPart)}`;
+        }
+        
+        // Handle '7:00-8:00' or '07:00-08:00' format
+        if (timeStr.includes('-')) {
+          const times = timeStr.split('-').map(part => {
+            const [h, m = '00'] = part.trim().split(':');
+            return `${h.padStart(2, '0')}:${m.padStart(2, '0')}`.substring(0, 5);
+          });
+          return times.join('-');
+        }
+        
+        // Handle single time (e.g., '7:00')
+        if (/^\d{1,2}:\d{2}$/.test(timeStr)) {
+          const [h] = timeStr.split(':');
+          const hour = parseInt(h, 10);
+          const nextHour = (hour + 1) % 24;
+          return `${String(hour).padStart(2, '0')}:00-${String(nextHour).padStart(2, '0')}:00`;
+        }
+        
+        console.warn(`Unrecognized time format: ${timeStr}`);
+        return '';
+      } catch (error) {
+        console.error('Error normalizing time:', error, 'Original time:', timeStr);
+        return '';
+      }
+    }
+    
+    /**
+     * Validates if an instructor has all required fields
+     * @param {Object} data - Instructor data object
+     * @returns {boolean} True if valid, false otherwise
+     */
+    function validateInstructorData(data) {
+      const requiredFields = ['name', 'course', 'year', 'section', 'day', 'time'];
+      return requiredFields.every(field => {
+        const hasField = data[field] && String(data[field]).trim() !== '';
+        if (!hasField) {
+          console.warn(`Missing required field: ${field}`, data);
+        }
+        return hasField;
+      });
+    }
+
     // Set up real-time listener for instructors
     function setupFirebaseListener() {
       const q = query(instructorsCollectionRef);
-      const unsubscribe = onSnapshot(q, (querySnapshot) => {
-        allInstructorsData = []; // Clear previous data
-        
-        querySnapshot.forEach((doc) => {
-          const data = doc.data();
-          if (!data) return;
+      const unsubscribe = onSnapshot(q, 
+        // Success callback
+        (querySnapshot) => {
+          console.log('Received instructor data update');
+          allInstructorsData = []; // Clear previous data
           
-          try {
-            // Normalize the time format to HH:00-HH:00
-            let normalizedTime = '';
-            if (data.time) {
-              // Handle different time formats (e.g., '7:00-8:00' or '07:00 - 08:00' or '7:00 AM - 8:00 AM')
-              let times = [];
-              if (data.time.includes(' - ')) {
-                // Handle '7:00 AM - 8:00 AM' format
-                const [startPart, endPart] = data.time.split(' - ');
-                const formatTime = (timeStr) => {
-                  const [time, period] = timeStr.split(' ');
-                  let [h, m = '00'] = time.split(':');
-                  h = parseInt(h, 10);
-                  if (period && period.toLowerCase() === 'pm' && h < 12) h += 12;
-                  if (period && period.toLowerCase() === 'am' && h === 12) h = 0;
-                  return `${String(h).padStart(2, '0')}:${m.padStart(2, '0')}`.substring(0, 5);
-                };
-                times = [formatTime(startPart), formatTime(endPart)];
-              } else {
-                // Handle '7:00-8:00' or '07:00-08:00' format
-                times = data.time.split('-').map(part => {
-                  const [h, m = '00'] = part.trim().split(':');
-                  return `${h.padStart(2, '0')}:${m.padStart(2, '0')}`.substring(0, 5);
-                });
-              }
-              normalizedTime = times.join('-');
+          querySnapshot.forEach((doc) => {
+            const data = doc.data();
+            if (!data) {
+              console.warn('Empty document data for doc:', doc.id);
+              return;
             }
             
-            // Create instructor object with normalized data
-            const instructor = {
-              id: doc.id,
-              name: data.name || 'N/A',
-              subject: data.subject || 'N/A',
-              roomName: data.roomName || data.room || 'TBA', // Handle both roomName and room fields
-              day: data.day ? data.day.trim() : '',
-              time: normalizedTime,
-              course: data.course || '',
-              year: data.year || '',
-              section: data.section || ''
-            };
-            
-            console.log('Adding instructor to data:', instructor);
-            allInstructorsData.push(instructor);
-          } catch (error) {
-            console.error('Error processing instructor data:', error, data);
-          }
+            try {
+              // Skip if missing required fields
+              if (!validateInstructorData(data)) {
+                console.warn('Skipping instructor - missing required fields:', data);
+                return;
+              }
+              
+              // Normalize the time format
+              const normalizedTime = normalizeTimeString(data.time);
+              if (!normalizedTime) {
+                console.warn('Skipping instructor - invalid time format:', data.time, data);
+                return;
+              }
+              
+              // Create instructor object with normalized data
+              const instructor = {
+                id: doc.id,
+                name: (data.name || '').trim(),
+                subject: (data.subject || 'N/A').trim(),
+                roomName: (data.roomName || data.room || 'TBA').trim(),
+                day: data.day.trim(),
+                time: normalizedTime,
+                course: data.course.trim(),
+                year: data.year.toString().trim(),
+                section: data.section.toString().trim()
+              };
+              
+              console.log('Adding instructor to data:', instructor);
+              allInstructorsData.push(instructor);
+            } catch (error) {
+              console.error('Error processing instructor data:', error, data);
+            }
+          });
           
-          console.log('Instructor loaded:', instructor);
-        });
-        
-        console.log('All instructors loaded. Total:', allInstructorsData.length);
-        renderSchedule(); // Re-render schedule with new data
-      }, (error) => {
-        console.error("Error setting up instructor listener:", error);
-      });
+          console.log('All instructors loaded:', allInstructorsData.length);
+          renderSchedule();
+        },
+        // Error callback
+        (error) => {
+          console.error('Error in Firestore listener:', error);
+        }
+      );
       
+      // Return the unsubscribe function
       return unsubscribe;
     }
 
