@@ -30,18 +30,18 @@
     
     <!-- Your HTML content here -->
     <div class="filters">
-      <select id="courseSelect" onchange="updateYearOptions()">
+      <select id="courseSelect">
         <option value="">Select Course</option>
         <option value="BSA">BSA</option>
         <option value="BSAIS">BSAIS</option>
         <!-- Add more courses as needed -->
       </select>
       
-      <select id="yearSelect" onchange="updateSectionOptions()" disabled>
+      <select id="yearSelect" disabled>
         <option value="">Select Year</option>
       </select>
       
-      <select id="sectionSelect" onchange="renderSchedule()" disabled>
+      <select id="sectionSelect" disabled>
         <option value="">Select Section</option>
       </select>
     </div>
@@ -421,19 +421,22 @@
     document.addEventListener('DOMContentLoaded', () => {
       console.log('DOM fully loaded, initializing application...');
       
-      // Add event listeners for debugging
+      // Add event listeners for the dropdowns
       courseSelect.addEventListener('change', () => {
         console.log('Course changed to:', courseSelect.value);
+        updateYearOptions();
         logCurrentState();
       });
       
       yearSelect.addEventListener('change', () => {
         console.log('Year changed to:', yearSelect.value);
+        updateSectionOptions();
         logCurrentState();
       });
       
       sectionSelect.addEventListener('change', () => {
         console.log('Section changed to:', sectionSelect.value);
+        renderSchedule();
         logCurrentState();
       });
       
