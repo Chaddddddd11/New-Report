@@ -501,21 +501,23 @@
             const dayMatch = instr.day.toLowerCase() === day.toLowerCase();
             const timeMatch = normalizedInstrTime === normalizedSlotTime;
             
-            if (dayMatch && timeMatch) {
-              console.log(`Match found: ${instr.name} on ${day} at ${timeSlot}`);
-              return true;
-            }
-            
-            return false;
+            return dayMatch && timeMatch;
           });
           
           // If instructor found, fill the cell with their info
           if (instructor) {
             cell.innerHTML = `
-              <div class="schedule-entry">
-                <div class="subject">${instructor.subject || 'N/A'}</div>
-                <div class="instructor">${instructor.name || 'N/A'}</div>
-                <div class="room">${instructor.roomName || 'TBA'}</div>
+              <div class="schedule-entry" style="
+                padding: 5px;
+                background-color: #e3f2fd;
+                border-radius: 4px;
+                margin: 2px;
+                font-size: 0.9em;
+                border-left: 3px solid #1A5F7A;
+              ">
+                <div style="font-weight: 500; color: #1A5F7A; margin-bottom: 4px;">${instructor.subject || 'N/A'}</div>
+                <div style="font-size: 0.9em; color: #333;">${instructor.name || 'N/A'}</div>
+                <div style="font-size: 0.85em; color: #666; font-style: italic;">${instructor.roomName || 'TBA'}</div>
               </div>
             `;
           }
