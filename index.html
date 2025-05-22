@@ -272,7 +272,9 @@
       onSnapshot, 
       query, 
       where, 
-      getDocs 
+      getDocs,
+      limit,
+      orderBy
     } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
     // Your web app's Firebase configuration (as provided by user)
@@ -307,22 +309,23 @@
       console.log('Firebase initialized successfully');
       console.log('Using collection: Instructors');
       
-      // Test the connection
-      getDocs(query(instructorsCollectionRef, limit(1)))
-        .then(snapshot => {
-          console.log(`Successfully connected to Firestore. Found ${snapshot.size} documents in Instructors collection.`);
-          if (snapshot.size > 0) {
-            console.log('Sample document:', snapshot.docs[0].id, snapshot.docs[0].data());
-          }
-        })
-        .catch(error => {
-          console.error('Error connecting to Firestore:', error);
-          console.error('Error details:', {
-            code: error.code,
-            message: error.message,
-            stack: error.stack
+      // Test the connection with error handling for the test query
+      try {
+        const testQuery = query(instructorsCollectionRef, limit(1));
+        getDocs(testQuery)
+          .then(snapshot => {
+            console.log(`Successfully connected to Firestore. Found ${snapshot.size} documents in Instructors collection.`);
+            if (snapshot.size > 0) {
+              console.log('Sample document:', snapshot.docs[0].id, snapshot.docs[0].data());
+            }
+          })
+          .catch(error => {
+            console.warn('Note: Test query failed, but this might be expected if there are no documents or security rules prevent access.');
+            console.warn('Error details:', error);
           });
-        });
+      } catch (error) {
+        console.warn('Error creating test query (this might be expected):', error);
+      }
         
     } catch (error) {
       console.error('Failed to initialize Firebase:', error);
