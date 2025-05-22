@@ -4,6 +4,7 @@
   <title>DHVSU Scheduling System</title>
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
   <style>
+    /* Your existing CSS styles */
     :root {
       --primary-color: #1A5F7A;
       --secondary-color: #2C8EBB;
@@ -20,249 +21,52 @@
       background-color: var(--background-color);
     }
 
-    .nav-buttons {
-      display: flex;
-      justify-content: space-between;
-      margin-bottom: 20px;
-    }
-
-    .nav-button {
-      padding: 10px 20px;
-      background-color: var(--primary-color);
-      color: white;
-      text-decoration: none;
-      border-radius: 4px;
-      font-weight: 500;
-      transition: background-color 0.3s ease;
-    }
-
-    .nav-button:hover {
-      background-color: var(--secondary-color);
-    }
-
-    h2 {
-      background-color: var(--primary-color);
-      color: white;
-      text-align: center;
-      padding: 15px;
-      margin-bottom: 20px;
-      border-radius: 5px;
-    }
-
-    select {
-      margin: 10px 0;
-      padding: 10px;
-      width: 250px;
-      border: 1px solid var(--secondary-color);
-      border-radius: 4px;
-      background-color: white;
-      transition: all 0.3s ease;
-    }
-
-    select:focus {
-      outline: none;
-      border-color: var(--accent-color);
-      box-shadow: 0 0 5px rgba(247, 179, 45, 0.5);
-    }
-
-    .disabled {
-      background-color: #cccccc;
-      cursor: not-allowed;
-    }
-
-    #selectionSummary {
-      margin: 15px 0;
-      padding: 10px;
-      border: 1px solid var(--secondary-color);
-      background-color: #f9f9f9;
-      border-radius: 5px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    #scheduleTable {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 15px;
-      box-shadow: 0 2px 3px rgba(0,0,0,0.1);
-    }
-
-    #scheduleTable th, #scheduleTable td {
-      border: 1px solid #ddd;
-      padding: 8px;
-      text-align: center;
-    }
-
-    #scheduleTable th {
-      background-color: var(--primary-color);
-      color: white;
-      font-weight: bold;
-    }
-
-    .navigation-buttons {
-      margin-top: 20px;
-      display: flex;
-      gap: 10px;
-      justify-content: center;
-    }
-
-    .navigation-buttons button {
-      padding: 10px 15px;
-      background-color: var(--secondary-color);
-      color: white;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-      transition: background-color 0.3s ease;
-    }
-
-    .navigation-buttons button:hover {
-      background-color: var(--accent-color);
-    }
-
-    /* Instructor Cards Styling */
-    #instructorsContainer {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-      gap: 20px;
-      margin-top: 30px;
-    }
-
-    .instructor-card {
-      background: white;
-      border-radius: 8px;
-      padding: 20px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-      transition: transform 0.3s ease, box-shadow 0.3s ease;
-      border-left: 4px solid var(--primary-color);
-    }
-
-    .instructor-card:hover {
-      transform: translateY(-5px);
-      box-shadow: 0 5px 15px rgba(0,0,0,0.15);
-    }
-
-    .instructor-name {
-      font-size: 1.2rem;
-      font-weight: 500;
-      color: var(--primary-color);
-      margin: 0 0 10px 0;
-    }
-
-    .instructor-detail {
-      margin: 5px 0;
-      color: var(--text-color);
-    }
-
-    .instructor-detail span {
-      font-weight: 500;
-      color: var(--secondary-color);
-    }
-
-    .no-instructors {
-      grid-column: 1 / -1;
-      text-align: center;
-      padding: 30px;
-      color: #666;
-      font-style: italic;
-    }
-
-    label {
-      display: block;
-      margin-top: 10px;
-      color: var(--primary-color);
-      font-weight: 500;
-    }
-
-    .occupied-cell {
-      background-color: var(--secondary-color);
-      color: white;
-      padding: 5px;
-    }
-
-    .schedule-info {
-      font-size: 12px;
-      line-height: 1.3;
-    }
-
-    .schedule-info .instructor {
-      font-weight: bold;
-    }
-
-    .schedule-info .subject {
-      font-style: italic;
-    }
-
-    .schedule-info .room {
-      /* color: #f0f0f0; */ /* Adjusted for better visibility on secondary-color */
-      color: #e0e0e0; 
-    }
+    /* Add your other CSS styles here */
   </style>
 </head>
 <body>
-  <div class="nav-buttons">
-    <a href="Instructor.html" class="nav-button">Enroll Instructor</a>
-    <a href="Room.html" class="nav-button">Room Registration</a>
-  </div>
-  
-  <h2>DHVSU Automatic Scheduling System</h2>
-  
-  <div class="form-group">
-    <label for="course">Course*</label>
-    <select id="course" required>
-      <option value="">Select Course</option>
-      <option value="BSA">BSA</option>
-      <option value="BSAIS">BSAIS</option>
-      <option value="MSMarketing">MS Marketing</option>
-      <option value="BSE">BSE</option>
-      <option value="BSPublicAdministration">BS Public Administration</option>
-    </select>
-  </div>
-
-  <div class="form-group">
-    <label for="year">Year*</label>
-    <select id="year" required disabled>
-      <option value="">Select Year</option>
-      <option value="1st">1st Year</option>
-      <option value="2nd">2nd Year</option>
-      <option value="3rd">3rd Year</option>
-      <option value="4th">4th Year</option>
-    </select>
-  </div>
-
-  <div class="form-group">
-    <label for="section">Section*</label>
-    <select id="section" required disabled>
-      <option value="">Select Section</option>
-      <option value="A">Section A</option>
-      <option value="B">Section B</option>
-      <option value="C">Section C</option>
-      <option value="D">Section D</option>
-    </select>
-  </div>
-
-  <div id="studentCapacityContainer" style="display: none; padding: 10px; background-color: #f8f9fa; border-radius: 4px; margin-bottom: 15px;">
-    <strong>Student Capacity: </strong><span id="studentCapacity">-</span>
+  <div class="container">
+    <h2>Class Schedule</h2>
+    
+    <!-- Your HTML content here -->
+    <div class="filters">
+      <select id="courseSelect" onchange="updateYearOptions()">
+        <option value="">Select Course</option>
+        <option value="BSA">BSA</option>
+        <option value="BSAIS">BSAIS</option>
+        <!-- Add more courses as needed -->
+      </select>
+      
+      <select id="yearSelect" onchange="updateSectionOptions()" disabled>
+        <option value="">Select Year</option>
+      </select>
+      
+      <select id="sectionSelect" onchange="renderSchedule()" disabled>
+        <option value="">Select Section</option>
+      </select>
+    </div>
+    
+    <div class="schedule-container">
+      <table id="scheduleTable">
+        <thead>
+          <tr>
+            <th>Time</th>
+            <th>Monday</th>
+            <th>Tuesday</th>
+            <th>Wednesday</th>
+            <th>Thursday</th>
+            <th>Friday</th>
+            <th>Saturday</th>
+          </tr>
+        </thead>
+        <tbody id="scheduleBody">
+          <!-- Schedule will be populated here -->
+        </tbody>
+      </table>
+    </div>
   </div>
 
-  <table id="scheduleTable">
-    <thead>
-      <tr>
-        <th>Time</th>
-        <th>Monday</th>
-        <th>Tuesday</th>
-        <th>Wednesday</th>
-        <th>Thursday</th>
-        <th>Friday</th>
-        <th>Saturday</th>
-      </tr>
-    </thead>
-    <tbody id="scheduleBody">
-      <!-- Schedule rows will be dynamically populated by Firebase data -->
-    </tbody>
-  </table>
-
+  <!-- Firebase and other scripts -->
   <script type="module">
     // Import the functions you need from the SDKs you need
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
@@ -277,12 +81,12 @@
       orderBy
     } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-    // Your web app's Firebase configuration (as provided by user)
+    // Your web app's Firebase configuration
     const firebaseConfig = {
       apiKey: "AIzaSyDeqxzp_-kKjM3hPr6CLGfTn38e4swSKbo",
       authDomain: "room-management-system-8e899.firebaseapp.com",
       projectId: "room-management-system-8e899",
-      storageBucket: "room-management-system-8e899.firebasestorage.app", // Using exact value from user
+      storageBucket: "room-management-system-8e899.firebasestorage.app",
       messagingSenderId: "667821278853",
       appId: "1:667821278853:web:a3a80c985073772670cbec"
     };
@@ -291,7 +95,7 @@
     let app;
     let db;
     let instructorsCollectionRef;
-    let allInstructorsData = []; // To store all instructors from Firebase
+    let allInstructorsData = [];
     
     try {
       console.log('Initializing Firebase with config:', firebaseConfig);
@@ -303,405 +107,36 @@
       
       // Collection reference with correct case sensitivity
       instructorsCollectionRef = collection(db, 'Instructors');
-      window.instructorsCollectionRef = instructorsCollectionRef; // For debugging
+      window.instructorsCollectionRef = instructorsCollectionRef;
       
       window.firebaseInitialized = true;
       console.log('Firebase initialized successfully');
-      console.log('Using collection: Instructors');
       
-      // Test the connection with error handling for the test query
-      try {
-        const testQuery = query(instructorsCollectionRef, limit(1));
-        getDocs(testQuery)
-          .then(snapshot => {
-            console.log(`Successfully connected to Firestore. Found ${snapshot.size} documents in Instructors collection.`);
-            if (snapshot.size > 0) {
-              console.log('Sample document:', snapshot.docs[0].id, snapshot.docs[0].data());
-            }
-          })
-          .catch(error => {
-            console.warn('Note: Test query failed, but this might be expected if there are no documents or security rules prevent access.');
-            console.warn('Error details:', error);
-          });
-      } catch (error) {
-        console.warn('Error creating test query (this might be expected):', error);
-      }
-        
+      // Set up the real-time listener
+      setupFirebaseListener();
+      
     } catch (error) {
       console.error('Failed to initialize Firebase:', error);
       alert('Failed to initialize Firebase. Please check the console for details.');
     }
 
-    // Student capacity map (course -> year -> section -> capacity)
-    const studentCapacityMap = {
-      'BSA': {
-        '1st': { 'A': 30, 'B': 30, 'C': 30, 'D': 30 },
-        '2nd': { 'A': 25, 'B': 25, 'C': 25, 'D': 25 },
-        '3rd': { 'A': 20, 'B': 20, 'C': 20, 'D': 20 },
-        '4th': { 'A': 15, 'B': 15, 'C': 15, 'D': 15 }
-      },
-      'BSAIS': {
-        '1st': { 'A': 30, 'B': 30 },
-        '2nd': { 'A': 25, 'B': 25 },
-        '3rd': { 'A': 20, 'B': 20 },
-        '4th': { 'A': 15, 'B': 15 }
-      },
-      'BSE': {
-        '1st': { 'A': 25, 'B': 25 },
-        '2nd': { 'A': 20, 'B': 20 },
-        '3rd': { 'A': 15, 'B': 15 },
-        '4th': { 'A': 10, 'B': 10 }
-      },
-      'BSPublicAdministration': {
-        '1st': { 'A': 25 },
-        '2nd': { 'A': 20 },
-        '3rd': { 'A': 15 },
-        '4th': { 'A': 10 }
-      },
-      'MSMarketing': {
-        '1st': { 'A': 20 },
-        '2nd': { 'A': 15 }
-      }
-    };
-
-    // Function to update student capacity display
-    function updateStudentCapacity() {
-      const course = courseSelect.value;
-      const year = yearSelect.value;
-      const section = sectionSelect.value;
-      
-      // Get student capacity for the selected course/year/section
-      const studentCapacity = studentCapacityMap[course]?.[year]?.[section] || 0;
-      
-      // Update the display
-      const capacityContainer = document.getElementById('studentCapacityContainer');
-      const capacityDisplay = document.getElementById('studentCapacity');
-      
-      if (studentCapacity > 0) {
-        capacityDisplay.textContent = studentCapacity;
-        capacityContainer.style.display = 'block';
-      } else {
-        capacityContainer.style.display = 'none';
-      }
-    }
-
-    // Get DOM elements
-    const courseSelect = document.getElementById('course');
-    const yearSelect = document.getElementById('year');
-    const sectionSelect = document.getElementById('section');
-    const courseSummary = document.getElementById('courseSummary');
-    const studentCapacityDisplay = document.getElementById('studentCapacityDisplay');
+    // DOM Elements
+    const courseSelect = document.getElementById('courseSelect');
+    const yearSelect = document.getElementById('yearSelect');
+    const sectionSelect = document.getElementById('sectionSelect');
     const scheduleBody = document.getElementById('scheduleBody');
-    
-    // Function to initialize the schedule
-    function initializeSchedule() {
-      renderSchedule();
-      
-      // Set up event listeners
-      courseSelect.addEventListener('change', handleCourseChange);
-      yearSelect.addEventListener('change', handleYearChange);
-      sectionSelect.addEventListener('change', handleSectionChange);
-    }
-    
-    function handleCourseChange() {
-      const selectedCourse = this.value;
-      yearSelect.disabled = !selectedCourse;
-      sectionSelect.disabled = true;
-      yearSelect.value = '';
-      sectionSelect.value = '';
-      updateStudentCapacity();
-      renderSchedule();
-    }
-    
-    function handleYearChange() {
-      const selectedYear = this.value;
-      sectionSelect.disabled = !selectedYear;
-      sectionSelect.value = '';
-      updateStudentCapacity();
-      renderSchedule();
-    }
-    
-    function handleSectionChange() {
-      updateStudentCapacity();
-      renderSchedule();
-    }
-
-    // Helper function to normalize time format to HH:00-HH:00
-    function normalizeTime(timeStr) {
-      if (!timeStr) return '';
-      
-      console.log(`Normalizing time: ${timeStr}`);
-      
-      // Handle case where time is already in the correct format
-      if (/^\d{2}:00-\d{2}:00$/.test(timeStr)) {
-        return timeStr;
-      }
-      
-      // Handle case where time is in format 'HH:MM-HH:MM'
-      if (/^\d{1,2}:\d{2}-\d{1,2}:\d{2}$/.test(timeStr)) {
-        const [start, end] = timeStr.split('-');
-        const formatPart = part => {
-          const [h, m] = part.split(':');
-          return `${h.padStart(2, '0')}:00`; // Convert to whole hour
-        };
-        return `${formatPart(start)}-${formatPart(end)}`;
-      }
-      
-      // Handle case where time is in format '7:00 AM - 8:00 AM'
-      if (/\d{1,2}:\d{2}\s*[AP]M\s*-\s*\d{1,2}:\d{2}\s*[AP]M/i.test(timeStr)) {
-        const [startPart, endPart] = timeStr.split('-').map(s => s.trim());
-        const formatTime = (timeStr) => {
-          const [time, period] = timeStr.split(' ');
-          let [h, m] = time.split(':').map(Number);
-          if (period.toLowerCase() === 'pm' && h < 12) h += 12;
-          if (period.toLowerCase() === 'am' && h === 12) h = 0;
-          return `${String(h).padStart(2, '0')}:00`;
-        };
-        return `${formatTime(startPart)}-${formatTime(endPart)}`;
-      }
-      
-      // Handle case where time is just a single time (e.g., '7:00')
-      if (/^\d{1,2}:\d{2}$/.test(timeStr)) {
-        const [h] = timeStr.split(':');
-        const hour = parseInt(h, 10);
-        const nextHour = (hour + 1) % 24;
-        return `${String(hour).padStart(2, '0')}:00-${String(nextHour).padStart(2, '0')}:00`;
-      }
-      
-      console.warn(`Unrecognized time format: ${timeStr}`);
-      return '';
-    }
-
-    // Render the schedule based on selected filters
-    function renderSchedule() {
-      console.log('Rendering schedule...');
-      console.log('Total instructors in memory:', allInstructorsData.length);
-      
-      // Get selected values
-      const selectedCourse = courseSelect.value;
-      const selectedYear = yearSelect.value;
-      const selectedSection = sectionSelect.value;
-      
-      console.log('Selected filters - Course:', selectedCourse, 'Year:', selectedYear, 'Section:', selectedSection);
-      
-      // Generate time slots from 07:00 to 17:00 (5:00 PM)
-      const timeSlots = [];
-      for (let i = 7; i < 17; i++) {
-        const startHour = String(i).padStart(2, '0');
-        const endHour = String(i + 1).padStart(2, '0');
-        timeSlots.push(`${startHour}:00-${endHour}:00`);
-      }
-      
-      // Clear the schedule body
-      scheduleBody.innerHTML = '';
-      
-      // If any required filter is missing, show empty schedule
-      if (!selectedCourse || !selectedYear || !selectedSection) {
-        console.log('Missing filter criteria, showing empty schedule');
-        timeSlots.forEach(timeSlot => {
-          const row = document.createElement('tr');
-          row.innerHTML = `<td>${timeSlot}</td><td></td><td></td><td></td><td></td><td></td><td></td>`;
-          scheduleBody.appendChild(row);
-        });
-        return;
-      }
-
-      // Filter instructors for the selected course, year, and section
-      console.log('All available instructors data:', allInstructorsData);
-      
-      const sectionInstructors = allInstructorsData.filter(instructor => {
-        if (!instructor) return false;
-        
-        // Log each instructor's data for debugging
-        console.log('Checking instructor:', {
-          instructorCourse: instructor.course,
-          instructorYear: instructor.year,
-          instructorSection: instructor.section,
-          selectedCourse,
-          selectedYear,
-          selectedSection,
-          courseMatch: String(instructor.course) === String(selectedCourse),
-          yearMatch: String(instructor.year).toLowerCase() === String(selectedYear).toLowerCase(),
-          sectionMatch: String(instructor.section).toUpperCase() === String(selectedSection).toUpperCase()
-        });
-        
-        // Make comparisons case-insensitive and type-flexible
-        const courseMatch = String(instructor.course).toLowerCase() === String(selectedCourse).toLowerCase();
-        const yearMatch = String(instructor.year).toLowerCase() === String(selectedYear).toLowerCase();
-        const sectionMatch = String(instructor.section).toUpperCase() === String(selectedSection).toUpperCase();
-        
-        return courseMatch && yearMatch && sectionMatch;
-      });
-
-      console.log(`Found ${sectionInstructors.length} instructors for ${selectedCourse} ${selectedYear} year, section ${selectedSection}:`, sectionInstructors);
-
-      // Create a row for each time slot
-      timeSlots.forEach(timeSlot => {
-        const row = document.createElement('tr');
-        row.innerHTML = `<td>${timeSlot}</td>`; // Add time slot cell
-        
-        // Days of the week
-        const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-        
-        // Create a cell for each day
-        days.forEach(day => {
-          const cell = document.createElement('td');
-          
-          // Find matching instructor for this day and time
-          const instructor = sectionInstructors.find(instr => {
-            if (!instr.day || !instr.time) return false;
-            
-            // Normalize times for comparison
-            const normalizedInstrTime = normalizeTime(instr.time);
-            const normalizedSlotTime = timeSlot;
-            
-            console.log(`Checking instructor: ${instr.name}, day: ${instr.day}, time: ${instr.time}`);
-            console.log(`Normalized times - Instructor: ${normalizedInstrTime}, Slot: ${normalizedSlotTime}`);
-            
-            // Check if day and time match (case-insensitive day comparison)
-            const dayMatch = instr.day.toLowerCase() === day.toLowerCase();
-            const timeMatch = normalizedInstrTime === normalizedSlotTime;
-            
-            if (dayMatch && timeMatch) {
-              console.log(`Match found: ${instr.name} on ${day} at ${timeSlot}`);
-              return true;
-            }
-            
-            return false;
-          });
-          
-          // If instructor found, fill the cell with their info
-          if (instructor) {
-            cell.innerHTML = `
-              <div class="schedule-entry">
-                <div class="subject">${instructor.subject || 'N/A'}</div>
-                <div class="instructor">${instructor.name || 'N/A'}</div>
-                <div class="room">${instructor.roomName || 'TBA'}</div>
-              </div>
-            `;
-          }
-          
-          row.appendChild(cell);
-        });
-
-  // Filter instructors for the selected course, year, and section
-  console.log('All available instructors data:', allInstructorsData);
-  
-  const sectionInstructors = allInstructorsData.filter(instructor => {
-    if (!instructor) return false;
-    
-    // Log each instructor's data for debugging
-    console.log('Checking instructor:', {
-      instructorCourse: instructor.course,
-      instructorYear: instructor.year,
-      instructorSection: instructor.section,
-      selectedCourse,
-      selectedYear,
-      selectedSection,
-      courseMatch: String(instructor.course) === String(selectedCourse),
-      yearMatch: String(instructor.year).toLowerCase() === String(selectedYear).toLowerCase(),
-      sectionMatch: String(instructor.section).toUpperCase() === String(selectedSection).toUpperCase()
-    });
-    
-    // Make comparisons case-insensitive and type-flexible
-    const courseMatch = String(instructor.course).toLowerCase() === String(selectedCourse).toLowerCase();
-    const yearMatch = String(instructor.year).toLowerCase() === String(selectedYear).toLowerCase();
-    const sectionMatch = String(instructor.section).toUpperCase() === String(selectedSection).toUpperCase();
-    
-    return courseMatch && yearMatch && sectionMatch;
-  });
-
-  console.log(`Found ${sectionInstructors.length} instructors for ${selectedCourse} ${selectedYear} year, section ${selectedSection}:`, sectionInstructors);
-        return [];
-      }
-      
-      try {
-        const q = query(
-          collection(db, 'Instructors'),
-          where('course', '==', selectedCourse),
-          where('year', '==', selectedYear),
-          where('section', '==', selectedSection)
-        );
-        
-        const querySnapshot = await getDocs(q);
-        return querySnapshot.docs.map(doc => {
-          const data = doc.data();
-          // Ensure time format matches our time slots (HH:00-HH:00)
-          if (data.time && data.time.includes(' - ')) {
-            data.time = data.time.replace(' - ', '-').replace(' ', '');
-          }
-          return { 
-            id: doc.id, 
-            ...data 
-          };
-        });
-      } catch (error) {
-        console.error('Error fetching instructors:', error);
-        return [];
-      }
-    }
-
-    // Function to log all instructors data for debugging
-    async function logAllInstructors() {
-      try {
-        console.log('Fetching all instructors from Firestore...');
-        const querySnapshot = await getDocs(collection(db, 'Instructors'));
-        console.log(`Found ${querySnapshot.size} instructors in Firestore:`);
-        
-        querySnapshot.forEach((doc) => {
-          console.log(`Document ID: ${doc.id}`, doc.data());
-          
-          // Log all fields in the document
-          const data = doc.data();
-          console.log('Document fields:', Object.keys(data));
-          
-          // Log specific fields we care about
-          console.log('Important fields:', {
-            course: data.course,
-            year: data.year,
-            section: data.section,
-            day: data.day,
-            time: data.time,
-            name: data.name,
-            subject: data.subject,
-            roomName: data.roomName
-          });
-        });
-      } catch (error) {
-        console.error('Error fetching instructors:', error);
-      }
-    }
 
     // Set up real-time listener for instructors
     function setupFirebaseListener() {
       console.log('Setting up Firebase listener...');
       
       if (!db || !instructorsCollectionRef) {
-        const errorMsg = 'Firebase not properly initialized. Cannot set up listener. db exists: ' + 
-                       (!!db) + ', instructorsCollectionRef exists: ' + (!!instructorsCollectionRef);
-        console.error(errorMsg);
-        
-        // Try to reinitialize Firebase once
-        if (!window.firebaseInitialized && !window.retryInitialization) {
-          console.log('Attempting to reinitialize Firebase...');
-          window.retryInitialization = true;
-          
-          // Wait a moment and try to set up the listener again
-          setTimeout(() => {
-            console.log('Retrying Firebase listener setup...');
-            setupFirebaseListener();
-          }, 1000);
-        }
-        
+        console.error('Firebase not properly initialized. Cannot set up listener.');
         return () => {}; // Return empty cleanup function
       }
       
       try {
         console.log('Creating query for collection...');
-        
-        // First, log all instructors data for debugging
-        logAllInstructors();
-        
         const q = query(instructorsCollectionRef);
         console.log('Query created, setting up onSnapshot listener...');
         
@@ -758,27 +193,19 @@
             });
             
             console.log('All instructors loaded. Total:', allInstructorsData.length);
-            renderSchedule(); // Re-render schedule with new data
+            
+            // If we have selections, re-render the schedule
+            if (courseSelect.value && yearSelect.value && sectionSelect.value) {
+              renderSchedule();
+            }
           },
           // Error callback
           (error) => {
-            console.error("Error in Firestore listener:", error);
-            console.error('Error code:', error.code);
-            console.error('Error message:', error.message);
-            
-            if (error.code === 'permission-denied') {
-              console.error('Permission denied. Please check your Firestore security rules.');
-            } else if (error.code === 'not-found') {
-              console.error('Collection not found. Make sure the collection name is correct.');
-            }
+            console.error('Error in Firestore listener:', error);
           }
         );
         
-        // Return the unsubscribe function
-        return () => {
-          console.log('Unsubscribing from Firestore listener');
-          unsubscribe();
-        };
+        return unsubscribe;
         
       } catch (error) {
         console.error('Error setting up Firestore listener:', error);
@@ -786,34 +213,232 @@
       }
     }
 
-    // Set up event listeners when the DOM is fully loaded
-    document.addEventListener('DOMContentLoaded', function() {
-      console.log('DOM fully loaded, initializing application...');
+    // Function to normalize time format
+    function normalizeTime(timeStr) {
+      if (!timeStr) return '';
       
-      try {
-        // Initialize the schedule first to set up UI event handlers
-        initializeSchedule();
+      // Handle time range format (e.g., "7:00 AM - 8:00 AM" or "07:00-08:00")
+      if (timeStr.includes('-')) {
+        const [start, end] = timeStr.split('-').map(s => s.trim());
+        const startTime = formatTimeString(start);
+        const endTime = formatTimeString(end);
+        return `${startTime}-${endTime}`;
+      }
+      
+      // Handle single time format (e.g., "7:00" or "7:00 AM")
+      return formatTimeString(timeStr);
+    }
+    
+    function formatTimeString(timeStr) {
+      // Remove AM/PM if present
+      timeStr = timeStr.replace(/\s*[AP]M\s*/i, '').trim();
+      
+      // Format as HH:MM
+      const [h, m = '00'] = timeStr.split(':');
+      return `${h.padStart(2, '0')}:${m.padStart(2, '0')}`;
+    }
+
+    // Function to update available years based on selected course
+    function updateYearOptions() {
+      const selectedCourse = courseSelect.value;
+      yearSelect.innerHTML = '<option value="">Select Year</option>';
+      yearSelect.disabled = !selectedCourse;
+      
+      if (!selectedCourse) {
+        sectionSelect.innerHTML = '<option value="">Select Section</option>';
+        sectionSelect.disabled = true;
+        return;
+      }
+      
+      // Add year options based on the selected course
+      const years = ['1st', '2nd', '3rd', '4th', '5th'];
+      years.forEach(year => {
+        const option = document.createElement('option');
+        option.value = year;
+        option.textContent = year + ' Year';
+        yearSelect.appendChild(option);
+      });
+      
+      // Reset section select
+      sectionSelect.innerHTML = '<option value="">Select Section</option>';
+      sectionSelect.disabled = true;
+      
+      // Clear the schedule
+      scheduleBody.innerHTML = '';
+    }
+
+    // Function to update available sections based on selected year
+    function updateSectionOptions() {
+      const selectedCourse = courseSelect.value;
+      const selectedYear = yearSelect.value;
+      sectionSelect.innerHTML = '<option value="">Select Section</option>';
+      sectionSelect.disabled = !selectedYear;
+      
+      if (!selectedYear) {
+        return;
+      }
+      
+      // Add section options (A, B, C, etc.)
+      const sections = ['A', 'B', 'C', 'D'];
+      sections.forEach(section => {
+        const option = document.createElement('option');
+        option.value = section;
+        option.textContent = 'Section ' + section;
+        sectionSelect.appendChild(option);
+      });
+      
+      // Clear the schedule
+      scheduleBody.innerHTML = '';
+    }
+
+    // Function to render the schedule based on selected filters
+    function renderSchedule() {
+      console.log('Rendering schedule...');
+      console.log('Total instructors in memory:', allInstructorsData.length);
+      
+      // Get selected values
+      const selectedCourse = courseSelect.value;
+      const selectedYear = yearSelect.value;
+      const selectedSection = sectionSelect.value;
+      
+      console.log('Selected filters - Course:', selectedCourse, 'Year:', selectedYear, 'Section:', selectedSection);
+      
+      // Generate time slots from 07:00 to 17:00 (5:00 PM)
+      const timeSlots = [];
+      for (let i = 7; i < 17; i++) {
+        const startHour = String(i).padStart(2, '0');
+        const endHour = String(i + 1).padStart(2, '0');
+        timeSlots.push(`${startHour}:00-${endHour}:00`);
+      }
+      
+      // Clear the schedule body
+      scheduleBody.innerHTML = '';
+      
+      // If any required filter is missing, show empty schedule
+      if (!selectedCourse || !selectedYear || !selectedSection) {
+        console.log('Missing filter criteria, showing empty schedule');
+        timeSlots.forEach(timeSlot => {
+          const row = document.createElement('tr');
+          row.innerHTML = `<td>${timeSlot}</td><td></td><td></td><td></td><td></td><td></td><td></td>`;
+          scheduleBody.appendChild(row);
+        });
+        return;
+      }
+      
+      // Filter instructors for the selected course, year, and section
+      console.log('Filtering instructors for:', { selectedCourse, selectedYear, selectedSection });
+      
+      const sectionInstructors = allInstructorsData.filter(instructor => {
+        if (!instructor) return false;
         
-        // Then set up Firebase real-time listener
-        const unsubscribe = setupFirebaseListener();
+        const courseMatch = String(instructor.course).toLowerCase() === String(selectedCourse).toLowerCase();
+        const yearMatch = String(instructor.year).toLowerCase() === String(selectedYear).toLowerCase();
+        const sectionMatch = String(instructor.section).toUpperCase() === String(selectedSection).toUpperCase();
         
-        if (typeof unsubscribe !== 'function') {
-          console.warn('Firebase listener was not properly initialized');
-        } else {
-          // Clean up the listener when the page is unloaded
-          window.addEventListener('beforeunload', () => {
-            console.log('Page unloading, cleaning up...');
-            try {
-              unsubscribe();
-            } catch (error) {
-              console.error('Error during cleanup:', error);
-            }
+        const isMatch = courseMatch && yearMatch && sectionMatch;
+        
+        if (isMatch) {
+          console.log('Matching instructor:', {
+            instructor,
+            courseMatch,
+            yearMatch,
+            sectionMatch
           });
         }
-      } catch (error) {
-        console.error('Error during application initialization:', error);
-        alert('Failed to initialize the application. Please check the console for details.');
-      }
+        
+        return isMatch;
+      });
+      
+      console.log(`Found ${sectionInstructors.length} matching instructors:`, sectionInstructors);
+      
+      // Create a row for each time slot
+      timeSlots.forEach(timeSlot => {
+        const row = document.createElement('tr');
+        row.innerHTML = `<td>${timeSlot}</td>`; // Add time slot cell
+        
+        // Days of the week
+        const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+        
+        // Create a cell for each day
+        days.forEach(day => {
+          const cell = document.createElement('td');
+          
+          // Find matching instructor for this day and time
+          const instructor = sectionInstructors.find(instr => {
+            if (!instr.day || !instr.time) return false;
+            
+            // Normalize times for comparison
+            const normalizedInstrTime = instr.time;
+            const normalizedSlotTime = timeSlot;
+            
+            // Check if day and time match (case-insensitive day comparison)
+            const dayMatch = instr.day.toLowerCase() === day.toLowerCase();
+            const timeMatch = normalizedInstrTime === normalizedSlotTime;
+            
+            if (dayMatch && timeMatch) {
+              console.log(`Match found: ${instr.name} on ${day} at ${timeSlot}`);
+              return true;
+            }
+            
+            return false;
+          });
+          
+          // If instructor found, fill the cell with their info
+          if (instructor) {
+            cell.innerHTML = `
+              <div class="schedule-entry">
+                <div class="subject">${instructor.subject || 'N/A'}</div>
+                <div class="instructor">${instructor.name || 'N/A'}</div>
+                <div class="room">${instructor.roomName || 'TBA'}</div>
+              </div>
+            `;
+          }
+          
+          row.appendChild(cell);
+        });
+        
+        scheduleBody.appendChild(row);
+      });
+    }
+
+    // Function to log current dropdown values and data for debugging
+    function logCurrentState() {
+      console.log('=== Current Application State ===');
+      console.log('Selected Course:', courseSelect.value);
+      console.log('Selected Year:', yearSelect.value);
+      console.log('Selected Section:', sectionSelect.value);
+      
+      console.log('Available options:');
+      console.log('- Courses:', Array.from(courseSelect.options).map(o => o.value));
+      console.log('- Years:', Array.from(yearSelect.options).map(o => o.value));
+      console.log('- Sections:', Array.from(sectionSelect.options).map(o => o.value));
+      
+      console.log('All instructors data:', allInstructorsData);
+      console.log('===============================');
+    }
+
+    // Initialize the page
+    document.addEventListener('DOMContentLoaded', () => {
+      console.log('DOM fully loaded, initializing application...');
+      
+      // Add event listeners for debugging
+      courseSelect.addEventListener('change', () => {
+        console.log('Course changed to:', courseSelect.value);
+        logCurrentState();
+      });
+      
+      yearSelect.addEventListener('change', () => {
+        console.log('Year changed to:', yearSelect.value);
+        logCurrentState();
+      });
+      
+      sectionSelect.addEventListener('change', () => {
+        console.log('Section changed to:', sectionSelect.value);
+        logCurrentState();
+      });
+      
+      // Initial log
+      logCurrentState();
     });
   </script>
 </body>
