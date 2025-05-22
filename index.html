@@ -286,17 +286,48 @@
     };
 
     // Initialize Firebase
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-    
-    // Collection reference with correct case sensitivity
-    const instructorsCollectionRef = collection(db, 'Instructors');
-    
-    console.log('Firebase initialized successfully');
-    console.log('Using collection: Instructors');
-    
-    // Store all instructors data
+    let app;
+    let db;
+    let instructorsCollectionRef;
     let allInstructorsData = []; // To store all instructors from Firebase
+    
+    try {
+      console.log('Initializing Firebase with config:', firebaseConfig);
+      app = initializeApp(firebaseConfig);
+      db = getFirestore(app);
+      
+      // Make db available globally for debugging
+      window.db = db;
+      
+      // Collection reference with correct case sensitivity
+      instructorsCollectionRef = collection(db, 'Instructors');
+      window.instructorsCollectionRef = instructorsCollectionRef; // For debugging
+      
+      window.firebaseInitialized = true;
+      console.log('Firebase initialized successfully');
+      console.log('Using collection: Instructors');
+      
+      // Test the connection
+      getDocs(query(instructorsCollectionRef, limit(1)))
+        .then(snapshot => {
+          console.log(`Successfully connected to Firestore. Found ${snapshot.size} documents in Instructors collection.`);
+          if (snapshot.size > 0) {
+            console.log('Sample document:', snapshot.docs[0].id, snapshot.docs[0].data());
+          }
+        })
+        .catch(error => {
+          console.error('Error connecting to Firestore:', error);
+          console.error('Error details:', {
+            code: error.code,
+            message: error.message,
+            stack: error.stack
+          });
+        });
+        
+    } catch (error) {
+      console.error('Failed to initialize Firebase:', error);
+      alert('Failed to initialize Firebase. Please check the console for details.');
+    }
 
     // Student capacity map (course -> year -> section -> capacity)
     const studentCapacityMap = {
@@ -583,8 +614,23 @@
     function setupFirebaseListener() {
       console.log('Setting up Firebase listener...');
       
-      if (!window.db) {
-        console.error('Firebase not properly initialized. Cannot set up listener.');
+      if (!db || !instructorsCollectionRef) {
+        const errorMsg = 'Firebase not properly initialized. Cannot set up listener. db exists: ' + 
+                       (!!db) + ', instructorsCollectionRef exists: ' + (!!instructorsCollectionRef);
+        console.error(errorMsg);
+        
+        // Try to reinitialize Firebase once
+        if (!window.firebaseInitialized && !window.retryInitialization) {
+          console.log('Attempting to reinitialize Firebase...');
+          window.retryInitialization = true;
+          
+          // Wait a moment and try to set up the listener again
+          setTimeout(() => {
+            console.log('Retrying Firebase listener setup...');
+            setupFirebaseListener();
+          }, 1000);
+        }
+        
         return () => {}; // Return empty cleanup function
       }
       
