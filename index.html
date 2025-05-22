@@ -4,7 +4,6 @@
   <title>DHVSU Scheduling System</title>
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
   <style>
-    /* Your existing CSS styles */
     :root {
       --primary-color: #1A5F7A;
       --secondary-color: #2C8EBB;
@@ -21,7 +20,124 @@
       background-color: var(--background-color);
     }
 
-    /* Add your other CSS styles here */
+    .nav-buttons {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 20px;
+    }
+
+    .nav-button {
+      padding: 10px 20px;
+      background-color: var(--primary-color);
+      color: white;
+      text-decoration: none;
+      border-radius: 4px;
+      font-weight: 500;
+      transition: background-color 0.3s ease;
+    }
+
+    .nav-button:hover {
+      background-color: var(--secondary-color);
+    }
+
+    h2 {
+      background-color: var(--primary-color);
+      color: white;
+      text-align: center;
+      padding: 15px;
+      margin-bottom: 20px;
+      border-radius: 5px;
+    }
+
+    select {
+      margin: 10px 10px 10px 0;
+      padding: 10px;
+      width: 250px;
+      border: 1px solid var(--secondary-color);
+      border-radius: 4px;
+      background-color: white;
+      transition: all 0.3s ease;
+    }
+
+    select:focus {
+      outline: none;
+      border-color: var(--accent-color);
+      box-shadow: 0 0 5px rgba(247, 179, 45, 0.5);
+    }
+
+    .disabled {
+      background-color: #cccccc;
+      cursor: not-allowed;
+    }
+
+    #scheduleTable {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 15px;
+      box-shadow: 0 2px 3px rgba(0,0,0,0.1);
+      background-color: white;
+    }
+
+    #scheduleTable th, #scheduleTable td {
+      border: 1px solid #ddd;
+      padding: 12px;
+      text-align: center;
+    }
+
+    #scheduleTable th {
+      background-color: var(--primary-color);
+      color: white;
+      font-weight: bold;
+    }
+
+    #scheduleTable tr:nth-child(even) {
+      background-color: #f9f9f9;
+    }
+
+    #scheduleTable tr:hover {
+      background-color: #f1f1f1;
+    }
+
+    .schedule-entry {
+      padding: 8px;
+      border-radius: 4px;
+      background-color: var(--secondary-color);
+      color: white;
+    }
+
+    .schedule-entry .subject {
+      font-weight: 500;
+      margin-bottom: 5px;
+    }
+
+    .schedule-entry .instructor {
+      font-size: 0.9em;
+      margin-bottom: 3px;
+    }
+
+    .schedule-entry .room {
+      font-size: 0.8em;
+      opacity: 0.9;
+    }
+
+    .filters {
+      display: flex;
+      gap: 15px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+
+    @media (max-width: 768px) {
+      .filters {
+        flex-direction: column;
+        gap: 10px;
+      }
+      
+      select {
+        width: 100%;
+        margin: 5px 0;
+      }
+    }
   </style>
 </head>
 <body>
