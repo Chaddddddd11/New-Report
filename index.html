@@ -20,35 +20,6 @@
       background-color: var(--background-color);
     }
 
-    /* Table Styles */
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 20px;
-      background: white;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-    }
-    
-    th, td {
-      border: 1px solid #ddd;
-      padding: 12px;
-      text-align: left;
-    }
-    
-    th {
-      background-color: var(--primary-color);
-      color: white;
-      font-weight: 500;
-    }
-    
-    tr:nth-child(even) {
-      background-color: #f9f9f9;
-    }
-    
-    tr:hover {
-      background-color: #f1f1f1;
-    }
-
     .nav-buttons {
       display: flex;
       justify-content: space-between;
@@ -227,33 +198,6 @@
       /* color: #f0f0f0; */ /* Adjusted for better visibility on secondary-color */
       color: #e0e0e0; 
     }
-    
-    /* Ensure table is visible */
-    #scheduleTable {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 20px;
-      border: 2px solid #1A5F7A;
-    }
-    
-    #scheduleTable th, #scheduleTable td {
-      border: 1px solid #ddd;
-      padding: 8px;
-      text-align: center;
-    }
-    
-    #scheduleTable th {
-      background-color: #1A5F7A;
-      color: white;
-    }
-    
-    #scheduleTable tr:nth-child(even) {
-      background-color: #f2f2f2;
-    }
-    
-    #scheduleTable tr:hover {
-      background-color: #e6f7ff;
-    }
   </style>
 </head>
 <body>
@@ -314,17 +258,12 @@
         <th>Saturday</th>
       </tr>
     </thead>
-    <tbody id="schedule-body">
+    <tbody id="scheduleBody">
       <!-- Schedule rows will be dynamically populated by Firebase data -->
     </tbody>
   </table>
 
   <script type="module">
-    // Get references to the dropdown elements
-    const courseSelect = document.getElementById('course');
-    const yearSelect = document.getElementById('year');
-    const sectionSelect = document.getElementById('section');
-    
     // Import the functions you need from the SDKs you need
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
     import { 
@@ -402,371 +341,224 @@
       const capacityDisplay = document.getElementById('studentCapacity');
       
       if (studentCapacity > 0) {
+        const capacityDisplay = document.getElementById('studentCapacity');
         capacityDisplay.textContent = studentCapacity;
-        capacityContainer.style.display = 'block';
+        document.getElementById('studentCapacityDisplay').style.display = 'block';
       } else {
-        capacityContainer.style.display = 'none';
+        document.getElementById('studentCapacityDisplay').style.display = 'none';
       }
     }
 
-    // Get other DOM elements
+    // Get DOM elements
+    const courseSelect = document.getElementById('course');
+    const yearSelect = document.getElementById('year');
+    const sectionSelect = document.getElementById('section');
     const courseSummary = document.getElementById('courseSummary');
     const studentCapacityDisplay = document.getElementById('studentCapacityDisplay');
-    const scheduleBody = document.getElementById('schedule-body');
+    const scheduleBody = document.getElementById('scheduleBody');
+    
+    // Store all instructors data
+    let allInstructors = [];
+    
+    // Function to fetch instructors from InstructorList.html
+    async function fetchInstructors() {
+      try {
+        const response = await fetch('InstructorList.html');
+        const html = await response.text();
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, 'text/html');
+        const tableRows = doc.querySelectorAll('#instructorTableBody tr');
+        
+        allInstructors = Array.from(tableRows).map(row => ({
+          name: row.cells[0]?.textContent.trim() || '',
+          subject: row.cells[1]?.textContent.trim() || '',
+          course: row.cells[2]?.textContent.trim() || '',
+          year: row.cells[3]?.textContent.trim() || '',
+          section: row.cells[4]?.textContent.trim() || '',
+          day: row.cells[5]?.textContent.trim() || '',
+          time: row.cells[6]?.textContent.trim() || '',
+          room: row.cells[7]?.textContent.trim() || ''
+        }));
+        
+        // Initialize dropdowns with available options
+        updateDropdowns();
+      } catch (error) {
+        console.error('Error fetching instructors:', error);
+      }
+    }
+    
+    // Function to update dropdowns based on available data
+    function updateDropdowns() {
+      // Get unique courses
+      const courses = [...new Set(allInstructors.map(inst => inst.course).filter(Boolean))];
+      updateSelectOptions(courseSelect, courses);
+      
+      // Update year and section based on selected course
+      updateYearOptions();
+    }
+    
+    // Function to update year options based on selected course
+    function updateYearOptions() {
+      const selectedCourse = courseSelect.value;
+      const years = [...new Set(
+        allInstructors
+          .filter(inst => !selectedCourse || inst.course === selectedCourse)
+          .map(inst => inst.year)
+          .filter(Boolean)
+      )];
+      updateSelectOptions(yearSelect, years);
+      updateSectionOptions();
+    }
+    
+    // Function to update section options based on selected course and year
+    function updateSectionOptions() {
+      const selectedCourse = courseSelect.value;
+      const selectedYear = yearSelect.value;
+      
+      const sections = [...new Set(
+        allInstructors
+          .filter(inst => 
+            (!selectedCourse || inst.course === selectedCourse) &&
+            (!selectedYear || inst.year === selectedYear)
+          )
+          .map(inst => inst.section)
+          .filter(Boolean)
+      )];
+      updateSelectOptions(sectionSelect, sections);
+    }
+    
+    // Helper function to update select options
+    function updateSelectOptions(selectElement, options) {
+      const currentValue = selectElement.value;
+      selectElement.innerHTML = '<option value="">Select ' + selectElement.id + '</option>';
+      
+      options.forEach(option => {
+        const optionElement = document.createElement('option');
+        optionElement.value = option;
+        optionElement.textContent = option;
+        selectElement.appendChild(optionElement);
+      });
+      
+      // Restore previous value if it still exists
+      if (options.includes(currentValue)) {
+        selectElement.value = currentValue;
+      }
+    }
     
     // Function to initialize the schedule
     function initializeSchedule() {
       renderSchedule();
       
-      // Set up event listeners
-      courseSelect.addEventListener('change', handleCourseChange);
-      yearSelect.addEventListener('change', handleYearChange);
-      sectionSelect.addEventListener('change', handleSectionChange);
+      // Add event listeners for dropdown changes
+      courseSelect.addEventListener('change', updateYearOptions);
+      yearSelect.addEventListener('change', updateSectionOptions);
+      sectionSelect.addEventListener('change', filterInstructors);
+      
+      // Initialize by fetching instructors
+      fetchInstructors();
     }
     
-    function handleCourseChange() {
-      const selectedCourse = this.value;
-      yearSelect.disabled = !selectedCourse;
-      sectionSelect.disabled = true;
-      yearSelect.value = '';
-      sectionSelect.value = '';
-      updateStudentCapacity();
-      renderSchedule();
+    // Function to filter instructors based on selected filters
+    function filterInstructors() {
+      const selectedCourse = courseSelect.value;
+      const selectedYear = yearSelect.value;
+      const selectedSection = sectionSelect.value;
+      
+      let filteredInstructors = allInstructors;
+      
+      if (selectedCourse) {
+        filteredInstructors = filteredInstructors.filter(instructor => 
+          instructor.course === selectedCourse
+        );
+      }
+      
+      if (selectedYear) {
+        filteredInstructors = filteredInstructors.filter(instructor => 
+          instructor.year === selectedYear
+        );
+      }
+      
+      if (selectedSection) {
+        filteredInstructors = filteredInstructors.filter(instructor => 
+          instructor.section === selectedSection
+        );
+      }
+      
+      console.log('Filtered instructors:', filteredInstructors);
+      
+      renderSchedule(filteredInstructors);
     }
     
-    function handleYearChange() {
-      const selectedYear = this.value;
-      sectionSelect.disabled = !selectedYear;
-      sectionSelect.value = '';
-      updateStudentCapacity();
-      renderSchedule();
-    }
-    
-    function handleSectionChange() {
-      updateStudentCapacity();
-      renderSchedule();
-    }
-
-    // Helper function to normalize time format to HH:00-HH:00
-    function normalizeTime(timeStr) {
-      if (!timeStr) return '';
-      
-      console.log(`Normalizing time: ${timeStr}`);
-      
-      // Handle case where time is already in the correct format
-      if (/^\d{2}:00-\d{2}:00$/.test(timeStr)) {
-        return timeStr;
-      }
-      
-      // Handle case where time is in format 'HH:MM-HH:MM'
-      if (/^\d{1,2}:\d{2}-\d{1,2}:\d{2}$/.test(timeStr)) {
-        const [start, end] = timeStr.split('-');
-        const formatPart = part => {
-          const [h, m] = part.split(':');
-          return `${h.padStart(2, '0')}:00`; // Convert to whole hour
-        };
-        return `${formatPart(start)}-${formatPart(end)}`;
-      }
-      
-      // Handle case where time is in format '7:00 AM - 8:00 AM'
-      if (/\d{1,2}:\d{2}\s*[AP]M\s*-\s*\d{1,2}:\d{2}\s*[AP]M/i.test(timeStr)) {
-        const [startPart, endPart] = timeStr.split('-').map(s => s.trim());
-        const formatTime = (timeStr) => {
-          const [time, period] = timeStr.split(' ');
-          let [h, m] = time.split(':').map(Number);
-          if (period.toLowerCase() === 'pm' && h < 12) h += 12;
-          if (period.toLowerCase() === 'am' && h === 12) h = 0;
-          return `${String(h).padStart(2, '0')}:00`;
-        };
-        return `${formatTime(startPart)}-${formatTime(endPart)}`;
-      }
-      
-      // Handle case where time is just a single time (e.g., '7:00')
-      if (/^\d{1,2}:\d{2}$/.test(timeStr)) {
-        const [h] = timeStr.split(':');
-        const hour = parseInt(h, 10);
-        const nextHour = (hour + 1) % 24;
-        return `${String(hour).padStart(2, '0')}:00-${String(nextHour).padStart(2, '0')}:00`;
-      }
-      
-      console.warn(`Unrecognized time format: ${timeStr}`);
-      return '';
-    }
-
-    // Render the schedule based on selected filters
-    function renderSchedule() {
-      console.log('=== RENDER SCHEDULE STARTED ===');
-      console.log('Current time:', new Date().toISOString());
-      
-      // Get the schedule body element
-      const scheduleBody = document.getElementById('schedule-body');
-      if (!scheduleBody) {
-        console.error('ERROR: Schedule body element not found');
-        return;
-      }
-      
-      console.log('Schedule body element found:', scheduleBody);
-      
-      // Clear existing schedule
-      console.log('Clearing existing schedule...');
-      const previousContent = scheduleBody.innerHTML;
-      scheduleBody.innerHTML = '';
-      console.log('Schedule cleared. Previous content:', previousContent || '(empty)');
-      
-      // Get selected values with null checks
-      const selectedCourse = courseSelect ? courseSelect.value : '';
-      const selectedYear = yearSelect ? yearSelect.value : '';
-      const selectedSection = sectionSelect ? sectionSelect.value : '';
-      
-      // Debug log current selections and data
-      console.log('Current selections:', { selectedCourse, selectedYear, selectedSection });
-      console.log('All instructors data:', allInstructorsData);
-      
-      // If any selection is missing, show empty schedule
-      if (!selectedCourse || !selectedYear || !selectedSection) {
-        console.log('Missing selection. Course:', selectedCourse, 'Year:', selectedYear, 'Section:', selectedSection);
-        
-        // Still show the time slots but with empty cells
-        const timeSlots = [];
-        for (let i = 7; i <= 17; i++) {
-          const startHour = String(i).padStart(2, '0');
-          const endHour = String(i + 1).padStart(2, '0');
-          timeSlots.push(`${startHour}:00-${endHour}:00`);
-        }
-        
-        timeSlots.forEach((timeSlot, index) => {
-          if (index === timeSlots.length - 1) return;
-          
-          const row = document.createElement('tr');
-          const timeCell = document.createElement('td');
-          timeCell.textContent = timeSlot;
-          timeCell.style.fontWeight = 'bold';
-          row.appendChild(timeCell);
-          
-          // Add empty cells for each day
-          ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'].forEach(() => {
-            const cell = document.createElement('td');
-            row.appendChild(cell);
-          });
-          
-          scheduleBody.appendChild(row);
-        });
-        
-        return;
-      }
+    // Function to render the schedule
+    function renderSchedule(instructors = allInstructors) {
+      console.log('Rendering schedule...');
       
       // Generate time slots from 07:00 to 17:00 (5:00 PM)
       const timeSlots = [];
-      console.log('Generating time slots from 07:00 to 17:00...');
-      for (let i = 7; i <= 17; i++) {  // Changed < 17 to <= 17 to include 17:00
+      for (let i = 7; i < 17; i++) {
         const startHour = String(i).padStart(2, '0');
         const endHour = String(i + 1).padStart(2, '0');
-        const timeSlot = `${startHour}:00-${endHour}:00`;
-        timeSlots.push(timeSlot);
-        console.log(`  - Added time slot [${timeSlots.length}]: ${timeSlot}`);
+        timeSlots.push(`${startHour}:00-${endHour}:00`);
       }
-      console.log(`Successfully generated ${timeSlots.length} time slots:`, timeSlots);
-      console.log('Time slots array length:', timeSlots.length);
-      console.log('First time slot:', timeSlots[0] || 'N/A');
-      console.log('Last time slot:', timeSlots[timeSlots.length - 1] || 'N/A');
       
-      // Filter instructors for the selected course, year, and section
-      const sectionInstructors = Array.isArray(allInstructorsData) ? 
-        allInstructorsData.filter(instructor => {
-          if (!instructor) return false;
-          
-          // Convert all values to strings for comparison to handle number/string mismatches
-          const instructorCourse = String(instructor.course || '').trim();
-          const instructorYear = String(instructor.year || '').trim();
-          const instructorSection = String(instructor.section || '').trim();
-          
-          const courseMatch = instructorCourse === String(selectedCourse).trim();
-          const yearMatch = instructorYear === String(selectedYear).trim();
-          const sectionMatch = instructorSection === String(selectedSection).trim();
-          
-          return courseMatch && yearMatch && sectionMatch;
-        }) : [];
-      
-      console.log(`Found ${sectionInstructors.length} matching instructors:`, sectionInstructors);
+      // Clear the schedule body
+      scheduleBody.innerHTML = '';
       
       // Create a row for each time slot
-      console.log('\n--- CREATING TABLE ROWS ---');
-      console.log(`Processing ${timeSlots.length - 1} time slots (skipping last one)...`);
-      
-      timeSlots.forEach((timeSlot, index) => {
-        // Skip the last time slot since it's the end marker
-        if (index === timeSlots.length - 1) {
-          console.log(`Skipping last time slot: ${timeSlot}`);
-          return;
-        }
-        
-        console.log(`\n--- Processing time slot [${index + 1}]: ${timeSlot} ---`);
-        
+      timeSlots.forEach(timeSlot => {
         const row = document.createElement('tr');
-        console.log('Created new table row element:', row);
-        
-        // Add time slot to the first cell
-        const timeCell = document.createElement('td');
-        timeCell.textContent = timeSlot;
-        timeCell.style.fontWeight = 'bold';
-        timeCell.id = `time-${timeSlot.replace(':', '-')}`;
-        
-        console.log(`Adding time cell with content: "${timeSlot}"`);
-        console.log('Time cell ID:', timeCell.id);
-        console.log('Time cell styles:', {
-          fontWeight: timeCell.style.fontWeight,
-          textContent: timeCell.textContent
-        });
-        
-        row.appendChild(timeCell);
-        console.log('Time cell added to row. Row now has', row.cells.length, 'cell(s)');
+        row.innerHTML = `<td>${timeSlot}</td>`; // Add time slot cell
         
         // Days of the week
         const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-        console.log(`Creating cells for ${days.length} days:`, days);
         
         // Create a cell for each day
-        days.forEach((day, dayIndex) => {
-          console.log(`\n--- Processing day [${dayIndex + 1}/${days.length}]: ${day} ---`);
-          
+        days.forEach(day => {
           const cell = document.createElement('td');
-          console.log(`Created cell for ${day}`, cell);
           
           // Find matching instructor for this day and time
           const instructor = sectionInstructors.find(instr => {
-            try {
-              if (!instr || !instr.day || !instr.time) {
-                console.log('  - Instructor missing required fields', { id: instr?.id, hasDay: !!instr?.day, hasTime: !!instr?.time });
-                return false;
-              }
-              
-              // Normalize day comparison (case and whitespace insensitive)
-              const normalizedInstrDay = String(instr.day || '').trim().toLowerCase();
-              const normalizedDay = String(day || '').trim().toLowerCase();
-              const dayMatch = normalizedInstrDay === normalizedDay;
-              
-              if (!dayMatch) {
-                console.log(`  - Day mismatch: ${normalizedInstrDay} !== ${normalizedDay}`);
-                return false;
-              }
-              
-              // Normalize time comparison
-              const normalizedInstrTime = normalizeTime(instr.time);
-              const normalizedSlotTime = timeSlot;
-              const timeMatch = normalizedInstrTime === normalizedSlotTime;
-              
-              console.log('  - Instructor time match check:', {
-                instructor: instr.name,
-                instructorTime: instr.time,
-                normalizedInstrTime,
-                timeSlot,
-                timeMatch
-              });
-              
-              return timeMatch;
-            } catch (error) {
-              console.error('Error matching instructor:', error, instr);
-              return false;
+            if (!instr.day || !instr.time) return false;
+            
+            // Normalize times for comparison
+            const normalizedInstrTime = normalizeTime(instr.time);
+            const normalizedSlotTime = timeSlot;
+            
+            console.log(`Checking instructor: ${instr.name}, day: ${instr.day}, time: ${instr.time}`);
+            console.log(`Normalized times - Instructor: ${normalizedInstrTime}, Slot: ${normalizedSlotTime}`);
+            
+            // Check if day and time match (case-insensitive day comparison)
+            const dayMatch = instr.day.toLowerCase() === day.toLowerCase();
+            const timeMatch = normalizedInstrTime === normalizedSlotTime;
+            
+            if (dayMatch && timeMatch) {
+              console.log(`Match found: ${instr.name} on ${day} at ${timeSlot}`);
+              return true;
             }
+            
+            return false;
           });
           
           // If instructor found, fill the cell with their info
           if (instructor) {
-            console.log(`  - Found matching instructor for ${day} at ${timeSlot}:`, {
-              name: instructor.name,
-              subject: instructor.subject,
-              room: instructor.roomName
-            });
-            
             cell.innerHTML = `
-              <div class="schedule-entry" style="
-                padding: 8px;
-                background-color: #e3f2fd;
-                border-radius: 6px;
-                margin: 3px;
-                font-size: 0.9em;
-                border-left: 4px solid #1A5F7A;
-                box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-                height: 100%;
-                box-sizing: border-box;
-                display: flex;
-                flex-direction: column;
-                justify-content: space-between;
-              ">
-                <div style="font-weight: 600; color: #1A5F7A; margin-bottom: 6px; font-size: 0.95em;">
-                  ${instructor.subject || 'N/A'}
-                </div>
-                <div style="font-size: 0.9em; color: #2c3e50; margin-bottom: 4px;">
-                  ${instructor.name || 'N/A'}
-                </div>
-                <div style="font-size: 0.85em; color: #7f8c8d; font-style: italic;">
-                  ${instructor.roomName || 'TBA'}
-                </div>
+              <div class="schedule-entry">
+                <div class="subject">${instructor.subject || 'N/A'}</div>
+                <div class="instructor">${instructor.name || 'N/A'}</div>
+                <div class="room">${instructor.roomName || 'TBA'}</div>
               </div>
             `;
-            console.log('  - Cell content set with instructor info');
-          } else {
-            console.log(`  - No instructor found for ${day} at ${timeSlot}`);
           }
           
-          console.log(`  - Adding cell for ${day} to row. Current cells in row: ${row.cells.length}`);
           row.appendChild(cell);
-          console.log(`  - Cell for ${day} added. Row now has ${row.cells.length} cells`);
-        });
-        
-        console.log(`\n--- ADDING ROW TO SCHEDULE ---`);
-        console.log('Row details:', {
-          timeSlot,
-          cellCount: row.cells.length,
-          rowContent: row.outerHTML
         });
         
         scheduleBody.appendChild(row);
-        console.log(`Row added to schedule body. Total rows: ${scheduleBody.rows.length}`);
-        console.log('Current schedule body content:', scheduleBody.innerHTML);
       });
-      
-      // Final debug output after all rows are added
-      console.log('\n=== RENDER SCHEDULE COMPLETE ===');
-      console.log('Total rows in schedule body:', scheduleBody.rows.length);
-      
-      // Check if table is visible and properly structured
-      const table = document.getElementById('scheduleTable');
-      if (table) {
-        console.log('Table visibility check:', {
-          display: window.getComputedStyle(table).display,
-          visibility: window.getComputedStyle(table).visibility,
-          opacity: window.getComputedStyle(table).opacity,
-          width: table.offsetWidth,
-          height: table.offsetHeight,
-          hasHeader: table.tHead !== null,
-          hasBody: table.tBodies.length > 0,
-          rowCount: table.rows.length
-        });
-        
-        // Log first few rows for verification
-        console.log('First 3 rows of the table:');
-        Array.from(table.rows).slice(0, 3).forEach((row, i) => {
-          console.log(`Row ${i}:`, {
-            cellCount: row.cells.length,
-            firstCellContent: row.cells[0]?.textContent?.trim() || 'empty',
-            rowHTML: row.outerHTML
-          });
-        });
-      } else {
-        console.error('Table element not found in DOM');
-      }
-      
-      // Verify the table body is properly connected to the table
-      if (scheduleBody.parentNode !== table) {
-        console.error('Schedule body is not properly connected to the table!');
-      }
-      
-      console.log('Render completed at:', new Date().toISOString());
     }
 
-    // Function to fetch instructors based on selected filters
-    async function fetchInstructors() {
+    // Function to filter instructors based on selected filters
+    function filterInstructors() {
       const selectedCourse = courseSelect.value;
       const selectedYear = yearSelect.value;
       const selectedSection = sectionSelect.value;
@@ -776,25 +568,16 @@
       }
       
       try {
-        const q = query(
-          collection(db, 'Instructors'),
-          where('course', '==', selectedCourse),
-          where('year', '==', selectedYear),
-          where('section', '==', selectedSection)
-        );
-        
-        const querySnapshot = await getDocs(q);
-        return querySnapshot.docs.map(doc => {
-          const data = doc.data();
-          // Ensure time format matches our time slots (HH:00-HH:00)
-          if (data.time && data.time.includes(' - ')) {
-            data.time = data.time.replace(' - ', '-').replace(' ', '');
-          }
-          return { 
-            id: doc.id, 
-            ...data 
-          };
-        });
+        // Filter instructors based on selected criteria
+        return allInstructors.filter(instructor => 
+          (!selectedCourse || instructor.course === selectedCourse) &&
+          (!selectedYear || instructor.year === selectedYear) &&
+          (!selectedSection || instructor.section === selectedSection)
+        ).map(instructor => ({
+          ...instructor,
+          // Ensure consistent time format
+          time: instructor.time ? instructor.time.replace(' - ', '-').replace(' ', '') : ''
+        }));
       } catch (error) {
         console.error('Error fetching instructors:', error);
         return [];
@@ -803,233 +586,63 @@
 
     // Set up real-time listener for instructors
     function setupFirebaseListener() {
-      return new Promise((resolve) => {
-        console.log('Setting up Firebase listener...');
-        const q = query(instructorsCollectionRef);
+      const q = query(instructorsCollectionRef);
+      const unsubscribe = onSnapshot(q, (querySnapshot) => {
+        allInstructorsData = []; // Clear previous data
         
-        const unsubscribe = onSnapshot(
-          q,
-          // Success callback
-          (querySnapshot) => {
-            console.log('Received snapshot from Firebase');
-            allInstructorsData = []; // Clear previous data
-            
-            // Process each document in the snapshot
-            querySnapshot.forEach((doc) => {
-              const data = doc.data();
-              if (!data) return;
-              
-              // Normalize the time format to HH:00-HH:00
-              let normalizedTime = '';
-              if (data.time) {
-                try {
-                  const times = data.time.split('-').map(part => {
-                    const [h, m = '00'] = part.trim().split(':');
-                    return `${h.padStart(2, '0')}:${m.padStart(2, '0')}`.substring(0, 5);
-                  });
-                  normalizedTime = times.join('-');
-                } catch (e) {
-                  console.error('Error normalizing time:', data.time, e);
-                  normalizedTime = data.time; // Use as-is if we can't parse it
-                }
-              }
-              
-              // Create instructor object with normalized data
-              const instructor = {
-                id: doc.id,
-                name: data.name || 'N/A',
-                subject: data.subject || 'N/A',
-                roomName: data.roomName || 'TBA',
-                day: data.day ? data.day.trim() : '',
-                time: normalizedTime,
-                course: data.course || '',
-                year: data.year ? String(data.year) : '', // Ensure year is a string
-                section: data.section || ''
-              };
-              
-              allInstructorsData.push(instructor);
-              console.log('Added instructor to allInstructorsData:', instructor);
+        querySnapshot.forEach((doc) => {
+          const data = doc.data();
+          if (!data) return;
+          
+          // Normalize the time format to HH:00-HH:00
+          let normalizedTime = '';
+          if (data.time) {
+            // Handle different time formats (e.g., '7:00-8:00' or '07:00 - 08:00')
+            const times = data.time.split('-').map(part => {
+              const [h, m = '00'] = part.trim().split(':');
+              return `${h.padStart(2, '0')}:${m.padStart(2, '0')}`.substring(0, 5);
             });
-            
-            console.log('All instructors loaded. Total:', allInstructorsData.length);
-            
-            // Resolve the promise with the first data load
-            if (allInstructorsData.length > 0) {
-              resolve(unsubscribe);
-            }
-            
-            // Re-render schedule with new data
-            renderSchedule();
-          },
-          // Error callback
-          (error) => {
-            console.error("Error in Firebase listener:", error);
-            // Still resolve to avoid hanging, but with null
-            resolve(null);
+            normalizedTime = times.join('-');
           }
-        );
+          
+          // Create instructor object with normalized data
+          const instructor = {
+            id: doc.id,
+            name: data.name || 'N/A',
+            subject: data.subject || 'N/A',
+            roomName: data.roomName || 'TBA',
+            day: data.day ? data.day.trim() : '',
+            time: normalizedTime,
+            course: data.course || '',
+            year: data.year || '',
+            section: data.section || ''
+          };
+          
+          allInstructorsData.push(instructor);
+          
+          console.log('Instructor loaded:', instructor);
+        });
         
-        // Set a timeout in case Firebase never responds
-        setTimeout(() => {
-          resolve(unsubscribe);
-        }, 5000);
+        console.log('All instructors loaded. Total:', allInstructorsData.length);
+        renderSchedule(); // Re-render schedule with new data
+      }, (error) => {
+        console.error("Error setting up instructor listener:", error);
       });
+      
+      return unsubscribe;
     }
 
-    // Function to handle course change
-    function handleCourseChange() {
-      const course = courseSelect.value;
-      yearSelect.disabled = !course;
-      yearSelect.value = '';
-      sectionSelect.value = '';
-      sectionSelect.disabled = true;
-      renderSchedule();
-    }
-    
-    // Function to handle year change
-    function handleYearChange() {
-      const year = yearSelect.value;
-      sectionSelect.disabled = !year;
-      sectionSelect.value = '';
-      renderSchedule();
-    }
-    
-    // Function to handle section change
-    function handleSectionChange() {
-      renderSchedule();
-    }
-    
-    // Function to automatically update the timetable when data changes
-    function setupAutoUpdate() {
-      let updateTimeout;
-      let lastUpdate = 0;
-      const MIN_UPDATE_INTERVAL = 1000; // 1 second minimum between updates
-      
-      // Update the timetable with debounce and throttle
-      const updateTimetable = () => {
-        const now = Date.now();
-        
-        // Clear any pending updates
-        if (updateTimeout) {
-          clearTimeout(updateTimeout);
-          updateTimeout = null;
-        }
-        
-        // Throttle: Don't update more than once per MIN_UPDATE_INTERVAL
-        if (now - lastUpdate < MIN_UPDATE_INTERVAL) {
-          updateTimeout = setTimeout(updateTimetable, MIN_UPDATE_INTERVAL - (now - lastUpdate));
-          return;
-        }
-        
-        // Only update if we have all required selections
-        if (courseSelect.value && yearSelect.value && sectionSelect.value) {
-          console.log('Updating timetable...');
-          lastUpdate = now;
-          renderSchedule();
-        }
-      };
-      
-      // Set up a more targeted MutationObserver
-      const observer = new MutationObserver((mutations) => {
-        // Only trigger update if mutations are relevant
-        const relevantMutations = mutations.some(mutation => {
-          // Check if the mutation is in our data structures
-          return mutation.target === document.body || 
-                 (mutation.target.id && ['course', 'year', 'section'].includes(mutation.target.id));
-        });
-        
-        if (relevantMutations) {
-          updateTimetable();
-        }
-      });
-      
-      // Only observe specific parts of the DOM
-      if (document.body) {
-        observer.observe(document.body, {
-          childList: true,
-          subtree: true,
-          characterData: true,
-          attributes: true
-        });
-      }
-      
-      // Listen for focus and data changes
-      window.addEventListener('focus', updateTimetable);
-      
-      // Initial update after a short delay to ensure DOM is ready
-      setTimeout(updateTimetable, 500);
-      
-      // Cleanup function
-      return () => {
-        if (updateTimeout) clearTimeout(updateTimeout);
-        observer.disconnect();
-        window.removeEventListener('focus', updateTimetable);
-      };
-    }
-    
     // Set up event listeners when the DOM is fully loaded
-    document.addEventListener('DOMContentLoaded', async function() {
-      console.log('DOM fully loaded');
+    document.addEventListener('DOMContentLoaded', function() {
+      // Initialize the schedule first to set up UI event handlers
+      initializeSchedule();
       
-      // Set up event listeners for dropdowns
-      if (courseSelect) {
-        console.log('Adding change listener to course select');
-        courseSelect.addEventListener('change', handleCourseChange);
-      }
-      if (yearSelect) {
-        console.log('Adding change listener to year select');
-        yearSelect.addEventListener('change', handleYearChange);
-      }
-      if (sectionSelect) {
-        console.log('Adding change listener to section select');
-        sectionSelect.addEventListener('change', handleSectionChange);
-      }
+      // Then set up Firebase real-time listener
+      const unsubscribe = setupFirebaseListener();
       
-      // Set up Firebase real-time listener
-      console.log('Setting up Firebase listener...');
-      let unsubscribeFirebase;
-      try {
-        unsubscribeFirebase = await setupFirebaseListener();
-        console.log('Firebase listener set up successfully');
-      } catch (error) {
-        console.error('Failed to set up Firebase listener:', error);
-      }
-      
-      // Set up auto-update functionality
-      console.log('Setting up auto-update...');
-      const cleanupAutoUpdate = setupAutoUpdate();
-      
-      // Debug function to check table population
-      function debugTable() {
-        console.log('=== TABLE DEBUG INFO ===');
-        const table = document.getElementById('scheduleTable');
-        console.log('Table element:', table);
-        console.log('Table rows:', table ? table.rows.length : 0);
-        const scheduleBody = document.getElementById('schedule-body');
-        console.log('Table body rows:', scheduleBody ? scheduleBody.querySelectorAll('tr').length : 0);
-        console.log('Table body content:', scheduleBody ? scheduleBody.innerHTML : 'No schedule body found');
-      }
-      
-      // Initial render after a short delay to ensure everything is loaded
-      console.log('Scheduling initial render...');
-      setTimeout(() => {
-        console.log('Performing initial render...');
-        renderSchedule();
-        // Debug after rendering
-        setTimeout(debugTable, 1000);
-      }, 1000);
-      
-      // Clean up when the page is unloaded
+      // Clean up the listener when the page is unloaded
       window.addEventListener('beforeunload', () => {
-        console.log('Cleaning up...');
-        if (unsubscribeFirebase && typeof unsubscribeFirebase === 'function') {
-          console.log('Unsubscribing from Firebase...');
-          unsubscribeFirebase();
-        }
-        if (cleanupAutoUpdate && typeof cleanupAutoUpdate === 'function') {
-          console.log('Cleaning up auto-update...');
-          cleanupAutoUpdate();
-        }
+        if (unsubscribe) unsubscribe();
       });
     });
   </script>
