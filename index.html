@@ -466,11 +466,21 @@
       }
 
       // Filter instructors for the selected course, year, and section
-      const sectionInstructors = allInstructorsData.filter(instructor => 
-        instructor.course === selectedCourse &&
-        instructor.year === selectedYear &&
-        instructor.section === selectedSection
-      );
+      console.log('All instructors data:', allInstructorsData);
+      console.log('Selected values - Course:', selectedCourse, 'Year:', selectedYear, 'Section:', selectedSection);
+      
+      const sectionInstructors = allInstructorsData.filter(instructor => {
+        const matches = 
+          instructor.course === selectedCourse &&
+          instructor.year === selectedYear &&
+          instructor.section === selectedSection;
+        
+        if (matches) {
+          console.log('Matching instructor found:', instructor);
+        }
+        
+        return matches;
+      });
 
       console.log('Filtered instructors:', sectionInstructors);
 
