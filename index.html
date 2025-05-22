@@ -263,6 +263,61 @@
     </tbody>
   </table>
 
+  <!-- Instructor Data Table -->
+  <div class="instructor-table-container">
+    <h3>Instructor Schedule</h3>
+    <table id="instructorTable" class="instructor-table">
+      <thead>
+        <tr>
+          <th>Time</th>
+          <th>Day</th>
+          <th>Instructor</th>
+          <th>Subject</th>
+          <th>Room</th>
+        </tr>
+      </thead>
+      <tbody id="instructorTableBody">
+        <!-- Instructor data will be populated here -->
+      </tbody>
+    </table>
+  </div>
+
+  <style>
+    .instructor-table-container {
+      margin-top: 30px;
+      padding: 20px;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .instructor-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 15px;
+    }
+
+    .instructor-table th,
+    .instructor-table td {
+      border: 1px solid #ddd;
+      padding: 10px;
+      text-align: left;
+    }
+
+    .instructor-table th {
+      background-color: #1A5F7A;
+      color: white;
+    }
+
+    .instructor-table tr:nth-child(even) {
+      background-color: #f9f9f9;
+    }
+
+    .instructor-table tr:hover {
+      background-color: #f1f1f1;
+    }
+  </style>
+
   <script type="module">
     // Import the functions you need from the SDKs you need
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
@@ -358,12 +413,13 @@
     
     // Function to initialize the schedule
     function initializeSchedule() {
-      renderSchedule();
-      
       // Set up event listeners
       courseSelect.addEventListener('change', handleCourseChange);
       yearSelect.addEventListener('change', handleYearChange);
       sectionSelect.addEventListener('change', handleSectionChange);
+      
+      // Set up Firestore listener
+      setupFirebaseListener();
     }
     
     function handleCourseChange() {
@@ -598,17 +654,106 @@
           };
           
           allInstructorsData.push(instructor);
-          
-          console.log('Instructor loaded:', instructor);
         });
         
         console.log('All instructors loaded. Total:', allInstructorsData.length);
-        renderSchedule(); // Re-render schedule with new data
+        updateInstructorTable(); // Update the instructor table
       }, (error) => {
         console.error("Error setting up instructor listener:", error);
       });
       
       return unsubscribe;
+    }
+    
+    // Function to update the instructor table based on selected filters
+    function updateInstructorTable() {
+      const selectedCourse = courseSelect.value;
+      const selectedYear = yearSelect.value;
+      const selectedSection = sectionSelect.value;
+      
+      // Get the table body element
+      const tableBody = document.getElementById('instructorTableBody');
+      tableBody.innerHTML = ''; // Clear existing rows
+      
+      // If any filter is not selected, don't show any data
+      if (!selectedCourse || !selectedYear || !selectedSection) {
+        return;
+      }
+      
+      // Filter instructors based on selected course, year, and section
+      const filteredInstructors = allInstructorsData.filter(instructor => {
+        return instructor.course === selectedCourse &&
+               instructor.year === selectedYear &&
+               instructor.section === selectedSection;
+      });
+      
+      // Sort instructors by day and time
+      filteredInstructors.sort((a, b) => {
+        const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+        const dayCompare = days.indexOf(a.day) - days.indexOf(b.day);
+        if (dayCompare !== 0) return dayCompare;
+        return (a.time || '').localeCompare(b.time || '');
+      });
+      
+      // Add rows to the table
+      filteredInstructors.forEach(instructor => {
+        const row = document.createElement('tr');
+        
+        // Format time for display (e.g., '07:00-08:00' -> '7:00 AM - 8:00 AM')
+        let displayTime = 'N/A';
+        if (instructor.time) {
+          const [start, end] = instructor.time.split('-');
+          const formatTime = (timeStr) => {
+            const [h, m] = timeStr.split(':');
+            const hour = parseInt(h, 10);
+            const period = hour >= 12 ? 'PM' : 'AM';
+            const displayHour = hour % 12 || 12;
+            return `${displayHour}:${m} ${period}`;
+          };
+          displayTime = `${formatTime(start)} - ${formatTime(end)}`;
+        }
+        
+        row.innerHTML = `
+          <td>${displayTime}</td>
+          <td>${instructor.day || 'N/A'}</td>
+          <td>${instructor.name}</td>
+          <td>${instructor.subject}</td>
+          <td>${instructor.roomName}</td>
+        `;
+        
+        tableBody.appendChild(row);
+      });
+      
+      // Show message if no instructors found
+      if (filteredInstructors.length === 0) {
+        const row = document.createElement('tr');
+        row.innerHTML = '<td colspan="5" style="text-align: center; padding: 20px;">No instructor schedule found for the selected filters.</td>';
+        tableBody.appendChild(row);
+      }
+    }
+    
+    // Update the table whenever filters change
+    function handleCourseChange() {
+      const selectedCourse = this.value;
+      yearSelect.disabled = !selectedCourse;
+      yearSelect.value = '';
+      sectionSelect.value = '';
+      sectionSelect.disabled = true;
+      updateStudentCapacity();
+      updateInstructorTable();
+    }
+    
+    function handleYearChange() {
+      const selectedYear = this.value;
+      sectionSelect.disabled = !selectedYear;
+      sectionSelect.value = '';
+      updateStudentCapacity();
+      updateInstructorTable();
+    }
+    
+    function handleSectionChange() {
+      updateStudentCapacity();
+      updateInstructorTable();
     }
 
     // Set up event listeners when the DOM is fully loaded
