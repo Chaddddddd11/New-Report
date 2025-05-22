@@ -583,18 +583,33 @@
           
           row.appendChild(cell);
         });
-        
-        scheduleBody.appendChild(row);
-      });
-    }
 
-    // Function to fetch instructors based on selected filters
-    async function fetchInstructors() {
-      const selectedCourse = courseSelect.value;
-      const selectedYear = yearSelect.value;
-      const selectedSection = sectionSelect.value;
-      
-      if (!selectedCourse || !selectedYear || !selectedSection) {
+  // Filter instructors for the selected course, year, and section
+  console.log('All available instructors data:', allInstructorsData);
+  
+  const sectionInstructors = allInstructorsData.filter(instructor => {
+    if (!instructor) return false;
+    
+    // Log each instructor's data for debugging
+    console.log('Checking instructor:', {
+      instructorCourse: instructor.course,
+      instructorYear: instructor.year,
+      instructorSection: instructor.section,
+      selectedCourse,
+      selectedYear,
+      selectedSection,
+      courseMatch: String(instructor.course) === String(selectedCourse),
+      yearMatch: String(instructor.year).toLowerCase() === String(selectedYear).toLowerCase(),
+      sectionMatch: String(instructor.section).toUpperCase() === String(selectedSection).toUpperCase()
+    });
+    
+    // Make comparisons case-insensitive and type-flexible
+    const courseMatch = String(instructor.course).toLowerCase() === String(selectedCourse).toLowerCase();
+    const yearMatch = String(instructor.year).toLowerCase() === String(selectedYear).toLowerCase();
+    const sectionMatch = String(instructor.section).toUpperCase() === String(selectedSection).toUpperCase();
+    
+    return courseMatch && yearMatch && sectionMatch;
+  });
         return [];
       }
       
@@ -624,6 +639,37 @@
       }
     }
 
+    // Function to log all instructors data for debugging
+    async function logAllInstructors() {
+      try {
+        console.log('Fetching all instructors from Firestore...');
+        const querySnapshot = await getDocs(collection(db, 'Instructors'));
+        console.log(`Found ${querySnapshot.size} instructors in Firestore:`);
+        
+        querySnapshot.forEach((doc) => {
+          console.log(`Document ID: ${doc.id}`, doc.data());
+          
+          // Log all fields in the document
+          const data = doc.data();
+          console.log('Document fields:', Object.keys(data));
+          
+          // Log specific fields we care about
+          console.log('Important fields:', {
+            course: data.course,
+            year: data.year,
+            section: data.section,
+            day: data.day,
+            time: data.time,
+            name: data.name,
+            subject: data.subject,
+            roomName: data.roomName
+          });
+        });
+      } catch (error) {
+        console.error('Error fetching instructors:', error);
+      }
+    }
+
     // Set up real-time listener for instructors
     function setupFirebaseListener() {
       console.log('Setting up Firebase listener...');
@@ -650,6 +696,10 @@
       
       try {
         console.log('Creating query for collection...');
+        
+        // First, log all instructors data for debugging
+        logAllInstructors();
+        
         const q = query(instructorsCollectionRef);
         console.log('Query created, setting up onSnapshot listener...');
         
