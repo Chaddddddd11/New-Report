@@ -150,24 +150,14 @@
     </style>
 </head>
 <body>
-    <div class="nav-buttons">
-        <a href="index.html" class="nav-button">Back to Schedule</a>
-        <a href="Room.html" class="nav-button">Room Registration</a>
-    </div>
-    
     <div class="container">
         <div class="header">
             <h1>Registered Instructors</h1>
         </div>
 
         <div class="controls">
-            <div>
-                <a href="index.html" class="btn">← Back to Schedule</a>
-                <button id="addInstructorBtn" class="btn">+ Register New Instructor</button>
-            </div>
-            <div>
-                <button id="signOutBtn" class="btn" style="background-color: #dc3545;">Sign Out</button>
-            </div>
+            <a href="index.html" class="btn">← Back to Main Menu</a>
+            <a href="Instructor.html" class="btn">+ Register New Instructor</a>
         </div>
 
         <div id="errorMessage" class="error-message"></div>
@@ -197,16 +187,9 @@
     </div>
 
     <!-- Firebase SDKs -->
-    <script type="module">
-        // Import the functions you need from the SDKs you need
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-        import { 
-            getFirestore, 
-            collection, 
-            query, 
-            getDocs, 
-            onSnapshot 
-        } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+    <script>
         // Your web app's Firebase configuration
         const firebaseConfig = {
             apiKey: "AIzaSyDeqxzp_-kKjM3hPr6CLGfTn38e4swSKbo",
@@ -218,9 +201,8 @@
         };
 
         // Initialize Firebase
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-        const instructorsCollection = collection(db, 'instructors');
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
 
         // DOM Elements
         const instructorTableBody = document.getElementById('instructorTableBody');
@@ -250,26 +232,6 @@
                     `${instructor.year}${instructor.year.endsWith('st') || instructor.year.endsWith('nd') || 
                     instructor.year.endsWith('rd') || instructor.year.endsWith('th') ? '' : ' Year'}` : 'N/A';
                 
-                // Handle time format for display
-                let displayTime = 'N/A';
-                if (instructor.time) {
-                    // Convert time format from "HH:00-HH:00" to "HH:00 AM/PM - HH:00 AM/PM"
-                    try {
-                        const [start, end] = instructor.time.split('-');
-                        const formatTime = (timeStr) => {
-                            const [hours, minutes] = timeStr.split(':');
-                            const hour = parseInt(hours, 10);
-                            const period = hour >= 12 ? 'PM' : 'AM';
-                            const displayHour = hour % 12 || 12;
-                            return `${displayHour}:${minutes || '00'} ${period}`;
-                        };
-                        displayTime = `${formatTime(start)} - ${formatTime(end)}`;
-                    } catch (e) {
-                        console.error('Error formatting time:', e);
-                        displayTime = instructor.time;
-                    }
-                }
-                
                 row.innerHTML = `
                     <td>${instructor.name || 'N/A'}</td>
                     <td>${instructor.subject || 'N/A'}</td>
@@ -277,7 +239,7 @@
                     <td>${yearDisplay}</td>
                     <td>${instructor.section ? `Section ${instructor.section}` : 'N/A'}</td>
                     <td>${instructor.day || 'N/A'}</td>
-                    <td>${displayTime}</td>
+                    <td>${instructor.time || 'N/A'}</td>
                     <td>${instructor.roomName || 'N/A'}</td>
                     <td class="actions">
                         <button class="btn-edit" data-id="${instructor.id}">Edit</button>
@@ -308,114 +270,56 @@
         }
         
         // Fetch instructors from Firestore
-        async function fetchInstructors() {
-            try {
-                loadingMessage.style.display = 'block';
-                emptyMessage.style.display = 'none';
-                errorMessage.style.display = 'none';
-                
-                const instructors = [];
-                const querySnapshot = await getDocs(instructorsCollection);
-                
-                querySnapshot.forEach((doc) => {
-                    instructors.push({ id: doc.id, ...doc.data() });
+        function fetchInstructors() {
+            loadingMessage.style.display = 'block';
+            emptyMessage.style.display = 'none';
+            
+            db.collection('Instructors')
+                .get()
+                .then((querySnapshot) => {
+                    const instructors = [];
+                    querySnapshot.forEach((doc) => {
+                        instructors.push({
+                            id: doc.id,
+                            ...doc.data()
+                        });
+                    });
+                    displayInstructors(instructors);
+                })
+                .catch((error) => {
+                    console.error('Error getting instructors: ', error);
+                    showError('Error loading instructors. Please try again.');
+                })
+                .finally(() => {
+                    loadingMessage.style.display = 'none';
                 });
-                
-                displayInstructors(instructors);
-            } catch (error) {
-                console.error('Error fetching instructors:', error);
-                showError('Failed to load instructors. Please try again.');
-            } finally {
-                loadingMessage.style.display = 'none';
-            }
         }
         
         // Set up real-time listener for instructor updates
         function setupRealtimeListener() {
-            loadingMessage.style.display = 'block';
-            emptyMessage.style.display = 'none';
-            errorMessage.style.display = 'none';
-            
-            const q = query(instructorsCollection);
-            return onSnapshot(q, 
-                (querySnapshot) => {
-                    try {
-                        const instructors = [];
-                        querySnapshot.forEach((doc) => {
-                            if (doc.exists()) {
-                                instructors.push({ 
-                                    id: doc.id, 
-                                    ...doc.data() 
-                                });
-                            }
+            db.collection('Instructors')
+                .onSnapshot((querySnapshot) => {
+                    const instructors = [];
+                    querySnapshot.forEach((doc) => {
+                        instructors.push({
+                            id: doc.id,
+                            ...doc.data()
                         });
-                        
-                        if (instructors.length === 0) {
-                            emptyMessage.style.display = 'block';
-                            instructorTableBody.innerHTML = '';
-                        } else {
-                            emptyMessage.style.display = 'none';
-                            displayInstructors(instructors);
-                        }
-                    } catch (error) {
-                        console.error('Error processing instructor data:', error);
-                        showError('Error processing instructor data. Please try again.');
-                    } finally {
-                        loadingMessage.style.display = 'none';
-                    }
-                }, 
-                (error) => {
-                    console.error('Error in real-time listener:', error);
-                    showError('Error loading real-time updates. Please refresh the page.');
-                    loadingMessage.style.display = 'none';
-                }
-            );
+                    });
+                    displayInstructors(instructors);
+                }, (error) => {
+                    console.error('Error in real-time listener: ', error);
+                    showError('Error receiving updates. Please refresh the page.');
+                });
         }
         
         // Initialize the page
         document.addEventListener('DOMContentLoaded', () => {
-            try {
-                // Get DOM elements
-                const addInstructorBtn = document.getElementById('addInstructorBtn');
-                const signOutBtn = document.getElementById('signOutBtn');
-                
-                // Check if elements exist before adding event listeners
-                if (!addInstructorBtn) {
-                    console.error('Add instructor button not found in the DOM');
-                    showError('Page initialization error. Please refresh the page.');
-                    return;
-                }
-
-                // Set up real-time listener
-                loadingMessage.style.display = 'block';
-                const unsubscribe = setupRealtimeListener();
-                
-                // Clean up listener when page is unloaded
-                window.addEventListener('beforeunload', () => {
-                    if (unsubscribe) unsubscribe();
-                });
-
-                // Add new instructor button
-                addInstructorBtn.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    window.location.href = 'Instructor.html';
-                });
-
-                // Hide or remove sign out button if it exists
-                if (signOutBtn) {
-                    signOutBtn.style.display = 'none';
-                }
-                
-                // Initial fetch of instructors
-                fetchInstructors().catch(error => {
-                    console.error('Error in initial fetch:', error);
-                    showError('Failed to load instructors. Please refresh the page.');
-                });
-                
-            } catch (error) {
-                console.error('Error initializing page:', error);
-                showError('Error initializing page. Please refresh.');
-            }
+            // Fetch instructors when the page loads
+            fetchInstructors();
+            
+            // Set up real-time updates
+            setupRealtimeListener();
         });
     </script>
 </body>
