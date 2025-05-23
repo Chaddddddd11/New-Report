@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DHVSU - Login</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #610000;
+            --secondary-color: #800a0acc;
+            --accent-color: #F7B32D;
+            --background-color: #f5f5f5;
+            --text-color: #333;
+            --error-color: #dc3545;
+            --success-color: #28a745;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Roboto', sans-serif;
+        }
+
+        body {
+            background-color: var(--background-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .login-container {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 400px;
+            padding: 40px;
+            text-align: center;
+        }
+
+        .logo {
+            max-width: 150px;
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            color: var(--primary-color);
+            margin-bottom: 30px;
+            font-size: 24px;
+            font-weight: 500;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: var(--text-color);
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 2px rgba(97, 0, 0, 0.2);
+        }
+
+        .btn {
+            display: inline-block;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 4px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            width: 100%;
+            transition: background-color 0.3s;
+        }
+
+        .btn:hover {
+            background-color: var(--secondary-color);
+        }
+
+        .error-message {
+            color: var(--error-color);
+            margin-top: 10px;
+            font-size: 14px;
+            display: none;
+        }
+
+        .success-message {
+            color: var(--success-color);
+            margin-top: 10px;
+            font-size: 14px;
+            display: none;
+        }
+
+        .auth-footer {
+            margin-top: 20px;
+            font-size: 14px;
+            color: #666;
+            text-align: center;
+        }
+        
+        .auth-footer a {
+            color: var(--primary-color);
+            text-decoration: none;
+            font-weight: 500;
+        }
+        
+        .auth-footer a:hover {
+            text-decoration: underline;
+        }
+        
+        .auth-form {
+            display: none;
+        }
+        
+        .auth-form.active {
+            display: block;
+        }
+
+        @media (max-width: 480px) {
+            .login-container {
+                padding: 30px 20px;
+            }
+            
+            h1 {
+                font-size: 20px;
+                margin-bottom: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <img src="https://media.assettype.com/sunstar/2025-02-04/7x1wu7dq/DHVSU.jpg" alt="DHVSU Logo" class="logo">
+        <h1>College of Business Studies<br>Faculty Scheduling System</h1>
+        
+        <form id="loginForm">
+            <div class="form-group">
+                <label for="email">Email Address</label>
+                <input type="email" id="email" class="form-control" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" class="form-control" required>
+            </div>
+            
+            <div id="errorMessage" class="error-message"></div>
+            <div id="successMessage" class="success-message"></div>
+            
+            <button type="submit" class="btn">Sign In</button>
+            
+            <div class="auth-footer">
+                <p>Don't have an account? <a href="#" id="showRegister">Create account</a></p>
+            </div>
+        </form>
+        
+        <!-- Registration Form (initially hidden) -->
+        <form id="registerForm" class="auth-form">
+            <div class="form-group">
+                <label for="regName">Full Name</label>
+                <input type="text" id="regName" class="form-control" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="regEmail">Email Address</label>
+                <input type="email" id="regEmail" class="form-control" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="regPassword">Password (min 6 characters)</label>
+                <input type="password" id="regPassword" class="form-control" minlength="6" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="regConfirmPassword">Confirm Password</label>
+                <input type="password" id="regConfirmPassword" class="form-control" minlength="6" required>
+            </div>
+            
+            <div id="regErrorMessage" class="error-message"></div>
+            <div id="regSuccessMessage" class="success-message"></div>
+            
+            <button type="submit" class="btn">Create Account</button>
+            
+            <div class="auth-footer">
+                <p>Already have an account? <a href="#" id="showLogin">Sign in</a></p>
+            </div>
+        </form>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+    
+    <script>
+        // Firebase configuration - Make sure to replace with your actual config
+        const firebaseConfig = {
+            apiKey: "AIzaSyDeqxzp_-kKjM3hPr6CLGfTn38e4swSKbo",
+            authDomain: "dhvsu-faculty-scheduling.firebaseapp.com",
+            projectId: "dhvsu-faculty-scheduling",
+            storageBucket: "dhvsu-faculty-scheduling.appspot.com",
+            messagingSenderId: "1234567890",
+            appId: "1:1234567890:web:abcdef123456"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        // DOM Elements
+        const loginForm = document.getElementById('loginForm');
+        const registerForm = document.getElementById('registerForm');
+        const emailInput = document.getElementById('email');
+        const passwordInput = document.getElementById('password');
+        const errorMessage = document.getElementById('errorMessage');
+        const successMessage = document.getElementById('successMessage');
+        const regErrorMessage = document.getElementById('regErrorMessage');
+        const regSuccessMessage = document.getElementById('regSuccessMessage');
+        const showRegisterLink = document.getElementById('showRegister');
+        const showLoginLink = document.getElementById('showLogin');
+
+        // Toggle between login and register forms
+        function showForm(formId) {
+            document.querySelectorAll('.auth-form').forEach(form => {
+                form.classList.remove('active');
+            });
+            document.getElementById(formId).classList.add('active');
+            
+            // Clear any messages when switching forms
+            clearMessages();
+        }
+        
+        // Clear all messages
+        function clearMessages() {
+            [errorMessage, successMessage, regErrorMessage, regSuccessMessage].forEach(el => {
+                if (el) {
+                    el.textContent = '';
+                    el.style.display = 'none';
+                }
+            });
+        }
+        
+        // Show error message
+        function showError(message, isRegistration = false) {
+            const errorEl = isRegistration ? regErrorMessage : errorMessage;
+            const successEl = isRegistration ? regSuccessMessage : successMessage;
+            
+            errorEl.textContent = message;
+            errorEl.style.display = 'block';
+            successEl.style.display = 'none';
+        }
+
+        // Show success message
+        function showSuccess(message, isRegistration = false) {
+            const successEl = isRegistration ? regSuccessMessage : successMessage;
+            const errorEl = isRegistration ? regErrorMessage : errorMessage;
+            
+            successEl.textContent = message;
+            successEl.style.display = 'block';
+            errorEl.style.display = 'none';
+        }
+
+        // Handle form submission
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const email = emailInput.value.trim();
+            const password = passwordInput.value;
+            
+            // Basic validation
+            if (!email || !password) {
+                showError('Please enter both email and password');
+                return;
+            }
+            
+            try {
+                // Sign in with email and password
+                const userCredential = await auth.signInWithEmailAndPassword(email, password);
+                const user = userCredential.user;
+                
+                // Get user role from Firestore
+                const userDoc = await db.collection('users').doc(user.uid).get();
+                
+                if (!userDoc.exists) {
+                    await auth.signOut();
+                    showError('No user data found. Please contact administrator.');
+                    return;
+                }
+                
+                const userData = userDoc.data();
+                
+                // Store user data in session storage
+                sessionStorage.setItem('user', JSON.stringify({
+                    uid: user.uid,
+                    email: user.email,
+                    displayName: user.displayName || '',
+                    role: userData.role || 'user',
+                    lastLogin: new Date().toISOString()
+                }));
+                
+                // Update last login time
+                await db.collection('users').doc(user.uid).update({
+                    lastLogin: new Date().toISOString()
+                });
+                
+                showSuccess('Login successful! Redirecting...');
+                
+                // Redirect to index.html after successful login
+                setTimeout(() => {
+                    window.location.href = 'index.html';
+                }, 1500);
+                
+            } catch (error) {
+                console.error('Login error:', error);
+                let errorMessage = 'Login failed. Please try again.';
+                
+                // Handle specific error cases
+                switch (error.code) {
+                    case 'auth/user-not-found':
+                        errorMessage = 'No user found with this email.';
+                        break;
+                    case 'auth/wrong-password':
+                        errorMessage = 'Incorrect password. Please try again.';
+                        break;
+                    case 'auth/too-many-requests':
+                        errorMessage = 'Too many failed attempts. Please try again later.';
+                        break;
+                    case 'auth/user-disabled':
+                        errorMessage = 'This account has been disabled.';
+                        break;
+                }
+                
+                showError(errorMessage);
+            }
+        });
+        
+        // Handle registration form submission
+        registerForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const name = document.getElementById('regName').value.trim();
+            const email = document.getElementById('regEmail').value.trim();
+            const password = document.getElementById('regPassword').value;
+            const confirmPassword = document.getElementById('regConfirmPassword').value;
+            
+            // Validation
+            if (!name || !email || !password || !confirmPassword) {
+                showError('Please fill in all fields', true);
+                return;
+            }
+            
+            if (password !== confirmPassword) {
+                showError('Passwords do not match', true);
+                return;
+            }
+            
+            if (password.length < 6) {
+                showError('Password must be at least 6 characters long', true);
+                return;
+            }
+            
+            try {
+                // Create user with email and password
+                const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+                const user = userCredential.user;
+                
+                // Save additional user data to Firestore
+                await db.collection('users').doc(user.uid).set({
+                    uid: user.uid,
+                    email: email,
+                    displayName: name,
+                    role: 'user', // Default role
+                    createdAt: new Date().toISOString(),
+                    lastLogin: new Date().toISOString()
+                });
+                
+                // Update user profile with display name
+                await user.updateProfile({
+                    displayName: name
+                });
+                
+                // Store user data in session storage
+                sessionStorage.setItem('user', JSON.stringify({
+                    uid: user.uid,
+                    email: user.email,
+                    displayName: name,
+                    role: 'user',
+                    lastLogin: new Date().toISOString()
+                }));
+                
+                showSuccess('Registration successful! Redirecting...', true);
+                
+                // Redirect to index.html after successful registration
+                setTimeout(() => {
+                    window.location.href = 'index.html';
+                }, 1500);
+                
+            } catch (error) {
+                console.error('Registration error:', error);
+                let errorMessage = 'Registration failed. Please try again.';
+                
+                // Handle specific error cases
+                switch (error.code) {
+                    case 'auth/email-already-in-use':
+                        errorMessage = 'This email is already registered. Please sign in instead.';
+                        break;
+                    case 'auth/invalid-email':
+                        errorMessage = 'Please enter a valid email address.';
+                        break;
+                    case 'auth/weak-password':
+                        errorMessage = 'Password is too weak. Please choose a stronger password.';
+                        break;
+                }
+                
+                showError(errorMessage, true);
+            }
+        });
+        
+        // Toggle between login and register forms
+        showRegisterLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            showForm('registerForm');
+        });
+        
+        showLoginLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            showForm('loginForm');
+        });
+        
+        // Show login form by default
+        showForm('loginForm');
+        
+        // Check if user is already logged in
+        auth.onAuthStateChanged((user) => {
+            if (user) {
+                // User is signed in, redirect to index.html
+                window.location.href = 'index.html';
+            }
+        });
+    </script>
+</body>
+</html>
