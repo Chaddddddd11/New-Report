@@ -4,6 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - DHVSU Scheduling System</title>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -101,13 +105,48 @@
             cursor: pointer;
             width: 100%;
             transition: all 0.3s ease;
-            margin-top: 10px;
+            margin: 10px 0;
+            text-align: center;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
         }
 
         .btn:hover {
             transform: translateY(-2px);
             box-shadow: 0 6px 16px rgba(97, 0, 0, 0.2);
             background: linear-gradient(135deg, #4d0000, #6a0808);
+        }
+        
+        .btn-outline {
+            background: transparent;
+            border: 2px solid var(--primary-color);
+            color: var(--primary-color);
+            transition: all 0.3s ease;
+        }
+        
+        .btn-outline:hover {
+            background: var(--primary-color);
+            color: white;
+        }
+        
+        .divider {
+            display: flex;
+            align-items: center;
+            margin: 20px 0;
+            color: #6b7280;
+            font-size: 14px;
+        }
+        
+        .divider::before,
+        .divider::after {
+            content: "";
+            flex: 1;
+            height: 1px;
+            background-color: #e1e4e8;
+            margin: 0 10px;
         }
 
         .error-message {
@@ -122,6 +161,22 @@
             text-align: left;
         }
 
+        .spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+            margin-right: 8px;
+            vertical-align: middle;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
         .footer {
             margin-top: 30px;
             color: #6b7280;
@@ -158,7 +213,15 @@
                 <input type="password" id="password" class="form-control" placeholder="Enter your password" required>
             </div>
             
-            <button type="submit" class="btn">Sign In</button>
+            <button type="submit" class="btn" id="loginBtn">
+                <i class="fas fa-sign-in-alt"></i> Sign In
+            </button>
+            
+            <div class="divider">OR</div>
+            
+            <a href="create.html" class="btn btn-outline">
+                <i class="fas fa-user-plus"></i> Create New Account
+            </a>
         </form>
         
         <div class="footer">
@@ -167,27 +230,68 @@
     </div>
 
     <script>
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyDBu7-vOFmS62IaGD8-8zb6TH0a1mHYNpI",
+            authDomain: "dhvsu-faculty-scheduling.firebaseapp.com",
+            projectId: "dhvsu-faculty-scheduling",
+            storageBucket: "dhvsu-faculty-scheduling.appspot.com",
+            messagingSenderId: "1075180921702",
+            appId: "1:1075180921702:web:a0320fa286c684511cdea7",
+            measurementId: "G-EP4FZ04FQT"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        // Handle form submission
         document.getElementById('loginForm').addEventListener('submit', function(e) {
             e.preventDefault();
             
             const username = document.getElementById('username').value.trim();
             const password = document.getElementById('password').value;
             const errorMessage = document.getElementById('errorMessage');
+            const loginBtn = document.getElementById('loginBtn');
             
-            // Simple validation (replace with your actual authentication logic)
-            if (username === 'admin' && password === 'admin') {
-                // Successful login - redirect to home.html
-                window.location.href = 'home.html';
-            } else {
-                // Show error message
-                errorMessage.textContent = 'Invalid username or password. Please try again.';
-                errorMessage.style.display = 'block';
-                
-                // Hide error message after 3 seconds
-                setTimeout(() => {
-                    errorMessage.style.display = 'none';
-                }, 3000);
-            }
+            // Show loading state
+            loginBtn.disabled = true;
+            loginBtn.innerHTML = '<span class="spinner">Signing in...</span>';
+            
+            // Sign in with email and password
+            // Note: In a real app, you would use the user's email, but since you want username only,
+            // we'll append a domain. Replace @example.com with your actual domain or adjust as needed.
+            const email = `${username}@dhvsu.edu.ph`;
+            
+            auth.signInWithEmailAndPassword(email, password)
+                .then((userCredential) => {
+                    // Signed in successfully
+                    window.location.href = 'home.html';
+                })
+                .catch((error) => {
+                    // Handle errors
+                    let errorMessage = 'Invalid username or password. Please try again.';
+                    if (error.code === 'auth/user-not-found') {
+                        errorMessage = 'No account found with this username.';
+                    } else if (error.code === 'auth/wrong-password') {
+                        errorMessage = 'Incorrect password. Please try again.';
+                    } else if (error.code === 'auth/too-many-requests') {
+                        errorMessage = 'Too many failed attempts. Please try again later.';
+                    }
+                    
+                    errorMessage.textContent = errorMessage;
+                    errorMessage.style.display = 'block';
+                    
+                    // Reset button state
+                    loginBtn.disabled = false;
+                    loginBtn.textContent = 'Sign In';
+                    
+                    // Hide error message after 5 seconds
+                    setTimeout(() => {
+                        errorMessage.style.display = 'none';
+                    }, 5000);
+                });
         });
         
         // Auto-hide error message when user starts typing
@@ -197,6 +301,14 @@
         
         document.getElementById('password').addEventListener('input', function() {
             document.getElementById('errorMessage').style.display = 'none';
+        });
+        
+        // Check if user is already logged in
+        auth.onAuthStateChanged((user) => {
+            if (user) {
+                // User is signed in, redirect to home
+                window.location.href = 'home.html';
+            }
         });
     </script>
 </body>
