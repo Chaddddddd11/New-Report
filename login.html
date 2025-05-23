@@ -462,23 +462,29 @@
             
             try {
                 // Create user with email and password
+                console.log('Creating user with email:', email);
                 const userCredential = await auth.createUserWithEmailAndPassword(email, password);
                 const user = userCredential.user;
+                console.log('User created:', user.uid);
                 
                 // Get department
                 const department = document.getElementById('regDepartment').value;
                 
                 // Save additional user data to Firestore
-                await db.collection('users').doc(user.uid).set({
+                console.log('Saving user data to Firestore');
+                const userData = {
                     uid: user.uid,
                     email: email,
                     displayName: name,
                     department: department,
                     role: 'user', // Default role
                     isActive: true,
-                    createdAt: new Date().toISOString(),
-                    lastLogin: new Date().toISOString()
-                });
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    lastLogin: firebase.firestore.FieldValue.serverTimestamp()
+                };
+                console.log('User data:', userData);
+                await db.collection('users').doc(user.uid).set(userData);
+                console.log('User data saved to Firestore');
                 
                 // Update user profile with display name
                 await user.updateProfile({
