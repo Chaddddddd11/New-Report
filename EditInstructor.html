@@ -315,8 +315,8 @@
             <div class="btn-container">
                 <a href="InstructorList.html" class="btn btn-secondary">← Back to List</a>
                 <div>
-                    <button id="deleteBtn" class="btn btn-danger">Delete Instructor</button>
-                    <button id="updateBtn" class="btn btn-primary">Update Instructor</button>
+                    <button type="button" id="deleteBtn" class="btn btn-danger">Delete Instructor</button>
+                    <button type="submit" id="submitBtn" class="btn btn-primary">Update Instructor</button>
                 </div>
             </div>
         </div>
@@ -713,11 +713,15 @@
         async function handleFormSubmit(e) {
             e.preventDefault();
             
+            const { 
+                nameInput, subjectInput, courseSelect, yearSelect, sectionSelect, 
+                daySelect, timeSelect, roomSelect, submitBtn 
+            } = window.formElements || {};
+            
             if (!validateForm()) {
                 return;
             }
             
-            const submitBtn = document.getElementById('submitBtn');
             const originalBtnText = submitBtn.textContent;
             
             try {
@@ -761,8 +765,10 @@
             } catch (error) {
                 console.error('Error updating instructor:', error);
                 showError('Failed to update instructor: ' + (error.message || 'Unknown error'));
-                submitBtn.disabled = false;
-                submitBtn.textContent = originalBtnText;
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = originalBtnText;
+                }
             }
         }
 
@@ -822,50 +828,63 @@
 
         // Validate form
         function validateForm() {
+            const { 
+                nameInput, subjectInput, courseSelect, yearSelect, sectionSelect, 
+                daySelect, timeSelect, roomSelect, errorMessage 
+            } = window.formElements || {};
+            
+            if (!errorMessage) return false;
+            
             // Reset previous errors
             errorMessage.style.display = 'none';
             
             // Basic validation
-            if (!nameInput.value.trim()) {
+            if (!nameInput || !nameInput.value.trim()) {
                 showError('Please enter instructor name');
-                nameInput.focus();
+                nameInput?.focus();
                 return false;
             }
 
-            if (!subjectInput.value.trim()) {
+            if (!subjectInput || !subjectInput.value.trim()) {
                 showError('Please enter subject');
-                subjectInput.focus();
+                subjectInput?.focus();
                 return false;
             }
 
             // Hidden fields validation
             if (!courseSelect || !courseSelect.value) {
                 showError('Please select a course');
+                courseSelect?.focus();
                 return false;
             }
 
             if (!yearSelect || !yearSelect.value) {
                 showError('Please select year level');
+                yearSelect?.focus();
                 return false;
             }
 
             if (!sectionSelect || !sectionSelect.value) {
                 showError('Please select a section');
+                sectionSelect?.focus();
                 return false;
             }
 
             if (!daySelect || !daySelect.value) {
                 showError('Please select a day');
+                daySelect?.focus();
                 return false;
             }
 
             if (!timeSelect || !timeSelect.value) {
                 showError('Please select a class time');
+                timeSelect?.focus();
                 return false;
             }
 
             if (!roomSelect || !roomSelect.value) {
                 showError('Please select a room');
+                roomSelect?.focus();
                 return false;
             }
 
@@ -892,11 +911,31 @@
 
         // Initialize the page
         document.addEventListener('DOMContentLoaded', () => {
+            // Get form elements
+            const form = document.getElementById('instructorForm');
+            const nameInput = document.getElementById('name');
+            const subjectInput = document.getElementById('subject');
+            const courseSelect = document.getElementById('course');
+            const yearSelect = document.getElementById('year');
+            const sectionSelect = document.getElementById('section');
+            const daySelect = document.getElementById('day');
+            const timeSelect = document.getElementById('time');
+            const roomSelect = document.getElementById('room');
+            const deleteBtn = document.getElementById('deleteBtn');
+            const submitBtn = document.getElementById('submitBtn');
+            const errorMessage = document.getElementById('errorMessage');
+            
             // Load instructor data
             loadInstructorData();
             
             // Add form submit handler
             form.addEventListener('submit', handleFormSubmit);
+            
+            // Add click handler for submit button (as a fallback)
+            submitBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                handleFormSubmit(e);
+            });
             
             // Initialize form validation
             [nameInput, subjectInput, courseSelect, yearSelect, sectionSelect, daySelect, timeSelect, roomSelect].forEach(field => {
@@ -905,6 +944,13 @@
             
             // Add delete button event listener
             deleteBtn.addEventListener('click', deleteInstructor);
+            
+            // Make form elements available globally for other functions
+            window.formElements = {
+                form, nameInput, subjectInput, courseSelect, yearSelect, 
+                sectionSelect, daySelect, timeSelect, roomSelect, 
+                deleteBtn, submitBtn, errorMessage
+            };
         });
     </script>
 </body>
