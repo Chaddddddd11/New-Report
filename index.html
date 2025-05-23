@@ -209,19 +209,16 @@
   </style>
 </head>
 <body>
-  <header>
-    <div class="header-content">
-      <div class="logo">
-        <img src="https://media.assettype.com/sunstar/2025-02-04/7x1wu7dq/DHVSU.jpg" alt="DHVSU Logo" style="height: 50px;">
-        <h1>DHVSU Faculty Scheduling</h1>
-      </div>
-      <div class="user-nav" id="userNav">
-        <a href="Instructor.html">Enroll Instructor</a>
-        <a href="Room.html">Room Registration</a>
-        <div class="user-dropdown">
-          <button class="user-button" id="userButton">
+  <div class="container">
+    <div class="header-container">
+      <a href="Instructor.html" class="nav-button">Enroll Instructor</a>
+      <h2>DHVSU Automatic Scheduling System</h2>
+      <div>
+        <a href="Room.html" class="nav-button" style="margin-right: 10px;">Room Register</a>
+        <div class="user-dropdown" style="display: inline-block;">
+          <button class="user-button" id="userButton" style="margin-left: 10px;">
             <span class="user-avatar" id="userAvatar">?</span>
-            <span class="user-name" id="userName">Loading...</span>
+            <span class="user-name" id="userName">Account</span>
             <span class="dropdown-arrow">▼</span>
           </button>
           <div class="dropdown-menu" id="dropdownMenu">
@@ -229,18 +226,6 @@
             <a href="#" id="btnLogout"><i class="fas fa-sign-out-alt"></i> Sign Out</a>
           </div>
         </div>
-      </div>
-    </div>
-  </header>
-  
-  <div class="container">
-    <div class="header-container">
-      <div class="logo-container left">
-        <img src="https://media.assettype.com/sunstar/2025-02-04/7x1wu7dq/DHVSU.jpg?w=1200&h=675&auto=format%2Ccompress&fit=max&enlarge=true" alt="DHVSU Logo" class="logo">
-      </div>
-      <h2>DHVSU Automatic Scheduling System</h2>
-      <div class="logo-container right">
-        <img src="https://dhvsu.edu.ph/images/college-of-business-studies/01202025%20-%20College%20of%20Business%20Studies%20LOGO%20-%20Samantha%20F.%20Batalla.png" alt="DHVSU CBS Logo" class="logo">
       </div>
     </div>
     
@@ -302,6 +287,7 @@
       limit,
       orderBy
     } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
     // Your web app's Firebase configuration
     const firebaseConfig = {
@@ -690,8 +676,18 @@
     }
 
     // Initialize the page
-    document.addEventListener('DOMContentLoaded', () => {
+    document.addEventListener('DOMContentLoaded', async () => {
       console.log('DOM fully loaded, initializing application...');
+      
+      // Check authentication
+      try {
+        await Auth.checkAuth();
+        console.log('User is authenticated');
+        // Continue with page initialization
+      } catch (error) {
+        console.log('User is not authenticated, redirecting to login...');
+        return;
+      }
       
       // Add event listeners for the dropdowns
       courseSelect.addEventListener('change', () => {
