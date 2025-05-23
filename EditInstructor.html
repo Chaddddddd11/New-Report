@@ -313,7 +313,7 @@
         const yearSelect = document.getElementById('year');
         const sectionSelect = document.getElementById('section');
         const daySelect = document.getElementById('day');
-        const timeInput = document.getElementById('time');
+        const timeSelect = document.getElementById('time');
         const roomSelect = document.getElementById('room');
         const updateBtn = document.getElementById('updateBtn');
         const deleteBtn = document.getElementById('deleteBtn');
@@ -337,7 +337,7 @@
             }
 
             try {
-                const doc = await db.collection('Instructors').doc(instructorId).get();
+                const doc = await db.collection('instructors').doc(instructorId).get();
                 
                 if (doc.exists) {
                     currentInstructor = {
@@ -345,33 +345,38 @@
                         ...doc.data()
                     };
                     
-                    // Only populate name and subject fields
+                    // Populate name and subject fields
                     nameInput.value = currentInstructor.name || '';
                     subjectInput.value = currentInstructor.subject || '';
                     
-                    // Store other fields in hidden inputs
-                    if (currentInstructor.course) document.getElementById('course').value = currentInstructor.course;
-                    if (currentInstructor.year) document.getElementById('year').value = currentInstructor.year;
-                    if (currentInstructor.section) document.getElementById('section').value = currentInstructor.section;
-                    if (currentInstructor.day) document.getElementById('day').value = currentInstructor.day;
-                    if (currentInstructor.time) document.getElementById('time').value = currentInstructor.time;
-                    if (currentInstructor.roomId) document.getElementById('room').value = currentInstructor.roomId;
+                    // Set other fields in hidden inputs
+                    if (currentInstructor.course) courseSelect.value = currentInstructor.course;
+                    if (currentInstructor.year) yearSelect.value = currentInstructor.year.toString();
+                    if (currentInstructor.section) sectionSelect.value = currentInstructor.section;
+                    if (currentInstructor.day) daySelect.value = currentInstructor.day;
+                    if (currentInstructor.time) timeSelect.value = currentInstructor.time;
                     
+                    // Load rooms and select the correct one
+                    await loadRooms(currentInstructor.roomId);
                 } else {
                     showError('Instructor not found');
                     disableForm();
                 }
-
             } catch (error) {
                 console.error('Error loading instructor:', error);
-                showError('Failed to load instructor data: ' + error.message);
+                showError('Failed to load instructor data: ' + (error.message || 'Unknown error'));
+                disableForm();
             }
         }
 
         // Load available rooms
         async function loadRooms(selectedRoomId = '') {
             try {
+                // Show loading state
                 roomSelect.innerHTML = '<option value="">Loading rooms...</option>';
+                roomSelect.disabled = true;
+                
+                // Fetch rooms from Firestore
                 const snapshot = await db.collection('rooms').get();
 
                 if (snapshot.empty) {
@@ -379,39 +384,55 @@
                     return;
                 }
 
+                // Build room options
                 let options = '<option value="">Select a room</option>';
                 snapshot.forEach(doc => {
                     const room = doc.data();
                     const selected = doc.id === selectedRoomId ? 'selected' : '';
-                    options += `<option value="${doc.id}" ${selected}>${room.roomName || 'Unnamed Room'}</option>`;
+                    const roomName = room.roomName || room.name || 'Unnamed Room';
+                    options += `<option value="${doc.id}" ${selected}>${roomName}</option>`;
                 });
 
+                // Update the select element
                 roomSelect.innerHTML = options;
-
+                roomSelect.disabled = false;
+                
+                // If we have a selected room, ensure it's selected
+                if (selectedRoomId) {
+                    roomSelect.value = selectedRoomId;
+                }
+                
             } catch (error) {
                 console.error('Error loading rooms:', error);
-                showError('Failed to load rooms');
+                showError('Failed to load rooms: ' + (error.message || 'Unknown error'));
                 roomSelect.innerHTML = '<option value="">Error loading rooms</option>';
+                roomSelect.disabled = false;
             }
         }
 
         // Update instructor
         async function updateInstructor() {
-            if (!validateForm()) return;
+            if (!validateForm()) {
+                return;
+            }
 
             try {
                 updateBtn.disabled = true;
                 updateBtn.textContent = 'Updating...';
 
+                // Get room name for display
+                const roomName = roomSelect.options[roomSelect.selectedIndex]?.text || 'Unknown Room';
+
                 const instructorData = {
                     name: nameInput.value.trim(),
                     subject: subjectInput.value.trim(),
-                    course: document.getElementById('course').value,
-                    year: document.getElementById('year').value,
-                    section: document.getElementById('section').value,
-                    day: document.getElementById('day').value,
-                    time: document.getElementById('time').value.trim(),
-                    roomId: document.getElementById('room').value,
+                    course: courseSelect.value,
+                    year: yearSelect.value,
+                    section: sectionSelect.value,
+                    day: daySelect.value,
+                    time: timeSelect.value,
+                    roomId: roomSelect.value,
+                    roomName: roomName,
                     updatedAt: new Date().toISOString()
                 };
 
@@ -451,6 +472,9 @@
 
         // Validate form
         function validateForm() {
+            // Reset previous errors
+            errorMessage.style.display = 'none';
+            
             // Basic validation
             if (!nameInput.value.trim()) {
                 showError('Please enter instructor name');
@@ -464,50 +488,38 @@
                 return false;
             }
 
-            if (!courseSelect.value) {
+            // Hidden fields validation
+            if (!courseSelect || !courseSelect.value) {
                 showError('Please select a course');
-                courseSelect.focus();
                 return false;
             }
 
-            if (!yearSelect.value) {
+            if (!yearSelect || !yearSelect.value) {
                 showError('Please select year level');
-                yearSelect.focus();
                 return false;
             }
 
-            if (!sectionSelect.value) {
+            if (!sectionSelect || !sectionSelect.value) {
                 showError('Please select a section');
-                sectionSelect.focus();
                 return false;
             }
 
-            if (!daySelect.value) {
+            if (!daySelect || !daySelect.value) {
                 showError('Please select a day');
-                daySelect.focus();
                 return false;
             }
 
-            if (!timeInput.value.trim()) {
-                showError('Please enter time');
-                timeInput.focus();
+            if (!timeSelect || !timeSelect.value) {
+                showError('Please select a class time');
                 return false;
             }
 
-            if (!roomSelect.value) {
+            if (!roomSelect || !roomSelect.value) {
                 showError('Please select a room');
-                roomSelect.focus();
                 return false;
             }
 
-            // Time format validation (HH:MM-HH:MM)
-            const timeRegex = /^([01]?[0-9]|2[0-3]):[0-5][0-9]-([01]?[0-9]|2[0-3]):[0-5][0-9]$/;
-            if (!timeRegex.test(timeInput.value.trim())) {
-                showError('Please enter a valid time format (e.g., 7:00-8:00)');
-                timeInput.focus();
-                return false;
-            }
-
+            // Time format validation is not needed since we're using a select
             return true;
         }
 
