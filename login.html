@@ -265,6 +265,38 @@
             display: block;
         }
 
+        .form-container {
+            background: white;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 400px;
+            margin: 0 auto;
+            position: relative;
+            min-height: 400px; /* Ensure consistent height */
+        }
+        
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        #loginForm,
+        #registerForm {
+            display: none;
+        }
+        
+        #loginForm.active,
+        #registerForm.active {
+            display: block;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
         @media (max-width: 480px) {
             .login-container {
                 padding: 30px 20px;
@@ -282,81 +314,82 @@
         <img src="https://media.assettype.com/sunstar/2025-02-04/7x1wu7dq/DHVSU.jpg" alt="DHVSU Logo" class="logo">
         <h1>College of Business Studies<br>Faculty Scheduling System</h1>
         
-        <form id="loginForm">
-            <div class="form-group">
-                <label for="email">Email Address</label>
-                <input type="email" id="email" class="form-control" required>
-            </div>
+        <div class="form-container">
+            <form id="loginForm" class="auth-form">
+                <div class="form-group">
+                    <label for="email">Email Address</label>
+                    <input type="email" id="email" class="form-control" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" class="form-control" required>
+                </div>
+                
+                <div id="errorMessage" class="error-message"></div>
+                <div id="successMessage" class="success-message"></div>
+                
+                <div class="form-group">
+                    <button type="submit" class="btn btn-primary" id="loginButton">
+                        <span class="button-text">Sign In</span>
+                        <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+                    </button>
+                </div>
+                
+                <div class="auth-footer">
+                    <p>Don't have an account? <a href="#" id="showRegister">Create account</a></p>
+                </div>
+            </form>
             
-            <div class="form-group">
-                <label for="password">Password</label>
-                <input type="password" id="password" class="form-control" required>
-            </div>
-            
-            <div id="errorMessage" class="error-message"></div>
-            <div id="successMessage" class="success-message"></div>
-            
-            <div class="form-group">
-                <button type="submit" class="btn btn-primary" id="loginButton">
-                    <span class="button-text">Sign In</span>
-                    <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
-                </button>
-            </div>
-            
-            <div class="auth-footer">
-                <p>Don't have an account? <a href="#" id="showRegister">Create account</a></p>
-            </div>
-        </form>
-        
-        <!-- Registration Form (initially hidden) -->
-        <form id="registerForm" class="auth-form">
-            <h2>Create Account</h2>
-            <p class="form-note">Create your account to get started</p>
-            
-            <div class="form-group">
-                <input type="text" id="regName" placeholder="Full Name" required>
-            </div>
-            
-            <div class="form-group">
-                <input type="email" id="regEmail" placeholder="Email Address" required>
-            </div>
-            
-            <div class="form-group">
-                <select id="regDepartment" class="form-control" required>
-                    <option value="" disabled selected>Select Department</option>
-                    <option value="College of Business and Accountancy">College of Business and Accountancy</option>
-                    <option value="College of Computer Studies">College of Computer Studies</option>
-                    <option value="College of Education">College of Education</option>
-                    <option value="College of Engineering">College of Engineering</option>
-                    <option value="College of Nursing">College of Nursing</option>
-                    <option value="College of Arts and Sciences">College of Arts and Sciences</option>
-                    <option value="College of Criminal Justice Education">College of Criminal Justice Education</option>
-                    <option value="College of Industrial Technology">College of Industrial Technology</option>
-                </select>
-            </div>
-            
-            <div class="form-group">
-                <input type="password" id="regPassword" placeholder="Password (min 6 characters)" required minlength="6">
-            </div>
-            
-            <div class="form-group">
-                <input type="password" id="regConfirmPassword" placeholder="Confirm Password" required>
-            </div>
-            
-            <div id="regErrorMessage" class="error-message"></div>
-            <div id="regSuccessMessage" class="success-message"></div>
-            
-            <div class="form-group">
-                <button type="submit" class="btn btn-primary" id="registerButton">
-                    <span class="button-text">Create Account</span>
-                    <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
-                </button>
-            </div>
-            
-            <div class="auth-footer">
-                <p>Already have an account? <a href="#" id="showLogin">Sign in</a></p>
-            </div>
-        </form>
+            <form id="registerForm" class="auth-form">
+                <h2>Create Account</h2>
+                <p class="form-note">Create your account to get started</p>
+                
+                <div class="form-group">
+                    <input type="text" id="regName" placeholder="Full Name" required>
+                </div>
+                
+                <div class="form-group">
+                    <input type="email" id="regEmail" placeholder="Email Address" required>
+                </div>
+                
+                <div class="form-group">
+                    <select id="regDepartment" class="form-control" required>
+                        <option value="" disabled selected>Select Department</option>
+                        <option value="College of Business and Accountancy">College of Business and Accountancy</option>
+                        <option value="College of Computer Studies">College of Computer Studies</option>
+                        <option value="College of Education">College of Education</option>
+                        <option value="College of Engineering">College of Engineering</option>
+                        <option value="College of Nursing">College of Nursing</option>
+                        <option value="College of Arts and Sciences">College of Arts and Sciences</option>
+                        <option value="College of Criminal Justice Education">College of Criminal Justice Education</option>
+                        <option value="College of Industrial Technology">College of Industrial Technology</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <input type="password" id="regPassword" placeholder="Password (min 6 characters)" required minlength="6">
+                </div>
+                
+                <div class="form-group">
+                    <input type="password" id="regConfirmPassword" placeholder="Confirm Password" required>
+                </div>
+                
+                <div id="regErrorMessage" class="error-message"></div>
+                <div id="regSuccessMessage" class="success-message"></div>
+                
+                <div class="form-group">
+                    <button type="submit" class="btn btn-primary" id="registerButton">
+                        <span class="button-text">Create Account</span>
+                        <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+                    </button>
+                </div>
+                
+                <div class="auth-footer">
+                    <p>Already have an account? <a href="#" id="showLogin">Sign in</a></p>
+                </div>
+            </form>
+        </div>
     </div>
 
     <!-- Firebase SDK -->
@@ -418,13 +451,22 @@
 
         // Toggle between login and register forms
         function showForm(formId) {
-            document.querySelectorAll('.auth-form').forEach(form => {
+            // Hide all forms and remove active class
+            document.querySelectorAll('form').forEach(form => {
                 form.classList.remove('active');
             });
-            document.getElementById(formId).classList.add('active');
             
-            // Clear any messages when switching forms
+            // Show the selected form with active class
+            const activeForm = document.getElementById(formId);
+            if (activeForm) {
+                activeForm.classList.add('active');
+            }
+            
+            // Clear any messages
             clearMessages();
+            
+            // Scroll to top of form container
+            document.querySelector('.form-container').scrollIntoView({ behavior: 'smooth' });
         }
         
         // Clear all messages
@@ -713,8 +755,26 @@
             showForm('loginForm');
         });
         
-        // Show login form by default
-        showForm('loginForm');
+        // Show login form by default and add active class
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initially show login form
+            document.getElementById('loginForm').classList.add('active');
+            
+            // Set up form toggle links
+            document.querySelector('.toggle-form a').addEventListener('click', function(e) {
+                e.preventDefault();
+                const targetForm = this.getAttribute('data-form');
+                if (targetForm) {
+                    showForm(targetForm);
+                }
+            });
+            
+            // Set up back to login link
+            document.querySelector('.back-to-login').addEventListener('click', function(e) {
+                e.preventDefault();
+                showForm('loginForm');
+            });
+        });
         
         // Check if user is already logged in
         auth.onAuthStateChanged((user) => {
