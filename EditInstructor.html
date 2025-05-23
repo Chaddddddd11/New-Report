@@ -54,6 +54,11 @@
         .logo-container {
             display: flex;
             align-items: center;
+            justify-content: center;
+            width: 120px; /* Fixed width for both containers */
+            height: 120px; /* Fixed height for both containers */
+            padding: 10px;
+            box-sizing: border-box;
             user-select: none;
             -webkit-user-select: none;
             -moz-user-select: none;
@@ -62,9 +67,10 @@
         }
 
         .logo {
-            height: 60px;
+            max-width: 100%;
+            max-height: 100%;
             width: auto;
-            max-width: 100px;
+            height: auto;
             object-fit: contain;
             border-radius: 50%;
             border: 2px solid #4b0404;
