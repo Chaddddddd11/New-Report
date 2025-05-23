@@ -1,799 +1,704 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>DHVSU - Login</title>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DHVSU - Login</title>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --primary-color: #610000;
-            --secondary-color: #800a0acc;
-            --accent-color: #F7B32D;
-            --background-color: #f5f5f5;
-            --text-color: #333;
-            --error-color: #dc3545;
-            --success-color: #28a745;
-        }
+  <title>DHVSU Scheduling System</title>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      background-image: linear-gradient(rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.9)), 
+                        url('https://the-post-assets.sgp1.digitaloceanspaces.com/2023/03/DHVSU_thumbnail.png');
+      background-size: cover;
+      background-position: center;
+      background-attachment: fixed;
+      min-height: 100vh;
+      margin: 0;
+      padding: 20px 0;
+    }
+    
+    .container {
+      background-color: rgba(255, 255, 255, 0.95);
+      border-radius: 8px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      padding: 25px;
+      margin: 20px auto;
+      max-width: 1200px;
+    }
+    
+    :root {
+      --primary-color: #610000;
+      --secondary-color: #800a0acc;
+      --accent-color: #F7B32D;
+      --background-color: #F4F7F6;
+      --text-color: #333;
+    }
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Roboto', sans-serif;
-        }
+    body {
+      font-family: 'Roboto', Arial, sans-serif;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+      background-color: var(--background-color);
+    }
 
-        body {
-            background-color: var(--background-color);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            padding: 20px;
-        }
+    .header-container {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 20px;
+      margin-bottom: 20px;
+      position: relative;
+    }
+    
+    .logo-container {
+      display: flex;
+      align-items: center;
+      user-select: none;
+      -webkit-user-select: none;
+      -moz-user-select: none;
+      -ms-user-select: none;
+      pointer-events: none;
+    }
+    
+    .logo-container img {
+      pointer-events: none;
+    }
+    
+    .header-container h2 {
+      margin: 0;
+      text-align: center;
+      flex-grow: 1;
+    }
+    
+    .logo {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      border: 3px solid #4b0404;
+      box-shadow: 0 2px 4px rgba(206, 5, 5, 0.2);
+      object-fit: cover;
+    }
+    
+    .nav-buttons {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 20px;
+    }
 
-        .login-container {
-            background: white;
-            border-radius: 16px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
-            width: 100%;
-            max-width: 480px;
-            padding: 48px 40px;
-            text-align: left;
-            transition: all 0.3s ease;
-            border: 1px solid rgba(0,0,0,0.05);
-        }
-        
-        .login-container:hover {
-            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.12);
-            transform: translateY(-2px);
-        }
+    .nav-button {
+      padding: 10px 20px;
+      background-color: var(--primary-color);
+      color: white;
+      text-decoration: none;
+      border-radius: 4px;
+      font-weight: 500;
+      transition: background-color 0.3s ease;
+    }
 
-        .logo {
-            max-width: 120px;
-            margin: 0 auto 24px;
-            display: block;
-            transition: transform 0.3s ease;
-        }
-        
-        .logo:hover {
-            transform: scale(1.05);
-        }
+    .nav-button:hover {
+      background-color: var(--secondary-color);
+    }
 
-        h1 {
-            color: #1f2937;
-            margin: 0 0 32px 0;
-            font-size: 24px;
-            font-weight: 700;
-            text-align: center;
-            line-height: 1.3;
-        }
-        
-        h2 {
-            color: #111827;
-            margin: 0 0 8px 0;
-            font-size: 22px;
-            font-weight: 700;
-        }
-        
-        .form-note {
-            color: #6b7280;
-            margin: 0 0 24px 0;
-            font-size: 14px;
-            text-align: center;
-        }
+    h2 {
+      background-color: var(--primary-color);
+      color: white;
+      text-align: center;
+      padding: 15px;
+      margin-bottom: 20px;
+      border-radius: 5px;
+    }
 
-        .form-group {
-            margin-bottom: 24px;
-            position: relative;
-        }
-        
-        .form-group:last-child {
-            margin-bottom: 0;
-        }
+    select {
+      margin: 10px 10px 10px 0;
+      padding: 10px;
+      width: 250px;
+      border: 1px solid var(--secondary-color);
+      border-radius: 4px;
+      background-color: rgb(226, 149, 4);
+      transition: all 0.3s ease;
+    }
 
-        .form-group label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: 500;
-            color: var(--text-color);
-        }
+    select:focus {
+      outline: none;
+      border-color: var(--accent-color);
+      box-shadow: 0 0 5px rgba(247, 179, 45, 0.5);
+    }
 
-        .form-control {
-            width: 100%;
-            padding: 14px 16px;
-            border: 2px solid #e1e4e8;
-            border-radius: 8px;
-            font-size: 15px;
-            transition: all 0.3s ease;
-            background-color: #f8f9fa;
-            color: #333;
-        }
-        
-        .form-control:focus {
-            border-color: #610000;
-            background-color: white;
-            box-shadow: 0 0 0 3px rgba(97, 0, 0, 0.1);
-            outline: none;
-        }
-        
-        .form-control::placeholder {
-            color: #9ca3af;
-            opacity: 1;
-        }
+    .disabled {
+      background-color: #cccccc;
+      cursor: not-allowed;
+    }
 
-        .form-control:focus {
-            outline: none;
-            border-color: var(--primary-color);
-            box-shadow: 0 0 0 2px rgba(97, 0, 0, 0.2);
-        }
+    #scheduleTable {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 15px;
+      box-shadow: 0 2px 3px rgba(0,0,0,0.1);
+      background-color: rgb(218, 150, 6);
+    }
 
-        .btn {
-            display: inline-block;
-            background-color: var(--primary-color);
-            color: white;
-            border: none;
-            padding: 12px 24px;
-            border-radius: 4px;
-            font-size: 16px;
-            font-weight: 500;
-            cursor: pointer;
-            width: 100%;
-            transition: background-color 0.3s;
-        }
+    #scheduleTable th, #scheduleTable td {
+      border: 1px solid #ddd;
+      padding: 12px;
+      text-align: center;
+    }
 
-        .btn-primary {
-            background: linear-gradient(135deg, #610000, #800a0a);
-            color: white;
-            border: none;
-            padding: 14px 24px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 15px;
-            font-weight: 500;
-            transition: all 0.3s ease;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            width: 100%;
-            letter-spacing: 0.5px;
-            text-transform: uppercase;
-            box-shadow: 0 4px 12px rgba(97, 0, 0, 0.15);
-        }
-        
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 16px rgba(97, 0, 0, 0.2);
-            background: linear-gradient(135deg, #4d0000, #6a0808);
-        }
-        
-        .btn-primary:active {
-            transform: translateY(0);
-            box-shadow: 0 2px 8px rgba(97, 0, 0, 0.15);
-        }
-        
-        .btn-primary:disabled {
-            opacity: 0.7;
-            cursor: not-allowed;
-        }
-        
-        .spinner-border {
-            width: 1rem;
-            height: 1rem;
-            border-width: 0.15em;
-        }
-        
-        .d-none {
-            display: none !important;
-        }
+    #scheduleTable th {
+      background-color: var(--primary-color);
+      color: white;
+      font-weight: bold;
+    }
 
-        .btn:hover {
-            background-color: var(--secondary-color);
-        }
+    #scheduleTable tr:nth-child(even) {
+      background-color: #f9f9f9;
+    }
 
-        .error-message {
-            color: #b91c1c;
-            background-color: #fef2f2;
-            border: 1px solid #fecaca;
-            padding: 12px 16px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            display: none;
-            font-size: 14px;
-            animation: fadeIn 0.3s ease;
-        }
-        
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(-10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
+    #scheduleTable tr:hover {
+      background-color: #f1f1f1;
+    }
 
-        .success-message {
-            color: var(--success-color);
-            margin-top: 10px;
-            font-size: 14px;
-            display: none;
-        }
+    .schedule-entry {
+      padding: 8px;
+      border-radius: 4px;
+      background-color: var(--secondary-color);
+      color: white;
+    }
 
-        .auth-footer {
-            margin-top: 24px;
-            font-size: 14px;
-            text-align: center;
-            color: #6b7280;
-        }
-        
-        .auth-footer a {
-            color: #610000;
-            text-decoration: none;
-            font-weight: 500;
-            position: relative;
-            transition: color 0.3s ease;
-        }
-        
-        .auth-footer a::after {
-            content: '';
-            position: absolute;
-            width: 100%;
-            height: 2px;
-            bottom: -2px;
-            left: 0;
-            background-color: #610000;
-            transform: scaleX(0);
-            transform-origin: bottom right;
-            transition: transform 0.3s ease;
-        }
-        
-        .auth-footer a:hover {
-            color: #4a0000;
-        }
-        
-        .auth-footer a:hover::after {
-            transform: scaleX(1);
-            transform-origin: bottom left;
-        }
-        
-        .auth-footer a:hover {
-            text-decoration: underline;
-        }
-        
-        .auth-form {
-            display: none;
-        }
-        
-        .auth-form.active {
-            display: block;
-        }
+    .schedule-entry .subject {
+      font-weight: 500;
+      margin-bottom: 5px;
+    }
 
-        .form-container {
-            background: white;
-            padding: 2rem;
-            border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            width: 100%;
-            max-width: 400px;
-            margin: 0 auto;
-            position: relative;
-            min-height: 400px; /* Ensure consistent height */
-        }
-        
-        .form-group {
-            margin-bottom: 1.5rem;
-        }
-        
-        #loginForm,
-        #registerForm {
-            display: none;
-        }
-        
-        #loginForm.active,
-        #registerForm.active {
-            display: block;
-            animation: fadeIn 0.3s ease-in-out;
-        }
-        
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
+    .schedule-entry .instructor {
+      font-size: 0.9em;
+      margin-bottom: 3px;
+    }
 
-        @media (max-width: 480px) {
-            .login-container {
-                padding: 30px 20px;
-            }
-            
-            h1 {
-                font-size: 20px;
-                margin-bottom: 20px;
-            }
-        }
-    </style>
+    .schedule-entry .room {
+      font-size: 0.8em;
+      opacity: 0.9;
+    }
+
+    .filters {
+      display: flex;
+      gap: 15px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .student-capacity {
+      padding: 10px;
+      min-width: 120px;
+      border: 1px solid var(--secondary-color);
+      border-radius: 4px;
+      background-color: #f9f9f9;
+      text-align: center;
+    }
+
+    @media (max-width: 768px) {
+      .filters {
+        flex-direction: column;
+        gap: 10px;
+      }
+      
+      select {
+        width: 100%;
+        margin: 5px 0;
+      }
+    }
+  </style>
 </head>
 <body>
-    <div class="login-container">
-        <img src="https://media.assettype.com/sunstar/2025-02-04/7x1wu7dq/DHVSU.jpg" alt="DHVSU Logo" class="logo">
-        <h1>College of Business Studies<br>Faculty Scheduling System</h1>
-        
-        <div class="form-container">
-            <form id="loginForm" class="auth-form">
-                <div class="form-group">
-                    <label for="email">Email Address</label>
-                    <input type="email" id="email" class="form-control" required>
-                </div>
-                
-                <div class="form-group">
-                    <label for="password">Password</label>
-                    <input type="password" id="password" class="form-control" required>
-                </div>
-                
-                <div id="errorMessage" class="error-message"></div>
-                <div id="successMessage" class="success-message"></div>
-                
-                <div class="form-group">
-                    <button type="submit" class="btn btn-primary" id="loginButton">
-                        <span class="button-text">Sign In</span>
-                        <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
-                    </button>
-                </div>
-                
-                <div class="auth-footer">
-                    <p>Don't have an account? <a href="#" id="showRegister">Create account</a></p>
-                </div>
-            </form>
-            
-            <form id="registerForm" class="auth-form">
-                <h2>Create Account</h2>
-                <p class="form-note">Create your account to get started</p>
-                
-                <div class="form-group">
-                    <input type="text" id="regName" placeholder="Full Name" required>
-                </div>
-                
-                <div class="form-group">
-                    <input type="email" id="regEmail" placeholder="Email Address" required>
-                </div>
-                
-                <div class="form-group">
-                    <select id="regDepartment" class="form-control" required>
-                        <option value="" disabled selected>Select Department</option>
-                        <option value="College of Business and Accountancy">College of Business and Accountancy</option>
-                        <option value="College of Computer Studies">College of Computer Studies</option>
-                        <option value="College of Education">College of Education</option>
-                        <option value="College of Engineering">College of Engineering</option>
-                        <option value="College of Nursing">College of Nursing</option>
-                        <option value="College of Arts and Sciences">College of Arts and Sciences</option>
-                        <option value="College of Criminal Justice Education">College of Criminal Justice Education</option>
-                        <option value="College of Industrial Technology">College of Industrial Technology</option>
-                    </select>
-                </div>
-                
-                <div class="form-group">
-                    <input type="password" id="regPassword" placeholder="Password (min 6 characters)" required minlength="6">
-                </div>
-                
-                <div class="form-group">
-                    <input type="password" id="regConfirmPassword" placeholder="Confirm Password" required>
-                </div>
-                
-                <div id="regErrorMessage" class="error-message"></div>
-                <div id="regSuccessMessage" class="success-message"></div>
-                
-                <div class="form-group">
-                    <button type="submit" class="btn btn-primary" id="registerButton">
-                        <span class="button-text">Create Account</span>
-                        <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
-                    </button>
-                </div>
-                
-                <div class="auth-footer">
-                    <p>Already have an account? <a href="#" id="showLogin">Sign in</a></p>
-                </div>
-            </form>
-        </div>
+  <div class="nav-buttons">
+    <a href="Instructor.html" class="nav-button">Enroll Instructor</a>
+    <a href="Room.html" class="nav-button">Room Registration</a>
+  </div>
+  
+  <div class="container">
+    <div class="header-container">
+      <div class="logo-container left">
+        <img src="https://media.assettype.com/sunstar/2025-02-04/7x1wu7dq/DHVSU.jpg?w=1200&h=675&auto=format%2Ccompress&fit=max&enlarge=true" alt="DHVSU Logo" class="logo">
+      </div>
+      <h2>DHVSU Automatic Scheduling System</h2>
+      <div class="logo-container right">
+        <img src="https://dhvsu.edu.ph/images/college-of-business-studies/01202025%20-%20College%20of%20Business%20Studies%20LOGO%20-%20Samantha%20F.%20Batalla.png" alt="DHVSU CBS Logo" class="logo">
+      </div>
     </div>
-
-    <!-- Firebase SDK -->
-    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-analytics-compat.js"></script>
     
-    <!-- Firebase SDK -->
-    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+    <!-- Your HTML content here -->
+    <div class="filters">
+      <select id="courseSelect">
+        <option value="">Select Course</option>
+        <option value="BSA">BSA</option>
+        <option value="BSAIS">BSAIS</option>
+        <option value="MSMarketing">MS Marketing</option>
+        <option value="BSE">BSE</option>
+        <option value="BSPublicAdministration">BS Public Administration</option>
+      </select>
+      
+      <select id="yearSelect" disabled>
+        <option value="">Select Year</option>
+      </select>
+      
+      <select id="sectionSelect" disabled>
+        <option value="">Select Section</option>
+      </select>
+      
+      <div id="studentCapacity" class="student-capacity">
+        Capacity: -
+      </div>
+    </div>
     
-    <script>
-        // Firebase configuration
-        const firebaseConfig = {
-            apiKey: "AIzaSyDBu7-vOFmS62IaGD8-8zb6TH0a1mHYNpI",
-            authDomain: "dhvsu-faculty-scheduling.firebaseapp.com",
-            projectId: "dhvsu-faculty-scheduling",
-            storageBucket: "dhvsu-faculty-scheduling.appspot.com",
-            messagingSenderId: "1075180921702",
-            appId: "1:1075180921702:web:a0320fa286c684511cdea7",
-            measurementId: "G-EP4FZ04FQT"
-        };
+    <div class="schedule-container">
+      <table id="scheduleTable">
+        <thead>
+          <tr>
+            <th>Time</th>
+            <th>Monday</th>
+            <th>Tuesday</th>
+            <th>Wednesday</th>
+            <th>Thursday</th>
+            <th>Friday</th>
+            <th>Saturday</th>
+          </tr>
+        </thead>
+        <tbody id="scheduleBody">
+          <!-- Schedule will be populated here -->
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Firebase and other scripts -->
+  <script type="module">
+    // Import the functions you need from the SDKs you need
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { 
+      getFirestore, 
+      collection, 
+      onSnapshot, 
+      query, 
+      where, 
+      getDocs,
+      limit,
+      orderBy
+    } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+    // Your web app's Firebase configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyDeqxzp_-kKjM3hPr6CLGfTn38e4swSKbo",
+      authDomain: "room-management-system-8e899.firebaseapp.com",
+      projectId: "room-management-system-8e899",
+      storageBucket: "room-management-system-8e899.firebasestorage.app",
+      messagingSenderId: "667821278853",
+      appId: "1:667821278853:web:a3a80c985073772670cbec"
+    };
+
+    // Initialize Firebase
+    let app;
+    let db;
+    let instructorsCollectionRef;
+    let allInstructorsData = [];
+    
+    try {
+      console.log('Initializing Firebase with config:', firebaseConfig);
+      app = initializeApp(firebaseConfig);
+      db = getFirestore(app);
+      
+      // Make db available globally for debugging
+      window.db = db;
+      
+      // Collection reference with correct case sensitivity
+      instructorsCollectionRef = collection(db, 'Instructors');
+      window.instructorsCollectionRef = instructorsCollectionRef;
+      
+      window.firebaseInitialized = true;
+      console.log('Firebase initialized successfully');
+      
+      // Set up the real-time listener
+      setupFirebaseListener();
+      
+    } catch (error) {
+      console.error('Failed to initialize Firebase:', error);
+      alert('Failed to initialize Firebase. Please check the console for details.');
+    }
+
+    // DOM Elements
+    const courseSelect = document.getElementById('courseSelect');
+    const yearSelect = document.getElementById('yearSelect');
+    const sectionSelect = document.getElementById('sectionSelect');
+    const studentCapacity = document.getElementById('studentCapacity');
+    const scheduleBody = document.getElementById('scheduleBody');
+    
+    // Student capacity data
+    const studentCapacityMap = {
+      'BSA': {
+        '1': { 'A': 30, 'B': 30, 'C': 30, 'D': 30 },
+        '2': { 'A': 25, 'B': 25, 'C': 25, 'D': 25 },
+        '3': { 'A': 20, 'B': 20, 'C': 20, 'D': 20 },
+        '4': { 'A': 15, 'B': 15, 'C': 15, 'D': 15 }
+      },
+      'BSAIS': {
+        '1': { 'A': 30, 'B': 30 },
+        '2': { 'A': 25, 'B': 25 },
+        '3': { 'A': 20, 'B': 20 },
+        '4': { 'A': 15, 'B': 15 }
+      },
+      'MSMarketing': {
+        '1': { 'A': 20 },
+        '2': { 'A': 15 }
+      },
+      'BSE': {
+        '1': { 'A': 25, 'B': 25 },
+        '2': { 'A': 20, 'B': 20 },
+        '3': { 'A': 15, 'B': 15 },
+        '4': { 'A': 10, 'B': 10 }
+      },
+      'BSPublicAdministration': {
+        '1': { 'A': 25 },
+        '2': { 'A': 20 },
+        '3': { 'A': 15 },
+        '4': { 'A': 10 }
+      }
+    };
+    
+    // Function to update student capacity display
+    function updateStudentCapacity() {
+      const course = courseSelect.value;
+      const year = yearSelect.value;
+      const section = sectionSelect.value;
+      
+      if (course && year && section) {
+        const capacity = studentCapacityMap[course]?.[year]?.[section] || '-';
+        studentCapacity.textContent = `Capacity: ${capacity}`;
+      } else {
+        studentCapacity.textContent = 'Capacity: -';
+      }
+    }
+
+    // Set up real-time listener for instructors
+    function setupFirebaseListener() {
+      console.log('Setting up Firebase listener...');
+      
+      if (!db || !instructorsCollectionRef) {
+        console.error('Firebase not properly initialized. Cannot set up listener.');
+        return () => {}; // Return empty cleanup function
+      }
+      
+      try {
+        console.log('Creating query for collection...');
+        const q = query(instructorsCollectionRef);
+        console.log('Query created, setting up onSnapshot listener...');
         
-        // Initialize Firebase
-        let auth, db, analytics;
-        
-        // Wrap in IIFE to handle async initialization
-        (function initializeFirebase() {
-            try {
-                // Initialize Firebase
-                firebase.initializeApp(firebaseConfig);
-                const auth = firebase.auth();
-                const db = firebase.firestore();
-                
-                // Set persistence to LOCAL to maintain login state
-                auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
-                
-                // Initialize Analytics if available
-                if (firebase.analytics) {
-                    analytics = firebase.analytics();
-                    console.log('Firebase Analytics initialized');
-                }
-                
-                console.log('Firebase initialized successfully');
-            } catch (error) {
-                console.error('Firebase initialization error:', error);
-                alert('Error initializing Firebase. Please check console for details.');
-                // Don't use return here as it's not in a function
-            }
-        })();
-
-        // DOM Elements
-        const loginForm = document.getElementById('loginForm');
-        const registerForm = document.getElementById('registerForm');
-        const emailInput = document.getElementById('email');
-        const passwordInput = document.getElementById('password');
-        const errorMessage = document.getElementById('errorMessage');
-        const successMessage = document.getElementById('successMessage');
-        const regErrorMessage = document.getElementById('regErrorMessage');
-        const regSuccessMessage = document.getElementById('regSuccessMessage');
-        const showRegisterLink = document.getElementById('showRegister');
-        const showLoginLink = document.getElementById('showLogin');
-
-        // Toggle between login and register forms
-        function showForm(formId) {
-            // Hide all forms and remove active class
-            document.querySelectorAll('form').forEach(form => {
-                form.classList.remove('active');
-            });
+        const unsubscribe = onSnapshot(q, 
+          // Success callback
+          (querySnapshot) => {
+            console.log('Received data snapshot with', querySnapshot.size, 'documents');
+            allInstructorsData = [];
             
-            // Show the selected form with active class
-            const activeForm = document.getElementById(formId);
-            if (activeForm) {
-                activeForm.classList.add('active');
-            }
-            
-            // Clear any messages
-            clearMessages();
-            
-            // Scroll to top of form container
-            document.querySelector('.form-container').scrollIntoView({ behavior: 'smooth' });
-        }
-        
-        // Clear all messages
-        function clearMessages() {
-            [errorMessage, successMessage, regErrorMessage, regSuccessMessage].forEach(el => {
-                if (el) {
-                    el.textContent = '';
-                    el.style.display = 'none';
-                }
-            });
-        }
-        
-        // Show error message
-        function showError(message, isRegistration = false) {
-            const errorEl = isRegistration ? regErrorMessage : errorMessage;
-            const successEl = isRegistration ? regSuccessMessage : successMessage;
-            
-            errorEl.textContent = message;
-            errorEl.style.display = 'block';
-            successEl.style.display = 'none';
-        }
-
-        // Show success message
-        function showSuccess(message, isRegistration = false) {
-            const successEl = isRegistration ? regSuccessMessage : successMessage;
-            const errorEl = isRegistration ? regErrorMessage : errorMessage;
-            
-            successEl.textContent = message;
-            successEl.style.display = 'block';
-            errorEl.style.display = 'none';
-        }
-
-        // Toggle loading state
-        function setLoading(button, isLoading) {
-            const spinner = button.querySelector('.spinner-border');
-            const buttonText = button.querySelector('.button-text');
-            
-            if (isLoading) {
-                button.disabled = true;
-                spinner.classList.remove('d-none');
-                buttonText.textContent = button.id === 'loginButton' ? 'Signing in...' : 'Creating account...';
-            } else {
-                button.disabled = false;
-                spinner.classList.add('d-none');
-                buttonText.textContent = button.id === 'loginButton' ? 'Sign In' : 'Create Account';
-            }
-        }
-
-        // Handle form submission
-        loginForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            const email = emailInput.value.trim();
-            const password = passwordInput.value;
-            const loginButton = document.getElementById('loginButton');
-            
-            // Basic validation
-            if (!email || !password) {
-                showError('Please enter both email and password');
+            querySnapshot.forEach((doc) => {
+              if (!doc.exists()) {
+                console.warn('Document does not exist:', doc.id);
                 return;
-            }
-            
-            setLoading(loginButton, true);
-            
-            try {
-                console.log('Attempting to sign in with email:', email);
-                // Sign in with email and password
-                const userCredential = await auth.signInWithEmailAndPassword(email, password);
-                const user = userCredential.user;
-                console.log('Authentication successful, user UID:', user.uid);
-                
-                // Get user role from Firestore
-                console.log('Fetching user data from Firestore...');
-                const userDoc = await db.collection('users').doc(user.uid).get();
-                
-                if (!userDoc.exists) {
-                    console.error('No user document found for UID:', user.uid);
-                    await auth.signOut();
-                    showError('No user data found. Please contact administrator.');
-                    return;
-                }
-                
-                const userData = userDoc.data();
-                console.log('User data from Firestore:', userData);
-                
-                // Prepare user session data
-                const sessionData = {
-                    uid: user.uid,
-                    email: user.email,
-                    displayName: user.displayName || '',
-                    role: userData.role || 'user',
-                    lastLogin: new Date().toISOString()
-                };
-                
-                // Store user data in session storage
-                console.log('Storing session data:', sessionData);
-                sessionStorage.setItem('user', JSON.stringify(sessionData));
-                
-                // Update last login time
-                console.log('Updating last login time...');
-                await db.collection('users').doc(user.uid).update({
-                    lastLogin: new Date().toISOString()
-                });
-                
-                showSuccess('Login successful! Redirecting...');
-                console.log('Login successful, redirecting to index.html...');
-                
-                // Redirect to index.html after successful login with a small delay
-                setTimeout(() => {
-                    window.location.href = 'index.html';
-                }, 500);
-                
-            } catch (error) {
-                console.error('Login error:', error);
-                let errorMessage = 'Login failed. Please try again.';
-                
-                // Handle specific error cases
-                switch (error.code) {
-                    case 'auth/user-not-found':
-                        errorMessage = 'No user found with this email.';
-                        break;
-                    case 'auth/wrong-password':
-                        errorMessage = 'Incorrect password. Please try again.';
-                        break;
-                    case 'auth/too-many-requests':
-                        errorMessage = 'Too many failed attempts. Please try again later.';
-                        break;
-                    case 'auth/user-disabled':
-                        errorMessage = 'This account has been disabled.';
-                        break;
-                }
-                
-                showError(errorMessage);
-            } finally {
-                setLoading(loginButton, false);
-            }
-        });
-        
-        // Handle registration form submission
-        registerForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            const registerButton = document.getElementById('registerButton');
-            const name = document.getElementById('regName').value.trim();
-            const email = document.getElementById('regEmail').value.trim();
-            const password = document.getElementById('regPassword').value;
-            const confirmPassword = document.getElementById('regConfirmPassword').value;
-            
-            // Clear previous messages and set loading state
-            clearMessages();
-            setLoading(registerButton, true);
-            
-            // Validation
-            if (!name || !email || !password || !confirmPassword) {
-                showError('Please fill in all fields', true);
-                setLoading(registerButton, false);
+              }
+              
+              const data = doc.data();
+              if (!data) {
+                console.warn('Document data is empty for document:', doc.id);
                 return;
-            }
-            
-            if (password !== confirmPassword) {
-                showError('Passwords do not match', true);
-                setLoading(registerButton, false);
-                return;
-            }
-            
-            if (password.length < 6) {
-                showError('Password must be at least 6 characters long', true);
-                setLoading(registerButton, false);
-                return;
-            }
-            
-            try {
-                // Create user with email and password
-                console.log('Creating user with email:', email);
-                const userCredential = await auth.createUserWithEmailAndPassword(email, password);
-                const user = userCredential.user;
-                console.log('User created:', user.uid);
-                
-                // Get department
-                const department = document.getElementById('regDepartment').value;
-                
-                // Save additional user data to Firestore
-                console.log('Saving user data to Firestore');
-                const userData = {
-                    uid: user.uid,
-                    email: email,
-                    displayName: name,
-                    department: department,
-                    role: 'user', // Default role
-                    isActive: true,
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                    lastLogin: firebase.firestore.FieldValue.serverTimestamp()
-                };
-                console.log('User data:', userData);
-                await db.collection('users').doc(user.uid).set(userData);
-                console.log('User data saved to Firestore');
-                
-                // Update user profile with display name
+              }
+              
+              console.log('Processing document:', doc.id, data);
+              
+              // Normalize time format
+              let normalizedTime = '';
+              if (data.time) {
                 try {
-                    await user.updateProfile({
-                        displayName: name,
-                        photoURL: `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=610000&color=fff`
-                    });
-                    
-                    // Store user data in session storage
-                    const userSessionData = {
-                        uid: user.uid,
-                        email: user.email,
-                        displayName: name,
-                        role: 'user',
-                        lastLogin: new Date().toISOString()
-                    };
-                    sessionStorage.setItem('user', JSON.stringify(userSessionData));
-                    
-                    // Log analytics event
-                    if (analytics) {
-                        analytics.logEvent('sign_up', {
-                            method: 'email'
-                        });
-                    }
-                    
-                    showSuccess('Registration successful! Redirecting...', true);
-                    
-                    // Redirect to index.html after successful registration
-                    setTimeout(() => {
-                        window.location.href = 'index.html';
-                    }, 1500);
-                    
-                } catch (profileError) {
-                    console.error('Error updating profile:', profileError);
-                    // Don't fail the registration if profile update fails
-                    showSuccess('Account created! Updating profile...', true);
-                    
-                    // Still store basic user data in session
-                    sessionStorage.setItem('user', JSON.stringify({
-                        uid: user.uid,
-                        email: user.email,
-                        displayName: name,
-                        role: 'user',
-                        lastLogin: new Date().toISOString()
-                    }));
-                    
-                    // Redirect anyway
-                    setTimeout(() => {
-                        window.location.href = 'index.html';
-                    }, 1500);
+                  const times = data.time.split('-').map(part => {
+                    const [h, m = '00'] = part.trim().split(':');
+                    return `${h.padStart(2, '0')}:${m.padStart(2, '0')}`.substring(0, 5);
+                  });
+                  normalizedTime = times.join('-');
+                } catch (error) {
+                  console.error('Error normalizing time:', error, 'Time string was:', data.time);
+                  normalizedTime = data.time; // Use original if normalization fails
                 }
-                
-            } catch (error) {
-                console.error('Registration error:', error);
-                let errorMessage = 'Registration failed. Please try again.';
-                
-                // Handle specific error cases
-                switch (error.code) {
-                    case 'auth/email-already-in-use':
-                        errorMessage = 'This email is already registered. Please sign in instead.';
-                        break;
-                    case 'auth/invalid-email':
-                        errorMessage += 'The email address is invalid.';
-                        break;
-                    case 'auth/operation-not-allowed':
-                        errorMessage += 'Email/password accounts are not enabled.';
-                        break;
-                    case 'auth/weak-password':
-                        errorMessage += 'The password is too weak.';
-                        break;
-                    default:
-                        errorMessage += error.message;
-                }
-                
-                showError(errorMessage, true);
-            } finally {
-                setLoading(registerButton, false);
-            }
-        });
-        
-        // Toggle between login and register forms
-        showRegisterLink.addEventListener('click', (e) => {
-            e.preventDefault();
-            showForm('registerForm');
-        });
-        
-        showLoginLink.addEventListener('click', (e) => {
-            e.preventDefault();
-            showForm('loginForm');
-        });
-        
-        // Show login form by default and add active class
-        document.addEventListener('DOMContentLoaded', function() {
-            // Initially show login form
-            document.getElementById('loginForm').classList.add('active');
-            
-            // Set up form toggle links
-            document.querySelector('.toggle-form a').addEventListener('click', function(e) {
-                e.preventDefault();
-                const targetForm = this.getAttribute('data-form');
-                if (targetForm) {
-                    showForm(targetForm);
-                }
+              }
+              
+              // Create instructor object with normalized data
+              const instructor = {
+                id: doc.id,
+                name: data.name || 'N/A',
+                subject: data.subject || 'N/A',
+                roomName: data.roomName || 'TBA',
+                day: data.day ? data.day.trim() : '',
+                time: normalizedTime,
+                course: data.course || '',
+                year: data.year || '',
+                section: data.section || ''
+              };
+              
+              allInstructorsData.push(instructor);
+              console.log('Added instructor:', instructor.name);
             });
             
-            // Set up back to login link
-            document.querySelector('.back-to-login').addEventListener('click', function(e) {
-                e.preventDefault();
-                showForm('loginForm');
-            });
+            console.log('All instructors loaded. Total:', allInstructorsData.length);
+            
+            // If we have selections, re-render the schedule
+            if (courseSelect.value && yearSelect.value && sectionSelect.value) {
+              renderSchedule();
+            }
+          },
+          // Error callback
+          (error) => {
+            console.error('Error in Firestore listener:', error);
+          }
+        );
+        
+        return unsubscribe;
+        
+      } catch (error) {
+        console.error('Error setting up Firestore listener:', error);
+        return () => {}; // Return empty cleanup function
+      }
+    }
+
+    // Function to normalize time format
+    function normalizeTime(timeStr) {
+      if (!timeStr) return '';
+      
+      // Handle time range format (e.g., "7:00 AM - 8:00 AM" or "07:00-08:00")
+      if (timeStr.includes('-')) {
+        const [start, end] = timeStr.split('-').map(s => s.trim());
+        const startTime = formatTimeString(start);
+        const endTime = formatTimeString(end);
+        return `${startTime}-${endTime}`;
+      }
+      
+      // Handle single time format (e.g., "7:00" or "7:00 AM")
+      return formatTimeString(timeStr);
+    }
+    
+    function formatTimeString(timeStr) {
+      // Remove AM/PM if present
+      timeStr = timeStr.replace(/\s*[AP]M\s*/i, '').trim();
+      
+      // Format as HH:MM
+      const [h, m = '00'] = timeStr.split(':');
+      return `${h.padStart(2, '0')}:${m.padStart(2, '0')}`;
+    }
+
+    // Function to update available years based on selected course
+    function updateYearOptions() {
+      const selectedCourse = courseSelect.value;
+      yearSelect.innerHTML = '<option value="">Select Year</option>';
+      yearSelect.disabled = !selectedCourse;
+      
+      if (!selectedCourse) {
+        sectionSelect.innerHTML = '<option value="">Select Section</option>';
+        sectionSelect.disabled = true;
+        return;
+      }
+      
+      // Add year options based on the selected course (up to 4th year)
+      // Using numbers to match the Firestore data format
+      const years = ['1', '2', '3', '4'];
+      years.forEach(year => {
+        const option = document.createElement('option');
+        option.value = year;
+        // Display as '1st Year', '2nd Year', etc.
+        const suffix = year === '1' ? 'st' : year === '2' ? 'nd' : year === '3' ? 'rd' : 'th';
+        option.textContent = `${year}${suffix} Year`;
+        yearSelect.appendChild(option);
+      });
+      
+      // Reset section select
+      sectionSelect.innerHTML = '<option value="">Select Section</option>';
+      sectionSelect.disabled = true;
+      
+      // Clear the schedule
+      scheduleBody.innerHTML = '';
+    }
+
+    // Function to update available sections based on selected year
+    function updateSectionOptions() {
+      const selectedCourse = courseSelect.value;
+      const selectedYear = yearSelect.value;
+      sectionSelect.innerHTML = '<option value="">Select Section</option>';
+      sectionSelect.disabled = !selectedYear;
+      
+      if (!selectedYear) {
+        return;
+      }
+      
+      // Add section options (A, B, C, etc.)
+      const sections = ['A', 'B', 'C', 'D'];
+      sections.forEach(section => {
+        const option = document.createElement('option');
+        option.value = section;
+        option.textContent = 'Section ' + section;
+        sectionSelect.appendChild(option);
+      });
+      
+      // Clear the schedule
+      scheduleBody.innerHTML = '';
+    }
+
+    // Function to render the schedule based on selected filters
+    function renderSchedule() {
+      console.log('Rendering schedule...');
+      console.log('Total instructors in memory:', allInstructorsData.length);
+      
+      // Get selected values
+      const selectedCourse = courseSelect.value;
+      const selectedYear = yearSelect.value;
+      const selectedSection = sectionSelect.value;
+      
+      console.log('Selected filters - Course:', selectedCourse, 'Year:', selectedYear, 'Section:', selectedSection);
+      
+      // Generate time slots from 07:00 to 17:00 (5:00 PM)
+      const timeSlots = [];
+      for (let i = 7; i < 17; i++) {
+        const startHour = String(i).padStart(2, '0');
+        const endHour = String(i + 1).padStart(2, '0');
+        timeSlots.push(`${startHour}:00-${endHour}:00`);
+      }
+      
+      // Clear the schedule body
+      scheduleBody.innerHTML = '';
+      
+      // If any required filter is missing, show empty schedule
+      if (!selectedCourse || !selectedYear || !selectedSection) {
+        console.log('Missing filter criteria, showing empty schedule');
+        timeSlots.forEach(timeSlot => {
+          const row = document.createElement('tr');
+          row.innerHTML = `<td>${timeSlot}</td><td></td><td></td><td></td><td></td><td></td><td></td>`;
+          scheduleBody.appendChild(row);
+        });
+        return;
+      }
+      
+      // Filter instructors for the selected course, year, and section
+      console.log('Filtering instructors for:', { selectedCourse, selectedYear, selectedSection });
+      
+      const sectionInstructors = allInstructorsData.filter(instructor => {
+        if (!instructor) return false;
+        
+        const courseMatch = String(instructor.course).toLowerCase() === String(selectedCourse).toLowerCase();
+        const yearMatch = String(instructor.year).toLowerCase() === String(selectedYear).toLowerCase();
+        const sectionMatch = String(instructor.section).toUpperCase() === String(selectedSection).toUpperCase();
+        
+        const isMatch = courseMatch && yearMatch && sectionMatch;
+        
+        if (isMatch) {
+          console.log('Matching instructor:', {
+            instructor,
+            courseMatch,
+            yearMatch,
+            sectionMatch
+          });
+        }
+        
+        return isMatch;
+      });
+      
+      console.log(`Found ${sectionInstructors.length} matching instructors:`, sectionInstructors);
+      
+      // Create a row for each time slot
+      timeSlots.forEach(timeSlot => {
+        const row = document.createElement('tr');
+        row.innerHTML = `<td>${timeSlot}</td>`; // Add time slot cell
+        
+        // Days of the week
+        const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+        
+        // Create a cell for each day
+        days.forEach(day => {
+          const cell = document.createElement('td');
+          
+          // Find matching instructor for this day and time
+          const instructor = sectionInstructors.find(instr => {
+            if (!instr.day || !instr.time) return false;
+            
+            // Normalize times for comparison
+            const normalizedInstrTime = instr.time;
+            const normalizedSlotTime = timeSlot;
+            
+            // Check if day and time match (case-insensitive day comparison)
+            const dayMatch = instr.day.toLowerCase() === day.toLowerCase();
+            const timeMatch = normalizedInstrTime === normalizedSlotTime;
+            
+            if (dayMatch && timeMatch) {
+              console.log(`Match found: ${instr.name} on ${day} at ${timeSlot}`);
+              return true;
+            }
+            
+            return false;
+          });
+          
+          // If instructor found, fill the cell with their info
+          if (instructor) {
+            cell.innerHTML = `
+              <div class="schedule-entry">
+                <div class="subject">${instructor.subject || 'N/A'}</div>
+                <div class="instructor">${instructor.name || 'N/A'}</div>
+                <div class="room">${instructor.roomName || 'TBA'}</div>
+              </div>
+            `;
+          }
+          
+          row.appendChild(cell);
         });
         
-        // Check if user is already logged in
-        auth.onAuthStateChanged((user) => {
-            if (user) {
-                // User is signed in, redirect to index.html
-                window.location.href = 'index.html';
-            }
-        });
-    </script>
+        scheduleBody.appendChild(row);
+      });
+    }
+
+    // Function to log current dropdown values and data for debugging
+    function logCurrentState() {
+      console.log('=== Current Application State ===');
+      console.log('Selected Course:', courseSelect.value);
+      console.log('Selected Year:', yearSelect.value);
+      console.log('Selected Section:', sectionSelect.value);
+      
+      console.log('Available options:');
+      console.log('- Courses:', Array.from(courseSelect.options).map(o => o.value));
+      console.log('- Years:', Array.from(yearSelect.options).map(o => o.value));
+      console.log('- Sections:', Array.from(sectionSelect.options).map(o => o.value));
+      
+      console.log('All instructors data:', allInstructorsData);
+      console.log('===============================');
+    }
+
+    // Initialize the page
+    document.addEventListener('DOMContentLoaded', () => {
+      console.log('DOM fully loaded, initializing application...');
+      
+      // Add event listeners for the dropdowns
+      courseSelect.addEventListener('change', () => {
+        console.log('Course changed to:', courseSelect.value);
+        updateYearOptions();
+        updateStudentCapacity();
+        logCurrentState();
+      });
+      
+      yearSelect.addEventListener('change', () => {
+        console.log('Year changed to:', yearSelect.value);
+        updateSectionOptions();
+        updateStudentCapacity();
+        logCurrentState();
+      });
+      
+      sectionSelect.addEventListener('change', () => {
+        console.log('Section changed to:', sectionSelect.value);
+        updateStudentCapacity();
+        renderSchedule();
+        logCurrentState();
+      });
+      
+      // Initial log
+      logCurrentState();
+    });
+  </script>
 </body>
 </html>
