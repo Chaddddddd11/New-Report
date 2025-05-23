@@ -3,6 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>DHVSU - Login</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DHVSU - Login</title>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
     <style>
@@ -398,6 +404,11 @@
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-analytics-compat.js"></script>
     
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+    
     <script>
         // Firebase configuration
         const firebaseConfig = {
@@ -417,11 +428,12 @@
         (function initializeFirebase() {
             try {
                 // Initialize Firebase
-                const app = firebase.initializeApp(firebaseConfig);
+                firebase.initializeApp(firebaseConfig);
+                const auth = firebase.auth();
+                const db = firebase.firestore();
                 
-                // Initialize services
-                auth = firebase.auth();
-                db = firebase.firestore();
+                // Set persistence to LOCAL to maintain login state
+                auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
                 
                 // Initialize Analytics if available
                 if (firebase.analytics) {
@@ -574,11 +586,10 @@
                 showSuccess('Login successful! Redirecting...');
                 console.log('Login successful, redirecting to index.html...');
                 
-                // Redirect to index.html after successful login
+                // Redirect to index.html after successful login with a small delay
                 setTimeout(() => {
-                    console.log('Executing redirect to index.html');
                     window.location.href = 'index.html';
-                }, 1500);
+                }, 500);
                 
             } catch (error) {
                 console.error('Login error:', error);
