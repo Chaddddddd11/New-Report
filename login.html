@@ -267,7 +267,9 @@
             auth.signInWithEmailAndPassword(email, password)
                 .then((userCredential) => {
                     // Signed in successfully
-                    window.location.href = 'home.html';
+                    const redirectTo = sessionStorage.getItem('redirectAfterLogin') || 'home.html';
+                    sessionStorage.removeItem('redirectAfterLogin');
+                    window.location.href = redirectTo;
                 })
                 .catch((error) => {
                     // Handle errors
