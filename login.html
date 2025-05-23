@@ -416,37 +416,49 @@
             appId: "1:1075180921702:web:a0320fa286c684511cdea7",
             measurementId: "G-EP4FZ04FQT"
         };
-        
-        // Initialize Firebase
+
+        // Initialize Firebase services
         let auth, db;
         
-        try {
-            // Initialize Firebase if not already initialized
-            if (!firebase.apps.length) {
-                firebase.initializeApp(firebaseConfig);
+        async function initializeFirebase() {
+            try {
+                // Initialize Firebase if not already initialized
+                if (!firebase.apps.length) {
+                    firebase.initializeApp(firebaseConfig);
+                }
+                
+                // Initialize services
+                auth = firebase.auth();
+                db = firebase.firestore();
+                
+                // Set auth persistence
+                await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+                
+                console.log('Firebase initialized successfully');
+                return true;
+            } catch (error) {
+                console.error('Firebase initialization error:', error);
+                showError('Failed to initialize the application. Please refresh the page.');
+                return false;
             }
-            
-            auth = firebase.auth();
-            db = firebase.firestore();
-            
-            // Set persistence to LOCAL to maintain login state
-            await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
-            
-            console.log('Firebase initialized successfully');
-            
-            // Check if user is already logged in
-            const currentUser = auth.currentUser;
-            if (currentUser) {
-                // User is signed in, redirect to index.html
-                window.location.href = 'index.html';
+        }
+        
+        // Initialize Firebase when the page loads
+        document.addEventListener('DOMContentLoaded', async () => {
+            const initialized = await initializeFirebase();
+            if (!initialized) {
                 return;
             }
             
-        } catch (error) {
-            console.error('Firebase initialization error:', error);
-            showError('Error initializing application. Please refresh the page.');
-        }
-
+            // Check if user is already logged in
+            auth.onAuthStateChanged(async (user) => {
+                if (user) {
+                    // User is signed in, redirect to index
+                    window.location.replace('index.html');
+                }
+            });
+        });
+        
         // DOM Elements
         const loginForm = document.getElementById('loginForm');
         const registerForm = document.getElementById('registerForm');
@@ -563,44 +575,23 @@
             try {
                 console.log('Attempting to sign in with email:', email);
                 
-                // Initialize auth if not already done
-                if (!auth) {
-                    if (!firebase.apps.length) {
-                        firebase.initializeApp(firebaseConfig);
+                // Ensure Firebase is initialized
+                if (!auth || !db) {
+                    const initialized = await initializeFirebase();
+                    if (!initialized) {
+                        throw new Error('Failed to initialize authentication');
                     }
-                    auth = firebase.auth();
-                    await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
                 }
                 
-                // Sign in with email and password
-                const userCredential = await auth.signInWithEmailAndPassword(email, password);
-                const user = userCredential.user;
+                // Sign in with email and password using the Auth module
+                const user = await Auth.signInWithEmailAndPassword(email, password);
                 console.log('Authentication successful, user UID:', user.uid);
                 
-                // Get user role from Firestore
-                console.log('Fetching user data from Firestore...');
-                const userDoc = await db.collection('users').doc(user.uid).get();
-                
-                if (!userDoc.exists) {
-                    console.error('No user document found for UID:', user.uid);
-                    await auth.signOut();
-                    showError('No user data found. Please contact administrator.');
-                    return;
-                }
-                
-                const userData = userDoc.data();
+                // Get updated user data with Firestore information
+                const userData = await Auth.getCurrentUser();
                 console.log('User data from Firestore:', userData);
                 
-                // Prepare user session data
-                const sessionData = {
-                    uid: user.uid,
-                    email: user.email,
-                    displayName: user.displayName || user.email.split('@')[0],
-                    role: userData.role || 'user',
-                    lastLogin: new Date().toISOString()
-                };
-                
-                // Store only necessary user data (never store passwords)
+                // Store user data in session storage
                 const userDataToStore = {
                     uid: user.uid,
                     email: user.email,
@@ -608,19 +599,14 @@
                     role: userData.role || 'user',
                     lastLogin: new Date().toISOString()
                 };
+                
                 sessionStorage.setItem('user', JSON.stringify(userDataToStore));
                 localStorage.setItem('user', JSON.stringify(userDataToStore));
-                
-                // Update last login time
-                await db.collection('users').doc(user.uid).update({
-                    lastLogin: new Date().toISOString()
-                });
                 
                 showSuccess('Login successful! Redirecting...');
                 console.log('Login successful, redirecting to index.html...');
                 
                 // Use replace instead of href to prevent back button issues
-                // and add a small delay to show success message
                 setTimeout(() => {
                     // Clear any pending redirects
                     window.onbeforeunload = null;
@@ -636,24 +622,51 @@
                 if (error.code) {
                     switch (error.code) {
                         case 'auth/user-not-found':
+                        case 'auth/user-not-found':
                             errorMessage = 'No user found with this email.';
                             break;
                         case 'auth/wrong-password':
                             errorMessage = 'Incorrect email or password.';
                             break;
                         case 'auth/too-many-requests':
-                            errorMessage = 'Too many failed attempts. Please try again later.';
+                            errorMessage = 'Too many failed attempts. Please try again later or reset your password.';
                             break;
                         case 'auth/user-disabled':
-                            errorMessage = 'This account has been disabled.';
+                            errorMessage = 'This account has been disabled. Please contact support.';
+                            break;
+                        case 'auth/invalid-email':
+                            errorMessage = 'Please enter a valid email address.';
+                            break;
+                        case 'auth/network-request-failed':
+                            errorMessage = 'Network error. Please check your internet connection.';
+                            break;
+                        case 'AUTH_ERROR':
+                        case 'NOT_AUTHENTICATED':
+                            // Already user-friendly message from our Auth module
+                            errorMessage = error.message || errorMessage;
                             break;
                         default:
-                            errorMessage = error.message || 'An error occurred during login.';
+                            errorMessage = error.message || 'An unexpected error occurred. Please try again.';
                     }
+                } else if (error.message) {
+                    // Handle non-Firebase errors
+                    errorMessage = error.message;
                 }
                 
                 showError(errorMessage);
                 setLoading(loginButton, false);
+                
+                // Re-enable the form
+                loginForm.querySelectorAll('input').forEach(input => {
+                    input.disabled = false;
+                });
+                
+                // Focus back on email field if invalid
+                if (error.code === 'auth/invalid-email' || error.code === 'auth/user-not-found') {
+                    emailInput.focus();
+                } else if (error.code === 'auth/wrong-password') {
+                    passwordInput.focus();
+                }
             }
         });
         
