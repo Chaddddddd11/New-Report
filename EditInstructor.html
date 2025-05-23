@@ -426,6 +426,35 @@
             }
         }
         
+        // Student capacity map for different courses, years, and sections
+        const studentCapacityMap = {
+            'BSA': {
+                '1st': { 'A': 30, 'B': 30, 'C': 30, 'D': 30 },
+                '2nd': { 'A': 25, 'B': 25, 'C': 25, 'D': 25 },
+                '3rd': { 'A': 20, 'B': 20, 'C': 20, 'D': 20 },
+                '4th': { 'A': 15, 'B': 15, 'C': 15, 'D': 15 }
+            },
+            'BSIT': {
+                '1st': { 'A': 35, 'B': 35, 'C': 35 },
+                '2nd': { 'A': 30, 'B': 30, 'C': 30 },
+                '3rd': { 'A': 25, 'B': 25, 'C': 25 },
+                '4th': { 'A': 20, 'B': 20, 'C': 20 }
+            },
+            'BSCS': {
+                '1st': { 'A': 30, 'B': 30 },
+                '2nd': { 'A': 25, 'B': 25 },
+                '3rd': { 'A': 20, 'B': 20 },
+                '4th': { 'A': 15, 'B': 15 }
+            },
+            'BSCE': {
+                '1st': { 'A': 30, 'B': 30 },
+                '2nd': { 'A': 25, 'B': 25 },
+                '3rd': { 'A': 20, 'B': 20 },
+                '4th': { 'A': 15, 'B': 15 },
+                '5th': { 'A': 10, 'B': 10 }
+            }
+        };
+
         // Function to convert time string to minutes (24-hour format)
         function timeToMinutes(timeStr) {
             // Remove any AM/PM and trim whitespace
@@ -446,6 +475,8 @@
 
         // Function to update available rooms based on current selections
         async function updateAvailableRooms() {
+            console.log('=== UPDATING AVAILABLE ROOMS ===');
+            
             const selectedDay = daySelect.value;
             const classTime = timeSelect.value;
             const course = courseSelect.value;
@@ -463,6 +494,10 @@
                 roomSelect.disabled = true;
                 roomSelect.innerHTML = '<option value="">Checking room availability...</option>';
                 
+                // Get student capacity for the selected course/year/section
+                const studentCapacity = studentCapacityMap[course]?.[year]?.[section] || 0;
+                console.log(`[updateAvailableRooms] Required Student Capacity: ${studentCapacity}`);
+                
                 // Get all rooms and instructors
                 const [roomsSnapshot, instructorsSnapshot] = await Promise.all([
                     db.collection('rooms').get(),
@@ -474,46 +509,68 @@
                 const selectedStartMinutes = timeToMinutes(selectedTimeStartStr);
                 const selectedEndMinutes = timeToMinutes(selectedTimeEndStr);
                 
-                // Create a map of room schedules
+                // Create a map of room schedules, parsing their times into minutes
                 const roomSchedules = new Map();
                 roomsSnapshot.docs.forEach(doc => {
                     const data = doc.data();
-                    if (!data.roomName) return;
+                    if (!data.roomName || !data.day || !data.time || typeof data.time !== 'string') {
+                        console.warn(`Skipping room doc ID: ${doc.id} due to missing or invalid roomName, day, or time.`);
+                        return;
+                    }
                     
-                    roomSchedules.set(data.roomName, {
-                        id: doc.id,
-                        name: data.roomName,
-                        capacity: parseInt(data.capacity) || 0,
-                        day: data.day || '',
-                        time: data.time || '',
-                        isBooked: false
-                    });
+                    try {
+                        const [roomTimeStartStr, roomTimeEndStr] = data.time.trim().split('-').map(t => t.trim());
+                        const roomStartMinutes = timeToMinutes(roomTimeStartStr);
+                        const roomEndMinutes = timeToMinutes(roomTimeEndStr);
+
+                        if (isNaN(roomStartMinutes) || isNaN(roomEndMinutes)) {
+                            console.warn(`Skipping room doc ID: ${doc.id} due to invalid time format: ${data.time}`);
+                            return;
+                        }
+
+                        roomSchedules.set(data.roomName, {
+                            id: doc.id,
+                            name: data.roomName,
+                            capacity: parseInt(data.capacity) || 0,
+                            day: data.day.trim(),
+                            timeString: data.time.trim(),
+                            startMinutes: roomStartMinutes,
+                            endMinutes: roomEndMinutes,
+                            isBooked: false
+                        });
+                    } catch (e) {
+                        console.warn(`Error parsing time for room doc ID: ${doc.id}, time: '${data.time}'. Error: ${e.message}`);
+                    }
                 });
                 
                 // Mark rooms as booked based on instructor schedules
                 instructorsSnapshot.docs.forEach(doc => {
                     const instructor = doc.data();
-                    if (!instructor.roomName || instructor.day !== selectedDay) return;
+                    if (!instructor.roomName || !instructor.day || !instructor.time || typeof instructor.time !== 'string') return;
                     
-                    // Skip if no time data
-                    if (!instructor.time || typeof instructor.time !== 'string') return;
+                    // Skip if not the same day
+                    if (instructor.day !== selectedDay) return;
                     
-                    // Parse instructor's time slot
-                    const [instructorStartStr, instructorEndStr] = instructor.time.split('-').map(t => t.trim());
-                    const instructorStartMinutes = timeToMinutes(instructorStartStr);
-                    const instructorEndMinutes = timeToMinutes(instructorEndStr);
+                    const roomSchedule = roomSchedules.get(instructor.roomName);
+                    if (!roomSchedule) return;
                     
-                    // Check for time overlap
-                    const timeOverlap = 
-                        (selectedStartMinutes >= instructorStartMinutes && selectedStartMinutes < instructorEndMinutes) ||
-                        (selectedEndMinutes > instructorStartMinutes && selectedEndMinutes <= instructorEndMinutes) ||
-                        (selectedStartMinutes <= instructorStartMinutes && selectedEndMinutes >= instructorEndMinutes);
-                    
-                    if (timeOverlap) {
-                        const room = roomSchedules.get(instructor.roomName);
-                        if (room) {
-                            room.isBooked = true;
+                    try {
+                        // Parse instructor's time slot
+                        const [instructorStartStr, instructorEndStr] = instructor.time.split('-').map(t => t.trim());
+                        const instructorStartMinutes = timeToMinutes(instructorStartStr);
+                        const instructorEndMinutes = timeToMinutes(instructorEndStr);
+                        
+                        // Check for time overlap
+                        const timeOverlap = 
+                            (selectedStartMinutes >= instructorStartMinutes && selectedStartMinutes < instructorEndMinutes) ||
+                            (selectedEndMinutes > instructorStartMinutes && selectedEndMinutes <= instructorEndMinutes) ||
+                            (selectedStartMinutes <= instructorStartMinutes && selectedEndMinutes >= instructorEndMinutes);
+                        
+                        if (timeOverlap) {
+                            roomSchedule.isBooked = true;
                         }
+                    } catch (e) {
+                        console.warn(`Error processing instructor time for room ${instructor.roomName}: ${e.message}`);
                     }
                 });
                 
@@ -522,18 +579,29 @@
                 const currentRoomId = roomSelect.dataset.currentRoomId || '';
                 let currentRoomFound = false;
                 
-                // Add available rooms
+                // Get available rooms (filter out booked rooms and those with insufficient capacity)
                 const availableRooms = Array.from(roomSchedules.values())
-                    .filter(room => !room.isBooked)
+                    .filter(room => !room.isBooked && room.capacity >= studentCapacity)
                     .sort((a, b) => a.name.localeCompare(b.name));
                 
-                // Add the current room first if it exists
+                // Add the current room first if it exists (even if it's now unavailable)
                 if (currentRoomId) {
-                    const currentRoom = availableRooms.find(r => r.id === currentRoomId || r.name === currentRoomId);
+                    const currentRoom = roomSchedules.get(currentRoomId) || 
+                                      Array.from(roomSchedules.values()).find(r => r.id === currentRoomId);
+                    
                     if (currentRoom) {
+                        let roomStatus = '';
+                        if (currentRoom.isBooked) {
+                            roomStatus = ' (Booked)';
+                        } else if (currentRoom.capacity < studentCapacity) {
+                            roomStatus = ` (Insufficient capacity: ${currentRoom.capacity} < ${studentCapacity})`;
+                        }
+                        
                         const option = new Option(
-                            `${currentRoom.name} (Capacity: ${currentRoom.capacity})`,
-                            currentRoom.id
+                            `${currentRoom.name} (Capacity: ${currentRoom.capacity})${roomStatus}`,
+                            currentRoom.id,
+                            false,  // selected
+                            !roomStatus  // disabled if there's a status message
                         );
                         option.selected = true;
                         roomSelect.add(option);
@@ -545,9 +613,10 @@
                 if (!currentRoomFound) {
                     const defaultOption = new Option(
                         availableRooms.length > 0 ? 'Select a room' : 'No available rooms',
-                        ''
+                        '',
+                        true,   // selected
+                        true    // disabled
                     );
-                    defaultOption.selected = true;
                     roomSelect.add(defaultOption);
                 }
                 
@@ -562,6 +631,7 @@
                 });
                 
                 roomSelect.disabled = false;
+                console.log(`[updateAvailableRooms] Found ${availableRooms.length} available rooms`);
                 return availableRooms;
                 
             } catch (error) {
