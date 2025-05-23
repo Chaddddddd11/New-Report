@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Forgot Password - DHVSU Scheduling System</title>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #610000;
+            --secondary-color: #800a0a;
+            --accent-color: #F7B32D;
+            --background-color: #f5f5f5;
+            --text-color: #333;
+            --error-color: #dc3545;
+            --success-color: #28a745;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Roboto', sans-serif;
+        }
+
+        body {
+            background: linear-gradient(rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.9)),
+                        url('https://the-post-assets.sgp1.digitaloceanspaces.com/2023/03/DHVSU_thumbnail.png');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .forgot-container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 420px;
+            padding: 40px;
+            text-align: center;
+            border: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        .logo {
+            max-width: 120px;
+            margin: 0 auto 20px;
+            display: block;
+        }
+
+        h1 {
+            color: var(--primary-color);
+            margin-bottom: 20px;
+            font-size: 24px;
+            font-weight: 700;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--text-color);
+            font-weight: 500;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e1e4e8;
+            border-radius: 8px;
+            font-size: 15px;
+            transition: all 0.3s ease;
+            background-color: #f8f9fa;
+        }
+
+        .form-control:focus {
+            border-color: var(--primary-color);
+            background-color: white;
+            box-shadow: 0 0 0 3px rgba(97, 0, 0, 0.1);
+            outline: none;
+        }
+
+        .btn {
+            display: inline-block;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            border: none;
+            padding: 14px 24px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            width: 100%;
+            transition: all 0.3s ease;
+            margin: 10px 0;
+            text-align: center;
+            text-decoration: none;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(97, 0, 0, 0.2);
+            background: linear-gradient(135deg, #4d0000, #6a0808);
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 2px solid var(--primary-color);
+            color: var(--primary-color);
+            transition: all 0.3s ease;
+        }
+
+        .btn-outline:hover {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .message {
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            text-align: left;
+            display: none;
+        }
+
+        .error-message {
+            background-color: #fef2f2;
+            border: 1px solid #fecaca;
+            color: var(--error-color);
+        }
+
+        .success-message {
+            background-color: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            color: var(--success-color);
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+            margin-right: 8px;
+            vertical-align: middle;
+        }
+
+        .btn-outline .spinner {
+            border-top-color: var(--primary-color);
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .footer {
+            margin-top: 30px;
+            color: #6b7280;
+            font-size: 14px;
+        }
+
+        .back-to-login {
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        .back-to-login a {
+            color: var(--primary-color);
+            text-decoration: none;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .back-to-login a:hover {
+            text-decoration: underline;
+        }
+
+        @media (max-width: 480px) {
+            .forgot-container {
+                padding: 30px 20px;
+            }
+            
+            h1 {
+                font-size: 20px;
+                margin-bottom: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="forgot-container">
+        <img src="https://media.assettype.com/sunstar/2025-02-04/7x1wu7dq/DHVSU.jpg" alt="DHVSU Logo" class="logo">
+        <h1>Reset Your Password</h1>
+        
+        <div id="errorMessage" class="message error-message"></div>
+        <div id="successMessage" class="message success-message"></div>
+        
+        <form id="forgotPasswordForm">
+            <div class="form-group">
+                <label for="username">Username</label>
+                <input type="text" id="username" class="form-control" placeholder="Enter your username" required>
+                <small class="text-muted">Enter the username associated with your account.</small>
+            </div>
+            
+            <button type="submit" class="btn" id="resetBtn">
+                <i class="fas fa-key"></i> Reset Password
+            </button>
+            
+            <div class="back-to-login">
+                <a href="login.html">
+                    <i class="fas fa-arrow-left"></i> Back to Login
+                </a>
+            </div>
+        </form>
+        
+        <div class="footer">
+            DHVSU &copy; 2025 - All Rights Reserved
+        </div>
+    </div>
+
+    <script>
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyDBu7-vOFmS62IaGD8-8zb6TH0a1mHYNpI",
+            authDomain: "dhvsu-faculty-scheduling.firebaseapp.com",
+            projectId: "dhvsu-faculty-scheduling",
+            storageBucket: "dhvsu-faculty-scheduling.appspot.com",
+            messagingSenderId: "1075180921702",
+            appId: "1:1075180921702:web:a0320fa286c684511cdea7",
+            measurementId: "G-EP4FZ04FQT"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+
+        // DOM Elements
+        const forgotPasswordForm = document.getElementById('forgotPasswordForm');
+        const usernameInput = document.getElementById('username');
+        const resetBtn = document.getElementById('resetBtn');
+        const errorMessage = document.getElementById('errorMessage');
+        const successMessage = document.getElementById('successMessage');
+
+        // Show message helper function
+        function showMessage(element, message, isError = true) {
+            element.textContent = message;
+            element.style.display = 'block';
+            
+            // Hide the other message
+            const otherMessage = isError ? successMessage : errorMessage;
+            otherMessage.style.display = 'none';
+            
+            // Auto-hide after 5 seconds
+            if (!isError) {
+                setTimeout(() => {
+                    element.style.display = 'none';
+                }, 10000);
+            }
+        }
+
+
+        // Handle form submission
+        forgotPasswordForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const username = usernameInput.value.trim();
+            
+            // Reset messages
+            errorMessage.style.display = 'none';
+            successMessage.style.display = 'none';
+            
+            // Validate input
+            if (!username) {
+                showMessage(errorMessage, 'Please enter your username.');
+                return;
+            }
+            
+            // Set loading state
+            resetBtn.disabled = true;
+            resetBtn.innerHTML = '<span class="spinner"></span> Sending reset link...';
+            
+            // Convert username to email (same as login)
+            const email = `${username}@dhvsu.edu.ph`;
+            
+            // Send password reset email
+            auth.sendPasswordResetEmail(email)
+                .then(() => {
+                    // Password reset email sent
+                    showMessage(
+                        successMessage, 
+                        'Password reset link has been sent to your email. Please check your inbox and follow the instructions to reset your password.',
+                        false
+                    );
+                    resetBtn.textContent = 'Resend Reset Link';
+                })
+                .catch((error) => {
+                    console.error('Error sending password reset email:', error);
+                    
+                    let errorMessageText = 'An error occurred while sending the reset link. Please try again.';
+                    
+                    // Handle specific Firebase errors
+                    switch (error.code) {
+                        case 'auth/user-not-found':
+                            errorMessageText = 'No account found with this username.';
+                            break;
+                        case 'auth/invalid-email':
+                            errorMessageText = 'Invalid username format.';
+                            break;
+                        case 'auth/too-many-requests':
+                            errorMessageText = 'Too many attempts. Please try again later.';
+                            break;
+                    }
+                    
+                    showMessage(errorMessage, errorMessageText);
+                })
+                .finally(() => {
+                    resetBtn.disabled = false;
+                });
+        });
+        
+        // Auto-hide error message when user starts typing
+        usernameInput.addEventListener('input', function() {
+            errorMessage.style.display = 'none';
+        });
+    </script>
+</body>
+</html>
