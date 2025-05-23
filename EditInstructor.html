@@ -717,15 +717,21 @@
                 return;
             }
             
+            const submitBtn = document.getElementById('submitBtn');
+            const originalBtnText = submitBtn.textContent;
+            
             try {
-                const instructorId = document.getElementById('instructorId').value;
+                submitBtn.disabled = true;
+                submitBtn.textContent = 'Updating...';
+                
+                const instructorId = new URLSearchParams(window.location.search).get('id');
                 if (!instructorId) {
-                    throw new Error('No instructor ID found');
+                    throw new Error('No instructor ID found in URL');
                 }
                 
                 // Get the selected room
                 const roomId = roomSelect.value;
-                const roomName = roomSelect.options[roomSelect.selectedIndex].text;
+                const roomName = roomSelect.options[roomSelect.selectedIndex].text.split(' (Capacity:')[0].trim();
                 
                 // Prepare the update data
                 const updateData = {
@@ -742,6 +748,8 @@
                     updatedAt: new Date().toISOString()
                 };
                 
+                console.log('Updating instructor with data:', updateData);
+                
                 // Update the instructor in Firestore
                 await db.collection('Instructors').doc(instructorId).update(updateData);
                 
@@ -749,10 +757,37 @@
                 setTimeout(() => {
                     window.location.href = 'InstructorList.html';
                 }, 1500);
+                
             } catch (error) {
                 console.error('Error updating instructor:', error);
                 showError('Failed to update instructor: ' + (error.message || 'Unknown error'));
+                submitBtn.disabled = false;
+                submitBtn.textContent = originalBtnText;
             }
+        }
+
+        // Show success message
+        function showSuccess(message) {
+            const successDiv = document.createElement('div');
+            successDiv.className = 'success-message';
+            successDiv.textContent = message;
+            
+            // Style the success message
+            successDiv.style.backgroundColor = '#d4edda';
+            successDiv.style.color = '#155724';
+            successDiv.style.padding = '10px';
+            successDiv.style.borderRadius = '4px';
+            successDiv.style.marginBottom = '15px';
+            successDiv.style.textAlign = 'center';
+            
+            // Insert before the form
+            const form = document.getElementById('instructorForm');
+            form.parentNode.insertBefore(successDiv, form);
+            
+            // Remove after 3 seconds
+            setTimeout(() => {
+                successDiv.remove();
+            }, 3000);
         }
 
         // Delete instructor
@@ -764,14 +799,22 @@
             try {
                 deleteBtn.disabled = true;
                 deleteBtn.textContent = 'Deleting...';
+                
+                const instructorId = new URLSearchParams(window.location.search).get('id');
+                if (!instructorId) {
+                    throw new Error('No instructor ID found in URL');
+                }
 
-                await db.collection('instructors').doc(instructorId).delete();
-                alert('Instructor deleted successfully!');
-                window.location.href = 'InstructorList.html';
-
+                await db.collection('Instructors').doc(instructorId).delete();
+                
+                showSuccess('Instructor deleted successfully!');
+                setTimeout(() => {
+                    window.location.href = 'InstructorList.html';
+                }, 1500);
+                
             } catch (error) {
                 console.error('Error deleting instructor:', error);
-                showError('Failed to delete instructor');
+                showError('Failed to delete instructor: ' + (error.message || 'Unknown error'));
                 deleteBtn.disabled = false;
                 deleteBtn.textContent = 'Delete Instructor';
             }
