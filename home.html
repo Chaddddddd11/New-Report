@@ -5,6 +5,8 @@
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+  <!-- Shared Authentication -->
+  <script src="js/auth-check.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
   <style>
     body {
@@ -151,38 +153,9 @@
   </div>
 
   <script>
-    // Firebase configuration
-    const firebaseConfig = {
-      apiKey: "AIzaSyDBu7-vOFmS62IaGD8-8zb6TH0a1mHYNpI",
-      authDomain: "dhvsu-faculty-scheduling.firebaseapp.com",
-      projectId: "dhvsu-faculty-scheduling",
-      storageBucket: "dhvsu-faculty-scheduling.appspot.com",
-      messagingSenderId: "1075180921702",
-      appId: "1:1075180921702:web:a0320fa286c684511cdea7",
-      measurementId: "G-EP4FZ04FQT"
-    };
-
-    // Initialize Firebase
-    firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth();
-
-    // Check authentication state
-    auth.onAuthStateChanged((user) => {
-      if (!user) {
-        // User is not logged in, redirect to login page
-        window.location.href = 'login.html';
-      }
-    });
-
     // Logout functionality
     document.getElementById('logoutBtn').addEventListener('click', () => {
-      auth.signOut().then(() => {
-        // Sign-out successful, redirect to login page
-        window.location.href = 'login.html';
-      }).catch((error) => {
-        console.error('Error signing out:', error);
-        alert('Error signing out. Please try again.');
-      });
+        window.logout();
     });
   </script>
 </body>
