@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>My Account - DHVSU Faculty Scheduling</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
@@ -365,25 +366,22 @@
 <body>
     <header>
         <div class="header-content">
-            <div class="logo">
-                <img src="https://media.assettype.com/sunstar/2025-02-04/7x1wu7dq/DHVSU.jpg" alt="DHVSU Logo" style="height: 50px;">
-                <h1>DHVSU Faculty Scheduling</h1>
-            </div>
-            <div class="user-nav" id="userNav">
-                <a href="index.html">Dashboard</a>
-                <a href="Instructor.html">Instructors</a>
+            <h1>DHVSU Faculty Scheduling</h1>
+            <nav class="user-nav">
+                <a href="index.html">Home</a>
+                <a href="account.html" class="active">My Account</a>
                 <div class="user-dropdown">
                     <button class="user-button" id="userButton">
-                        <span class="user-avatar" id="userAvatar">?</span>
-                        <span class="user-name" id="userName">Loading...</span>
-                        <span class="dropdown-arrow">▼</span>
+                        <span class="user-avatar" id="userAvatar">U</span>
+                        <span id="userName">User</span>
+                        <i class="fas fa-chevron-down"></i>
                     </button>
                     <div class="dropdown-menu" id="dropdownMenu">
-                        <a href="account.html"><i class="fas fa-user"></i> My Account</a>
-                        <a href="#" id="btnLogout"><i class="fas fa-sign-out-alt"></i> Sign Out</a>
+                        <a href="account.html"><i class="fas fa-user"></i> My Profile</a>
+                        <a href="#" id="btnLogout"><i class="fas fa-sign-out-alt"></i> Logout</a>
                     </div>
                 </div>
-            </div>
+            </nav>
         </div>
     </header>
 
@@ -658,16 +656,137 @@
             }, 1000);
         }
 
-        // Initialize session time
-        sessionStartTime = new Date();
+        // Initialize Firebase and check authentication
+        async function initializeAuth() {
+            try {
+                // Initialize Firebase if not already initialized
+                if (!firebase.apps.length) {
+                    firebase.initializeApp({
+                        apiKey: "AIzaSyDBu7-vOFmS62IaGD8-8zb6TH0a1mHYNpI",
+                        authDomain: "dhvsu-faculty-scheduling.firebaseapp.com",
+                        projectId: "dhvsu-faculty-scheduling",
+                        storageBucket: "dhvsu-faculty-scheduling.appspot.com",
+                        messagingSenderId: "1075180921702",
+                        appId: "1:1075180921702:web:a0320fa286c684511cdea7",
+                        measurementId: "G-EP4FZ04FQT"
+                    });
+                }
 
-        // Check auth state
-        auth.onAuthStateChanged((user) => {
-            if (user) {
-                loadUserData(user);
-            } else {
-                window.location.href = 'login.html';
+                // Set auth persistence
+                await firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+                
+                // Check current user
+                const user = firebase.auth().currentUser;
+                const storedUser = sessionStorage.getItem('user') || localStorage.getItem('user');
+                
+                if (!user && !storedUser) {
+                    throw new Error('No authenticated user found');
+                }
+                
+                if (storedUser && !user) {
+                    // If we have stored user but no Firebase auth, sign out to clear invalid state
+                    await firebase.auth().signOut();
+                    window.location.href = 'login.html';
+                    return null;
+                }
+                
+                return user;
+                
+            } catch (error) {
+                console.error('Authentication error:', error);
+                // Only redirect if not already on login page
+                if (!window.location.href.includes('login.html')) {
+                    window.location.href = 'login.html';
+                }
+                return null;
             }
+        }
+
+        // Initialize the page
+        async function initializePage() {
+            console.log('Initializing account page...');
+            
+            // Initialize session time
+            sessionStartTime = new Date();
+            
+            // Check authentication
+            const user = await initializeAuth();
+            if (!user) return;
+            
+            console.log('User is authenticated:', user.email);
+            
+            // Load user data
+            loadUserData(user);
+            
+            // Set up session timer
+            setupSessionTimer();
+        }
+        
+        // User dropdown functionality
+        async function initializeUserDropdown() {
+            const userButton = document.getElementById('userButton');
+            const dropdownMenu = document.getElementById('dropdownMenu');
+            const btnLogout = document.getElementById('btnLogout');
+            const userName = document.getElementById('userName');
+            const userAvatar = document.getElementById('userAvatar');
+            
+            // Toggle dropdown menu
+            if (userButton && dropdownMenu) {
+                userButton.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    dropdownMenu.classList.toggle('show');
+                });
+                
+                // Close dropdown when clicking outside
+                document.addEventListener('click', function() {
+                    dropdownMenu.classList.remove('show');
+                });
+                
+                dropdownMenu.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                });
+            }
+            
+            // Handle logout
+            if (btnLogout) {
+                btnLogout.addEventListener('click', async function(e) {
+                    e.preventDefault();
+                    try {
+                        await firebase.auth().signOut();
+                        sessionStorage.removeItem('user');
+                        localStorage.removeItem('user');
+                        window.location.href = 'login.html';
+                    } catch (error) {
+                        console.error('Logout error:', error);
+                    }
+                });
+            }
+            
+            // Load user data
+            try {
+                const user = firebase.auth().currentUser;
+                if (user) {
+                    // Update UI with user data
+                    if (userName) {
+                        const displayName = user.displayName || user.email || 'User';
+                        userName.textContent = displayName;
+                        
+                        // Set avatar initials
+                        if (userAvatar) {
+                            const initials = displayName.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
+                            userAvatar.textContent = initials;
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading user data:', error);
+            }
+        }
+        
+        // Start the page initialization
+        document.addEventListener('DOMContentLoaded', async () => {
+            await initializePage();
+            await initializeUserDropdown();
         });
     </script>
 </body>
