@@ -691,20 +691,26 @@
     async function initializePage() {
       console.log('Initializing application...');
       
-      // Check authentication
       try {
-        await Auth.checkAuth();
-        console.log('User is authenticated');
+        // Check authentication
+        const user = await Auth.checkAuth();
+        console.log('User is authenticated:', user.email);
+        
+        // Initialize Firebase
+        initializeApp(firebaseConfig);
+        db = getFirestore();
+        instructorsCollectionRef = collection(db, 'instructors');
+        
+        // Set up the Firestore listener
+        setupFirebaseListener();
+        
       } catch (error) {
-        console.log('User is not authenticated, redirecting to login...');
-        window.location.href = 'login.html';
+        console.log('Authentication error:', error);
+        if (!window.location.href.includes('login.html')) {
+          window.location.href = 'login.html';
+        }
         return;
       }
-      
-      // Initialize Firebase
-      initializeApp(firebaseConfig);
-      db = getFirestore();
-      instructorsCollectionRef = collection(db, 'instructors');
       
       // Set up event listeners for dropdowns
       courseSelect.addEventListener('change', () => {
@@ -872,10 +878,12 @@
   
   <script>
     // User dropdown functionality
-    document.addEventListener('DOMContentLoaded', function() {
+    async function initializeUserDropdown() {
       const userButton = document.getElementById('userButton');
       const dropdownMenu = document.getElementById('dropdownMenu');
       const btnLogout = document.getElementById('btnLogout');
+      const userName = document.getElementById('userName');
+      const userAvatar = document.getElementById('userAvatar');
       
       // Toggle dropdown menu
       if (userButton && dropdownMenu) {
@@ -896,41 +904,39 @@
       
       // Handle logout
       if (btnLogout) {
-        btnLogout.addEventListener('click', function(e) {
+        btnLogout.addEventListener('click', async function(e) {
           e.preventDefault();
-          firebase.auth().signOut().then(() => {
+          try {
+            await Auth.signOut();
             window.location.href = 'login.html';
-          }).catch((error) => {
+          } catch (error) {
             console.error('Logout error:', error);
-          });
+          }
         });
       }
       
       // Load user data
-      firebase.auth().onAuthStateChanged((user) => {
+      try {
+        const user = await Auth.getCurrentUser();
         if (user) {
-          // User is signed in
-          const userName = document.getElementById('userName');
-          const userAvatar = document.getElementById('userAvatar');
-          
+          // Update UI with user data
           if (userName) {
             userName.textContent = user.displayName || user.email || 'User';
           }
           
           if (userAvatar) {
-            if (user.displayName) {
-              const initials = user.displayName.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
-              userAvatar.textContent = initials;
-            } else if (user.email) {
-              userAvatar.textContent = user.email[0].toUpperCase();
-            }
+            const name = user.displayName || user.email || '';
+            const initials = name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
+            userAvatar.textContent = initials;
           }
-        } else {
-          // User is signed out, redirect to login
-          window.location.href = 'login.html';
         }
-      });
-    });
+      } catch (error) {
+        console.error('Error loading user data:', error);
+      }
+    }
+    
+    // Initialize user dropdown when the page loads
+    document.addEventListener('DOMContentLoaded', initializeUserDropdown);
   </script>
 </body>
 </html>
