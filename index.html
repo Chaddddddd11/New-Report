@@ -40,20 +40,33 @@
       background-color: var(--background-color);
     }
 
+    .header-container {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 20px;
+      margin-bottom: 20px;
+      position: relative;
+    }
+    
     .logo-container {
-      position: absolute;
-      top: 20px;
-      z-index: 1000;
+      display: flex;
+      align-items: center;
+      user-select: none;
+      -webkit-user-select: none;
+      -moz-user-select: none;
+      -ms-user-select: none;
+      pointer-events: none;
     }
     
-    .logo-container.right {
-      right: 20px;
-      left: auto;
+    .logo-container img {
+      pointer-events: none;
     }
     
-    .logo-container.left {
-      left: 20px;
-      right: auto;
+    .header-container h2 {
+      margin: 0;
+      text-align: center;
+      flex-grow: 1;
     }
     
     .logo {
@@ -62,11 +75,7 @@
       border-radius: 50%;
       border: 3px solid #1A5F7A;
       box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-      transition: transform 0.3s ease;
-    }
-    
-    .logo:hover {
-      transform: scale(1.05);
+      object-fit: cover;
     }
     
     .nav-buttons {
@@ -205,16 +214,16 @@
     <a href="Room.html" class="nav-button">Room Registration</a>
   </div>
   
-  <div class="logo-container">
-    <img src="https://media.assettype.com/sunstar/2025-02-04/7x1wu7dq/DHVSU.jpg?w=1200&h=675&auto=format%2Ccompress&fit=max&enlarge=true" alt="DHVSU Logo" class="logo">
-  </div>
-  
-  <div class="logo-container right">
-    <img src="https://dhvsu.edu.ph/images/college-of-business-studies/01202025%20-%20College%20of%20Business%20Studies%20LOGO%20-%20Samantha%20F.%20Batalla.png" alt="DHVSU CBS Logo" class="logo">
-  </div>
-  
   <div class="container">
-    <h2>DHVSU Automatic Scheduling System</h2>
+    <div class="header-container">
+      <div class="logo-container left">
+        <img src="https://media.assettype.com/sunstar/2025-02-04/7x1wu7dq/DHVSU.jpg?w=1200&h=675&auto=format%2Ccompress&fit=max&enlarge=true" alt="DHVSU Logo" class="logo">
+      </div>
+      <h2>DHVSU Automatic Scheduling System</h2>
+      <div class="logo-container right">
+        <img src="https://dhvsu.edu.ph/images/college-of-business-studies/01202025%20-%20College%20of%20Business%20Studies%20LOGO%20-%20Samantha%20F.%20Batalla.png" alt="DHVSU CBS Logo" class="logo">
+      </div>
+    </div>
     
     <!-- Your HTML content here -->
     <div class="filters">
