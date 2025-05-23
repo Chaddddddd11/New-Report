@@ -777,50 +777,94 @@
       }
     }
 
+    // Check authentication status
+    async function checkAuth() {
+      try {
+        const user = auth.currentUser;
+        if (!user) {
+          console.log('No authenticated user, redirecting to login...');
+          window.location.replace('login.html');
+          return null;
+        }
+        
+        // Verify the user's ID token to ensure it's still valid
+        await user.getIdToken(true);
+        console.log('User authenticated:', user.email);
+        return user;
+      } catch (error) {
+        console.error('Authentication error:', error);
+        window.location.replace('login.html');
+        return null;
+      }
+    }
+
     // Initialize the page
     async function initializePage() {
       console.log('Initializing application...');
       
-      // Check authentication
-      const user = await initializeAuth();
-      if (!user) return;
-      
-      console.log('User is authenticated:', user.email);
-      
-      // Initialize Firestore
-      db = firebase.firestore();
-      instructorsCollectionRef = db.collection('instructors');
-      
-      // Set up the Firestore listener
-      setupFirebaseListener();
-      
-      // Set up event listeners for dropdowns
-      courseSelect.addEventListener('change', () => {
-        console.log('Course changed to:', courseSelect.value);
-        updateYearOptions();
-        updateStudentCapacity();
+      try {
+        // Initialize Firebase
+        if (!firebase.apps.length) {
+          firebase.initializeApp(firebaseConfig);
+        }
+        
+        // Initialize auth and check authentication
+        auth = firebase.auth();
+        const user = await checkAuth();
+        if (!user) return;
+        
+        console.log('User is authenticated:', user.email);
+        
+        // Set up auth state listener
+        const unsubscribe = auth.onAuthStateChanged((user) => {
+          if (!user) {
+            console.log('User signed out, redirecting to login...');
+            window.location.replace('login.html');
+          }
+        });
+        
+        // Clean up listener when page unloads
+        window.addEventListener('beforeunload', () => {
+          unsubscribe();
+        });
+        
+        // Initialize Firestore
+        db = firebase.firestore();
+        instructorsCollectionRef = db.collection('instructors');
+        
+        // Set up the Firestore listener
+        setupFirebaseListener();
+        
+        // Set up event listeners for dropdowns
+        courseSelect.addEventListener('change', () => {
+          console.log('Course changed to:', courseSelect.value);
+          updateYearOptions();
+          updateStudentCapacity();
+          logCurrentState();
+        });
+        
+        yearSelect.addEventListener('change', () => {
+          console.log('Year changed to:', yearSelect.value);
+          updateSectionOptions();
+          updateStudentCapacity();
+          logCurrentState();
+        });
+        
+        sectionSelect.addEventListener('change', () => {
+          console.log('Section changed to:', sectionSelect.value);
+          updateStudentCapacity();
+          renderSchedule();
+          logCurrentState();
+        });
+        
+        // Initial log
         logCurrentState();
-      });
-      
-      yearSelect.addEventListener('change', () => {
-        console.log('Year changed to:', yearSelect.value);
-        updateSectionOptions();
-        updateStudentCapacity();
-        logCurrentState();
-      });
-      
-      sectionSelect.addEventListener('change', () => {
-        console.log('Section changed to:', sectionSelect.value);
-        updateStudentCapacity();
-        renderSchedule();
-        logCurrentState();
-      });
-      
-      // Initial log
-      logCurrentState();
-      
-      // Set up the Firestore listener
-      setupFirebaseListener();
+        
+      } catch (error) {
+        console.error('Initialization error:', error);
+        // If there's an error, redirect to login
+        window.location.replace('login.html');
+      }
     }
     
     // Start the application when the DOM is fully loaded
