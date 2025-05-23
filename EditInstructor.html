@@ -61,18 +61,11 @@
             pointer-events: none;
         }
 
-        .logo-placeholder {
-            width: 60px;
+        .logo {
             height: 60px;
-            border-radius: 50%;
-            border: 2px solid #4b0404;
-            background-color: var(--primary-color);
-            color: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            width: auto;
+            max-width: 100px;
+            object-fit: contain;
         }
 
         .header {
@@ -203,13 +196,13 @@
     <div class="container">
         <div class="header-container">
             <div class="logo-container">
-                <div class="logo-placeholder">DHVSU</div>
+                <img src="https://i.ibb.co/7yXWJjT/dhvsu-logo.png" alt="DHVSU Logo" class="logo">
             </div>
             <div class="header">
                 <h1>Edit Instructor</h1>
             </div>
             <div class="logo-container">
-                <div class="logo-placeholder">CBS</div>
+                <img src="https://i.ibb.co/0XJ8qY0/cbs-logo.png" alt="CBS Logo" class="logo">
             </div>
         </div>
 
@@ -221,11 +214,19 @@
                     <label for="name">Instructor Name</label>
                     <input type="text" id="name" class="form-control" required>
                 </div>
-
+                
                 <div class="form-group required">
                     <label for="subject">Subject</label>
                     <input type="text" id="subject" class="form-control" required>
                 </div>
+                
+                <!-- These fields will be hidden but still submitted with the form -->
+                <input type="hidden" id="course">
+                <input type="hidden" id="year">
+                <input type="hidden" id="section">
+                <input type="hidden" id="day">
+                <input type="hidden" id="time">
+                <input type="hidden" id="room">
 
                 <div class="form-group required">
                     <label for="course">Course</label>
@@ -356,23 +357,17 @@
                 const data = doc.data();
                 console.log('Retrieved instructor data:', data);
 
-                // Set form values
+                // Set only the name and subject fields
                 if (data.name) nameInput.value = data.name;
                 if (data.subject) subjectInput.value = data.subject;
-                if (data.course) courseSelect.value = data.course;
-                if (data.year) yearSelect.value = data.year;
-                if (data.section) sectionSelect.value = data.section;
-                if (data.day) daySelect.value = data.day;
-                if (data.time) timeInput.value = data.time;
-
-                // Load rooms and set the selected room
-                if (data.roomId) {
-                    console.log('Loading room with ID:', data.roomId);
-                    await loadRooms(data.roomId);
-                } else {
-                    console.log('No room ID found, loading all rooms');
-                    await loadRooms();
-                }
+                
+                // Store other fields in hidden inputs
+                if (data.course) document.getElementById('course').value = data.course;
+                if (data.year) document.getElementById('year').value = data.year;
+                if (data.section) document.getElementById('section').value = data.section;
+                if (data.day) document.getElementById('day').value = data.day;
+                if (data.time) document.getElementById('time').value = data.time;
+                if (data.roomId) document.getElementById('room').value = data.roomId;
 
             } catch (error) {
                 console.error('Error loading instructor:', error);
@@ -418,12 +413,12 @@
                 const instructorData = {
                     name: nameInput.value.trim(),
                     subject: subjectInput.value.trim(),
-                    course: courseSelect.value,
-                    year: yearSelect.value,
-                    section: sectionSelect.value,
-                    day: daySelect.value,
-                    time: timeInput.value.trim(),
-                    roomId: roomSelect.value,
+                    course: document.getElementById('course').value,
+                    year: document.getElementById('year').value,
+                    section: document.getElementById('section').value,
+                    day: document.getElementById('day').value,
+                    time: document.getElementById('time').value.trim(),
+                    roomId: document.getElementById('room').value,
                     updatedAt: new Date().toISOString()
                 };
 
