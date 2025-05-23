@@ -218,7 +218,7 @@
         <div class="form-container">
             <div id="errorMessage" class="error-message"></div>
 
-            <div class="form-container">
+            <form id="instructorForm">
                 <div class="form-group required">
                     <label for="name">Instructor Name*</label>
                     <input type="text" id="name" class="form-control" required>
@@ -299,7 +299,10 @@
                         <option value="">Loading rooms...</option>
                     </select>
                 </div>
-            </div>
+                
+                <!-- Hidden field to store the instructor ID -->
+                <input type="hidden" id="instructorId">
+            </form>
 
             <div class="btn-container">
                 <a href="InstructorList.html" class="btn btn-secondary">← Back to List</a>
@@ -330,7 +333,7 @@
         const db = firebase.firestore();
 
         // DOM Elements
-        const errorMessage = document.getElementById('errorMessage');
+        const form = document.getElementById('instructorForm');
         const nameInput = document.getElementById('name');
         const subjectInput = document.getElementById('subject');
         const courseSelect = document.getElementById('course');
@@ -355,13 +358,20 @@
         let currentInstructor = null;
 
         async function loadInstructorData() {
+            // Get instructor ID from URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const instructorId = urlParams.get('id');
+            
             if (!instructorId) {
                 showError('No instructor ID provided');
                 return;
             }
+            
+            // Store the ID in the hidden field
+            document.getElementById('instructorId').value = instructorId;
 
             try {
-                const doc = await db.collection('instructors').doc(instructorId).get();
+                const doc = await db.collection('Instructors').doc(instructorId).get();
                 
                 if (doc.exists) {
                     currentInstructor = {
@@ -375,36 +385,26 @@
                     nameInput.value = currentInstructor.name || '';
                     subjectInput.value = currentInstructor.subject || '';
                     
-                    // Set other fields
+                    // Set other fields if they exist
                     if (currentInstructor.course) {
                         courseSelect.value = currentInstructor.course;
-                        console.log('Set course to:', currentInstructor.course);
-                    }
-                    if (currentInstructor.year) {
-                        yearSelect.value = currentInstructor.year.toString();
-                        console.log('Set year to:', currentInstructor.year);
-                    }
-                    if (currentInstructor.section) {
-                        sectionSelect.value = currentInstructor.section;
-                        console.log('Set section to:', currentInstructor.section);
-                    }
-                    if (currentInstructor.day) {
-                        daySelect.value = currentInstructor.day;
-                        console.log('Set day to:', currentInstructor.day);
-                    }
-                    if (currentInstructor.time) {
-                        timeSelect.value = currentInstructor.time;
-                        console.log('Set time to:', currentInstructor.time);
                     }
                     
-                    // Load rooms and select the correct one
-                    if (currentInstructor.roomId) {
-                        console.log('Loading room with ID:', currentInstructor.roomId);
-                        await loadRooms(currentInstructor.roomId);
-                    } else {
-                        console.log('No room ID found, loading all rooms');
-                        await loadRooms();
+                    // Handle year and section (they might be combined in yearSection)
+                    if (currentInstructor.yearSection) {
+                        const year = currentInstructor.yearSection.match(/^(\d+)/)?.[0];
+                        const section = currentInstructor.yearSection.replace(/^\d+/, '');
+                        if (year) yearSelect.value = year;
+                        if (section) sectionSelect.value = section;
                     }
+                    
+                    // Set day and time
+                    if (currentInstructor.day) daySelect.value = currentInstructor.day;
+                    if (currentInstructor.time) timeSelect.value = currentInstructor.time;
+                    
+                    // Load rooms and select the correct one
+                    await loadRooms(currentInstructor.roomId || currentInstructor.roomName);
+                    
                 } else {
                     showError('Instructor not found');
                     disableForm();
@@ -419,79 +419,98 @@
         // Load available rooms
         async function loadRooms(selectedRoomId = '') {
             try {
-                // Show loading state
-                roomSelect.innerHTML = '<option value="">Loading rooms...</option>';
                 roomSelect.disabled = true;
+                const querySnapshot = await db.collection('rooms').get();
+                roomSelect.innerHTML = '<option value="">Select a room</option>';
                 
-                // Fetch rooms from Firestore
-                const snapshot = await db.collection('rooms').get();
-
-                if (snapshot.empty) {
-                    roomSelect.innerHTML = '<option value="">No rooms available</option>';
-                    return;
-                }
-
-                // Build room options
-                let options = '<option value="">Select a room</option>';
-                snapshot.forEach(doc => {
-                    const room = doc.data();
-                    const selected = doc.id === selectedRoomId ? 'selected' : '';
-                    const roomName = room.roomName || room.name || 'Unnamed Room';
-                    options += `<option value="${doc.id}" ${selected}>${roomName}</option>`;
+                let foundSelected = false;
+                
+                querySnapshot.forEach(doc => {
+                    const room = { id: doc.id, ...doc.data() };
+                    const option = document.createElement('option');
+                    option.value = room.id;
+                    option.textContent = room.name || `Room ${doc.id}`;
+                    
+                    // Check if this is the selected room (by ID or name)
+                    if (room.id === selectedRoomId || room.name === selectedRoomId) {
+                        option.selected = true;
+                        foundSelected = true;
+                    }
+                    
+                    roomSelect.appendChild(option);
                 });
-
-                // Update the select element
-                roomSelect.innerHTML = options;
+                
+                // If no rooms found
+                if (querySnapshot.empty) {
+                    roomSelect.innerHTML = '<option value="">No rooms available</option>';
+                }
+                
                 roomSelect.disabled = false;
                 
-                // If we have a selected room, ensure it's selected
-                if (selectedRoomId) {
-                    roomSelect.value = selectedRoomId;
+                // If we didn't find the selected room, add it as an option
+                if (selectedRoomId && !foundSelected) {
+                    const option = document.createElement('option');
+                    option.value = selectedRoomId;
+                    option.textContent = selectedRoomId;
+                    option.selected = true;
+                    roomSelect.insertBefore(option, roomSelect.firstChild);
                 }
                 
+                return querySnapshot.docs.map(doc => ({
+                    id: doc.id,
+                    ...doc.data()
+                }));
             } catch (error) {
                 console.error('Error loading rooms:', error);
-                showError('Failed to load rooms: ' + (error.message || 'Unknown error'));
                 roomSelect.innerHTML = '<option value="">Error loading rooms</option>';
                 roomSelect.disabled = false;
+                return [];
             }
         }
 
-        // Update instructor
-        async function updateInstructor() {
+        // Form submission handler
+        async function handleFormSubmit(e) {
+            e.preventDefault();
+            
             if (!validateForm()) {
                 return;
             }
-
+            
             try {
-                updateBtn.disabled = true;
-                updateBtn.textContent = 'Updating...';
-
-                // Get room name for display
-                const roomName = roomSelect.options[roomSelect.selectedIndex]?.text || 'Unknown Room';
-
-                const instructorData = {
+                const instructorId = document.getElementById('instructorId').value;
+                if (!instructorId) {
+                    throw new Error('No instructor ID found');
+                }
+                
+                // Get the selected room
+                const roomId = roomSelect.value;
+                const roomName = roomSelect.options[roomSelect.selectedIndex].text;
+                
+                // Prepare the update data
+                const updateData = {
                     name: nameInput.value.trim(),
                     subject: subjectInput.value.trim(),
                     course: courseSelect.value,
                     year: yearSelect.value,
                     section: sectionSelect.value,
+                    yearSection: yearSelect.value + sectionSelect.value,
                     day: daySelect.value,
                     time: timeSelect.value,
-                    roomId: roomSelect.value,
+                    roomId: roomId,
                     roomName: roomName,
                     updatedAt: new Date().toISOString()
                 };
-
-                await db.collection('instructors').doc(instructorId).update(instructorData);
-                alert('Instructor updated successfully!');
-                window.location.href = 'InstructorList.html';
-
+                
+                // Update the instructor in Firestore
+                await db.collection('Instructors').doc(instructorId).update(updateData);
+                
+                showSuccess('Instructor updated successfully!');
+                setTimeout(() => {
+                    window.location.href = 'InstructorList.html';
+                }, 1500);
             } catch (error) {
                 console.error('Error updating instructor:', error);
-                showError('Failed to update instructor');
-                updateBtn.disabled = false;
-                updateBtn.textContent = 'Update Instructor';
+                showError('Failed to update instructor: ' + (error.message || 'Unknown error'));
             }
         }
 
