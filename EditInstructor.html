@@ -344,7 +344,9 @@
         // Load instructor data
         async function loadInstructorData() {
             try {
+                console.log('Loading instructor data for ID:', instructorId);
                 const doc = await db.collection('instructors').doc(instructorId).get();
+                
                 if (!doc.exists) {
                     showError('Instructor not found');
                     disableForm();
@@ -352,20 +354,29 @@
                 }
 
                 const data = doc.data();
-                nameInput.value = data.name || '';
-                subjectInput.value = data.subject || '';
-                courseSelect.value = data.course || '';
-                yearSelect.value = data.year || '';
-                sectionSelect.value = data.section || '';
-                daySelect.value = data.day || '';
-                timeInput.value = data.time || '';
+                console.log('Retrieved instructor data:', data);
+
+                // Set form values
+                if (data.name) nameInput.value = data.name;
+                if (data.subject) subjectInput.value = data.subject;
+                if (data.course) courseSelect.value = data.course;
+                if (data.year) yearSelect.value = data.year;
+                if (data.section) sectionSelect.value = data.section;
+                if (data.day) daySelect.value = data.day;
+                if (data.time) timeInput.value = data.time;
 
                 // Load rooms and set the selected room
-                await loadRooms(data.roomId);
+                if (data.roomId) {
+                    console.log('Loading room with ID:', data.roomId);
+                    await loadRooms(data.roomId);
+                } else {
+                    console.log('No room ID found, loading all rooms');
+                    await loadRooms();
+                }
 
             } catch (error) {
                 console.error('Error loading instructor:', error);
-                showError('Failed to load instructor data');
+                showError('Failed to load instructor data: ' + error.message);
             }
         }
 
