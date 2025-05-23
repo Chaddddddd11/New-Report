@@ -324,10 +324,8 @@
             try {
                 const email = `${username}@dhvsu.edu.ph`;
                 
-                // Send password reset email
-                await auth.sendPasswordResetEmail(email, {
-                    url: window.location.origin + '/login.html'
-                });
+                // Send basic password reset email
+                await auth.sendPasswordResetEmail(email);
                 
                 // Show success message
                 showMessage(
@@ -355,19 +353,6 @@
                     errorMessageText = 'Invalid username format.';
                 } else if (error.code === 'auth/too-many-requests') {
                     errorMessageText = 'Too many attempts. Please try again later.';
-                } else if (error.code.includes('auth/unauthorized-continue-uri')) {
-                    // If the continue URL is not whitelisted, use the default Firebase URL
-                    try {
-                        await auth.sendPasswordResetEmail(email);
-                        showMessage(
-                            successMessage,
-                            'Password reset link has been sent to your email. Please check your inbox.',
-                            false
-                        );
-                        return;
-                    } catch (innerError) {
-                        errorMessageText = 'Failed to send password reset. Please contact support.';
-                    }
                 }
                 
                 showMessage(errorMessage, errorMessageText);
