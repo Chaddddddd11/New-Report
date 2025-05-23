@@ -523,6 +523,12 @@
       
       // Clear the schedule
       scheduleBody.innerHTML = '';
+      
+      // Add event listener for year change if not already added
+      if (!yearSelect.hasAttribute('data-listener-added')) {
+        yearSelect.setAttribute('data-listener-added', 'true');
+        yearSelect.addEventListener('change', updateSectionOptions);
+      }
     }
 
     // Function to update available sections based on selected year
@@ -544,6 +550,12 @@
         option.textContent = 'Section ' + section;
         sectionSelect.appendChild(option);
       });
+      
+      // Add event listener for section change if not already added
+      if (!sectionSelect.hasAttribute('data-listener-added')) {
+        sectionSelect.setAttribute('data-listener-added', 'true');
+        sectionSelect.addEventListener('change', renderSchedule);
+      }
       
       // Clear the schedule
       scheduleBody.innerHTML = '';
@@ -689,30 +701,41 @@
         return;
       }
       
-      // Add event listeners for the dropdowns
-      courseSelect.addEventListener('change', () => {
-        console.log('Course changed to:', courseSelect.value);
-        updateYearOptions();
-        updateStudentCapacity();
+      // Add event listeners for dropdown changes
+      document.addEventListener('DOMContentLoaded', function() {
+        // Initialize Firebase
+        initializeApp(firebaseConfig);
+        db = getFirestore();
+        instructorsCollectionRef = collection(db, 'instructors');
+        
+        // Set up event listeners for dropdowns
+        courseSelect.addEventListener('change', () => {
+          console.log('Course changed to:', courseSelect.value);
+          updateYearOptions();
+          updateStudentCapacity();
+          logCurrentState();
+        });
+        
+        yearSelect.addEventListener('change', () => {
+          console.log('Year changed to:', yearSelect.value);
+          updateSectionOptions();
+          updateStudentCapacity();
+          logCurrentState();
+        });
+        
+        sectionSelect.addEventListener('change', () => {
+          console.log('Section changed to:', sectionSelect.value);
+          updateStudentCapacity();
+          renderSchedule();
+          logCurrentState();
+        });
+        
+        // Initial log
         logCurrentState();
+        
+        // Set up the Firestore listener
+        setupFirebaseListener();
       });
-      
-      yearSelect.addEventListener('change', () => {
-        console.log('Year changed to:', yearSelect.value);
-        updateSectionOptions();
-        updateStudentCapacity();
-        logCurrentState();
-      });
-      
-      sectionSelect.addEventListener('change', () => {
-        console.log('Section changed to:', sectionSelect.value);
-        updateStudentCapacity();
-        renderSchedule();
-        logCurrentState();
-      });
-      
-      // Initial log
-      logCurrentState();
     });
   </script>
   
