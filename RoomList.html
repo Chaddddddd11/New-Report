@@ -77,6 +77,47 @@
       object-fit: cover;
     }
 
+    .search-container {
+      background: white;
+      padding: 15px;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      margin-bottom: 20px;
+    }
+
+    .search-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 15px;
+      margin-bottom: 15px;
+    }
+
+    .search-group {
+      margin-bottom: 0;
+    }
+
+    .search-group label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: 500;
+      color: var(--primary-color);
+      font-size: 0.9em;
+    }
+
+    .search-input {
+      width: 100%;
+      padding: 8px 12px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 0.95em;
+    }
+
+    .search-input:focus {
+      outline: none;
+      border-color: var(--accent-color);
+      box-shadow: 0 0 0 2px rgba(247, 179, 45, 0.2);
+    }
+
     .nav-buttons {
       display: flex;
       justify-content: space-between;
@@ -316,6 +357,38 @@
       <a href="Room.html" class="nav-button">Add New Room</a>
     </div>
 
+    <div class="search-container">
+      <h3>Search Rooms</h3>
+      <div class="search-grid">
+        <div class="search-group">
+          <label for="searchName">Room Name</label>
+          <input type="text" id="searchName" class="search-input" placeholder="Search by name">
+        </div>
+        <div class="search-group">
+          <label for="searchCapacity">Capacity</label>
+          <input type="number" id="searchCapacity" class="search-input" placeholder="Min capacity">
+        </div>
+        <div class="search-group">
+          <label for="searchDay">Day</label>
+          <select id="searchDay" class="search-input">
+            <option value="">All Days</option>
+            <option value="Monday">Monday</option>
+            <option value="Tuesday">Tuesday</option>
+            <option value="Wednesday">Wednesday</option>
+            <option value="Thursday">Thursday</option>
+            <option value="Friday">Friday</option>
+            <option value="Saturday">Saturday</option>
+            <option value="Sunday">Sunday</option>
+          </select>
+        </div>
+        <div class="search-group">
+          <label for="searchTime">Time</label>
+          <input type="text" id="searchTime" class="search-input" placeholder="e.g., 7:00-8:00">
+        </div>
+      </div>
+      <button id="clearSearch" class="btn" style="background-color: #6c757d;">Clear Filters</button>
+    </div>
+
     <div id="roomList" class="room-list">
       <!-- Room cards will be inserted here -->
       <p id="loadingMessage">Loading rooms...</p>
@@ -339,10 +412,27 @@
           <label for="editRoomCapacity">Capacity:</label>
           <input type="number" id="editRoomCapacity" class="form-control" min="1" required>
         </div>
+        <div class="form-group">
+          <label for="editRoomDay">Day:</label>
+          <select id="editRoomDay" class="form-control" required>
+            <option value="">Select a day</option>
+            <option value="Monday">Monday</option>
+            <option value="Tuesday">Tuesday</option>
+            <option value="Wednesday">Wednesday</option>
+            <option value="Thursday">Thursday</option>
+            <option value="Friday">Friday</option>
+            <option value="Saturday">Saturday</option>
+            <option value="Sunday">Sunday</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="editRoomTime">Time (e.g., 7:00-8:00):</label>
+          <input type="text" id="editRoomTime" class="form-control" required>
+        </div>
       </div>
       <div class="modal-footer">
+        <button class="btn btn-delete" id="cancelEdit" style="margin-right: 10px;">Cancel</button>
         <button class="btn btn-edit" id="saveRoomChanges">Save Changes</button>
-        <button class="btn btn-delete" id="cancelEdit">Cancel</button>
       </div>
     </div>
   </div>
@@ -381,9 +471,21 @@
     const editRoomIdInput = document.getElementById('editRoomId');
     const editRoomNameInput = document.getElementById('editRoomName');
     const editRoomCapacityInput = document.getElementById('editRoomCapacity');
+    const editRoomDaySelect = document.getElementById('editRoomDay');
+    const editRoomTimeInput = document.getElementById('editRoomTime');
     const saveRoomChangesBtn = document.getElementById('saveRoomChanges');
     const cancelEditBtn = document.getElementById('cancelEdit');
     const closeModalBtn = document.querySelector('.close');
+    
+    // Search elements
+    const searchNameInput = document.getElementById('searchName');
+    const searchCapacityInput = document.getElementById('searchCapacity');
+    const searchDaySelect = document.getElementById('searchDay');
+    const searchTimeInput = document.getElementById('searchTime');
+    const clearSearchBtn = document.getElementById('clearSearch');
+    
+    // Store all rooms for filtering
+    let allRooms = [];
 
     // Function to escape HTML to prevent XSS
     function escapeHTML(str) {
@@ -417,7 +519,12 @@
             </div>` : ''}
           </div>
           <div class="room-actions">
-            <button class="btn btn-edit edit-room" data-id="${room.id}" data-name="${escapeHTML(roomName)}" data-capacity="${room.capacity || ''}">
+            <button class="btn btn-edit edit-room" 
+                    data-id="${room.id}" 
+                    data-name="${escapeHTML(roomName)}" 
+                    data-capacity="${room.capacity || ''}"
+                    data-day="${room.day || ''}"
+                    data-time="${room.time || ''}">
               Edit
             </button>
             <button class="btn btn-delete delete-room" data-id="${room.id}">
@@ -454,10 +561,14 @@
       const roomId = e.currentTarget.dataset.id;
       const roomName = e.currentTarget.dataset.name;
       const roomCapacity = e.currentTarget.dataset.capacity;
+      const roomDay = e.currentTarget.dataset.day;
+      const roomTime = e.currentTarget.dataset.time;
       
       editRoomIdInput.value = roomId;
       editRoomNameInput.value = roomName;
       editRoomCapacityInput.value = roomCapacity;
+      editRoomDaySelect.value = roomDay || '';
+      editRoomTimeInput.value = roomTime || '';
       
       editRoomModal.style.display = 'flex';
     }
@@ -482,16 +593,27 @@
       const roomId = editRoomIdInput.value;
       const roomName = editRoomNameInput.value.trim();
       const capacity = parseInt(editRoomCapacityInput.value, 10);
+      const day = editRoomDaySelect.value.trim();
+      const time = editRoomTimeInput.value.trim();
       
-      if (!roomName || isNaN(capacity) || capacity <= 0) {
-        alert('Please enter a valid room name and capacity.');
+      if (!roomName || isNaN(capacity) || capacity <= 0 || !day || !time) {
+        alert('Please fill in all required fields with valid values.');
+        return;
+      }
+      
+      // Basic time format validation (HH:MM-HH:MM)
+      const timeRegex = /^([01]?[0-9]|2[0-3]):[0-5][0-9]-([01]?[0-9]|2[0-3]):[0-5][0-9]$/;
+      if (!timeRegex.test(time)) {
+        alert('Please enter a valid time format (e.g., 7:00-8:00)');
         return;
       }
       
       try {
         await updateDoc(doc(db, 'rooms', roomId), {
-          roomName: roomName,  // Use roomName instead of name
+          roomName: roomName,
           capacity: capacity,
+          day: day,
+          time: time,
           updatedAt: new Date().toISOString()
         });
         editRoomModal.style.display = 'none';
@@ -519,20 +641,62 @@
       }
     });
 
+    // Filter rooms based on search criteria
+    function filterRooms(rooms) {
+      const nameQuery = searchNameInput.value.toLowerCase();
+      const capacityQuery = parseInt(searchCapacityInput.value, 10);
+      const dayQuery = searchDaySelect.value;
+      const timeQuery = searchTimeInput.value.toLowerCase();
+      
+      return rooms.filter(room => {
+        const roomName = (room.roomName || room.name || '').toLowerCase();
+        const roomDay = (room.day || '').toLowerCase();
+        const roomTime = (room.time || '').toLowerCase();
+        const roomCapacity = parseInt(room.capacity, 10) || 0;
+        
+        return (!nameQuery || roomName.includes(nameQuery)) &&
+               (!capacityQuery || roomCapacity >= capacityQuery) &&
+               (!dayQuery || roomDay === dayQuery.toLowerCase()) &&
+               (!timeQuery || roomTime.includes(timeQuery));
+      });
+    }
+    
+    // Update room list based on filters
+    function updateFilteredRooms() {
+      if (allRooms.length === 0) return;
+      const filteredRooms = filterRooms(allRooms);
+      renderRooms(filteredRooms);
+    }
+    
     // Initialize the app
     function init() {
       // Set up real-time listener for rooms
       const q = query(roomsCollectionRef);
       onSnapshot(q, (querySnapshot) => {
-        const rooms = [];
+        allRooms = [];
         querySnapshot.forEach((doc) => {
-          rooms.push({ id: doc.id, ...doc.data() });
+          allRooms.push({ id: doc.id, ...doc.data() });
         });
-        renderRooms(rooms);
+        updateFilteredRooms();
       }, (error) => {
         console.error('Error getting rooms:', error);
         loadingMessage.textContent = 'Error loading rooms. Please try again.';
         loadingMessage.style.display = 'block';
+      });
+      
+      // Add event listeners for search inputs
+      searchNameInput.addEventListener('input', updateFilteredRooms);
+      searchCapacityInput.addEventListener('input', updateFilteredRooms);
+      searchDaySelect.addEventListener('change', updateFilteredRooms);
+      searchTimeInput.addEventListener('input', updateFilteredRooms);
+      
+      // Clear search button
+      clearSearchBtn.addEventListener('click', () => {
+        searchNameInput.value = '';
+        searchCapacityInput.value = '';
+        searchDaySelect.value = '';
+        searchTimeInput.value = '';
+        updateFilteredRooms();
       });
     }
 
