@@ -223,9 +223,9 @@
                     <input type="text" id="subject" class="form-control" required>
                 </div>
 
-                <!-- Hidden fields to maintain data integrity -->
-                <div style="display: none;">
-                    <select id="course" required>
+                <div class="form-group required">
+                    <label for="course">Course*</label>
+                    <select id="course" class="form-control" required>
                         <option value="">Select Course</option>
                         <option value="BSA">BSA</option>
                         <option value="BSAIS">BSAIS</option>
@@ -233,24 +233,33 @@
                         <option value="BSE">BSE</option>
                         <option value="BSPublicAdministration">BS Public Administration</option>
                     </select>
-                    
-                    <select id="year" required>
+                </div>
+
+                <div class="form-group required">
+                    <label for="year">Year Level*</label>
+                    <select id="year" class="form-control" required>
                         <option value="">Select Year</option>
-                        <option value="1">1</option>
-                        <option value="2">2</option>
-                        <option value="3">3</option>
-                        <option value="4">4</option>
+                        <option value="1">1st Year</option>
+                        <option value="2">2nd Year</option>
+                        <option value="3">3rd Year</option>
+                        <option value="4">4th Year</option>
                     </select>
-                    
-                    <select id="section" required>
+                </div>
+
+                <div class="form-group required">
+                    <label for="section">Section*</label>
+                    <select id="section" class="form-control" required>
                         <option value="">Select Section</option>
                         <option value="A">Section A</option>
                         <option value="B">Section B</option>
                         <option value="C">Section C</option>
                         <option value="D">Section D</option>
                     </select>
-                    
-                    <select id="day" required>
+                </div>
+
+                <div class="form-group required">
+                    <label for="day">Day*</label>
+                    <select id="day" class="form-control" required>
                         <option value="">Select Day</option>
                         <option value="Monday">Monday</option>
                         <option value="Tuesday">Tuesday</option>
@@ -259,8 +268,11 @@
                         <option value="Friday">Friday</option>
                         <option value="Saturday">Saturday</option>
                     </select>
-                    
-                    <select id="time" required>
+                </div>
+
+                <div class="form-group required">
+                    <label for="time">Class Time*</label>
+                    <select id="time" class="form-control" required>
                         <option value="">Select Class Time</option>
                         <option value="07:00-08:00">07:00-08:00</option>
                         <option value="08:00-09:00">08:00-09:00</option>
@@ -273,8 +285,11 @@
                         <option value="15:00-16:00">15:00-16:00</option>
                         <option value="16:00-17:00">16:00-17:00</option>
                     </select>
-                    
-                    <select id="room" required>
+                </div>
+
+                <div class="form-group required">
+                    <label for="room">Room*</label>
+                    <select id="room" class="form-control" required>
                         <option value="">Loading rooms...</option>
                     </select>
                 </div>
@@ -348,19 +363,42 @@
                         ...doc.data()
                     };
                     
+                    console.log('Instructor data loaded:', currentInstructor);
+                    
                     // Populate name and subject fields
                     nameInput.value = currentInstructor.name || '';
                     subjectInput.value = currentInstructor.subject || '';
                     
-                    // Set other fields in hidden inputs
-                    if (currentInstructor.course) courseSelect.value = currentInstructor.course;
-                    if (currentInstructor.year) yearSelect.value = currentInstructor.year.toString();
-                    if (currentInstructor.section) sectionSelect.value = currentInstructor.section;
-                    if (currentInstructor.day) daySelect.value = currentInstructor.day;
-                    if (currentInstructor.time) timeSelect.value = currentInstructor.time;
+                    // Set other fields
+                    if (currentInstructor.course) {
+                        courseSelect.value = currentInstructor.course;
+                        console.log('Set course to:', currentInstructor.course);
+                    }
+                    if (currentInstructor.year) {
+                        yearSelect.value = currentInstructor.year.toString();
+                        console.log('Set year to:', currentInstructor.year);
+                    }
+                    if (currentInstructor.section) {
+                        sectionSelect.value = currentInstructor.section;
+                        console.log('Set section to:', currentInstructor.section);
+                    }
+                    if (currentInstructor.day) {
+                        daySelect.value = currentInstructor.day;
+                        console.log('Set day to:', currentInstructor.day);
+                    }
+                    if (currentInstructor.time) {
+                        timeSelect.value = currentInstructor.time;
+                        console.log('Set time to:', currentInstructor.time);
+                    }
                     
                     // Load rooms and select the correct one
-                    await loadRooms(currentInstructor.roomId);
+                    if (currentInstructor.roomId) {
+                        console.log('Loading room with ID:', currentInstructor.roomId);
+                        await loadRooms(currentInstructor.roomId);
+                    } else {
+                        console.log('No room ID found, loading all rooms');
+                        await loadRooms();
+                    }
                 } else {
                     showError('Instructor not found');
                     disableForm();
