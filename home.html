@@ -5,6 +5,21 @@
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+  <script>
+    // Firebase configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyDBu7-vOFmS62IaGD8-8zb6TH0a1mHYNpI",
+      authDomain: "dhvsu-faculty-scheduling.firebaseapp.com",
+      projectId: "dhvsu-faculty-scheduling",
+      storageBucket: "dhvsu-faculty-scheduling.appspot.com",
+      messagingSenderId: "1075180921702",
+      appId: "1:1075180921702:web:a0320fa286c684511cdea7",
+      measurementId: "G-EP4FZ04FQT"
+    };
+
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+  </script>
   <!-- Shared Authentication -->
   <script src="js/auth-check.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
@@ -154,8 +169,19 @@
 
   <script>
     // Logout functionality
-    document.getElementById('logoutBtn').addEventListener('click', () => {
-        window.logout();
+    document.addEventListener('DOMContentLoaded', function() {
+      const logoutBtn = document.getElementById('logoutBtn');
+      if (logoutBtn) {
+        logoutBtn.addEventListener('click', async function() {
+          try {
+            await window.logout();
+            // The redirect will be handled by the auth state change listener in auth-check.js
+          } catch (error) {
+            console.error('Logout failed:', error);
+            alert('Failed to log out. Please try again.');
+          }
+        });
+      }
     });
   </script>
 </body>
