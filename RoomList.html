@@ -1,174 +1,347 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Registered Rooms</title>
+  <title>DHVSU Room Management</title>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
   <style>
     :root {
-      --primary-color: #d92323;
-      --secondary-color: #ffcc00;
-      --background-color: #f5f5f5;
+      --primary-color: #610000;
+      --secondary-color: #800a0acc;
+      --accent-color: #F7B32D;
+      --background-color: #F4F7F6;
       --text-color: #333;
-      --danger-color: #dc3545;
-      --edit-color: #28a745;
+      --error-color: #dc3545;
     }
-    * { margin: 0; padding: 0; box-sizing: border-box; }
+
     body {
-      font-family: 'Arial', sans-serif;
-      background-color: var(--background-color);
-      color: var(--text-color);
-      line-height: 1.6;
-      padding: 20px;
+      background-image: linear-gradient(rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.9)), 
+                      url('https://the-post-assets.sgp1.digitaloceanspaces.com/2023/03/DHVSU_thumbnail.png');
+      background-size: cover;
+      background-position: center;
+      background-attachment: fixed;
+      min-height: 100vh;
+      margin: 0;
+      padding: 20px 0;
+      font-family: 'Roboto', Arial, sans-serif;
     }
-    .container { max-width: 900px; margin: 0 auto; }
-    header {
+    
+    .container {
+      background-color: rgba(255, 255, 255, 0.95);
+      border-radius: 8px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      padding: 25px;
+      margin: 20px auto;
+      max-width: 1000px;
+    }
+
+    .header-container {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 20px;
+      margin-bottom: 20px;
+      position: relative;
+    }
+    
+    .logo-container {
+      display: flex;
+      align-items: center;
+      user-select: none;
+      -webkit-user-select: none;
+      -moz-user-select: none;
+      -ms-user-select: none;
+      pointer-events: none;
+    }
+    
+    .logo-container img {
+      pointer-events: none;
+    }
+    
+    .header {
       background-color: var(--primary-color);
       color: white;
-      padding: 15px 20px;
       text-align: center;
-      margin-bottom: 30px;
-      border-radius: 10px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-    }
-    h1 { font-size: 2em; }
-    .navigation-buttons { margin-bottom: 20px; }
-    button {
-      padding: 10px 15px;
-      border: none;
+      padding: 15px;
+      margin: 0 0 20px 0;
       border-radius: 5px;
-      cursor: pointer;
-      font-size: 0.9em;
-      transition: background-color 0.3s;
-      margin-right: 10px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      flex-grow: 1;
     }
+    
+    .logo {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      border: 2px solid #4b0404;
+      box-shadow: 0 2px 4px rgba(206, 5, 5, 0.2);
+      object-fit: cover;
+    }
+
+    .nav-buttons {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 20px;
+    }
+
     .nav-button {
+      padding: 10px 20px;
+      background-color: var(--primary-color);
+      color: white;
+      text-decoration: none;
+      border-radius: 4px;
+      font-weight: 500;
+      transition: all 0.3s ease;
+    }
+
+    .nav-button:hover {
       background-color: var(--secondary-color);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+
+    .room-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 20px;
+      margin-top: 20px;
+    }
+
+    .room-card {
+      background: white;
+      border-radius: 8px;
+      padding: 20px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      border-left: 4px solid var(--primary-color);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .room-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 5px 15px rgba(0,0,0,0.15);
+    }
+
+    .room-name {
+      font-size: 1.2rem;
+      font-weight: 500;
+      color: var(--primary-color);
+      margin: 0 0 10px 0;
+    }
+
+    .room-detail {
+      margin: 5px 0;
       color: var(--text-color);
     }
-    .nav-button:hover { background-color: #e6b800; }
-    .room-list-container {
-      background: white;
-      padding: 20px;
-      border-radius: 10px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+
+    .room-detail span {
+      font-weight: 500;
+      color: var(--secondary-color);
     }
-    .room-item {
-      border-bottom: 1px solid #eee;
-      padding: 15px 0;
+
+    .room-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 15px;
+    }
+
+    .btn {
+      padding: 8px 15px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: 500;
+      transition: all 0.3s ease;
+      flex: 1;
+      text-align: center;
+    }
+
+    .btn-edit {
+      background-color: var(--primary-color);
+      color: white;
+    }
+
+    .btn-delete {
+      background-color: var(--error-color);
+      color: white;
+    }
+
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    }
+
+    .btn-edit:hover {
+      background-color: var(--secondary-color);
+    }
+
+    .btn-delete:hover {
+      background-color: #c82333;
+    }
+
+    /* Modal Styles */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.5);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .modal-content {
+      background-color: white;
+      padding: 25px;
+      border-radius: 8px;
+      width: 90%;
+      max-width: 500px;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    }
+
+    .modal-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      flex-wrap: wrap;
-    }
-    .room-item:last-child { border-bottom: none; }
-    .room-details { flex-grow: 1; }
-    .room-details p { margin-bottom: 5px; }
-    .room-details strong { color: var(--primary-color); }
-    .room-actions button {
-      margin-left: 10px;
-      color: white;
-    }
-    .edit-button { background-color: var(--edit-color); }
-    .edit-button:hover { background-color: #218838; }
-    .delete-button { background-color: var(--danger-color); }
-    .delete-button:hover { background-color: #c82333; }
-    .status-used {
-        color: var(--danger-color); /* Or a green for 'in use' if preferred */
-        font-weight: bold;
+      margin-bottom: 20px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid #eee;
     }
 
-    .status-free {
-        color: #28a745; /* Green for 'free' */
-        font-weight: bold;
+    .modal-title {
+      margin: 0;
+      color: var(--primary-color);
     }
-    #loadingMessage { text-align: center; padding: 20px; font-style: italic; }
-    /* Modal Styles */
-    .modal {
-      position: fixed; z-index: 1; left: 0; top: 0; width: 100%; height: 100%;
-      overflow: auto; background-color: rgba(0,0,0,0.4);
-      padding-top: 60px;
+
+    .close {
+      font-size: 24px;
+      cursor: pointer;
+      color: #666;
     }
-    .modal-content {
-      background-color: #fefefe; margin: 5% auto; padding: 20px;
-      border: 1px solid #888; width: 80%; max-width: 500px; border-radius: 10px;
+
+    .form-group {
+      margin-bottom: 15px;
     }
-    .close-button {
-      color: #aaa; float: right; font-size: 28px; font-weight: bold;
+
+    .form-group label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: 500;
+      color: var(--text-color);
     }
-    .close-button:hover, .close-button:focus {
-      color: black; text-decoration: none; cursor: pointer;
+
+    .form-control {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 16px;
     }
-    .modal-content div { margin-bottom: 15px; }
-    .modal-content label { display: block; margin-bottom: 5px; }
-    .modal-content input[type="text"], .modal-content input[type="number"] {
-      width: calc(100% - 22px); padding: 10px; border: 1px solid #ccc; border-radius: 5px;
+
+    .form-control:focus {
+      outline: none;
+      border-color: var(--accent-color);
+      box-shadow: 0 0 5px rgba(247, 179, 45, 0.5);
     }
-    .modal-content button {
-        background-color: var(--primary-color); color: white; padding: 10px 15px;
-        border: none; border-radius: 5px; cursor: pointer; font-size: 1em;
+
+    .modal-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-top: 20px;
+      padding-top: 15px;
+      border-top: 1px solid #eee;
     }
-    .modal-content button:hover { background-color: #b81e1e; }
-    @media (max-width: 600px) {
-      .room-item { flex-direction: column; align-items: flex-start; }
-      .room-actions { margin-top: 10px; width: 100%; }
-      .room-actions button { width: calc(50% - 5px); }
-      .room-actions button:first-child { margin-right: 10px; margin-left: 0;}
+
+    #loadingMessage {
+      text-align: center;
+      padding: 20px;
+      color: #666;
+      font-style: italic;
+    }
+
+    @media (max-width: 768px) {
+      .room-list {
+        grid-template-columns: 1fr;
+      }
+      
+      .room-actions {
+        flex-direction: column;
+      }
+      
+      .btn {
+        width: 100%;
+      }
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <header>
-      <h1>Registered Rooms</h1>
-    </header>
-
-    <div class="navigation-buttons">
-      <button class="nav-button" onclick="window.location.href='Room.html'">Back to Room Registration</button>
+    <div class="header-container">
+      <div class="logo-container left">
+        <img src="https://media.assettype.com/sunstar/2025-02-04/7x1wu7dq/DHVSU.jpg?w=1200&h=675&auto=format%2Ccompress&fit=max&enlarge=true" alt="DHVSU Logo" class="logo">
+      </div>
+      <div class="header">
+        <h1>Room Management</h1>
+      </div>
+      <div class="logo-container right">
+        <img src="https://dhvsu.edu.ph/images/college-of-business-studies/01202025%20-%20College%20of%20Business%20Studies%20LOGO%20-%20Samantha%20F.%20Batalla.png" alt="DHVSU CBS Logo" class="logo">
+      </div>
     </div>
 
-    <div class="room-list-container">
-      <div id="roomList">
-        <!-- Room items will be injected here by JavaScript -->
-      </div>
+    <div class="nav-buttons">
+      <a href="index.html" class="nav-button">← Back to Schedule</a>
+      <a href="Room.html" class="nav-button">Add New Room</a>
+    </div>
+
+    <div id="roomList" class="room-list">
+      <!-- Room cards will be inserted here -->
       <p id="loadingMessage">Loading rooms...</p>
     </div>
+  </div>
 
-    <!-- Modal for Editing Room -->
-    <div id="editRoomModal" class="modal" style="display:none;">
-      <div class="modal-content">
-        <span class="close-button" onclick="closeEditModal()">&times;</span>
-        <h2>Edit Room</h2>
+  <!-- Edit Room Modal -->
+  <div id="editRoomModal" class="modal" style="display: none;">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="modal-title">Edit Room</h2>
+        <span class="close">&times;</span>
+      </div>
+      <div class="modal-body">
         <input type="hidden" id="editRoomId">
-        <div>
+        <div class="form-group">
           <label for="editRoomName">Room Name:</label>
-          <input type="text" id="editRoomName" required>
+          <input type="text" id="editRoomName" class="form-control" required>
         </div>
-        <div>
+        <div class="form-group">
           <label for="editRoomCapacity">Capacity:</label>
-          <input type="number" id="editRoomCapacity" required>
+          <input type="number" id="editRoomCapacity" class="form-control" min="1" required>
         </div>
-        <button onclick="saveRoomChanges()">Save Changes</button>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-edit" id="saveRoomChanges">Save Changes</button>
+        <button class="btn btn-delete" id="cancelEdit">Cancel</button>
       </div>
     </div>
   </div>
 
   <script type="module">
-    // Firebase SDK imports
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
     import {
       getFirestore,
       collection,
-      doc, 
+      doc,
       deleteDoc,
-      updateDoc, // Added for editing
+      updateDoc,
       onSnapshot,
-      query // Added for querying rooms collection
+      query
     } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-    // IMPORTANT: Copy your Firebase config object here!
+    // Firebase configuration
     const firebaseConfig = {
-      apiKey: "AIzaSyDeqxzp_-kKjM3hPr6CLGfTn38e4swSKbo", 
+      apiKey: "AIzaSyDeqxzp_-kKjM3hPr6CLGfTn38e4swSKbo",
       authDomain: "room-management-system-8e899.firebaseapp.com",
       projectId: "room-management-system-8e899",
       storageBucket: "room-management-system-8e899.appspot.com",
@@ -179,167 +352,155 @@
     // Initialize Firebase
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
-
-    const roomListDiv = document.getElementById('roomList');
-    const loadingMessage = document.getElementById('loadingMessage');
-
     const roomsCollectionRef = collection(db, "rooms");
-    const instructorsCollectionRef = collection(db, "instructors"); // To check room usage
 
-    // Helper function to escape HTML to prevent XSS (Keep as is)
+    // DOM Elements
+    const roomList = document.getElementById('roomList');
+    const loadingMessage = document.getElementById('loadingMessage');
+    const editRoomModal = document.getElementById('editRoomModal');
+    const editRoomIdInput = document.getElementById('editRoomId');
+    const editRoomNameInput = document.getElementById('editRoomName');
+    const editRoomCapacityInput = document.getElementById('editRoomCapacity');
+    const saveRoomChangesBtn = document.getElementById('saveRoomChanges');
+    const cancelEditBtn = document.getElementById('cancelEdit');
+    const closeModalBtn = document.querySelector('.close');
+
+    // Function to escape HTML to prevent XSS
     function escapeHTML(str) {
-        if (str === null || str === undefined) return '';
-        const div = document.createElement('div');
-        div.appendChild(document.createTextNode(String(str))); // Ensure str is a string
-        return div.innerHTML;
+      if (!str) return '';
+      const div = document.createElement('div');
+      div.textContent = str;
+      return div.innerHTML;
     }
 
-    // Function to render rooms from Firebase and their usage
-    function renderRoomsAndUsage(roomsSnapshot, instructorSchedulesSnapshot) {
-      roomListDiv.innerHTML = ''; // Clear existing list
-      loadingMessage.style.display = 'none';
+    // Function to create room card HTML
+    function createRoomCard(room) {
+      return `
+        <div class="room-card" data-id="${room.id}">
+          <h3 class="room-name">${escapeHTML(room.name || 'Unnamed Room')}</h3>
+          <p class="room-detail"><strong>Capacity:</strong> <span>${escapeHTML(room.capacity || '0')} students</span></p>
+          <div class="room-actions">
+            <button class="btn btn-edit edit-room" data-id="${room.id}" data-name="${escapeHTML(room.name || '')}" data-capacity="${room.capacity || ''}">
+              Edit
+            </button>
+            <button class="btn btn-delete delete-room" data-id="${room.id}">
+              Delete
+            </button>
+          </div>
+        </div>
+      `;
+    }
 
-      const roomUsageCounts = {}; // { roomName: count }
-      instructorSchedulesSnapshot.forEach((docSnap) => {
-        const schedule = docSnap.data();
-        if (schedule.roomName) { // Assuming room name is stored in instructor schedules
-          roomUsageCounts[schedule.roomName] = (roomUsageCounts[schedule.roomName] || 0) + 1;
-        }
-      });
-
-      if (roomsSnapshot.empty) {
-        loadingMessage.textContent = 'No rooms found in the database. Please register rooms first.';
+    // Function to render rooms
+    function renderRooms(rooms) {
+      if (!rooms || rooms.length === 0) {
+        loadingMessage.textContent = 'No rooms found. Please add a room to get started.';
         loadingMessage.style.display = 'block';
         return;
       }
 
-      roomsSnapshot.forEach((roomDoc) => {
-        const room = roomDoc.data();
-        const roomId = roomDoc.id;
-        // Assuming room documents have 'name' and 'capacity' fields.
-        // If your fields are different, please adjust room.name and room.capacity below.
-        const roomName = room.name || 'Unnamed Room'; 
-        const roomCapacity = room.capacity || 'N/A';
+      loadingMessage.style.display = 'none';
+      roomList.innerHTML = rooms.map(createRoomCard).join('');
+      
+      // Add event listeners to edit and delete buttons
+      document.querySelectorAll('.edit-room').forEach(btn => {
+        btn.addEventListener('click', handleEditRoom);
+      });
+      
+      document.querySelectorAll('.delete-room').forEach(btn => {
+        btn.addEventListener('click', handleDeleteRoom);
+      });
+    }
 
-        const usageCount = roomUsageCounts[roomName] || 0;
-        const roomElement = document.createElement('div');
-        roomElement.classList.add('room-item');
-        
-        let statusText = 'Free';
-        let statusClass = 'status-free';
+    // Handle edit room
+    function handleEditRoom(e) {
+      const roomId = e.currentTarget.dataset.id;
+      const roomName = e.currentTarget.dataset.name;
+      const roomCapacity = e.currentTarget.dataset.capacity;
+      
+      editRoomIdInput.value = roomId;
+      editRoomNameInput.value = roomName;
+      editRoomCapacityInput.value = roomCapacity;
+      
+      editRoomModal.style.display = 'flex';
+    }
 
-        if (usageCount > 0) {
-          statusText = 'In Use';
-          statusClass = 'status-used';
-        }
+    // Handle delete room
+    async function handleDeleteRoom(e) {
+      const roomId = e.currentTarget.dataset.id;
+      if (!confirm('Are you sure you want to delete this room? This action cannot be undone.')) {
+        return;
+      }
+      
+      try {
+        await deleteDoc(doc(db, 'rooms', roomId));
+      } catch (error) {
+        console.error('Error deleting room:', error);
+        alert('Failed to delete room. Please try again.');
+      }
+    }
 
-        roomElement.innerHTML = 
-          `<div class="room-details">
-            <p><strong>Name:</strong> ${escapeHTML(roomName)}</p>
-            <p><strong>Capacity:</strong> ${escapeHTML(roomCapacity.toString())} students</p>
-            <p><strong>Status:</strong> <span class="${statusClass}">${escapeHTML(statusText)}</span></p>
-            <p><strong>Scheduled Classes:</strong> ${escapeHTML(usageCount.toString())}</p>
-          </div>
-          <div class="room-actions">
-            <button class="edit-button" data-id="${roomId}" data-name="${escapeHTML(roomName)}" data-capacity="${escapeHTML(roomCapacity.toString())}">Edit</button>
-            <button class="delete-button" data-id="${roomId}">Delete</button>
-          </div>`;
-        
-        roomListDiv.appendChild(roomElement);
-
-        // Add event listeners for edit and delete buttons
-        roomElement.querySelector('.edit-button').addEventListener('click', function() {
-            openEditModal(this.dataset.id, this.dataset.name, this.dataset.capacity);
+    // Save room changes
+    async function saveRoomChanges() {
+      const roomId = editRoomIdInput.value;
+      const name = editRoomNameInput.value.trim();
+      const capacity = parseInt(editRoomCapacityInput.value, 10);
+      
+      if (!name || isNaN(capacity) || capacity <= 0) {
+        alert('Please enter a valid room name and capacity.');
+        return;
+      }
+      
+      try {
+        await updateDoc(doc(db, 'rooms', roomId), {
+          name: name,
+          capacity: capacity,
+          updatedAt: new Date().toISOString()
         });
-        roomElement.querySelector('.delete-button').addEventListener('click', function() {
-            handleDeleteRoom(this.dataset.id);
-        });
-      }); // End of roomsSnapshot.forEach
-    } // End of renderRoomsAndUsage function
+        editRoomModal.style.display = 'none';
+      } catch (error) {
+        console.error('Error updating room:', error);
+        alert('Failed to update room. Please try again.');
+      }
+    }
 
-    // Modal functions
-    const editModal = document.getElementById('editRoomModal');
-    const editRoomIdInput = document.getElementById('editRoomId');
-    const editRoomNameInput = document.getElementById('editRoomName');
-    const editRoomCapacityInput = document.getElementById('editRoomCapacity');
-
-    window.openEditModal = (id, name, capacity) => {
-        editRoomIdInput.value = id;
-        editRoomNameInput.value = name;
-        editRoomCapacityInput.value = capacity;
-        editModal.style.display = 'block';
-    };
-
-    window.closeEditModal = () => {
-        editModal.style.display = 'none';
-    };
-
-    window.saveRoomChanges = async () => {
-        const id = editRoomIdInput.value;
-        const name = editRoomNameInput.value.trim();
-        const capacity = parseInt(editRoomCapacityInput.value, 10);
-
-        if (!name || isNaN(capacity) || capacity <= 0) {
-            alert('Please enter a valid room name and capacity.');
-            return;
-        }
-
-        const roomRef = doc(db, "rooms", id);
-        try {
-            await updateDoc(roomRef, {
-                name: name,
-                capacity: capacity
-            });
-            alert('Room updated successfully!');
-            closeEditModal();
-            // Real-time listener will update the UI
-        } catch (error) {
-            console.error("Error updating room: ", error);
-            alert('Error updating room. Check console.');
-        }
-    };
-
-    // Delete room function
-    window.handleDeleteRoom = async (roomId) => {
-        if (confirm('Are you sure you want to delete this room? This action cannot be undone.')) {
-            const roomRef = doc(db, "rooms", roomId);
-            try {
-                await deleteDoc(roomRef);
-                alert('Room deleted successfully!');
-                // Real-time listener will update the UI
-            } catch (error) {
-                console.error("Error deleting room: ", error);
-                alert('Error deleting room. Check console.');
-            }
-        }
-    };
-
-    // Fetch rooms and instructor schedules to determine usage
-    // We use two separate onSnapshot listeners and combine their results
-    let currentRoomsSnapshot = null;
-    let currentInstructorsSnapshot = null;
-
-    onSnapshot(query(roomsCollectionRef), (roomsSnapshot) => {
-        currentRoomsSnapshot = roomsSnapshot;
-        if (currentInstructorsSnapshot) {
-            renderRoomsAndUsage(currentRoomsSnapshot, currentInstructorsSnapshot);
-        }
-    }, (error) => {
-        console.error("Error fetching rooms: ", error);
-        loadingMessage.textContent = 'Error loading rooms data.';
-        loadingMessage.style.display = 'block';
+    // Event Listeners
+    saveRoomChangesBtn.addEventListener('click', saveRoomChanges);
+    
+    cancelEditBtn.addEventListener('click', () => {
+      editRoomModal.style.display = 'none';
+    });
+    
+    closeModalBtn.addEventListener('click', () => {
+      editRoomModal.style.display = 'none';
+    });
+    
+    // Close modal when clicking outside the modal content
+    window.addEventListener('click', (e) => {
+      if (e.target === editRoomModal) {
+        editRoomModal.style.display = 'none';
+      }
     });
 
-    onSnapshot(query(instructorsCollectionRef), (instructorsSnapshot) => {
-        currentInstructorsSnapshot = instructorsSnapshot;
-        if (currentRoomsSnapshot) {
-            renderRoomsAndUsage(currentRoomsSnapshot, currentInstructorsSnapshot);
-        }
-    }, (error) => {
-        console.error("Error fetching instructor schedules: ", error);
-        loadingMessage.textContent = 'Error loading room usage data.';
+    // Initialize the app
+    function init() {
+      // Set up real-time listener for rooms
+      const q = query(roomsCollectionRef);
+      onSnapshot(q, (querySnapshot) => {
+        const rooms = [];
+        querySnapshot.forEach((doc) => {
+          rooms.push({ id: doc.id, ...doc.data() });
+        });
+        renderRooms(rooms);
+      }, (error) => {
+        console.error('Error getting rooms:', error);
+        loadingMessage.textContent = 'Error loading rooms. Please try again.';
         loadingMessage.style.display = 'block';
-    });
+      });
+    }
+
+    // Start the app
+    document.addEventListener('DOMContentLoaded', init);
   </script>
 </body>
 </html>
