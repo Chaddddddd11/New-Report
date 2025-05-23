@@ -687,8 +687,28 @@
       console.log('===============================');
     }
 
+    // Track authentication state to prevent multiple redirects
+    let authInitialized = false;
+    let authCheckInProgress = false;
+
     // Initialize Firebase and check authentication
     async function initializeAuth() {
+      // Prevent multiple simultaneous auth checks
+      if (authCheckInProgress) {
+        return new Promise(resolve => {
+          const checkAuth = () => {
+            if (authInitialized) {
+              resolve(firebase.auth().currentUser);
+            } else {
+              setTimeout(checkAuth, 100);
+            }
+          };
+          checkAuth();
+        });
+      }
+
+      authCheckInProgress = true;
+      
       try {
         // Initialize Firebase if not already initialized
         if (!firebase.apps.length) {
@@ -710,26 +730,50 @@
         const user = firebase.auth().currentUser;
         const storedUser = sessionStorage.getItem('user') || localStorage.getItem('user');
         
-        if (!user && !storedUser) {
-          throw new Error('No authenticated user found');
+        // If we have a stored user but no Firebase auth, try to restore session
+        if (storedUser && !user) {
+          try {
+            const userData = JSON.parse(storedUser);
+            // Try to sign in with stored credentials
+            const result = await firebase.auth().signInWithEmailAndPassword(
+              userData.email,
+              userData.password // Note: This is just a placeholder - in a real app, don't store passwords in localStorage
+            );
+            authInitialized = true;
+            return result.user;
+          } catch (error) {
+            console.error('Session restore failed:', error);
+            // Clear invalid stored data
+            sessionStorage.removeItem('user');
+            localStorage.removeItem('user');
+            await firebase.auth().signOut();
+            if (!window.location.href.includes('login.html')) {
+              window.location.replace('login.html');
+            }
+            return null;
+          }
         }
         
-        if (storedUser && !user) {
-          // If we have stored user but no Firebase auth, sign out to clear invalid state
-          await firebase.auth().signOut();
-          window.location.href = 'login.html';
+        // If no user is found, redirect to login
+        if (!user) {
+          if (!window.location.href.includes('login.html')) {
+            window.location.replace('login.html');
+          }
           return null;
         }
         
+        authInitialized = true;
         return user;
         
       } catch (error) {
         console.error('Authentication error:', error);
         // Only redirect if not already on login page
         if (!window.location.href.includes('login.html')) {
-          window.location.href = 'login.html';
+          window.location.replace('login.html');
         }
         return null;
+      } finally {
+        authCheckInProgress = false;
       }
     }
 
