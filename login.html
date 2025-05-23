@@ -403,6 +403,7 @@
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-analytics-compat.js"></script>
+    <script src="js/auth.js"></script>
     
     <script>
         // Firebase configuration
@@ -435,6 +436,15 @@
             }
             
             console.log('Firebase initialized successfully');
+            
+            // Check if user is already logged in
+            auth.onAuthStateChanged((user) => {
+                if (user) {
+                    // User is signed in, redirect to index.html
+                    window.location.href = 'index.html';
+                }
+            });
+            
         } catch (error) {
             console.error('Firebase initialization error:', error);
             alert('Error initializing Firebase. Please check console for details.');
@@ -582,9 +592,10 @@
                     lastLogin: new Date().toISOString()
                 };
                 
-                // Store user data in session storage
+                // Store user data in both session and local storage for persistence
                 console.log('Storing session data:', sessionData);
                 sessionStorage.setItem('user', JSON.stringify(sessionData));
+                localStorage.setItem('user', JSON.stringify(sessionData));
                 
                 // Update last login time
                 console.log('Updating last login time...');
@@ -595,10 +606,8 @@
                 showSuccess('Login successful! Redirecting...');
                 console.log('Login successful, redirecting to index.html...');
                 
-                // Redirect to index.html after successful login with a small delay
-                setTimeout(() => {
-                    window.location.href = 'index.html';
-                }, 500);
+                // Force a hard redirect to prevent any caching issues
+                window.location.replace('index.html');
                 
             } catch (error) {
                 console.error('Login error:', error);
