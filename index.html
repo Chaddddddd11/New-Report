@@ -125,6 +125,16 @@
       gap: 15px;
       margin-bottom: 20px;
       flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .student-capacity {
+      padding: 10px;
+      min-width: 120px;
+      border: 1px solid var(--secondary-color);
+      border-radius: 4px;
+      background-color: #f9f9f9;
+      text-align: center;
     }
 
     @media (max-width: 768px) {
@@ -155,7 +165,9 @@
         <option value="">Select Course</option>
         <option value="BSA">BSA</option>
         <option value="BSAIS">BSAIS</option>
-        <!-- Add more courses as needed -->
+        <option value="MSMarketing">MS Marketing</option>
+        <option value="BSE">BSE</option>
+        <option value="BSPublicAdministration">BS Public Administration</option>
       </select>
       
       <select id="yearSelect" disabled>
@@ -165,6 +177,10 @@
       <select id="sectionSelect" disabled>
         <option value="">Select Section</option>
       </select>
+      
+      <div id="studentCapacity" class="student-capacity">
+        Capacity: -
+      </div>
     </div>
     
     <div class="schedule-container">
@@ -245,7 +261,54 @@
     const courseSelect = document.getElementById('courseSelect');
     const yearSelect = document.getElementById('yearSelect');
     const sectionSelect = document.getElementById('sectionSelect');
+    const studentCapacity = document.getElementById('studentCapacity');
     const scheduleBody = document.getElementById('scheduleBody');
+    
+    // Student capacity data
+    const studentCapacityMap = {
+      'BSA': {
+        '1': { 'A': 30, 'B': 30, 'C': 30, 'D': 30 },
+        '2': { 'A': 25, 'B': 25, 'C': 25, 'D': 25 },
+        '3': { 'A': 20, 'B': 20, 'C': 20, 'D': 20 },
+        '4': { 'A': 15, 'B': 15, 'C': 15, 'D': 15 }
+      },
+      'BSAIS': {
+        '1': { 'A': 30, 'B': 30 },
+        '2': { 'A': 25, 'B': 25 },
+        '3': { 'A': 20, 'B': 20 },
+        '4': { 'A': 15, 'B': 15 }
+      },
+      'MSMarketing': {
+        '1': { 'A': 20 },
+        '2': { 'A': 15 }
+      },
+      'BSE': {
+        '1': { 'A': 25, 'B': 25 },
+        '2': { 'A': 20, 'B': 20 },
+        '3': { 'A': 15, 'B': 15 },
+        '4': { 'A': 10, 'B': 10 }
+      },
+      'BSPublicAdministration': {
+        '1': { 'A': 25 },
+        '2': { 'A': 20 },
+        '3': { 'A': 15 },
+        '4': { 'A': 10 }
+      }
+    };
+    
+    // Function to update student capacity display
+    function updateStudentCapacity() {
+      const course = courseSelect.value;
+      const year = yearSelect.value;
+      const section = sectionSelect.value;
+      
+      if (course && year && section) {
+        const capacity = studentCapacityMap[course]?.[year]?.[section] || '-';
+        studentCapacity.textContent = `Capacity: ${capacity}`;
+      } else {
+        studentCapacity.textContent = 'Capacity: -';
+      }
+    }
 
     // Set up real-time listener for instructors
     function setupFirebaseListener() {
@@ -371,9 +434,9 @@
         return;
       }
       
-      // Add year options based on the selected course
+      // Add year options based on the selected course (up to 4th year)
       // Using numbers to match the Firestore data format
-      const years = ['1', '2', '3', '4', '5'];
+      const years = ['1', '2', '3', '4'];
       years.forEach(year => {
         const option = document.createElement('option');
         option.value = year;
@@ -549,17 +612,20 @@
       courseSelect.addEventListener('change', () => {
         console.log('Course changed to:', courseSelect.value);
         updateYearOptions();
+        updateStudentCapacity();
         logCurrentState();
       });
       
       yearSelect.addEventListener('change', () => {
         console.log('Year changed to:', yearSelect.value);
         updateSectionOptions();
+        updateStudentCapacity();
         logCurrentState();
       });
       
       sectionSelect.addEventListener('change', () => {
         console.log('Section changed to:', sectionSelect.value);
+        updateStudentCapacity();
         renderSchedule();
         logCurrentState();
       });
