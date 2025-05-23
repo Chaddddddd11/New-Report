@@ -230,7 +230,10 @@
       collection,
       addDoc,
       updateDoc,
-      doc
+      doc,
+      query,
+      where,
+      getDocs
     } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
     const firebaseConfig = {
@@ -251,6 +254,9 @@
       const time = document.getElementById('time').value;
       const capacity = document.getElementById('capacity').value.trim();
       const errorContainer = document.getElementById('errorContainer');
+      const urlParams = new URLSearchParams(window.location.search);
+      const isEdit = urlParams.get('edit') === 'true';
+      const editId = urlParams.get('id');
 
       errorContainer.textContent = ""; // Clear previous errors
 
@@ -266,27 +272,52 @@
       }
 
       try {
-        const urlParams = new URLSearchParams(window.location.search);
-        const isEdit = urlParams.get('edit') === 'true';
-        const editId = urlParams.get('id');
+        // Check for existing room with the same name, day, and time
+        // Skip this check if we're in edit mode and none of these values have changed
+        const shouldCheckForConflict = !isEdit || 
+          (isEdit && (
+            roomName !== urlParams.get('roomName') || 
+            day !== urlParams.get('day') || 
+            time !== urlParams.get('time')
+          ));
 
-        const roomData = { roomName, day, time, capacity: parseInt(capacity, 10) }; // Store capacity as a number
-        console.log("Attempting to save roomData:", roomData); // <-- ADD THIS LINE
+        if (shouldCheckForConflict) {
+          const roomsRef = collection(db, "rooms");
+          const q = query(
+            roomsRef, 
+            where("roomName", "==", roomName),
+            where("day", "==", day),
+            where("time", "==", time)
+          );
+          
+          const querySnapshot = await getDocs(q);
+          
+          if (!querySnapshot.empty) {
+            errorContainer.textContent = "This room is already booked at the selected day and time. Please choose a different time slot or day.";
+            return;
+          }
+        }
+
+        const roomData = { 
+          roomName, 
+          day, 
+          time, 
+          capacity: parseInt(capacity, 10) 
+        };
 
         if (isEdit && editId) {
           const docRef = doc(db, "rooms", editId);
           await updateDoc(docRef, roomData);
-          alert('Room updated successfully!'); // Optional: Provide user feedback
+          alert('Room schedule updated successfully!');
         } else {
           await addDoc(collection(db, "rooms"), roomData);
-          alert('Room registered successfully!'); // Optional: Provide user feedback
+          alert('Room scheduled successfully!');
         }
 
-        // Redirect to room list page or clear form
-        window.location.href = 'RoomList.html'; // Or clear form: roomForm.reset(); toggleTimeSlots('');
+        window.location.href = 'RoomList.html';
       } catch (error) {
-        errorContainer.textContent = "Failed to save room. Please try again.";
-        console.error("Error saving room:", error); // Crucial for debugging
+        errorContainer.textContent = "Failed to save room schedule. Please try again.";
+        console.error("Error saving room:", error);
       }
     }
 
