@@ -579,9 +579,24 @@
                 const currentRoomId = roomSelect.dataset.currentRoomId || '';
                 let currentRoomFound = false;
                 
-                // Get available rooms (filter out booked rooms and those with insufficient capacity)
+                // Get available rooms (filter by day, time, capacity, and availability)
                 const availableRooms = Array.from(roomSchedules.values())
-                    .filter(room => !room.isBooked && room.capacity >= studentCapacity)
+                    .filter(room => {
+                        // Check if room matches the selected day and time
+                        const matchesDay = room.day === selectedDay;
+                        const [roomStart, roomEnd] = room.timeString.split('-').map(t => t.trim());
+                        const roomStartMinutes = timeToMinutes(roomStart);
+                        const roomEndMinutes = timeToMinutes(roomEnd);
+                        
+                        // Check if room's time slot includes the selected time
+                        const matchesTime = roomStartMinutes <= selectedStartMinutes && 
+                                         roomEndMinutes >= selectedEndMinutes;
+                        
+                        return matchesDay && 
+                               matchesTime && 
+                               !room.isBooked && 
+                               room.capacity >= studentCapacity;
+                    })
                     .sort((a, b) => a.name.localeCompare(b.name));
                 
                 // Add the current room first if it exists (even if it's now unavailable)
