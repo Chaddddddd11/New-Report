@@ -127,14 +127,34 @@
       margin: 0 0 10px 0;
     }
 
+    .room-details {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+      gap: 10px;
+      margin: 10px 0;
+    }
+
     .room-detail {
-      margin: 5px 0;
+      background: rgba(0, 0, 0, 0.03);
+      padding: 8px 12px;
+      border-radius: 6px;
+      margin: 0;
       color: var(--text-color);
+      font-size: 0.9em;
     }
 
     .room-detail span {
-      font-weight: 500;
+      display: block;
+      font-size: 0.8em;
+      color: #666;
+      margin-bottom: 3px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .room-detail strong {
       color: var(--secondary-color);
+      font-weight: 500;
     }
 
     .room-actions {
@@ -380,7 +400,22 @@
       return `
         <div class="room-card" data-id="${room.id}">
           <h3 class="room-name">${escapeHTML(roomName)}</h3>
-          <p class="room-detail"><strong>Capacity:</strong> <span>${escapeHTML(room.capacity || '0')} students</span></p>
+          <div class="room-details">
+            <div class="room-detail">
+              <span>Capacity</span>
+              <strong>${escapeHTML(room.capacity || '0')} students</strong>
+            </div>
+            ${room.day ? `
+            <div class="room-detail">
+              <span>Day</span>
+              <strong>${escapeHTML(room.day)}</strong>
+            </div>` : ''}
+            ${room.time ? `
+            <div class="room-detail">
+              <span>Time</span>
+              <strong>${escapeHTML(room.time)}</strong>
+            </div>` : ''}
+          </div>
           <div class="room-actions">
             <button class="btn btn-edit edit-room" data-id="${room.id}" data-name="${escapeHTML(roomName)}" data-capacity="${room.capacity || ''}">
               Edit
