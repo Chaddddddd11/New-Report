@@ -10,7 +10,7 @@
       --accent-color: #F7B32D;
       --background-color: #F4F7F6;
       --text-color: #333;
-      --error-color: #dc3545;
+      --error-color: #5f4900;
     }
 
     body {
@@ -375,12 +375,14 @@
 
     // Function to create room card HTML
     function createRoomCard(room) {
+      // Use roomName field instead of name
+      const roomName = room.roomName || room.name || 'Unnamed Room';
       return `
         <div class="room-card" data-id="${room.id}">
-          <h3 class="room-name">${escapeHTML(room.name || 'Unnamed Room')}</h3>
+          <h3 class="room-name">${escapeHTML(roomName)}</h3>
           <p class="room-detail"><strong>Capacity:</strong> <span>${escapeHTML(room.capacity || '0')} students</span></p>
           <div class="room-actions">
-            <button class="btn btn-edit edit-room" data-id="${room.id}" data-name="${escapeHTML(room.name || '')}" data-capacity="${room.capacity || ''}">
+            <button class="btn btn-edit edit-room" data-id="${room.id}" data-name="${escapeHTML(roomName)}" data-capacity="${room.capacity || ''}">
               Edit
             </button>
             <button class="btn btn-delete delete-room" data-id="${room.id}">
@@ -443,17 +445,17 @@
     // Save room changes
     async function saveRoomChanges() {
       const roomId = editRoomIdInput.value;
-      const name = editRoomNameInput.value.trim();
+      const roomName = editRoomNameInput.value.trim();
       const capacity = parseInt(editRoomCapacityInput.value, 10);
       
-      if (!name || isNaN(capacity) || capacity <= 0) {
+      if (!roomName || isNaN(capacity) || capacity <= 0) {
         alert('Please enter a valid room name and capacity.');
         return;
       }
       
       try {
         await updateDoc(doc(db, 'rooms', roomId), {
-          name: name,
+          roomName: roomName,  // Use roomName instead of name
           capacity: capacity,
           updatedAt: new Date().toISOString()
         });
