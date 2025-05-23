@@ -363,6 +363,7 @@
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-analytics-compat.js"></script>
     
     <script>
         // Firebase configuration
@@ -376,26 +377,28 @@
             measurementId: "G-EP4FZ04FQT"
         };
         
-        // Enable Firebase Analytics
-        const analytics = firebase.analytics();
-
         // Initialize Firebase
+        let auth, db, analytics;
+        
         try {
-            // Check if Firebase is already initialized
-            if (!firebase.apps.length) {
-                firebase.initializeApp(firebaseConfig);
-            } else {
-                firebase.app(); // if already initialized, use that one
-            }
+            // Initialize Firebase
+            const app = firebase.initializeApp(firebaseConfig);
             
             // Initialize services
-            const auth = firebase.auth();
-            const db = firebase.firestore();
+            auth = firebase.auth();
+            db = firebase.firestore();
+            
+            // Initialize Analytics if available
+            if (firebase.analytics) {
+                analytics = firebase.analytics();
+                console.log('Firebase Analytics initialized');
+            }
             
             console.log('Firebase initialized successfully');
         } catch (error) {
             console.error('Firebase initialization error:', error);
-            alert('Error initializing the app. Please check console for details.');
+            alert('Error initializing Firebase. Please check console for details.');
+            return; // Stop execution if Firebase fails to initialize
         }
 
         // DOM Elements
@@ -556,25 +559,26 @@
             const password = document.getElementById('regPassword').value;
             const confirmPassword = document.getElementById('regConfirmPassword').value;
             
-            // Clear previous messages
+            // Clear previous messages and set loading state
             clearMessages();
             setLoading(registerButton, true);
             
             // Validation
             if (!name || !email || !password || !confirmPassword) {
                 showError('Please fill in all fields', true);
+                setLoading(registerButton, false);
                 return;
             }
             
-            setLoading(registerButton, true);
-            
             if (password !== confirmPassword) {
                 showError('Passwords do not match', true);
+                setLoading(registerButton, false);
                 return;
             }
             
             if (password.length < 6) {
                 showError('Password must be at least 6 characters long', true);
+                setLoading(registerButton, false);
                 return;
             }
             
@@ -605,26 +609,55 @@
                 console.log('User data saved to Firestore');
                 
                 // Update user profile with display name
-                await user.updateProfile({
-                    displayName: name,
-                    photoURL: `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=610000&color=fff`
-                });
-                
-                // Store user data in session storage
-                sessionStorage.setItem('user', JSON.stringify({
-                    uid: user.uid,
-                    email: user.email,
-                    displayName: name,
-                    role: 'user',
-                    lastLogin: new Date().toISOString()
-                }));
-                
-                showSuccess('Registration successful! Redirecting...', true);
-                
-                // Redirect to index.html after successful registration
-                setTimeout(() => {
-                    window.location.href = 'index.html';
-                }, 1500);
+                try {
+                    await user.updateProfile({
+                        displayName: name,
+                        photoURL: `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=610000&color=fff`
+                    });
+                    
+                    // Store user data in session storage
+                    const userSessionData = {
+                        uid: user.uid,
+                        email: user.email,
+                        displayName: name,
+                        role: 'user',
+                        lastLogin: new Date().toISOString()
+                    };
+                    sessionStorage.setItem('user', JSON.stringify(userSessionData));
+                    
+                    // Log analytics event
+                    if (analytics) {
+                        analytics.logEvent('sign_up', {
+                            method: 'email'
+                        });
+                    }
+                    
+                    showSuccess('Registration successful! Redirecting...', true);
+                    
+                    // Redirect to index.html after successful registration
+                    setTimeout(() => {
+                        window.location.href = 'index.html';
+                    }, 1500);
+                    
+                } catch (profileError) {
+                    console.error('Error updating profile:', profileError);
+                    // Don't fail the registration if profile update fails
+                    showSuccess('Account created! Updating profile...', true);
+                    
+                    // Still store basic user data in session
+                    sessionStorage.setItem('user', JSON.stringify({
+                        uid: user.uid,
+                        email: user.email,
+                        displayName: name,
+                        role: 'user',
+                        lastLogin: new Date().toISOString()
+                    }));
+                    
+                    // Redirect anyway
+                    setTimeout(() => {
+                        window.location.href = 'index.html';
+                    }, 1500);
+                }
                 
             } catch (error) {
                 console.error('Registration error:', error);
