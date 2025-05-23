@@ -1,6 +1,9 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
   <title>DHVSU Scheduling System</title>
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
   <style>
@@ -211,13 +214,11 @@
 <body>
   <header>
     <div class="header-content">
-      <div class="logo">
-        <img src="https://media.assettype.com/sunstar/2025-02-04/7x1wu7dq/DHVSU.jpg" alt="DHVSU Logo" style="height: 50px;">
-        <h1>DHVSU Faculty Scheduling</h1>
-      </div>
       <div class="user-nav" id="userNav">
-        <a href="Instructor.html">Enroll Instructor</a>
-        <a href="Room.html">Room Registration</a>
+        <nav class="main-nav">
+          <a href="Instructor.html" class="nav-link">Enroll Instructor</a>
+          <a href="Room.html" class="nav-link">Room Registration</a>
+        </nav>
         <div class="user-dropdown">
           <button class="user-button" id="userButton">
             <span class="user-avatar" id="userAvatar">?</span>
@@ -225,8 +226,8 @@
             <span class="dropdown-arrow">▼</span>
           </button>
           <div class="dropdown-menu" id="dropdownMenu">
-            <a href="account.html"><i class="fas fa-user"></i> My Account</a>
-            <a href="#" id="btnLogout"><i class="fas fa-sign-out-alt"></i> Sign Out</a>
+            <a href="account.html" class="dropdown-item"><i class="fas fa-user"></i> My Account</a>
+            <a href="#" id="btnLogout" class="dropdown-item"><i class="fas fa-sign-out-alt"></i> Sign Out</a>
           </div>
         </div>
       </div>
@@ -289,58 +290,59 @@
   </div>
 
   <!-- Firebase and other scripts -->
-  <script type="module">
-    // Import the functions you need from the SDKs you need
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-    import { 
-      getFirestore, 
-      collection, 
-      onSnapshot, 
-      query, 
-      where, 
-      getDocs,
-      limit,
-      orderBy
-    } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-analytics-compat.js"></script>
+  
+  <script>
+    // Firebase configuration and initialization
+    (function() {
+      // Declare global variables
+      window.db = null;
+      window.instructorsCollectionRef = null;
+      window.allInstructorsData = [];
+      
+      const firebaseConfig = {
+        apiKey: "AIzaSyDBu7-vOFmS62IaGD8-8zb6TH0a1mHYNpI",
+        authDomain: "dhvsu-faculty-scheduling.firebaseapp.com",
+        projectId: "dhvsu-faculty-scheduling",
+        storageBucket: "dhvsu-faculty-scheduling.appspot.com",
+        messagingSenderId: "123456789012",
+        appId: "1:123456789012:web:abcdef123456",
+        measurementId: "G-XXXXXXXXXX"
+      };
 
-    // Your web app's Firebase configuration
-    const firebaseConfig = {
-      apiKey: "AIzaSyDeqxzp_-kKjM3hPr6CLGfTn38e4swSKbo",
-      authDomain: "room-management-system-8e899.firebaseapp.com",
-      projectId: "room-management-system-8e899",
-      storageBucket: "room-management-system-8e899.firebasestorage.app",
-      messagingSenderId: "667821278853",
-      appId: "1:667821278853:web:a3a80c985073772670cbec"
-    };
-
-    // Initialize Firebase
-    let app;
-    let db;
-    let instructorsCollectionRef;
-    let allInstructorsData = [];
-    
-    try {
-      console.log('Initializing Firebase with config:', firebaseConfig);
-      app = initializeApp(firebaseConfig);
-      db = getFirestore(app);
-      
-      // Make db available globally for debugging
-      window.db = db;
-      
-      // Collection reference with correct case sensitivity
-      instructorsCollectionRef = collection(db, 'Instructors');
-      window.instructorsCollectionRef = instructorsCollectionRef;
-      
-      window.firebaseInitialized = true;
-      console.log('Firebase initialized successfully');
-      
-      // Set up the real-time listener
-      setupFirebaseListener();
-      
-    } catch (error) {
-      console.error('Failed to initialize Firebase:', error);
-      alert('Failed to initialize Firebase. Please check the console for details.');
-    }
+      try {
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        window.db = firebase.firestore();
+        
+        // Set persistence to LOCAL to maintain login state
+        firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+        
+        // Initialize Analytics if available
+        if (firebase.analytics) {
+          firebase.analytics();
+        }
+        
+        console.log('Firebase initialized successfully');
+        
+        // Initialize collection references after Firebase is ready
+        window.instructorsCollectionRef = window.db.collection('Instructors');
+        
+        // Mark Firebase as initialized
+        window.firebaseInitialized = true;
+        
+        // Setup Firebase listener if the function exists
+        if (typeof setupFirebaseListener === 'function') {
+          setupFirebaseListener();
+        }
+      } catch (error) {
+        console.error('Firebase initialization error:', error);
+      }
+    })();
 
     // DOM Elements
     const courseSelect = document.getElementById('courseSelect');
@@ -724,87 +726,83 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
   
   <style>
-    /* Header and User Navigation Styles */
+    /* Header and Navigation Styles */
     header {
-      background-color: white;
-      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-      padding: 10px 0;
+      background-color: #610000;
+      padding: 0.8rem 0;
       position: sticky;
       top: 0;
       z-index: 1000;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
     }
     
     .header-content {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
       max-width: 1200px;
       margin: 0 auto;
-      padding: 0 20px;
-    }
-    
-    .logo {
+      padding: 0 2rem;
       display: flex;
+      justify-content: flex-end;
       align-items: center;
-      gap: 15px;
-    }
-    
-    .logo h1 {
-      color: #610000;
-      font-size: 1.5rem;
-      margin: 0;
     }
     
     .user-nav {
       display: flex;
       align-items: center;
-      gap: 20px;
+      gap: 1.5rem;
     }
     
-    .user-nav a {
-      color: #333;
+    .main-nav {
+      display: flex;
+      gap: 1rem;
+      margin-right: 1rem;
+    }
+    
+    .nav-link {
+      color: white !important;
       text-decoration: none;
       font-weight: 500;
-      padding: 8px 12px;
+      padding: 0.5rem 1rem;
       border-radius: 4px;
-      transition: background-color 0.3s;
+      transition: all 0.2s ease;
     }
     
-    .user-nav a:hover {
-      background-color: #f0f0f0;
+    .nav-link:hover {
+      background-color: rgba(255, 255, 255, 0.1);
     }
     
     .user-dropdown {
       position: relative;
-      display: inline-block;
+      margin-left: 1rem;
     }
     
     .user-button {
       display: flex;
       align-items: center;
-      gap: 10px;
-      background: none;
-      border: 1px solid #ddd;
+      gap: 0.5rem;
+      background: rgba(255, 255, 255, 0.1);
+      color: white;
+      border: none;
       border-radius: 20px;
-      padding: 5px 15px;
+      padding: 0.4rem 1rem 0.4rem 0.6rem;
       cursor: pointer;
-      transition: all 0.3s;
+      transition: all 0.2s ease;
     }
     
     .user-button:hover {
-      background-color: #f5f5f5;
+      background: rgba(255, 255, 255, 0.2);
     }
     
     .user-avatar {
-      width: 32px;
-      height: 32px;
-      background-color: #610000;
-      color: white;
+      width: 28px;
+      height: 28px;
+      background-color: white;
+      color: #610000;
       border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-weight: bold;
+      font-weight: 600;
+      font-size: 0.8rem;
     }
     
     .dropdown-menu {
@@ -813,37 +811,53 @@
       right: 0;
       background-color: white;
       min-width: 200px;
-      box-shadow: 0 8px 16px rgba(0,0,0,0.1);
-      border-radius: 4px;
-      z-index: 1;
-      margin-top: 5px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      border-radius: 6px;
+      z-index: 1000;
+      margin-top: 8px;
+      overflow: hidden;
     }
     
-    .dropdown-menu a {
+    .dropdown-item {
       color: #333;
-      padding: 10px 15px;
+      padding: 0.7rem 1rem;
       text-decoration: none;
-      display: block;
-      transition: background-color 0.3s;
+      display: flex;
+      align-items: center;
+      transition: all 0.2s ease;
+      font-size: 0.9rem;
     }
     
-    .dropdown-menu a:hover {
-      background-color: #f5f5f5;
+    .dropdown-item:hover {
+      background-color: #f8f9fa;
+      color: #610000;
     }
     
-    .dropdown-menu a i {
-      margin-right: 10px;
+    .dropdown-item i {
+      margin-right: 0.75rem;
       width: 20px;
       text-align: center;
+      color: #6c757d;
     }
     
     .dropdown-menu.show {
       display: block;
+      animation: fadeIn 0.15s ease-out;
     }
     
     .dropdown-arrow {
-      font-size: 0.7em;
-      margin-left: 5px;
+      font-size: 0.6em;
+      margin-left: 0.5rem;
+      transition: transform 0.2s ease;
+    }
+    
+    .dropdown-menu.show + .user-button .dropdown-arrow {
+      transform: rotate(180deg);
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-5px); }
+      to { opacity: 1; transform: translateY(0); }
     }
   </style>
   
@@ -893,7 +907,7 @@
       }
       
       // Load user data
-      onAuthStateChanged(auth, (user) => {
+      firebase.auth().onAuthStateChanged((user) => {
         if (user) {
           // User is signed in
           const userName = document.getElementById('userName');
