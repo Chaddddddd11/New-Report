@@ -445,18 +445,41 @@
         
         // Initialize Firebase when the page loads
         document.addEventListener('DOMContentLoaded', async () => {
-            const initialized = await initializeFirebase();
-            if (!initialized) {
-                return;
-            }
-            
-            // Check if user is already logged in
-            auth.onAuthStateChanged(async (user) => {
-                if (user) {
-                    // User is signed in, redirect to index
-                    window.location.replace('index.html');
+            try {
+                // Initialize Firebase
+                const initialized = await initializeFirebase();
+                if (!initialized) {
+                    throw new Error('Failed to initialize Firebase');
                 }
-            });
+                
+                // Check if user is already logged in
+                const currentUser = auth.currentUser;
+                if (currentUser) {
+                    console.log('User already logged in, redirecting to index...');
+                    window.location.replace('index.html');
+                    return;
+                }
+                
+                // Set up auth state listener
+                const unsubscribe = auth.onAuthStateChanged((user) => {
+                    if (user) {
+                        console.log('Auth state changed: User signed in');
+                        // User is signed in, redirect to index
+                        window.location.replace('index.html');
+                    } else {
+                        console.log('Auth state changed: No user signed in');
+                    }
+                });
+                
+                // Clean up listener when page unloads
+                window.addEventListener('beforeunload', () => {
+                    unsubscribe();
+                });
+                
+            } catch (error) {
+                console.error('Initialization error:', error);
+                showError('Failed to initialize the application. Please refresh the page.');
+            }
         });
         
         // DOM Elements
