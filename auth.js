@@ -3,13 +3,30 @@
 // Check if user is authenticated, if not redirect to login
 function checkAuth() {
     return new Promise((resolve, reject) => {
+        // First check session storage for user data
+        const storedUser = sessionStorage.getItem('user') || localStorage.getItem('user');
+        
+        if (storedUser) {
+            try {
+                const userData = JSON.parse(storedUser);
+                resolve(userData);
+                return;
+            } catch (e) {
+                console.error('Error parsing stored user data:', e);
+                // Continue to check Firebase auth
+            }
+        }
+        
+        // If no stored user, check Firebase auth
         const user = firebase.auth().currentUser;
         if (user) {
             // User is signed in, resolve with user data
             resolve(user);
         } else {
             // No user is signed in, redirect to login
-            window.location.href = 'login.html';
+            if (!window.location.href.includes('login.html')) {
+                window.location.href = 'login.html';
+            }
             reject(new Error('User not authenticated'));
         }
     });
