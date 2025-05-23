@@ -600,9 +600,16 @@
                     lastLogin: new Date().toISOString()
                 };
                 
-                // Store user data in both session and local storage
-                sessionStorage.setItem('user', JSON.stringify(sessionData));
-                localStorage.setItem('user', JSON.stringify(sessionData));
+                // Store only necessary user data (never store passwords)
+                const userDataToStore = {
+                    uid: user.uid,
+                    email: user.email,
+                    displayName: user.displayName || user.email.split('@')[0],
+                    role: userData.role || 'user',
+                    lastLogin: new Date().toISOString()
+                };
+                sessionStorage.setItem('user', JSON.stringify(userDataToStore));
+                localStorage.setItem('user', JSON.stringify(userDataToStore));
                 
                 // Update last login time
                 await db.collection('users').doc(user.uid).update({
@@ -612,9 +619,13 @@
                 showSuccess('Login successful! Redirecting...');
                 console.log('Login successful, redirecting to index.html...');
                 
-                // Short delay to show success message, then redirect
+                // Use replace instead of href to prevent back button issues
+                // and add a small delay to show success message
                 setTimeout(() => {
-                    window.location.href = 'index.html';
+                    // Clear any pending redirects
+                    window.onbeforeunload = null;
+                    // Use replace to prevent back button from going back to login
+                    window.location.replace('index.html');
                 }, 500);
                 
             } catch (error) {
