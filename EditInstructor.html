@@ -196,13 +196,13 @@
     <div class="container">
         <div class="header-container">
             <div class="logo-container">
-                <img src="https://i.ibb.co/7yXWJjT/dhvsu-logo.png" alt="DHVSU Logo" class="logo">
+                <img src="https://media.assettype.com/sunstar/2025-02-04/7x1wu7dq/DHVSU.jpg" alt="DHVSU Logo" class="logo">
             </div>
             <div class="header">
                 <h1>Edit Instructor</h1>
             </div>
             <div class="logo-container">
-                <img src="https://i.ibb.co/0XJ8qY0/cbs-logo.png" alt="CBS Logo" class="logo">
+                <img src="https://dhvsu.edu.ph/images/college-of-business-studies/01202025%20-%20College%20of%20Business%20Studies%20LOGO%20-%20Samantha%20F.%20Batalla.png" alt="CBS Logo" class="logo">
             </div>
         </div>
 
@@ -220,8 +220,10 @@
                     <input type="text" id="subject" class="form-control" required>
                 </div>
 
-                <!-- Hidden fields to maintain data integrity -->
-                <div style="display: none;">
+                <!-- Course Selection -->
+                <div class="form-group required">
+                    <label for="course">Course*</label>
+                    <select id="course" class="form-control" required>
                     <select id="course" required>
                         <option value="">Select Course</option>
                         <option value="BSA">BSA</option>
@@ -272,6 +274,70 @@
                     </select>
                     
                     <select id="room" required>
+                        <option value="">Loading rooms...</option>
+                    </select>
+                </div>
+
+                <!-- Year Level -->
+                <div class="form-group required">
+                    <label for="year">Year Level*</label>
+                    <select id="year" class="form-control" required>
+                        <option value="">Select Year</option>
+                        <option value="1">1st Year</option>
+                        <option value="2">2nd Year</option>
+                        <option value="3">3rd Year</option>
+                        <option value="4">4th Year</option>
+                    </select>
+                </div>
+
+                <!-- Section -->
+                <div class="form-group required">
+                    <label for="section">Section*</label>
+                    <select id="section" class="form-control" required>
+                        <option value="">Select Section</option>
+                        <option value="A">Section A</option>
+                        <option value="B">Section B</option>
+                        <option value="C">Section C</option>
+                        <option value="D">Section D</option>
+                    </select>
+                </div>
+
+                <!-- Day -->
+                <div class="form-group required">
+                    <label for="day">Day*</label>
+                    <select id="day" class="form-control" required>
+                        <option value="">Select Day</option>
+                        <option value="Monday">Monday</option>
+                        <option value="Tuesday">Tuesday</option>
+                        <option value="Wednesday">Wednesday</option>
+                        <option value="Thursday">Thursday</option>
+                        <option value="Friday">Friday</option>
+                        <option value="Saturday">Saturday</option>
+                    </select>
+                </div>
+
+                <!-- Time -->
+                <div class="form-group required">
+                    <label for="time">Class Time*</label>
+                    <select id="time" class="form-control" required>
+                        <option value="">Select Class Time</option>
+                        <option value="07:00-08:00">07:00-08:00</option>
+                        <option value="08:00-09:00">08:00-09:00</option>
+                        <option value="09:00-10:00">09:00-10:00</option>
+                        <option value="10:00-11:00">10:00-11:00</option>
+                        <option value="11:00-12:00">11:00-12:00</option>
+                        <option value="12:00-13:00">12:00-13:00</option>
+                        <option value="13:00-14:00">13:00-14:00</option>
+                        <option value="14:00-15:00">14:00-15:00</option>
+                        <option value="15:00-16:00">15:00-16:00</option>
+                        <option value="16:00-17:00">16:00-17:00</option>
+                    </select>
+                </div>
+
+                <!-- Room -->
+                <div class="form-group required">
+                    <label for="room">Room*</label>
+                    <select id="room" class="form-control" required>
                         <option value="">Loading rooms...</option>
                     </select>
                 </div>
