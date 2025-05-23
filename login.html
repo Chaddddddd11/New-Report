@@ -404,11 +404,6 @@
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-analytics-compat.js"></script>
     
-    <!-- Firebase SDK -->
-    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
-    
     <script>
         // Firebase configuration
         const firebaseConfig = {
@@ -424,30 +419,26 @@
         // Initialize Firebase
         let auth, db, analytics;
         
-        // Wrap in IIFE to handle async initialization
-        (function initializeFirebase() {
-            try {
-                // Initialize Firebase
-                firebase.initializeApp(firebaseConfig);
-                const auth = firebase.auth();
-                const db = firebase.firestore();
-                
-                // Set persistence to LOCAL to maintain login state
-                auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
-                
-                // Initialize Analytics if available
-                if (firebase.analytics) {
-                    analytics = firebase.analytics();
-                    console.log('Firebase Analytics initialized');
-                }
-                
-                console.log('Firebase initialized successfully');
-            } catch (error) {
-                console.error('Firebase initialization error:', error);
-                alert('Error initializing Firebase. Please check console for details.');
-                // Don't use return here as it's not in a function
+        try {
+            // Initialize Firebase
+            firebase.initializeApp(firebaseConfig);
+            auth = firebase.auth();
+            db = firebase.firestore();
+            
+            // Set persistence to LOCAL to maintain login state
+            auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+            
+            // Initialize Analytics if available
+            if (firebase.analytics) {
+                analytics = firebase.analytics();
+                console.log('Firebase Analytics initialized');
             }
-        })();
+            
+            console.log('Firebase initialized successfully');
+        } catch (error) {
+            console.error('Firebase initialization error:', error);
+            alert('Error initializing Firebase. Please check console for details.');
+        }
 
         // DOM Elements
         const loginForm = document.getElementById('loginForm');
@@ -464,14 +455,14 @@
         // Toggle between login and register forms
         function showForm(formId) {
             // Hide all forms and remove active class
-            document.querySelectorAll('form').forEach(form => {
-                form.classList.remove('active');
+            document.querySelectorAll('.auth-form').forEach(form => {
+                form.style.display = 'none';
             });
             
-            // Show the selected form with active class
+            // Show the selected form
             const activeForm = document.getElementById(formId);
             if (activeForm) {
-                activeForm.classList.add('active');
+                activeForm.style.display = 'block';
             }
             
             // Clear any messages
@@ -480,6 +471,24 @@
             // Scroll to top of form container
             document.querySelector('.form-container').scrollIntoView({ behavior: 'smooth' });
         }
+        
+        // Initialize form visibility
+        document.addEventListener('DOMContentLoaded', function() {
+            // Show login form by default, hide register form
+            document.getElementById('loginForm').style.display = 'block';
+            document.getElementById('registerForm').style.display = 'none';
+            
+            // Set up form toggles
+            document.getElementById('showRegister').addEventListener('click', (e) => {
+                e.preventDefault();
+                showForm('registerForm');
+            });
+            
+            document.getElementById('showLogin').addEventListener('click', (e) => {
+                e.preventDefault();
+                showForm('loginForm');
+            });
+        });
         
         // Clear all messages
         function clearMessages() {
@@ -528,7 +537,7 @@
         }
 
         // Handle form submission
-        loginForm.addEventListener('submit', async (e) => {
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             
             const email = emailInput.value.trim();
@@ -618,7 +627,7 @@
         });
         
         // Handle registration form submission
-        registerForm.addEventListener('submit', async (e) => {
+        document.getElementById('registerForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             
             const registerButton = document.getElementById('registerButton');
