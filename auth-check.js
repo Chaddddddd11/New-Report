@@ -1,16 +1,4 @@
-// Firebase configuration
-const firebaseConfig = {
-    apiKey: "AIzaSyDBu7-vOFmS62IaGD8-8zb6TH0a1mHYNpI",
-    authDomain: "dhvsu-faculty-scheduling.firebaseapp.com",
-    projectId: "dhvsu-faculty-scheduling",
-    storageBucket: "dhvsu-faculty-scheduling.appspot.com",
-    messagingSenderId: "1075180921702",
-    appId: "1:1075180921702:web:a0320fa286c684511cdea7",
-    measurementId: "G-EP4FZ04FQT"
-};
-
-// Initialize Firebase
-firebase.initializeApp(firebaseConfig);
+// Get Firebase auth instance
 const auth = firebase.auth();
 
 // Check authentication state
@@ -43,5 +31,6 @@ function logout() {
         });
 }
 
-// Make logout function available globally
+// Make functions available globally
 window.logout = logout;
+window.getCurrentUser = getCurrentUser;
