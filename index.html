@@ -688,55 +688,59 @@
     }
 
     // Initialize the page
-    document.addEventListener('DOMContentLoaded', async () => {
-      console.log('DOM fully loaded, initializing application...');
+    async function initializePage() {
+      console.log('Initializing application...');
       
       // Check authentication
       try {
         await Auth.checkAuth();
         console.log('User is authenticated');
-        // Continue with page initialization
       } catch (error) {
         console.log('User is not authenticated, redirecting to login...');
+        window.location.href = 'login.html';
         return;
       }
       
-      // Add event listeners for dropdown changes
-      document.addEventListener('DOMContentLoaded', function() {
-        // Initialize Firebase
-        initializeApp(firebaseConfig);
-        db = getFirestore();
-        instructorsCollectionRef = collection(db, 'instructors');
-        
-        // Set up event listeners for dropdowns
-        courseSelect.addEventListener('change', () => {
-          console.log('Course changed to:', courseSelect.value);
-          updateYearOptions();
-          updateStudentCapacity();
-          logCurrentState();
-        });
-        
-        yearSelect.addEventListener('change', () => {
-          console.log('Year changed to:', yearSelect.value);
-          updateSectionOptions();
-          updateStudentCapacity();
-          logCurrentState();
-        });
-        
-        sectionSelect.addEventListener('change', () => {
-          console.log('Section changed to:', sectionSelect.value);
-          updateStudentCapacity();
-          renderSchedule();
-          logCurrentState();
-        });
-        
-        // Initial log
+      // Initialize Firebase
+      initializeApp(firebaseConfig);
+      db = getFirestore();
+      instructorsCollectionRef = collection(db, 'instructors');
+      
+      // Set up event listeners for dropdowns
+      courseSelect.addEventListener('change', () => {
+        console.log('Course changed to:', courseSelect.value);
+        updateYearOptions();
+        updateStudentCapacity();
         logCurrentState();
-        
-        // Set up the Firestore listener
-        setupFirebaseListener();
       });
-    });
+      
+      yearSelect.addEventListener('change', () => {
+        console.log('Year changed to:', yearSelect.value);
+        updateSectionOptions();
+        updateStudentCapacity();
+        logCurrentState();
+      });
+      
+      sectionSelect.addEventListener('change', () => {
+        console.log('Section changed to:', sectionSelect.value);
+        updateStudentCapacity();
+        renderSchedule();
+        logCurrentState();
+      });
+      
+      // Initial log
+      logCurrentState();
+      
+      // Set up the Firestore listener
+      setupFirebaseListener();
+    }
+    
+    // Start the application when the DOM is fully loaded
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initializePage);
+    } else {
+      initializePage();
+    }
   </script>
   
   <!-- Add Font Awesome for icons -->
