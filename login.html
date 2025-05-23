@@ -132,6 +132,35 @@
             color: white;
         }
         
+        .forgot-password {
+            margin: 15px 0;
+            text-align: center;
+        }
+        
+        .forgot-password a {
+            color: var(--primary-color);
+            text-decoration: none;
+            font-size: 14px;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            transition: color 0.2s ease;
+        }
+        
+        .forgot-password a:hover {
+            color: var(--secondary-color);
+            text-decoration: underline;
+        }
+        
+        .footer {
+            margin-top: 30px;
+            color: #6b7280;
+            font-size: 13px;
+            text-align: center;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+        }
+        
         .divider {
             display: flex;
             align-items: center;
@@ -216,6 +245,12 @@
             <button type="submit" class="btn" id="loginBtn">
                 <i class="fas fa-sign-in-alt"></i> Sign In
             </button>
+            
+            <div class="forgot-password">
+                <a href="forgot.html">
+                    <i class="fas fa-question-circle"></i> Forgot Password?
+                </a>
+            </div>
             
             <div class="divider">OR</div>
             
