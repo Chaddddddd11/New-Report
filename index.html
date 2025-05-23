@@ -81,7 +81,14 @@
     .nav-buttons {
       display: flex;
       justify-content: space-between;
+      align-items: center;
       margin-bottom: 20px;
+      padding: 0 20px;
+    }
+    
+    .left-buttons {
+      display: flex;
+      gap: 10px;
     }
 
     .nav-button {
@@ -210,7 +217,10 @@
 </head>
 <body>
   <div class="nav-buttons">
-    <a href="Instructor.html" class="nav-button">Enroll Instructor</a>
+    <div class="left-buttons">
+      <a href="home.html" class="nav-button">Home Page</a>
+      <a href="Instructor.html" class="nav-button">Enroll Instructor</a>
+    </div>
     <a href="Room.html" class="nav-button">Room Registration</a>
   </div>
   
