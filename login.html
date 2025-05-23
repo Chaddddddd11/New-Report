@@ -365,20 +365,38 @@
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
     
     <script>
-        // Firebase configuration - Make sure to replace with your actual config
+        // Firebase configuration
         const firebaseConfig = {
-            apiKey: "AIzaSyDeqxzp_-kKjM3hPr6CLGfTn38e4swSKbo",
+            apiKey: "AIzaSyDBu7-vOFmS62IaGD8-8zb6TH0a1mHYNpI",
             authDomain: "dhvsu-faculty-scheduling.firebaseapp.com",
             projectId: "dhvsu-faculty-scheduling",
             storageBucket: "dhvsu-faculty-scheduling.appspot.com",
-            messagingSenderId: "1234567890",
-            appId: "1:1234567890:web:abcdef123456"
+            messagingSenderId: "1075180921702",
+            appId: "1:1075180921702:web:a0320fa286c684511cdea7",
+            measurementId: "G-EP4FZ04FQT"
         };
+        
+        // Enable Firebase Analytics
+        const analytics = firebase.analytics();
 
         // Initialize Firebase
-        firebase.initializeApp(firebaseConfig);
-        const auth = firebase.auth();
-        const db = firebase.firestore();
+        try {
+            // Check if Firebase is already initialized
+            if (!firebase.apps.length) {
+                firebase.initializeApp(firebaseConfig);
+            } else {
+                firebase.app(); // if already initialized, use that one
+            }
+            
+            // Initialize services
+            const auth = firebase.auth();
+            const db = firebase.firestore();
+            
+            console.log('Firebase initialized successfully');
+        } catch (error) {
+            console.error('Firebase initialization error:', error);
+            alert('Error initializing the app. Please check console for details.');
+        }
 
         // DOM Elements
         const loginForm = document.getElementById('loginForm');
@@ -538,6 +556,10 @@
             const password = document.getElementById('regPassword').value;
             const confirmPassword = document.getElementById('regConfirmPassword').value;
             
+            // Clear previous messages
+            clearMessages();
+            setLoading(registerButton, true);
+            
             // Validation
             if (!name || !email || !password || !confirmPassword) {
                 showError('Please fill in all fields', true);
@@ -614,11 +636,16 @@
                         errorMessage = 'This email is already registered. Please sign in instead.';
                         break;
                     case 'auth/invalid-email':
-                        errorMessage = 'Please enter a valid email address.';
+                        errorMessage += 'The email address is invalid.';
+                        break;
+                    case 'auth/operation-not-allowed':
+                        errorMessage += 'Email/password accounts are not enabled.';
                         break;
                     case 'auth/weak-password':
-                        errorMessage = 'Password is too weak. Please choose a stronger password.';
+                        errorMessage += 'The password is too weak.';
                         break;
+                    default:
+                        errorMessage += error.message;
                 }
                 
                 showError(errorMessage, true);
