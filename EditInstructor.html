@@ -417,7 +417,7 @@
         function setupRoomFiltering(currentRoomId = '') {
             // Add change listeners to relevant fields
             [daySelect, timeSelect, courseSelect, yearSelect, sectionSelect].forEach(select => {
-                select.addEventListener('change', filterAndLoadRooms);
+                select.addEventListener('change', updateAvailableRooms);
             });
             
             // Store the current room ID for later use
@@ -426,94 +426,147 @@
             }
         }
         
-        // Filter and load available rooms based on selections
-        async function filterAndLoadRooms() {
-            const day = daySelect.value;
-            const time = timeSelect.value;
+        // Function to convert time string to minutes (24-hour format)
+        function timeToMinutes(timeStr) {
+            // Remove any AM/PM and trim whitespace
+            timeStr = timeStr.replace(/[a-zA-Z]/g, '').trim();
+            
+            // Handle 24-hour format (e.g., '13:00' or '13:00:00')
+            if (timeStr.includes(':')) {
+                const [hours, minutes] = timeStr.split(':').map(Number);
+                return (hours * 60) + (minutes || 0);
+            }
+            
+            // Handle military time (e.g., '1300')
+            const time = timeStr.padStart(4, '0');
+            const hours = parseInt(time.substring(0, 2));
+            const minutes = parseInt(time.substring(2));
+            return (hours * 60) + minutes;
+        }
+
+        // Function to update available rooms based on current selections
+        async function updateAvailableRooms() {
+            const selectedDay = daySelect.value;
+            const classTime = timeSelect.value;
             const course = courseSelect.value;
             const year = yearSelect.value;
             const section = sectionSelect.value;
             
-            // Don't proceed if required fields are missing
-            if (!day || !time || !course || !year || !section) {
+            if (!selectedDay || !classTime || !course || !year || !section) {
                 roomSelect.innerHTML = '<option value="">Select all fields first</option>';
                 roomSelect.disabled = true;
                 return;
             }
             
             try {
+                // Show loading state
                 roomSelect.disabled = true;
-                roomSelect.innerHTML = '<option value="">Loading available rooms...</option>';
+                roomSelect.innerHTML = '<option value="">Checking room availability...</option>';
                 
-                // Get all rooms
-                const roomsSnapshot = await db.collection('rooms').get();
-                const allRooms = roomsSnapshot.docs.map(doc => ({
-                    id: doc.id,
-                    ...doc.data()
-                }));
+                // Get all rooms and instructors
+                const [roomsSnapshot, instructorsSnapshot] = await Promise.all([
+                    db.collection('rooms').get(),
+                    db.collection('Instructors').get()
+                ]);
                 
-                // Get all instructors to check for conflicts
-                const instructorsSnapshot = await db.collection('Instructors').get();
-                const conflictingRooms = new Set();
+                // Parse selected time from dropdown into minutes
+                const [selectedTimeStartStr, selectedTimeEndStr] = classTime.split('-').map(t => t.trim());
+                const selectedStartMinutes = timeToMinutes(selectedTimeStartStr);
+                const selectedEndMinutes = timeToMinutes(selectedTimeEndStr);
                 
-                // Find rooms that are already booked at this day/time
-                instructorsSnapshot.forEach(doc => {
-                    const instructor = doc.data();
-                    if (instructor.day === day && instructor.time === time) {
-                        if (instructor.roomId) conflictingRooms.add(instructor.roomId);
-                        if (instructor.roomName) conflictingRooms.add(instructor.roomName);
-                    }
+                // Create a map of room schedules
+                const roomSchedules = new Map();
+                roomsSnapshot.docs.forEach(doc => {
+                    const data = doc.data();
+                    if (!data.roomName) return;
+                    
+                    roomSchedules.set(data.roomName, {
+                        id: doc.id,
+                        name: data.roomName,
+                        capacity: parseInt(data.capacity) || 0,
+                        day: data.day || '',
+                        time: data.time || '',
+                        isBooked: false
+                    });
                 });
                 
-                // Filter out unavailable rooms
-                const availableRooms = allRooms.filter(room => 
-                    !conflictingRooms.has(room.id) && !conflictingRooms.has(room.name)
-                );
+                // Mark rooms as booked based on instructor schedules
+                instructorsSnapshot.docs.forEach(doc => {
+                    const instructor = doc.data();
+                    if (!instructor.roomName || instructor.day !== selectedDay) return;
+                    
+                    // Skip if no time data
+                    if (!instructor.time || typeof instructor.time !== 'string') return;
+                    
+                    // Parse instructor's time slot
+                    const [instructorStartStr, instructorEndStr] = instructor.time.split('-').map(t => t.trim());
+                    const instructorStartMinutes = timeToMinutes(instructorStartStr);
+                    const instructorEndMinutes = timeToMinutes(instructorEndStr);
+                    
+                    // Check for time overlap
+                    const timeOverlap = 
+                        (selectedStartMinutes >= instructorStartMinutes && selectedStartMinutes < instructorEndMinutes) ||
+                        (selectedEndMinutes > instructorStartMinutes && selectedEndMinutes <= instructorEndMinutes) ||
+                        (selectedStartMinutes <= instructorStartMinutes && selectedEndMinutes >= instructorEndMinutes);
+                    
+                    if (timeOverlap) {
+                        const room = roomSchedules.get(instructor.roomName);
+                        if (room) {
+                            room.isBooked = true;
+                        }
+                    }
+                });
                 
                 // Update the room select
                 roomSelect.innerHTML = '';
                 const currentRoomId = roomSelect.dataset.currentRoomId || '';
                 let currentRoomFound = false;
                 
+                // Add available rooms
+                const availableRooms = Array.from(roomSchedules.values())
+                    .filter(room => !room.isBooked)
+                    .sort((a, b) => a.name.localeCompare(b.name));
+                
                 // Add the current room first if it exists
                 if (currentRoomId) {
-                    const currentRoom = allRooms.find(r => r.id === currentRoomId || r.name === currentRoomId);
+                    const currentRoom = availableRooms.find(r => r.id === currentRoomId || r.name === currentRoomId);
                     if (currentRoom) {
-                        const option = document.createElement('option');
-                        option.value = currentRoom.id;
-                        option.textContent = currentRoom.name || `Room ${currentRoom.id}`;
+                        const option = new Option(
+                            `${currentRoom.name} (Capacity: ${currentRoom.capacity})`,
+                            currentRoom.id
+                        );
                         option.selected = true;
-                        roomSelect.appendChild(option);
+                        roomSelect.add(option);
                         currentRoomFound = true;
                     }
                 }
                 
                 // Add a default option if no current room or it wasn't found
                 if (!currentRoomFound) {
-                    const defaultOption = document.createElement('option');
-                    defaultOption.value = '';
-                    defaultOption.textContent = availableRooms.length > 0 ? 'Select a room' : 'No available rooms';
+                    const defaultOption = new Option(
+                        availableRooms.length > 0 ? 'Select a room' : 'No available rooms',
+                        ''
+                    );
                     defaultOption.selected = true;
-                    roomSelect.appendChild(defaultOption);
+                    roomSelect.add(defaultOption);
                 }
                 
                 // Add available rooms (excluding the current room if it was added)
                 availableRooms.forEach(room => {
                     if (!currentRoomFound || room.id !== currentRoomId) {
-                        const option = document.createElement('option');
-                        option.value = room.id;
-                        option.textContent = room.name || `Room ${room.id}`;
-                        roomSelect.appendChild(option);
+                        roomSelect.add(new Option(
+                            `${room.name} (Capacity: ${room.capacity})`,
+                            room.id
+                        ));
                     }
                 });
                 
                 roomSelect.disabled = false;
-                
                 return availableRooms;
                 
             } catch (error) {
                 console.error('Error loading rooms:', error);
-                roomSelect.innerHTML = '<option value="">Error loading rooms</option>';
+                roomSelect.innerHTML = '<option value="">Error loading rooms. Please try again.</option>';
                 roomSelect.disabled = false;
                 return [];
             }
