@@ -380,26 +380,29 @@
         // Initialize Firebase
         let auth, db, analytics;
         
-        try {
-            // Initialize Firebase
-            const app = firebase.initializeApp(firebaseConfig);
-            
-            // Initialize services
-            auth = firebase.auth();
-            db = firebase.firestore();
-            
-            // Initialize Analytics if available
-            if (firebase.analytics) {
-                analytics = firebase.analytics();
-                console.log('Firebase Analytics initialized');
+        // Wrap in IIFE to handle async initialization
+        (function initializeFirebase() {
+            try {
+                // Initialize Firebase
+                const app = firebase.initializeApp(firebaseConfig);
+                
+                // Initialize services
+                auth = firebase.auth();
+                db = firebase.firestore();
+                
+                // Initialize Analytics if available
+                if (firebase.analytics) {
+                    analytics = firebase.analytics();
+                    console.log('Firebase Analytics initialized');
+                }
+                
+                console.log('Firebase initialized successfully');
+            } catch (error) {
+                console.error('Firebase initialization error:', error);
+                alert('Error initializing Firebase. Please check console for details.');
+                // Don't use return here as it's not in a function
             }
-            
-            console.log('Firebase initialized successfully');
-        } catch (error) {
-            console.error('Firebase initialization error:', error);
-            alert('Error initializing Firebase. Please check console for details.');
-            return; // Stop execution if Firebase fails to initialize
-        }
+        })();
 
         // DOM Elements
         const loginForm = document.getElementById('loginForm');
@@ -487,39 +490,51 @@
             setLoading(loginButton, true);
             
             try {
+                console.log('Attempting to sign in with email:', email);
                 // Sign in with email and password
                 const userCredential = await auth.signInWithEmailAndPassword(email, password);
                 const user = userCredential.user;
+                console.log('Authentication successful, user UID:', user.uid);
                 
                 // Get user role from Firestore
+                console.log('Fetching user data from Firestore...');
                 const userDoc = await db.collection('users').doc(user.uid).get();
                 
                 if (!userDoc.exists) {
+                    console.error('No user document found for UID:', user.uid);
                     await auth.signOut();
                     showError('No user data found. Please contact administrator.');
                     return;
                 }
                 
                 const userData = userDoc.data();
+                console.log('User data from Firestore:', userData);
                 
-                // Store user data in session storage
-                sessionStorage.setItem('user', JSON.stringify({
+                // Prepare user session data
+                const sessionData = {
                     uid: user.uid,
                     email: user.email,
                     displayName: user.displayName || '',
                     role: userData.role || 'user',
                     lastLogin: new Date().toISOString()
-                }));
+                };
+                
+                // Store user data in session storage
+                console.log('Storing session data:', sessionData);
+                sessionStorage.setItem('user', JSON.stringify(sessionData));
                 
                 // Update last login time
+                console.log('Updating last login time...');
                 await db.collection('users').doc(user.uid).update({
                     lastLogin: new Date().toISOString()
                 });
                 
                 showSuccess('Login successful! Redirecting...');
+                console.log('Login successful, redirecting to index.html...');
                 
                 // Redirect to index.html after successful login
                 setTimeout(() => {
+                    console.log('Executing redirect to index.html');
                     window.location.href = 'index.html';
                 }, 1500);
                 
