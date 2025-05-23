@@ -40,6 +40,35 @@
       background-color: var(--background-color);
     }
 
+    .logo-container {
+      position: absolute;
+      top: 20px;
+      z-index: 1000;
+    }
+    
+    .logo-container.right {
+      right: 20px;
+      left: auto;
+    }
+    
+    .logo-container.left {
+      left: 20px;
+      right: auto;
+    }
+    
+    .logo {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      border: 3px solid #1A5F7A;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+      transition: transform 0.3s ease;
+    }
+    
+    .logo:hover {
+      transform: scale(1.05);
+    }
+    
     .nav-buttons {
       display: flex;
       justify-content: space-between;
@@ -174,6 +203,14 @@
   <div class="nav-buttons">
     <a href="Instructor.html" class="nav-button">Enroll Instructor</a>
     <a href="Room.html" class="nav-button">Room Registration</a>
+  </div>
+  
+  <div class="logo-container">
+    <img src="https://www.dhvsu.edu.ph/images/dhvsu_logo.png" alt="DHVSU Logo" class="logo">
+  </div>
+  
+  <div class="logo-container right">
+    <img src="https://www.dhvsu.edu.ph/images/cbs_logo.png" alt="DHVSU CBS Logo" class="logo">
   </div>
   
   <div class="container">
