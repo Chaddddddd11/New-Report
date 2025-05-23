@@ -95,6 +95,37 @@
             transition: background-color 0.3s;
         }
 
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            min-width: 120px;
+        }
+        
+        .btn-primary:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+        
+        .spinner-border {
+            width: 1rem;
+            height: 1rem;
+            border-width: 0.15em;
+        }
+        
+        .d-none {
+            display: none !important;
+        }
+
         .btn:hover {
             background-color: var(--secondary-color);
         }
@@ -169,7 +200,12 @@
             <div id="errorMessage" class="error-message"></div>
             <div id="successMessage" class="success-message"></div>
             
-            <button type="submit" class="btn">Sign In</button>
+            <div class="form-group">
+                <button type="submit" class="btn btn-primary" id="loginButton">
+                    <span class="button-text">Sign In</span>
+                    <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+                </button>
+            </div>
             
             <div class="auth-footer">
                 <p>Don't have an account? <a href="#" id="showRegister">Create account</a></p>
@@ -178,30 +214,48 @@
         
         <!-- Registration Form (initially hidden) -->
         <form id="registerForm" class="auth-form">
+            <h2>Create Account</h2>
+            <p class="form-note">Create your account to get started</p>
+            
             <div class="form-group">
-                <label for="regName">Full Name</label>
-                <input type="text" id="regName" class="form-control" required>
+                <input type="text" id="regName" placeholder="Full Name" required>
             </div>
             
             <div class="form-group">
-                <label for="regEmail">Email Address</label>
-                <input type="email" id="regEmail" class="form-control" required>
+                <input type="email" id="regEmail" placeholder="Email Address" required>
             </div>
             
             <div class="form-group">
-                <label for="regPassword">Password (min 6 characters)</label>
-                <input type="password" id="regPassword" class="form-control" minlength="6" required>
+                <select id="regDepartment" class="form-control" required>
+                    <option value="" disabled selected>Select Department</option>
+                    <option value="College of Business and Accountancy">College of Business and Accountancy</option>
+                    <option value="College of Computer Studies">College of Computer Studies</option>
+                    <option value="College of Education">College of Education</option>
+                    <option value="College of Engineering">College of Engineering</option>
+                    <option value="College of Nursing">College of Nursing</option>
+                    <option value="College of Arts and Sciences">College of Arts and Sciences</option>
+                    <option value="College of Criminal Justice Education">College of Criminal Justice Education</option>
+                    <option value="College of Industrial Technology">College of Industrial Technology</option>
+                </select>
             </div>
             
             <div class="form-group">
-                <label for="regConfirmPassword">Confirm Password</label>
-                <input type="password" id="regConfirmPassword" class="form-control" minlength="6" required>
+                <input type="password" id="regPassword" placeholder="Password (min 6 characters)" required minlength="6">
+            </div>
+            
+            <div class="form-group">
+                <input type="password" id="regConfirmPassword" placeholder="Confirm Password" required>
             </div>
             
             <div id="regErrorMessage" class="error-message"></div>
             <div id="regSuccessMessage" class="success-message"></div>
             
-            <button type="submit" class="btn">Create Account</button>
+            <div class="form-group">
+                <button type="submit" class="btn btn-primary" id="registerButton">
+                    <span class="button-text">Create Account</span>
+                    <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+                </button>
+            </div>
             
             <div class="auth-footer">
                 <p>Already have an account? <a href="#" id="showLogin">Sign in</a></p>
@@ -283,18 +337,37 @@
             errorEl.style.display = 'none';
         }
 
+        // Toggle loading state
+        function setLoading(button, isLoading) {
+            const spinner = button.querySelector('.spinner-border');
+            const buttonText = button.querySelector('.button-text');
+            
+            if (isLoading) {
+                button.disabled = true;
+                spinner.classList.remove('d-none');
+                buttonText.textContent = button.id === 'loginButton' ? 'Signing in...' : 'Creating account...';
+            } else {
+                button.disabled = false;
+                spinner.classList.add('d-none');
+                buttonText.textContent = button.id === 'loginButton' ? 'Sign In' : 'Create Account';
+            }
+        }
+
         // Handle form submission
         loginForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             
             const email = emailInput.value.trim();
             const password = passwordInput.value;
+            const loginButton = document.getElementById('loginButton');
             
             // Basic validation
             if (!email || !password) {
                 showError('Please enter both email and password');
                 return;
             }
+            
+            setLoading(loginButton, true);
             
             try {
                 // Sign in with email and password
@@ -354,6 +427,8 @@
                 }
                 
                 showError(errorMessage);
+            } finally {
+                setLoading(loginButton, false);
             }
         });
         
@@ -361,6 +436,7 @@
         registerForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             
+            const registerButton = document.getElementById('registerButton');
             const name = document.getElementById('regName').value.trim();
             const email = document.getElementById('regEmail').value.trim();
             const password = document.getElementById('regPassword').value;
@@ -371,6 +447,8 @@
                 showError('Please fill in all fields', true);
                 return;
             }
+            
+            setLoading(registerButton, true);
             
             if (password !== confirmPassword) {
                 showError('Passwords do not match', true);
@@ -387,19 +465,25 @@
                 const userCredential = await auth.createUserWithEmailAndPassword(email, password);
                 const user = userCredential.user;
                 
+                // Get department
+                const department = document.getElementById('regDepartment').value;
+                
                 // Save additional user data to Firestore
                 await db.collection('users').doc(user.uid).set({
                     uid: user.uid,
                     email: email,
                     displayName: name,
+                    department: department,
                     role: 'user', // Default role
+                    isActive: true,
                     createdAt: new Date().toISOString(),
                     lastLogin: new Date().toISOString()
                 });
                 
                 // Update user profile with display name
                 await user.updateProfile({
-                    displayName: name
+                    displayName: name,
+                    photoURL: `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=610000&color=fff`
                 });
                 
                 // Store user data in session storage
@@ -436,6 +520,8 @@
                 }
                 
                 showError(errorMessage, true);
+            } finally {
+                setLoading(registerButton, false);
             }
         });
         
