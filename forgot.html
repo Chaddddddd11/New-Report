@@ -324,44 +324,60 @@
             try {
                 const email = `${username}@dhvsu.edu.ph`;
                 
-                // Sign in with email link (no password needed for password reset)
-                const actionCodeSettings = {
-                    url: window.location.href,
-                    handleCodeInApp: true
-                };
-                
-                // Get the user record by email
-                const userCredential = await auth.fetchSignInMethodsForEmail(email);
-                
-                if (userCredential && userCredential.length > 0) {
-                    // User exists, update password directly
-                    await auth.sendSignInLinkToEmail(email, actionCodeSettings);
+                // First check if user exists by attempting to sign in
+                try {
+                    // This will throw an error if user doesn't exist
+                    const methods = await auth.fetchSignInMethodsForEmail(email);
                     
-                    // Get the current user (should be null if not signed in)
-                    const user = auth.currentUser;
-                    
-                    if (user && user.email === email) {
-                        // If user is already signed in, update password directly
-                        await user.updatePassword(newPassword);
-                        showMessage(successMessage, 'Your password has been updated successfully!', false);
-                    } else {
-                        // If user is not signed in, sign in with email link
-                        showMessage(
-                            successMessage, 
-                            'A sign-in link has been sent to your email. Please check your inbox and click the link to complete the password update.',
-                            false
-                        );
+                    if (methods.length === 0) {
+                        throw new Error('auth/user-not-found');
                     }
                     
-                    // Reset form
-                    resetPasswordForm.reset();
+                    // If we get here, user exists - try to update password
+                    try {
+                        // First try to update directly (if user is already signed in)
+                        const user = auth.currentUser;
+                        if (user && user.email === email) {
+                            await user.updatePassword(newPassword);
+                            showMessage(successMessage, 'Your password has been updated successfully!', false);
+                        } else {
+                            // If not signed in, use the admin SDK (handled by a Cloud Function)
+                            // For now, we'll show a message to contact support
+                            showMessage(
+                                errorMessage,
+                                'Please sign in to update your password. If you cannot sign in, please contact support.',
+                                true
+                            );
+                            return;
+                        }
+                        
+                        // Reset form and redirect
+                        resetPasswordForm.reset();
+                        setTimeout(() => {
+                            window.location.href = 'login.html';
+                        }, 3000);
+                        
+                    } catch (updateError) {
+                        console.error('Update error:', updateError);
+                        if (updateError.code === 'auth/requires-recent-login') {
+                            showMessage(
+                                errorMessage,
+                                'For security reasons, please sign in again before changing your password.',
+                                true
+                            );
+                        } else {
+                            throw updateError;
+                        }
+                    }
                     
-                    // Redirect to login page after 5 seconds
-                    setTimeout(() => {
-                        window.location.href = 'login.html';
-                    }, 5000);
-                } else {
-                    showMessage(errorMessage, 'No account found with this username.');
+                } catch (authError) {
+                    if (authError.message === 'auth/user-not-found' || 
+                        (authError.code && authError.code === 'auth/user-not-found')) {
+                        showMessage(errorMessage, 'No account found with this username.');
+                    } else {
+                        console.error('Auth error:', authError);
+                        throw authError;
+                    }
                 }
                 
             } catch (error) {
