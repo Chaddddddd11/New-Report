@@ -397,16 +397,15 @@
                     }
                     
                     html += `
-                        <div class="request-card" data-id="${doc.id}">
-                            <h3>
-                                ${request.username || 'Unknown User'}
+                        <div class="request-card">
+                            <h3>${request.username || 'Unknown User'} 
                                 <span class="status status-${request.status || 'pending'}">
                                     ${(request.status || 'pending').toUpperCase()}
                                 </span>
                             </h3>
-                            <p><strong>Email:</strong> ${request.email || 'N/A'}</p>
-                            <p><strong>Requested:</strong> ${dateStr} (${timeAgo})</p>
-                            ${request.reason ? `<p><strong>Reason:</strong> ${request.reason}</p>` : ''}
+                            <p><strong>Requested:</strong> ${dateStr}</p>
+                            ${request.fullName ? `<p><strong>Name:</strong> ${request.fullName}</p>` : ''}
+                            ${request.department ? `<p><strong>Department:</strong> ${request.department}</p>` : ''}
                             <div class="request-actions">
                                 <button class="btn btn-approve" data-id="${doc.id}" data-type="passwordChangeRequests" data-action="approved">
                                     <i class="fas fa-check"></i> Approve
@@ -628,13 +627,22 @@
                 // Handle password change requests
                 else if (action === 'approved' && collectionName === 'passwordChangeRequests') {
                     try {
-                        // Call a Cloud Function to update the password
-                        const updatePassword = firebase.functions().httpsCallable('updateUserPassword');
-                        await updatePassword({
-                            email: request.email,
-                            newPassword: request.newPassword
+                        // Update the user's password in the users collection
+                        await db.collection('users').doc(request.username).update({
+                            password: request.newPassword, // Note: In production, hash this password
+                            passwordLastChanged: firebase.firestore.FieldValue.serverTimestamp()
                         });
-                        console.log(`Password updated for ${request.email}`);
+                        
+                        console.log(`Password updated for user: ${request.username}`);
+                        
+                        // Log the password change
+                        await db.collection('auditLogs').add({
+                            type: 'password_changed',
+                            username: request.username,
+                            changedBy: auth.currentUser?.uid || 'admin',
+                            changedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                            requestId: docId
+                        });
                     } catch (error) {
                         console.error('Error updating password:', error);
                         throw new Error(`Failed to update password: ${error.message}`);
