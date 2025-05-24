@@ -185,39 +185,136 @@
             margin-bottom: 15px;
         }
 
-        .request-card p {
-            margin: 5px 0;
+        .request-card {
+            background: #fff;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            padding: 20px;
+            margin-bottom: 20px;
+            border-left: 4px solid var(--primary-color);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .request-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+        }
+
+        .request-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .request-header h3 {
+            margin: 0;
+            font-size: 1.1rem;
+            color: #333;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .request-time {
+            color: #666;
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .request-details {
+            margin-bottom: 15px;
+        }
+
+        .detail-row {
+            display: flex;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+        }
+
+        .detail-label {
+            font-weight: 500;
             color: #555;
+            min-width: 120px;
+        }
+
+        .detail-value {
+            color: #333;
+            flex: 1;
         }
 
         .request-actions {
-            margin-top: 10px;
             display: flex;
             gap: 10px;
+            flex-wrap: wrap;
+            padding-top: 10px;
+            border-top: 1px solid #f0f0f0;
+            margin-top: 15px;
         }
 
         .btn {
-            padding: 8px 16px;
+            padding: 6px 12px;
             border: none;
             border-radius: 4px;
             cursor: pointer;
             font-weight: 500;
-            transition: all 0.2s;
+            font-size: 0.85rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            transition: all 0.2s ease;
         }
 
         .btn-approve {
             background: var(--success-color);
             color: white;
+            box-shadow: 0 2px 4px rgba(40, 167, 69, 0.2);
+        }
+
+        .btn-approve:hover {
+            background: #218838;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(40, 167, 69, 0.3);
+        }
+
+        .btn-approve:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 4px rgba(40, 167, 69, 0.2);
         }
 
         .btn-reject {
             background: var(--error-color);
             color: white;
+            box-shadow: 0 2px 4px rgba(220, 53, 69, 0.2);
+        }
+
+        .btn-reject:hover {
+            background: #c82333;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(220, 53, 69, 0.3);
+        }
+        .btn-reject:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 4px rgba(220, 53, 69, 0.2);
         }
 
         .btn-view {
             background: var(--warning-color);
             color: #000;
+            box-shadow: 0 2px 4px rgba(255, 193, 7, 0.2);
+        }
+        .btn-view:hover {
+            background: #e0a800;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(255, 193, 7, 0.3);
+        }
+        .btn-view:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 4px rgba(255, 193, 7, 0.2);
         }
 
         .status {
@@ -385,41 +482,99 @@
                 let html = '';
                 const now = new Date();
                 
+                // First, collect all requests
+                const requests = [];
                 snapshot.forEach(doc => {
                     const request = { id: doc.id, ...doc.data() };
-                    const requestedAt = request.requestedAt ? request.requestedAt.toDate() : new Date();
-                    const timeAgo = formatTimeAgo(requestedAt, now);
-                    const dateStr = requestedAt.toLocaleString();
-                    
                     // Skip already processed requests
                     if (request.status && request.status !== 'pending') {
                         return;
                     }
+                    requests.push(request);
+                });
+                
+                // Process each request one by one
+                for (const request of requests) {
+                    const requestedAt = request.requestedAt ? request.requestedAt.toDate() : new Date();
+                    const timeAgo = formatTimeAgo(requestedAt, now);
+                    const dateStr = requestedAt.toLocaleString();
                     
+                    // Get additional user details if available
+                    let userDetails = {};
+                    try {
+                        const userDoc = await db.collection('users').doc(request.username).get();
+                        if (userDoc.exists) {
+                            userDetails = userDoc.data();
+                        }
+                    } catch (e) {
+                        console.error('Error fetching user details:', e);
+                    }
+                
+                    // Add the request card HTML
                     html += `
                         <div class="request-card">
-                            <h3>${request.username || 'Unknown User'} 
-                                <span class="status status-${request.status || 'pending'}">
-                                    ${(request.status || 'pending').toUpperCase()}
-                                </span>
-                            </h3>
-                            <p><strong>Requested:</strong> ${dateStr}</p>
-                            ${request.fullName ? `<p><strong>Name:</strong> ${request.fullName}</p>` : ''}
-                            ${request.department ? `<p><strong>Department:</strong> ${request.department}</p>` : ''}
+                            <div class="request-header">
+                                <h3>
+                                    <i class="fas fa-user-circle"></i>
+                                    ${request.username || 'Unknown User'}
+                                    <span class="status status-${request.status || 'pending'}">
+                                        ${(request.status || 'pending').toUpperCase()}
+                                    </span>
+                                </h3>
+                                <div class="request-time">
+                                    <i class="far fa-clock"></i> ${timeAgo}
+                                </div>
+                            </div>
+                            
+                            <div class="request-details">
+                                <div class="detail-row">
+                                    <span class="detail-label">Requested:</span>
+                                    <span class="detail-value">${dateStr}</span>
+                                </div>
+                                
+                                ${userDetails.fullName ? `
+                                    <div class="detail-row">
+                                        <span class="detail-label">Name:</span>
+                                        <span class="detail-value">${userDetails.fullName}</span>
+                                    </div>
+                                ` : ''}
+                                
+                                ${userDetails.department ? `
+                                    <div class="detail-row">
+                                        <span class="detail-label">Department:</span>
+                                        <span class="detail-value">${userDetails.department}</span>
+                                    </div>
+                                ` : ''}
+                                
+                                ${userDetails.role ? `
+                                    <div class="detail-row">
+                                        <span class="detail-label">Role:</span>
+                                        <span class="detail-value">${userDetails.role}</span>
+                                    </div>
+                                ` : ''}
+                                
+                                ${request.requestedBy ? `
+                                    <div class="detail-row">
+                                        <span class="detail-label">Requested By:</span>
+                                        <span class="detail-value">${request.requestedBy}</span>
+                                    </div>
+                                ` : ''}
+                            </div>
+                            
                             <div class="request-actions">
-                                <button class="btn btn-approve" data-id="${doc.id}" data-type="passwordChangeRequests" data-action="approved">
+                                <button class="btn btn-approve" data-id="${request.id}" data-type="passwordChangeRequests" data-action="approved">
                                     <i class="fas fa-check"></i> Approve
                                 </button>
-                                <button class="btn btn-reject" data-id="${doc.id}" data-type="passwordChangeRequests" data-action="rejected">
+                                <button class="btn btn-reject" data-id="${request.id}" data-type="passwordChangeRequests" data-action="rejected">
                                     <i class="fas fa-times"></i> Reject
                                 </button>
-                                <button class="btn btn-view" data-id="${doc.id}" data-type="passwordChangeRequests">
-                                    <i class="fas fa-eye"></i> View Details
+                                <button class="btn btn-view" data-id="${request.id}" data-type="passwordChangeRequests">
+                                    <i class="fas fa-eye"></i> Details
                                 </button>
                             </div>
                         </div>
                     `;
-                });
+                }
                 
                 container.innerHTML = html || '<p class="no-requests">No pending password change requests found.</p>';
                 
@@ -629,24 +784,64 @@
                     }
                 }
                 // Handle password change requests
-                else if (action === 'approved' && collectionName === 'passwordChangeRequests') {
+                else if (collectionName === 'passwordChangeRequests') {
                     try {
-                        // Update the user's password in the users collection
-                        await db.collection('users').doc(request.username).update({
-                            password: request.newPassword, // Note: In production, hash this password
-                            passwordLastChanged: firebase.firestore.FieldValue.serverTimestamp()
-                        });
-                        
-                        console.log(`Password updated for user: ${request.username}`);
-                        
-                        // Log the password change
-                        await db.collection('auditLogs').add({
-                            type: 'password_changed',
-                            username: request.username,
-                            changedBy: auth.currentUser?.uid || 'admin',
-                            changedAt: firebase.firestore.FieldValue.serverTimestamp(),
-                            requestId: docId
-                        });
+                        if (action === 'approved') {
+                            // Get the user document to verify it exists
+                            const userDoc = await db.collection('users').doc(request.username).get();
+                            if (!userDoc.exists) {
+                                throw new Error('User not found');
+                            }
+                            
+                            // Update the user's password in the users collection
+                            // In production, you should use Firebase Admin SDK to update the password
+                            await db.collection('users').doc(request.username).update({
+                                password: request.newPassword, // Note: In production, hash this password
+                                passwordLastChanged: firebase.firestore.FieldValue.serverTimestamp(),
+                                lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+                            });
+                            
+                            console.log(`Password updated for user: ${request.username}`);
+                            
+                            // Log the password change
+                            await db.collection('auditLogs').add({
+                                type: 'password_changed',
+                                username: request.username,
+                                changedBy: auth.currentUser?.uid || 'admin',
+                                changedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                                requestId: docId,
+                                status: 'completed'
+                            });
+                            
+                            // Optional: Send notification to user that their password has been updated
+                            await db.collection('notifications').add({
+                                type: 'password_updated',
+                                username: request.username,
+                                message: 'Your password has been successfully updated by an administrator.',
+                                read: false,
+                                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                            });
+                        } else if (action === 'rejected') {
+                            // Log the rejection
+                            await db.collection('auditLogs').add({
+                                type: 'password_change_rejected',
+                                username: request.username,
+                                rejectedBy: auth.currentUser?.uid || 'admin',
+                                rejectedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                                requestId: docId,
+                                status: 'rejected',
+                                reason: 'Rejected by administrator'
+                            });
+                            
+                            // Optional: Send notification to user that their request was rejected
+                            await db.collection('notifications').add({
+                                type: 'password_change_rejected',
+                                username: request.username,
+                                message: 'Your password change request has been rejected. Please contact support for assistance.',
+                                read: false,
+                                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                            });
+                        }
                     } catch (error) {
                         console.error('Error updating password:', error);
                         throw new Error(`Failed to update password: ${error.message}`);
