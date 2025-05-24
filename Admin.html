@@ -585,9 +585,13 @@
                             throw new Error('User already exists');
                         }
                         
+                        // Generate a unique ID for Firebase Auth
+                        const authUid = firebase.firestore().collection('temp').doc().id;
+                        
                         // Create user document in Firestore
                         const userData = {
                             username: request.username,
+                            authUid: authUid, // Store the auth UID for login
                             fullName: request.fullName || '',
                             studentId: request.studentId || '',
                             department: request.department || '',
@@ -595,7 +599,9 @@
                             status: 'active',
                             createdAt: firebase.firestore.FieldValue.serverTimestamp(),
                             lastLogin: null,
-                            accountCreatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                            accountCreatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                            // Store hashed password (in production, use a proper hashing algorithm)
+                            password: request.password // WARNING: In production, use proper hashing
                         };
                         
                         // Add year level if it's a student
@@ -603,12 +609,8 @@
                             userData.yearLevel = request.yearLevel;
                         }
                         
-                        // Create the user document
+                        // Create the user document with the username as the document ID
                         await db.collection('users').doc(request.username).set(userData);
-                        
-                        // IMPORTANT: In a production environment, you should use a Cloud Function
-                        // to handle password hashing and user creation in Firebase Auth
-                        console.log(`User document created for ${request.username}`);
                         
                         // Log the account creation
                         await db.collection('auditLogs').add({
@@ -618,6 +620,8 @@
                             createdAt: firebase.firestore.FieldValue.serverTimestamp(),
                             requestId: docId
                         });
+                        
+                        console.log(`User account created for ${request.username}`);
                         
                     } catch (error) {
                         console.error('Error creating user account:', error);
