@@ -308,18 +308,17 @@
                 })
                 .catch((error) => {
                     // Handle errors
-                    let errorMessageText = 'Invalid username or password. Please try again.';
+                    let errorMessage = 'Invalid username or password. Please try again.';
                     if (error.code === 'auth/user-not-found') {
-                        errorMessageText = 'No account found with this username.';
+                        errorMessage = 'No account found with this username.';
                     } else if (error.code === 'auth/wrong-password') {
-                        errorMessageText = 'Incorrect password. Please try again.';
+                        errorMessage = 'Incorrect password. Please try again.';
                     } else if (error.code === 'auth/too-many-requests') {
-                        errorMessageText = 'Too many failed attempts. Please try again later.';
+                        errorMessage = 'Too many failed attempts. Please try again later.';
                     }
                     
-                    const errorElement = document.getElementById('errorMessage');
-                    errorElement.textContent = errorMessageText;
-                    errorElement.style.display = 'block';
+                    errorMessage.textContent = errorMessage;
+                    errorMessage.style.display = 'block';
                     
                     // Reset button state
                     loginBtn.disabled = false;
