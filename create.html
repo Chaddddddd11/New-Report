@@ -300,9 +300,34 @@
         const successMessage = document.getElementById('successMessage');
 
         // Check if all required elements exist
-        if (!createAccountForm || !usernameInput || !emailInput || !passwordInput || !confirmPasswordInput || !createAccountBtn || !errorMessage || !successMessage) {
-            console.error('One or more required elements are missing from the page');
-            return;
+        const requiredElements = {
+            createAccountForm,
+            usernameInput,
+            emailInput,
+            passwordInput,
+            confirmPasswordInput,
+            createAccountBtn,
+            errorMessage,
+            successMessage
+        };
+        
+        const missingElements = Object.entries(requiredElements)
+            .filter(([_, element]) => !element)
+            .map(([name]) => name);
+            
+        if (missingElements.length > 0) {
+            console.error('Missing required elements:', missingElements.join(', '));
+            document.body.innerHTML = `
+                <div style="text-align: center; padding: 20px; font-family: Arial, sans-serif; color: #721c24; background-color: #f8d7da; border: 1px solid #f5c6cb; border-radius: 4px; margin: 20px;">
+                    <h2>Error: Missing Required Elements</h2>
+                    <p>The following required elements are missing from the page:</p>
+                    <ul style="text-align: left; display: inline-block;">
+                        ${missingElements.map(el => `<li>${el}</li>`).join('')}
+                    </ul>
+                    <p>Please check your HTML markup and ensure all required elements exist.</p>
+                </div>
+            `;
+            throw new Error(`Missing required elements: ${missingElements.join(', ')}`);
         }
 
         // Username validation
