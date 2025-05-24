@@ -3,12 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - DHVSU Scheduling System</title>
+    <title>Admin Panel - DHVSU Scheduling System</title>
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         :root {
             --primary-color: #610000;
@@ -18,6 +19,7 @@
             --text-color: #333;
             --error-color: #dc3545;
             --success-color: #28a745;
+            --warning-color: #ffc107;
         }
 
         * {
@@ -28,239 +30,167 @@
         }
 
         body {
-            background: linear-gradient(rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.9)),
-                        url('https://the-post-assets.sgp1.digitaloceanspaces.com/2023/03/DHVSU_thumbnail.png');
-            background-size: cover;
-            background-position: center;
-            background-attachment: fixed;
+            background: #f0f2f5;
             min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
             padding: 20px;
         }
 
-        .login-container {
-            background: rgba(255, 255, 255, 0.95);
-            border-radius: 16px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-            width: 100%;
-            max-width: 420px;
-            padding: 40px;
-            text-align: center;
-            border: 1px solid rgba(0, 0, 0, 0.05);
+        .admin-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
         }
 
-        .logo {
-            max-width: 120px;
-            margin: 0 auto 20px;
-            display: block;
+        .admin-header {
+            background: var(--primary-color);
+            color: white;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
 
-        h1 {
-            color: var(--primary-color);
-            margin-bottom: 30px;
+        .admin-header h1 {
             font-size: 24px;
-            font-weight: 700;
-        }
-
-        .form-group {
-            margin-bottom: 20px;
-            text-align: left;
-        }
-
-        .form-group label {
-            display: block;
-            margin-bottom: 8px;
-            color: var(--text-color);
             font-weight: 500;
         }
 
-        .form-control {
-            width: 100%;
-            padding: 12px 16px;
-            border: 2px solid #e1e4e8;
-            border-radius: 8px;
-            font-size: 15px;
-            transition: all 0.3s ease;
-            background-color: #f8f9fa;
+        .admin-content {
+            padding: 20px;
         }
 
-        .form-control:focus {
-            border-color: var(--primary-color);
-            background-color: white;
-            box-shadow: 0 0 0 3px rgba(97, 0, 0, 0.1);
-            outline: none;
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid #ddd;
+            margin-bottom: 20px;
+        }
+
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            font-weight: 500;
+        }
+
+        .tab.active {
+            border-bottom-color: var(--primary-color);
+            color: var(--primary-color);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .request-card {
+            background: white;
+            border: 1px solid #e1e4e8;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .request-card h3 {
+            margin-bottom: 10px;
+            color: var(--primary-color);
+        }
+
+        .request-card p {
+            margin: 5px 0;
+            color: #555;
+        }
+
+        .request-actions {
+            margin-top: 10px;
+            display: flex;
+            gap: 10px;
         }
 
         .btn {
-            display: inline-block;
-            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-            color: white;
+            padding: 8px 16px;
             border: none;
-            padding: 14px 24px;
-            border-radius: 8px;
-            font-size: 16px;
-            font-weight: 500;
+            border-radius: 4px;
             cursor: pointer;
-            width: 100%;
-            transition: all 0.3s ease;
-            margin: 10px 0;
-            text-align: center;
-            text-decoration: none;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
+            font-weight: 500;
+            transition: all 0.2s;
         }
 
-        .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 16px rgba(97, 0, 0, 0.2);
-            background: linear-gradient(135deg, #4d0000, #6a0808);
-        }
-        
-        .btn-outline {
-            background: transparent;
-            border: 2px solid var(--primary-color);
-            color: var(--primary-color);
-            transition: all 0.3s ease;
-        }
-        
-        .btn-outline:hover {
-            background: var(--primary-color);
+        .btn-approve {
+            background: var(--success-color);
             color: white;
         }
-        
-        .forgot-password {
-            margin: 15px 0;
-            text-align: center;
-        }
-        
-        .forgot-password a {
-            color: var(--primary-color);
-            text-decoration: none;
-            font-size: 14px;
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
-            transition: color 0.2s ease;
-        }
-        
-        .forgot-password a:hover {
-            color: var(--secondary-color);
-            text-decoration: underline;
-        }
-        
-        .footer {
-            margin-top: 30px;
-            color: #6b7280;
-            font-size: 13px;
-            text-align: center;
-            padding-top: 20px;
-            border-top: 1px solid #eee;
-        }
-        
-        .divider {
-            display: flex;
-            align-items: center;
-            margin: 20px 0;
-            color: #6b7280;
-            font-size: 14px;
-        }
-        
-        .divider::before,
-        .divider::after {
-            content: "";
-            flex: 1;
-            height: 1px;
-            background-color: #e1e4e8;
-            margin: 0 10px;
+
+        .btn-reject {
+            background: var(--error-color);
+            color: white;
         }
 
-        .error-message {
-            color: var(--error-color);
-            background-color: #fef2f2;
-            border: 1px solid #fecaca;
-            padding: 12px 16px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            display: none;
-            font-size: 14px;
-            text-align: left;
+        .btn-view {
+            background: var(--warning-color);
+            color: #000;
         }
 
-        .spinner {
+        .status {
             display: inline-block;
-            width: 20px;
-            height: 20px;
-            border: 3px solid rgba(255, 255, 255, 0.3);
-            border-radius: 50%;
-            border-top-color: #fff;
-            animation: spin 1s ease-in-out infinite;
-            margin-right: 8px;
-            vertical-align: middle;
-        }
-        
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-        
-        .footer {
-            margin-top: 30px;
-            color: #6b7280;
-            font-size: 14px;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
         }
 
-        @media (max-width: 480px) {
-            .login-container {
-                padding: 30px 20px;
-            }
-            
-            h1 {
-                font-size: 20px;
-                margin-bottom: 20px;
-            }
+        .status-pending {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .status-approved {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-rejected {
+            background: #f8d7da;
+            color: #721c24;
         }
     </style>
 </head>
 <body>
-    <div class="login-container">
-        <img src="https://media.assettype.com/sunstar/2025-02-04/7x1wu7dq/DHVSU.jpg" alt="DHVSU Logo" class="logo">
-        <h1>DHVSU Scheduling System</h1>
-        
-        <form id="loginForm">
-            <div id="errorMessage" class="error-message"></div>
-            
-            <div class="form-group">
-                <label for="username">Username</label>
-                <input type="text" id="username" class="form-control" placeholder="Enter your username" required>
-            </div>
-            
-            <div class="form-group">
-                <label for="password">Password</label>
-                <input type="password" id="password" class="form-control" placeholder="Enter your password" required>
-            </div>
-            
-            <button type="submit" class="btn" id="loginBtn">
-                <i class="fas fa-sign-in-alt"></i> Sign In
+    <div class="admin-container">
+        <div class="admin-header">
+            <h1>Admin Panel</h1>
+            <button id="signOutBtn" class="btn btn-view">
+                <i class="fas fa-sign-out-alt"></i> Sign Out
             </button>
-            
-            <div class="forgot-password">
-                <a href="forgot.html">
-                    <i class="fas fa-question-circle"></i> Forgot Password?
-                </a>
+        </div>
+        
+        <div class="admin-content">
+            <div class="tabs">
+                <div class="tab active" data-tab="password-requests">Password Change Requests</div>
+                <div class="tab" data-tab="account-requests">New Account Requests</div>
             </div>
             
-            <div class="divider">OR</div>
+            <div id="password-requests" class="tab-content active">
+                <h2>Password Change Requests</h2>
+                <div id="passwordRequestsList">
+                    <!-- Password change requests will be loaded here -->
+                    <p>Loading password change requests...</p>
+                </div>
+            </div>
             
-            <a href="create.html" class="btn btn-outline">
-                <i class="fas fa-user-plus"></i> Create New Account
-            </a>
-        </form>
-        
-        <div class="footer">
-            DHVSU &copy; 2025 - All Rights Reserved
+            <div id="account-requests" class="tab-content">
+                <h2>New Account Requests</h2>
+                <div id="accountRequestsList">
+                    <!-- New account requests will be loaded here -->
+                    <p>Loading account requests...</p>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -281,73 +211,200 @@
         const auth = firebase.auth();
         const db = firebase.firestore();
 
-        // Handle form submission
-        document.getElementById('loginForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            const username = document.getElementById('username').value.trim();
-            const password = document.getElementById('password').value;
-            const errorMessage = document.getElementById('errorMessage');
-            const loginBtn = document.getElementById('loginBtn');
-            
-            // Show loading state
-            loginBtn.disabled = true;
-            loginBtn.innerHTML = '<span class="spinner">Signing in...</span>';
-            
-            // Sign in with email and password
-            // Note: In a real app, you would use the user's email, but since you want username only,
-            // we'll append a domain. Replace @example.com with your actual domain or adjust as needed.
-            const email = `${username}@dhvsu.edu.ph`;
-            
-            auth.signInWithEmailAndPassword(email, password)
-                .then((userCredential) => {
-                    // Signed in successfully
-                    const redirectTo = sessionStorage.getItem('redirectAfterLogin') || 'home.html';
-                    sessionStorage.removeItem('redirectAfterLogin');
-                    window.location.href = redirectTo;
-                })
-                .catch((error) => {
-                    // Handle errors
-                    let errorMessageText = 'Invalid username or password. Please try again.';
-                    if (error.code === 'auth/user-not-found') {
-                        errorMessageText = 'No account found with this username.';
-                    } else if (error.code === 'auth/wrong-password') {
-                        errorMessageText = 'Incorrect password. Please try again.';
-                    } else if (error.code === 'auth/too-many-requests') {
-                        errorMessageText = 'Too many failed attempts. Please try again later.';
-                    }
-                    
-                    const errorElement = document.getElementById('errorMessage');
-                    errorElement.textContent = errorMessageText;
-                    errorElement.style.display = 'block';
-                    
-                    // Reset button state
-                    loginBtn.disabled = false;
-                    loginBtn.textContent = 'Sign In';
-                    
-                    // Hide error message after 5 seconds
-                    setTimeout(() => {
-                        errorMessage.style.display = 'none';
-                    }, 5000);
-                });
-        });
-        
-        // Auto-hide error message when user starts typing
-        document.getElementById('username').addEventListener('input', function() {
-            document.getElementById('errorMessage').style.display = 'none';
-        });
-        
-        document.getElementById('password').addEventListener('input', function() {
-            document.getElementById('errorMessage').style.display = 'none';
-        });
-        
-        // Check if user is already logged in
-        auth.onAuthStateChanged((user) => {
-            if (user) {
-                // User is signed in, redirect to home
-                window.location.href = 'home.html';
+        // Check if user is admin
+        auth.onAuthStateChanged(async (user) => {
+            if (!user) {
+                window.location.href = 'login.html';
+                return;
             }
+
+            // Check if user is admin (you'll need to implement this check)
+            const isAdmin = await checkIfAdmin(user.uid);
+            if (!isAdmin) {
+                alert('You do not have permission to access the admin panel.');
+                window.location.href = 'home.html';
+                return;
+            }
+
+            // Load requests
+            loadPasswordChangeRequests();
+            loadAccountRequests();
         });
+
+        // Tab switching
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                // Remove active class from all tabs and contents
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                
+                // Add active class to clicked tab and corresponding content
+                tab.classList.add('active');
+                const tabId = tab.getAttribute('data-tab');
+                document.getElementById(tabId).classList.add('active');
+            });
+        });
+
+        // Sign out
+        document.getElementById('signOutBtn').addEventListener('click', () => {
+            auth.signOut().then(() => {
+                window.location.href = 'login.html';
+            });
+        });
+
+        // Load password change requests
+        async function loadPasswordChangeRequests() {
+            const container = document.getElementById('passwordRequestsList');
+            container.innerHTML = '<p>Loading password change requests...</p>';
+            
+            try {
+                const snapshot = await db.collection('passwordChangeRequests')
+                    .orderBy('requestedAt', 'desc')
+                    .get();
+                
+                if (snapshot.empty) {
+                    container.innerHTML = '<p>No password change requests found.</p>';
+                    return;
+                }
+                
+                let html = '';
+                snapshot.forEach(doc => {
+                    const request = { id: doc.id, ...doc.data() };
+                    const date = request.requestedAt ? request.requestedAt.toDate().toLocaleString() : 'N/A';
+                    
+                    html += `
+                        <div class="request-card">
+                            <h3>${request.username} <span class="status status-${request.status || 'pending'}">${request.status || 'pending'}</span></h3>
+                            <p><strong>Email:</strong> ${request.email}</p>
+                            <p><strong>Requested:</strong> ${date}</p>
+                            <div class="request-actions">
+                                <button class="btn btn-approve" onclick="handleRequest('${doc.id}', 'passwordChangeRequests', 'approved')">
+                                    <i class="fas fa-check"></i> Approve
+                                </button>
+                                <button class="btn btn-reject" onclick="handleRequest('${doc.id}', 'passwordChangeRequests', 'rejected')">
+                                    <i class="fas fa-times"></i> Reject
+                                </button>
+                                <button class="btn btn-view" onclick="viewRequestDetails('${doc.id}', 'passwordChangeRequests')">
+                                    <i class="fas fa-eye"></i> View
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                container.innerHTML = html || '<p>No password change requests found.</p>';
+            } catch (error) {
+                console.error('Error loading password change requests:', error);
+                container.innerHTML = '<p>Error loading password change requests. Please try again.</p>';
+            }
+        }
+
+        // Load account requests (similar to password change requests)
+        async function loadAccountRequests() {
+            const container = document.getElementById('accountRequestsList');
+            container.innerHTML = '<p>Loading account requests...</p>';
+            
+            try {
+                const snapshot = await db.collection('accountRequests')
+                    .orderBy('requestedAt', 'desc')
+                    .get();
+                
+                if (snapshot.empty) {
+                    container.innerHTML = '<p>No account requests found.</p>';
+                    return;
+                }
+                
+                let html = '';
+                snapshot.forEach(doc => {
+                    const request = { id: doc.id, ...doc.data() };
+                    const date = request.requestedAt ? request.requestedAt.toLocaleString() : 'N/A';
+                    
+                    html += `
+                        <div class="request-card">
+                            <h3>${request.username} <span class="status status-${request.status || 'pending'}">${request.status || 'pending'}</span></h3>
+                            <p><strong>Email:</strong> ${request.email}</p>
+                            <p><strong>Requested:</strong> ${date}</p>
+                            <div class="request-actions">
+                                <button class="btn btn-approve" onclick="handleRequest('${doc.id}', 'accountRequests', 'approved')">
+                                    <i class="fas fa-check"></i> Approve
+                                </button>
+                                <button class="btn btn-reject" onclick="handleRequest('${doc.id}', 'accountRequests', 'rejected')">
+                                    <i class="fas fa-times"></i> Reject
+                                </button>
+                                <button class="btn btn-view" onclick="viewRequestDetails('${doc.id}', 'accountRequests')">
+                                    <i class="fas fa-eye"></i> View
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                container.innerHTML = html || '<p>No account requests found.</p>';
+            } catch (error) {
+                console.error('Error loading account requests:', error);
+                container.innerHTML = '<p>Error loading account requests. Please try again.</p>';
+            }
+        }
+
+        // Handle request approval/rejection
+        async function handleRequest(docId, collectionName, action) {
+            if (!confirm(`Are you sure you want to ${action} this request?`)) return;
+            
+            try {
+                const docRef = db.collection(collectionName).doc(docId);
+                await docRef.update({
+                    status: action,
+                    processedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    processedBy: auth.currentUser.uid
+                });
+                
+                // If approved and it's a password change request, update the password
+                if (action === 'approved' && collectionName === 'passwordChangeRequests') {
+                    const doc = await docRef.get();
+                    const request = doc.data();
+                    // In a real app, you would use Firebase Admin SDK to update the password
+                    // This is just a placeholder
+                    console.log(`Would update password for ${request.email} to ${request.newPassword}`);
+                }
+                
+                // Reload the appropriate list
+                if (collectionName === 'passwordChangeRequests') {
+                    loadPasswordChangeRequests();
+                } else {
+                    loadAccountRequests();
+                }
+                
+                alert(`Request ${action} successfully.`);
+            } catch (error) {
+                console.error(`Error ${action} request:`, error);
+                alert(`Failed to ${action} request. Please try again.`);
+            }
+        }
+
+        // View request details
+        function viewRequestDetails(docId, collectionName) {
+            // In a real app, you would show a modal with full details
+            // For now, just log to console
+            console.log(`Viewing details for ${collectionName}/${docId}`);
+            // You can implement a modal or redirect to a details page
+        }
+
+        // Check if user is admin (you'll need to implement this based on your auth setup)
+        async function checkIfAdmin(uid) {
+            try {
+                // This is a placeholder - implement your own admin check
+                // For example, you might check a custom claim or a document in Firestore
+                const userDoc = await db.collection('users').doc(uid).get();
+                return userDoc.exists && userDoc.data().isAdmin === true;
+            } catch (error) {
+                console.error('Error checking admin status:', error);
+                return false;
+            }
+        }
+
+        // Make functions available globally
+        window.handleRequest = handleRequest;
+        window.viewRequestDetails = viewRequestDetails;
     </script>
 </body>
 </html>
