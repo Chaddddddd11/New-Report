@@ -217,7 +217,7 @@
             <div class="form-group">
                 <label for="username">Username</label>
                 <input type="text" id="username" class="form-control" placeholder="Enter your username" required>
-                <small class="text-muted">Enter the username associated with your account.</small>
+                <small class="text-muted">Enter your username to receive a password reset link.</small>
             </div>
             
             <button type="submit" class="btn" id="resetBtn">
@@ -251,6 +251,7 @@
         // Initialize Firebase
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
+        const db = firebase.firestore();
 
         // DOM Elements
         const forgotPasswordForm = document.getElementById('forgotPasswordForm');
@@ -276,9 +277,8 @@
             }
         }
 
-
         // Handle form submission
-        forgotPasswordForm.addEventListener('submit', function(e) {
+        forgotPasswordForm.addEventListener('submit', async function(e) {
             e.preventDefault();
             
             const username = usernameInput.value.trim();
@@ -287,7 +287,7 @@
             errorMessage.style.display = 'none';
             successMessage.style.display = 'none';
             
-            // Validate input
+            // Validate inputs
             if (!username) {
                 showMessage(errorMessage, 'Please enter your username.');
                 return;
@@ -297,43 +297,62 @@
             resetBtn.disabled = true;
             resetBtn.innerHTML = '<span class="spinner"></span> Sending reset link...';
             
-            // Convert username to email (same as login)
-            const email = `${username}@dhvsu.edu.ph`;
-            
-            // Send password reset email
-            auth.sendPasswordResetEmail(email)
-                .then(() => {
-                    // Password reset email sent
-                    showMessage(
-                        successMessage, 
-                        'Password reset link has been sent to your email. Please check your inbox and follow the instructions to reset your password.',
-                        false
-                    );
-                    resetBtn.textContent = 'Resend Reset Link';
-                })
-                .catch((error) => {
-                    console.error('Error sending password reset email:', error);
-                    
-                    let errorMessageText = 'An error occurred while sending the reset link. Please try again.';
-                    
-                    // Handle specific Firebase errors
-                    switch (error.code) {
-                        case 'auth/user-not-found':
-                            errorMessageText = 'No account found with this username.';
-                            break;
-                        case 'auth/invalid-email':
-                            errorMessageText = 'Invalid username format.';
-                            break;
-                        case 'auth/too-many-requests':
-                            errorMessageText = 'Too many attempts. Please try again later.';
-                            break;
-                    }
-                    
-                    showMessage(errorMessage, errorMessageText);
-                })
-                .finally(() => {
-                    resetBtn.disabled = false;
-                });
+            try {
+                // Look up the user's email in Firestore using their username
+                const usersRef = db.collection('users');
+                const querySnapshot = await usersRef.where('username', '==', username).limit(1).get();
+                
+                if (querySnapshot.empty) {
+                    showMessage(errorMessage, 'No account found with this username.');
+                    return;
+                }
+                
+                // Get the first matching user document
+                const userDoc = querySnapshot.docs[0];
+                const userData = userDoc.data();
+                const userEmail = userData.email;
+                
+                if (!userEmail) {
+                    showMessage(errorMessage, 'No email address found for this account.');
+                    return;
+                }
+                
+                // Send password reset email to the registered email
+                await auth.sendPasswordResetEmail(userEmail);
+                
+                // Password reset email sent successfully
+                showMessage(
+                    successMessage, 
+                    'Password reset link has been sent to your registered email. Please check your inbox and follow the instructions to reset your password.',
+                    false
+                );
+                resetBtn.textContent = 'Resend Reset Link';
+                
+            } catch (error) {
+                console.error('Error processing password reset:', error);
+                
+                let errorMessageText = 'An error occurred while processing your request. Please try again.';
+                
+                // Handle specific Firebase errors
+                switch (error.code) {
+                    case 'auth/user-not-found':
+                        errorMessageText = 'No account found with this username.';
+                        break;
+                    case 'auth/invalid-email':
+                        errorMessageText = 'Invalid username format.';
+                        break;
+                    case 'auth/too-many-requests':
+                        errorMessageText = 'Too many attempts. Please try again later.';
+                        break;
+                    case 'auth/operation-not-allowed':
+                        errorMessageText = 'Password reset is not enabled. Please contact support.';
+                        break;
+                }
+                
+                showMessage(errorMessage, errorMessageText);
+            } finally {
+                resetBtn.disabled = false;
+            }
         });
         
         // Auto-hide error message when user starts typing
