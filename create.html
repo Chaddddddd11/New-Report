@@ -271,7 +271,7 @@
     </div>
 
     <script>
-        // Firebase configuration
+        // Firebase configuration and initialization
         const firebaseConfig = {
             apiKey: "AIzaSyDBu7-vOFmS62IaGD8-8zb6TH0a1mHYNpI",
             authDomain: "dhvsu-faculty-scheduling.firebaseapp.com",
@@ -282,8 +282,10 @@
             measurementId: "G-EP4FZ04FQT"
         };
 
-        // Initialize Firebase
-        firebase.initializeApp(firebaseConfig);
+        // Initialize Firebase if not already initialized
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
         const auth = firebase.auth();
         const db = firebase.firestore();
 
@@ -297,6 +299,12 @@
         const errorMessage = document.getElementById('errorMessage');
         const successMessage = document.getElementById('successMessage');
 
+        // Check if all required elements exist
+        if (!createAccountForm || !usernameInput || !emailInput || !passwordInput || !confirmPasswordInput || !createAccountBtn || !errorMessage || !successMessage) {
+            console.error('One or more required elements are missing from the page');
+            return;
+        }
+
         // Username validation
         function isValidUsername(username) {
             return /^[a-zA-Z0-9_]+$/.test(username);
@@ -307,8 +315,26 @@
             return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
         }
 
+        // Show/hide message helper function
+        function showMessage(element, message, isError = true) {
+            if (!element) return;
+            
+            element.textContent = message;
+            element.style.display = 'block';
+            
+            if (isError) {
+                element.className = 'error-message';
+                // Auto-hide error after 5 seconds
+                setTimeout(() => {
+                    if (element) element.style.display = 'none';
+                }, 5000);
+            } else {
+                element.className = 'success-message';
+            }
+        }
+
         // Handle form submission
-        createAccountForm.addEventListener('submit', function(e) {
+        createAccountForm.addEventListener('submit', async function(e) {
             e.preventDefault();
             
             const username = usernameInput.value.trim();
@@ -317,8 +343,8 @@
             const confirmPassword = confirmPasswordInput.value;
             
             // Reset messages
-            errorMessage.style.display = 'none';
-            successMessage.style.display = 'none';
+            if (errorMessage) errorMessage.style.display = 'none';
+            if (successMessage) successMessage.style.display = 'none';
             
             // Validate inputs
             if (!isValidUsername(username)) {
@@ -395,13 +421,16 @@
                 })
                 .catch((error) => {
                     // Handle errors
-                    let errorMessage = 'Error creating account. Please try again.';
+                    let errorMsg = 'Error creating account. Please try again.';
                     if (error.code === 'auth/email-already-in-use') {
-                        errorMessage = 'Email address already in use. Please try again.';
+                        errorMsg = 'This username is already taken. Please choose a different one.';
+                    } else if (error.code === 'auth/weak-password') {
+                        errorMsg = 'Password is too weak. Please use at least 6 characters.';
+                    } else if (error.code) {
+                        errorMsg = `Error: ${error.message}`;
                     }
                     
-                    errorMessage.textContent = errorMessage;
-                    errorMessage.style.display = 'block';
+                    showMessage(errorMessage, errorMsg);
                     
                     // Reset button state
                     createAccountBtn.disabled = false;
@@ -410,14 +439,23 @@
         });
         
         // Auto-hide error message when user starts typing
-        emailInput.addEventListener('input', function() {
-            errorMessage.style.display = 'none';
-            document.getElementById('errorMessage').style.display = 'none';
-        });
+        if (emailInput) {
+            emailInput.addEventListener('input', function() {
+                if (errorMessage) errorMessage.style.display = 'none';
+            });
+        }
         
-        document.getElementById('password').addEventListener('input', function() {
-            document.getElementById('errorMessage').style.display = 'none';
-        });
+        if (passwordInput) {
+            passwordInput.addEventListener('input', function() {
+                if (errorMessage) errorMessage.style.display = 'none';
+            });
+        }
+        
+        if (confirmPasswordInput) {
+            confirmPasswordInput.addEventListener('input', function() {
+                if (errorMessage) errorMessage.style.display = 'none';
+            });
+        }
         
         // Check if user is already logged in
         auth.onAuthStateChanged((user) => {
@@ -426,6 +464,8 @@
                 window.location.href = 'home.html';
             }
         });
+        
+        // Firestore is already initialized above
     </script>
 </body>
 </html>
