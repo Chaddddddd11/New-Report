@@ -193,7 +193,9 @@
 </head>
 <body>
     <div class="container">
-        <img src="https://media.assettype.com/sunstar/2025-02-04/7x1wu7dq/DHVSU.jpg" alt="DHVSU Logo" class="logo" id="adminLogo" style="cursor: pointer;">
+        <div style="text-align: center; margin-bottom: 20px;">
+            <img src="https://media.assettype.com/sunstar/2025-02-04/7x1wu7dq/DHVSU.jpg" alt="DHVSU Logo" class="logo" style="max-width: 150px;">
+        </div>
         <h1>Create Account</h1>
         
         <div id="errorMessage" class="message error-message"></div>
@@ -438,19 +440,6 @@
             // If page is already loaded
             setupAdminAccess();
         }
-        
-        // Add a debug button for testing
-        const debugButton = document.createElement('button');
-        debugButton.textContent = 'Debug Admin Access';
-        debugButton.style.position = 'fixed';
-        debugButton.style.bottom = '10px';
-        debugButton.style.right = '10px';
-        debugButton.style.zIndex = '9999';
-        debugButton.onclick = function() {
-            console.log('Debug button clicked');
-            window.location.href = 'Admin.html';
-        };
-        document.body.appendChild(debugButton);
         
         // Check if user is admin (for admin redirection after login)
         async function checkIfAdmin(uid) {
