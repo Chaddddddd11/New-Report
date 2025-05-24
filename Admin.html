@@ -6,8 +6,11 @@
     <title>Admin Panel - DHVSU Scheduling System</title>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-functions-compat.js"></script>
     <style>
         :root {
             --primary-color: #610000;
@@ -98,6 +101,88 @@
         .request-card h3 {
             margin-bottom: 10px;
             color: var(--primary-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .status {
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+            text-transform: capitalize;
+        }
+        
+        .status-pending {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+        
+        .status-approved {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        
+        .status-rejected {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        
+        .request-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+        }
+        
+        .btn {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .btn-approve {
+            background-color: #28a745;
+            color: white;
+        }
+        
+        .btn-reject {
+            background-color: #dc3545;
+            color: white;
+        }
+        
+        .btn-view {
+            background-color: #6c757d;
+            color: white;
+        }
+        
+        .refresh-btn {
+            background: none;
+            border: none;
+            color: #6c757d;
+            cursor: pointer;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            padding: 5px 10px;
+            border-radius: 4px;
+        }
+        
+        .refresh-btn:hover {
+            background-color: #f1f1f1;
+        }
+        
+        .tab-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
         }
 
         .request-card p {
@@ -175,17 +260,25 @@
             </div>
             
             <div id="password-requests" class="tab-content active">
-                <h2>Password Change Requests</h2>
+                <div class="tab-header">
+                    <h2>Password Change Requests</h2>
+                    <button class="refresh-btn" title="Refresh">
+                        <i class="fas fa-sync-alt"></i> Refresh
+                    </button>
+                </div>
                 <div id="passwordRequestsList">
-                    <!-- Password change requests will be loaded here -->
                     <p>Loading password change requests...</p>
                 </div>
             </div>
             
             <div id="account-requests" class="tab-content">
-                <h2>New Account Requests</h2>
+                <div class="tab-header">
+                    <h2>New Account Requests</h2>
+                    <button class="refresh-btn" title="Refresh">
+                        <i class="fas fa-sync-alt"></i> Refresh
+                    </button>
+                </div>
                 <div id="accountRequestsList">
-                    <!-- New account requests will be loaded here -->
                     <p>Loading account requests...</p>
                 </div>
             </div>
@@ -193,32 +286,60 @@
     </div>
 
     <script>
-        // Initialize Firebase without authentication
+        // Initialize Firebase
         const firebaseConfig = {
             apiKey: "AIzaSyDBu7-vOFmS62IaGD8-8zb6TH0a1mHYNpI",
-            projectId: "dhvsu-faculty-scheduling"
+            authDomain: "dhvsu-faculty-scheduling.firebaseapp.com",
+            projectId: "dhvsu-faculty-scheduling",
+            storageBucket: "dhvsu-faculty-scheduling.appspot.com",
+            messagingSenderId: "1075180921702",
+            appId: "1:1075180921702:web:a0320fa286c684511cdea7"
         };
 
-        // Initialize Firebase without auth
+        // Initialize Firebase
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
+        const functions = firebase.functions();
         
         // Enable offline persistence
         db.enablePersistence().catch((err) => {
             console.error('Firebase persistence error:', err);
         });
         
-        // Load data when page loads
+        // Initialize when page loads
         document.addEventListener('DOMContentLoaded', () => {
             console.log('Admin panel loaded');
+            
+            // Load initial data
             loadPasswordChangeRequests();
             loadAccountRequests();
             
-            // Remove sign out button since we're not using auth
-            const signOutBtn = document.getElementById('signOutBtn');
-            if (signOutBtn) {
-                signOutBtn.style.display = 'none';
-            }
+            // Set up tab switching
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.addEventListener('click', () => {
+                    // Remove active class from all tabs and contents
+                    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                    
+                    // Add active class to clicked tab and corresponding content
+                    tab.classList.add('active');
+                    const tabId = tab.getAttribute('data-tab');
+                    document.getElementById(tabId).classList.add('active');
+                });
+            });
+            
+            // Set up refresh buttons
+            document.querySelectorAll('.refresh-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const tab = btn.closest('.tab-content').id;
+                    if (tab === 'password-requests') {
+                        loadPasswordChangeRequests();
+                    } else {
+                        loadAccountRequests();
+                    }
+                });
+            });
         });
 
         // Tab switching
@@ -245,7 +366,11 @@
         // Load password change requests
         async function loadPasswordChangeRequests() {
             const container = document.getElementById('passwordRequestsList');
-            container.innerHTML = '<p>Loading password change requests...</p>';
+            const loader = container.querySelector('.loader') || document.createElement('div');
+            loader.className = 'loader';
+            loader.innerHTML = '<p><i class="fas fa-spinner fa-spin"></i> Loading password change requests...</p>';
+            container.innerHTML = '';
+            container.appendChild(loader);
             
             try {
                 const snapshot = await db.collection('passwordChangeRequests')
@@ -253,46 +378,106 @@
                     .get();
                 
                 if (snapshot.empty) {
-                    container.innerHTML = '<p>No password change requests found.</p>';
+                    container.innerHTML = '<p class="no-requests">No password change requests found.</p>';
                     return;
                 }
                 
                 let html = '';
+                const now = new Date();
+                
                 snapshot.forEach(doc => {
                     const request = { id: doc.id, ...doc.data() };
-                    const date = request.requestedAt ? request.requestedAt.toDate().toLocaleString() : 'N/A';
+                    const requestedAt = request.requestedAt ? request.requestedAt.toDate() : new Date();
+                    const timeAgo = formatTimeAgo(requestedAt, now);
+                    const dateStr = requestedAt.toLocaleString();
+                    
+                    // Skip already processed requests
+                    if (request.status && request.status !== 'pending') {
+                        return;
+                    }
                     
                     html += `
-                        <div class="request-card">
-                            <h3>${request.username} <span class="status status-${request.status || 'pending'}">${request.status || 'pending'}</span></h3>
-                            <p><strong>Email:</strong> ${request.email}</p>
-                            <p><strong>Requested:</strong> ${date}</p>
+                        <div class="request-card" data-id="${doc.id}">
+                            <h3>
+                                ${request.username || 'Unknown User'}
+                                <span class="status status-${request.status || 'pending'}">
+                                    ${(request.status || 'pending').toUpperCase()}
+                                </span>
+                            </h3>
+                            <p><strong>Email:</strong> ${request.email || 'N/A'}</p>
+                            <p><strong>Requested:</strong> ${dateStr} (${timeAgo})</p>
+                            ${request.reason ? `<p><strong>Reason:</strong> ${request.reason}</p>` : ''}
                             <div class="request-actions">
-                                <button class="btn btn-approve" onclick="handleRequest('${doc.id}', 'passwordChangeRequests', 'approved')">
+                                <button class="btn btn-approve" data-id="${doc.id}" data-type="passwordChangeRequests" data-action="approved">
                                     <i class="fas fa-check"></i> Approve
                                 </button>
-                                <button class="btn btn-reject" onclick="handleRequest('${doc.id}', 'passwordChangeRequests', 'rejected')">
+                                <button class="btn btn-reject" data-id="${doc.id}" data-type="passwordChangeRequests" data-action="rejected">
                                     <i class="fas fa-times"></i> Reject
                                 </button>
-                                <button class="btn btn-view" onclick="viewRequestDetails('${doc.id}', 'passwordChangeRequests')">
-                                    <i class="fas fa-eye"></i> View
+                                <button class="btn btn-view" data-id="${doc.id}" data-type="passwordChangeRequests">
+                                    <i class="fas fa-eye"></i> View Details
                                 </button>
                             </div>
                         </div>
                     `;
                 });
                 
-                container.innerHTML = html || '<p>No password change requests found.</p>';
+                container.innerHTML = html || '<p class="no-requests">No pending password change requests found.</p>';
+                
+                // Add event listeners to new buttons
+                container.querySelectorAll('.btn-approve, .btn-reject').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const id = e.currentTarget.dataset.id;
+                        const type = e.currentTarget.dataset.type;
+                        const action = e.currentTarget.dataset.action;
+                        handleRequest(id, type, action);
+                    });
+                });
+                
+                container.querySelectorAll('.btn-view').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const id = e.currentTarget.dataset.id;
+                        const type = e.currentTarget.dataset.type;
+                        viewRequestDetails(id, type);
+                    });
+                });
+                
             } catch (error) {
                 console.error('Error loading password change requests:', error);
-                container.innerHTML = '<p>Error loading password change requests. Please try again.</p>';
+                container.innerHTML = `
+                    <div class="error-message">
+                        <i class="fas fa-exclamation-circle"></i>
+                        <p>Failed to load password change requests. Please try again.</p>
+                        <button class="btn btn-retry" onclick="loadPasswordChangeRequests()">
+                            <i class="fas fa-sync-alt"></i> Retry
+                        </button>
+                    </div>
+                `;
             }
         }
 
-        // Load account requests (similar to password change requests)
+        // Format time ago
+        function formatTimeAgo(date, now = new Date()) {
+            const seconds = Math.floor((now - date) / 1000);
+            const minutes = Math.floor(seconds / 60);
+            const hours = Math.floor(minutes / 60);
+            const days = Math.floor(hours / 24);
+            
+            if (days > 7) return date.toLocaleDateString();
+            if (days > 0) return `${days}d ago`;
+            if (hours > 0) return `${hours}h ago`;
+            if (minutes > 0) return `${minutes}m ago`;
+            return 'just now';
+        }
+        
+        // Load account requests
         async function loadAccountRequests() {
             const container = document.getElementById('accountRequestsList');
-            container.innerHTML = '<p>Loading account requests...</p>';
+            const loader = container.querySelector('.loader') || document.createElement('div');
+            loader.className = 'loader';
+            loader.innerHTML = '<p><i class="fas fa-spinner fa-spin"></i> Loading account requests...</p>';
+            container.innerHTML = '';
+            container.appendChild(loader);
             
             try {
                 const snapshot = await db.collection('accountRequests')
@@ -300,39 +485,82 @@
                     .get();
                 
                 if (snapshot.empty) {
-                    container.innerHTML = '<p>No account requests found.</p>';
+                    container.innerHTML = '<p class="no-requests">No account requests found.</p>';
                     return;
                 }
                 
                 let html = '';
+                const now = new Date();
+                
                 snapshot.forEach(doc => {
                     const request = { id: doc.id, ...doc.data() };
-                    const date = request.requestedAt ? request.requestedAt.toLocaleString() : 'N/A';
+                    const requestedAt = request.requestedAt ? request.requestedAt.toDate() : new Date();
+                    const timeAgo = formatTimeAgo(requestedAt, now);
+                    const dateStr = requestedAt.toLocaleString();
+                    
+                    // Skip already processed requests
+                    if (request.status && request.status !== 'pending') {
+                        return;
+                    }
                     
                     html += `
-                        <div class="request-card">
-                            <h3>${request.username} <span class="status status-${request.status || 'pending'}">${request.status || 'pending'}</span></h3>
-                            <p><strong>Email:</strong> ${request.email}</p>
-                            <p><strong>Requested:</strong> ${date}</p>
+                        <div class="request-card" data-id="${doc.id}">
+                            <h3>
+                                ${request.username || 'New User'}
+                                <span class="status status-${request.status || 'pending'}">
+                                    ${(request.status || 'pending').toUpperCase()}
+                                </span>
+                            </h3>
+                            <p><strong>Role:</strong> ${request.role || 'user'}</p>
+                            <p><strong>Requested:</strong> ${dateStr} (${timeAgo})</p>
+                            ${request.department ? `<p><strong>Department:</strong> ${request.department}</p>` : ''}
+                            ${request.studentId ? `<p><strong>Student ID:</strong> ${request.studentId}</p>` : ''}
                             <div class="request-actions">
-                                <button class="btn btn-approve" onclick="handleRequest('${doc.id}', 'accountRequests', 'approved')">
+                                <button class="btn btn-approve" data-id="${doc.id}" data-type="accountRequests" data-action="approved">
                                     <i class="fas fa-check"></i> Approve
                                 </button>
-                                <button class="btn btn-reject" onclick="handleRequest('${doc.id}', 'accountRequests', 'rejected')">
+                                <button class="btn btn-reject" data-id="${doc.id}" data-type="accountRequests" data-action="rejected">
                                     <i class="fas fa-times"></i> Reject
                                 </button>
-                                <button class="btn btn-view" onclick="viewRequestDetails('${doc.id}', 'accountRequests')">
-                                    <i class="fas fa-eye"></i> View
+                                <button class="btn btn-view" data-id="${doc.id}" data-type="accountRequests">
+                                    <i class="fas fa-eye"></i> View Details
                                 </button>
                             </div>
                         </div>
                     `;
                 });
                 
-                container.innerHTML = html || '<p>No account requests found.</p>';
+                container.innerHTML = html || '<p class="no-requests">No pending account requests found.</p>';
+                
+                // Add event listeners to new buttons
+                container.querySelectorAll('.btn-approve, .btn-reject').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const id = e.currentTarget.dataset.id;
+                        const type = e.currentTarget.dataset.type;
+                        const action = e.currentTarget.dataset.action;
+                        handleRequest(id, type, action);
+                    });
+                });
+                
+                container.querySelectorAll('.btn-view').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const id = e.currentTarget.dataset.id;
+                        const type = e.currentTarget.dataset.type;
+                        viewRequestDetails(id, type);
+                    });
+                });
+                
             } catch (error) {
                 console.error('Error loading account requests:', error);
-                container.innerHTML = '<p>Error loading account requests. Please try again.</p>';
+                container.innerHTML = `
+                    <div class="error-message">
+                        <i class="fas fa-exclamation-circle"></i>
+                        <p>Failed to load account requests. Please try again.</p>
+                        <button class="btn btn-retry" onclick="loadAccountRequests()">
+                            <i class="fas fa-sync-alt"></i> Retry
+                        </button>
+                    </div>
+                `;
             }
         }
 
@@ -345,8 +573,27 @@
                 const doc = await docRef.get();
                 const request = doc.data();
                 
-                // If approved and it's a password change request, update the password
-                if (action === 'approved' && collectionName === 'passwordChangeRequests') {
+                // Handle account creation for approved account requests
+                if (action === 'approved' && collectionName === 'accountRequests') {
+                    try {
+                        // Call a Cloud Function to create the user account
+                        const createUser = firebase.functions().httpsCallable('createUserAccount');
+                        await createUser({
+                            username: request.username,
+                            password: request.password,
+                            // Add any additional user data from the request
+                            role: request.role || 'user',
+                            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                        });
+                        console.log(`User account created for ${request.username}`);
+                        
+                    } catch (error) {
+                        console.error('Error creating user account:', error);
+                        throw new Error(`Failed to create user account: ${error.message}`);
+                    }
+                }
+                // Handle password change requests
+                else if (action === 'approved' && collectionName === 'passwordChangeRequests') {
                     try {
                         // Call a Cloud Function to update the password
                         const updatePassword = firebase.functions().httpsCallable('updateUserPassword');
@@ -354,7 +601,7 @@
                             email: request.email,
                             newPassword: request.newPassword
                         });
-                        console.log(`Password update requested for ${request.email}`);
+                        console.log(`Password updated for ${request.email}`);
                     } catch (error) {
                         console.error('Error updating password:', error);
                         throw new Error(`Failed to update password: ${error.message}`);
@@ -365,8 +612,33 @@
                 await docRef.update({
                     status: action,
                     processedAt: firebase.firestore.FieldValue.serverTimestamp(),
-                    processedBy: auth.currentUser.uid
+                    processedBy: auth.currentUser?.uid || 'admin',
+                    processedEmail: auth.currentUser?.email || 'admin@dhvsu.edu.ph'
                 });
+                
+                // Update request tracking (optional)
+                if (collectionName === 'accountRequests') {
+                    try {
+                        // Store the request status in user's document if it exists
+                        await db.collection('users').doc(request.username).set({
+                            accountStatus: action,
+                            lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+                        }, { merge: true });
+                        
+                        // Optional: Log the approval in an audit collection
+                        await db.collection('auditLogs').add({
+                            type: 'account_request_processed',
+                            username: request.username,
+                            action: action,
+                            processedBy: auth.currentUser?.uid || 'admin',
+                            processedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                            requestId: docId
+                        });
+                    } catch (logError) {
+                        console.error('Error updating request tracking:', logError);
+                        // Continue even if logging fails
+                    }
+                }
                 
                 // Reload the appropriate list
                 if (collectionName === 'passwordChangeRequests') {
