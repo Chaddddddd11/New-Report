@@ -189,7 +189,7 @@
                 margin-bottom: 20px;
             }
         }
-    </style>a
+    </style>
 </head>
 <body>
     <div class="container">
@@ -386,7 +386,14 @@
                 return;
             }
             
-            adminLogo.addEventListener('click', () => {
+            // Remove any existing click handlers to prevent duplicates
+            const newLogo = adminLogo.cloneNode(true);
+            adminLogo.parentNode.replaceChild(newLogo, adminLogo);
+            
+            newLogo.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                
                 clickCount++;
                 console.log(`Admin logo clicked ${clickCount} times`);
                 
@@ -408,16 +415,19 @@
                     window.location.href = 'Admin.html';
                     clickCount = 0; // Reset counter after redirecting
                 }
+                
+                return false;
             });
+            
+            // Add cursor style
+            newLogo.style.cursor = 'pointer';
         }
         
         // Initialize admin access after the page loads
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', setupAdminAccess);
-        } else {
-            // If the page is already loaded, set up admin access immediately
-            setTimeout(setupAdminAccess, 500);
-        }
+        document.addEventListener('DOMContentLoaded', function() {
+            // Small delay to ensure all elements are loaded
+            setTimeout(setupAdminAccess, 100);
+        });
         
         // Check if user is admin (for admin redirection after login)
         async function checkIfAdmin(uid) {
