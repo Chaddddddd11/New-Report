@@ -204,27 +204,65 @@
         <form id="createAccountForm">
             <div class="form-group">
                 <label for="username">Username</label>
-                <input type="text" id="username" class="form-control" placeholder="Choose a username" required>
+                <input type="text" id="username" class="form-control" placeholder="Enter username" required>
                 <div class="password-requirements">Only letters, numbers, and underscores allowed</div>
             </div>
-            
             <div class="form-group">
                 <label for="password">Password</label>
-                <input type="password" id="password" class="form-control" placeholder="Create a password" required minlength="6">
-                <div class="password-requirements">At least 6 characters long</div>
+                <input type="password" id="password" class="form-control" placeholder="Enter password" required>
+                <div class="password-requirements">Must be at least 6 characters long</div>
             </div>
-            
             <div class="form-group">
                 <label for="confirmPassword">Confirm Password</label>
-                <input type="password" id="confirmPassword" class="form-control" placeholder="Confirm your password" required>
+                <input type="password" id="confirmPassword" class="form-control" placeholder="Confirm password" required>
             </div>
-            
-            <button type="submit" class="btn" id="createAccountBtn">Request Account</button>
-            
-            <p style="margin-top: 20px; text-align: center;">
-                Already have an account? <a href="login.html" style="color: var(--primary-color); font-weight: 500;">Sign in</a>
-            </p>
+            <div class="form-group">
+                <label for="fullName">Full Name</label>
+                <input type="text" id="fullName" class="form-control" placeholder="Enter your full name" required>
+            </div>
+            <div class="form-group">
+                <label for="studentId">Student/Employee ID</label>
+                <input type="text" id="studentId" class="form-control" placeholder="Enter your ID number" required>
+            </div>
+            <div class="form-group">
+                <label for="department">Department</label>
+                <select id="department" class="form-control" required>
+                    <option value="" disabled selected>Select department</option>
+                    <option value="CCS">College of Computer Studies</option>
+                    <option value="CBM">College of Business and Management</option>
+                    <option value="CTE">College of Teacher Education</option>
+                    <option value="CAS">College of Arts and Sciences</option>
+                    <option value="COE">College of Engineering</option>
+                    <option value="CON">College of Nursing</option>
+                    <option value="CICT">College of Information and Communications Technology</option>
+                    <option value="CVMBS">College of Veterinary Medicine and Biomedical Sciences</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="yearLevel">Year Level (for students)</label>
+                <select id="yearLevel" class="form-control">
+                    <option value="">Not Applicable</option>
+                    <option value="1st Year">1st Year</option>
+                    <option value="2nd Year">2nd Year</option>
+                    <option value="3rd Year">3rd Year</option>
+                    <option value="4th Year">4th Year</option>
+                    <option value="5th Year">5th Year</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="role">Account Type</label>
+                <select id="role" class="form-control" required>
+                    <option value="student" selected>Student</option>
+                    <option value="instructor">Instructor</option>
+                    <option value="admin">Administrator</option>
+                </select>
+            </div>
+            <button type="submit" id="createAccountBtn" class="btn">Submit Account Request</button>
         </form>
+        
+        <p style="margin-top: 20px; text-align: center;">
+            Already have an account? <a href="login.html" style="color: var(--primary-color); font-weight: 500;">Sign in</a>
+        </p>
         
         <div class="footer">
             DHVSU &copy; 2025 - All Rights Reserved
@@ -277,6 +315,13 @@
             }, 5000);
         }
 
+        // DOM Elements
+        const fullNameInput = document.getElementById('fullName');
+        const studentIdInput = document.getElementById('studentId');
+        const departmentSelect = document.getElementById('department');
+        const yearLevelSelect = document.getElementById('yearLevel');
+        const roleSelect = document.getElementById('role');
+
         // Handle form submission
         createAccountForm.addEventListener('submit', async function(e) {
             e.preventDefault();
@@ -284,6 +329,11 @@
             const username = usernameInput.value.trim();
             const password = passwordInput.value;
             const confirmPassword = confirmPasswordInput.value;
+            const fullName = fullNameInput.value.trim();
+            const studentId = studentIdInput.value.trim();
+            const department = departmentSelect.value;
+            const yearLevel = yearLevelSelect.value;
+            const role = roleSelect.value;
             
             // Reset messages
             errorMessage.style.display = 'none';
@@ -304,14 +354,27 @@
                 showMessage(errorMessage, 'Passwords do not match.');
                 return;
             }
+
+            if (fullName.length < 2) {
+                showMessage(errorMessage, 'Please enter your full name.');
+                return;
+            }
+
+            if (!studentId) {
+                showMessage(errorMessage, 'Please enter your student/employee ID.');
+                return;
+            }
+
+            if (!department) {
+                showMessage(errorMessage, 'Please select your department.');
+                return;
+            }
             
             // Set loading state
             createAccountBtn.disabled = true;
             createAccountBtn.innerHTML = '<span class="spinner"></span>Submitting Request...';
             
             try {
-                const email = `${username}@dhvsu.edu.ph`;
-                
                 // First check if username is already taken
                 const userQuery = await db.collection('users')
                     .where('username', '==', username)
@@ -322,33 +385,67 @@
                     throw new Error('auth/username-already-in-use');
                 }
                 
-                // Check if there's already a pending request for this username
+                // Check if student/employee ID is already in use
+                const idCheck = await db.collection('users')
+                    .where('studentId', '==', studentId)
+                    .limit(1)
+                    .get();
+                
+                if (!idCheck.empty) {
+                    throw new Error('auth/id-already-in-use');
+                }
+                
+                // Check if there's already a pending request for this username or ID
                 const pendingRequest = await db.collection('accountRequests')
-                    .where('username', '==', username)
                     .where('status', '==', 'pending')
+                    .where('$or', [
+                        { username: username },
+                        { studentId: studentId }
+                    ])
                     .limit(1)
                     .get();
                 
                 if (!pendingRequest.empty) {
-                    throw new Error('auth/request-pending');
+                    const existingRequest = pendingRequest.docs[0].data();
+                    if (existingRequest.username === username) {
+                        throw new Error('auth/username-request-pending');
+                    } else {
+                        throw new Error('auth/id-request-pending');
+                    }
                 }
                 
                 // Create account request in Firestore
-                await db.collection('accountRequests').add({
+                const requestData = {
                     username: username,
-                    email: email,
-                    password: password,  // In production, never store plaintext passwords
+                    password: password,  // In production, hash this before storing
+                    fullName: fullName,
+                    studentId: studentId,
+                    department: department,
+                    role: role,
                     status: 'pending',
                     requestedAt: firebase.firestore.FieldValue.serverTimestamp(),
                     type: 'account_creation'
-                });
+                };
+
+                // Add year level only if it's a student
+                if (role === 'student' && yearLevel) {
+                    requestData.yearLevel = yearLevel;
+                }
+
+                await db.collection('accountRequests').add(requestData);
                 
-                // Show success message
+                // Show success message and reset form
                 showMessage(
                     successMessage, 
-                    'Your account request has been submitted for admin approval. You will be notified once your account is approved.',
+                    'Your account request has been submitted for admin approval. You will be redirected to login once your account is approved.',
                     false
                 );
+                
+                // Reset form
+                createAccountForm.reset();
+                
+                // Check for approval status periodically
+                checkApprovalStatus(username);
                 
                 // Reset form
                 createAccountForm.reset();
@@ -356,22 +453,36 @@
             } catch (error) {
                 console.error('Error creating account request:', error);
                 
-                let errorMessageText = 'An error occurred while processing your request. Please try again.';
+                let errorMessageText = 'An error occurred while creating your account request. Please try again.';
                 
-                // Handle specific errors
-                if (error.message === 'auth/username-already-in-use') {
-                    errorMessageText = 'This username is already taken. Please choose another one.';
-                } else if (error.message === 'auth/request-pending') {
-                    errorMessageText = 'There is already a pending request for this username. Please wait for admin approval.';
-                } else if (error.code === 'permission-denied') {
-                    errorMessageText = 'You do not have permission to perform this action.';
+                // Handle different error cases
+                switch(error.message) {
+                    case 'auth/username-already-in-use':
+                        errorMessageText = 'This username is already in use. Please choose a different one.';
+                        break;
+                    case 'auth/id-already-in-use':
+                        errorMessageText = 'This student/employee ID is already registered. Please contact support if you believe this is an error.';
+                        break;
+                    case 'auth/username-request-pending':
+                        errorMessageText = 'There is already a pending request for this username. Please wait for approval.';
+                        break;
+                    case 'auth/id-request-pending':
+                        errorMessageText = 'There is already a pending request with this student/employee ID. Please contact support if you believe this is an error.';
+                        break;
+                    case 'permission-denied':
+                        errorMessageText = 'You do not have permission to perform this action. Please make sure you are logged in.';
+                        break;
+                    case 'unavailable':
+                    case 'network-request-failed':
+                        errorMessageText = 'Network error. Please check your internet connection and try again.';
+                        break;
                 }
                 
                 showMessage(errorMessage, errorMessageText);
-            } finally {
+                
                 // Reset button state
                 createAccountBtn.disabled = false;
-                createAccountBtn.textContent = 'Request Account';
+                createAccountBtn.textContent = 'Submit Account Request';
             }
         });
         
@@ -452,6 +563,84 @@
             }
         }
         
+        // Check approval status periodically
+        async function checkApprovalStatus(username) {
+            // Check immediately first
+            const checkStatus = async () => {
+                try {
+                    // Check if user exists in the users collection
+                    const userDoc = await db.collection('users')
+                        .where('username', '==', username)
+                        .limit(1)
+                        .get();
+                    
+                    if (!userDoc.empty) {
+                        // Account has been approved and created
+                        showMessage(
+                            successMessage,
+                            'Your account has been approved! Redirecting to login...',
+                            false
+                        );
+                        
+                        // Redirect to login after a short delay
+                        setTimeout(() => {
+                            window.location.href = 'login.html';
+                        }, 3000);
+                        return true;
+                    }
+                    
+                    // Check if request was rejected
+                    const requestDoc = await db.collection('accountRequests')
+                        .where('username', '==', username)
+                        .where('status', 'in', ['rejected', 'cancelled'])
+                        .limit(1)
+                        .get();
+                    
+                    if (!requestDoc.empty) {
+                        const status = requestDoc.docs[0].data().status;
+                        showMessage(
+                            errorMessage,
+                            `Your account request has been ${status}. Please contact support if you believe this is an error.`,
+                            true
+                        );
+                        createAccountBtn.disabled = false;
+                        createAccountBtn.textContent = 'Submit Account Request';
+                        return true;
+                    }
+                    
+                    return false;
+                } catch (error) {
+                    console.error('Error checking approval status:', error);
+                    return false;
+                }
+            };
+            
+            // Initial check
+            const approved = await checkStatus();
+            
+            // If not approved yet, set up polling
+            if (!approved) {
+                const intervalId = setInterval(async () => {
+                    const approved = await checkStatus();
+                    if (approved) {
+                        clearInterval(intervalId);
+                    }
+                }, 10000); // Check every 10 seconds
+                
+                // Stop checking after 1 hour (3600 * 1000 ms)
+                setTimeout(() => {
+                    clearInterval(intervalId);
+                    showMessage(
+                        errorMessage,
+                        'Account approval is taking longer than expected. Please check back later.',
+                        true
+                    );
+                    createAccountBtn.disabled = false;
+                    createAccountBtn.textContent = 'Submit Account Request';
+                }, 3600000);
+            }
+        }
+
         // Check if user is already logged in
         auth.onAuthStateChanged((user) => {
             if (user) {
