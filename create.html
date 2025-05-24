@@ -373,7 +373,7 @@
             }
         });
         
-        // Simple admin access via logo click
+        // Enhanced admin access via logo click
         function setupAdminAccess() {
             console.log('Setting up admin access...');
             
@@ -385,17 +385,50 @@
             
             console.log('Admin logo found, adding click handler...');
             
-            // Simple click handler - use goToAdmin function
-            adminLogo.onclick = function(e) {
-                e.preventDefault();
-                console.log('Logo clicked, going to admin panel...');
-                goToAdmin();
-                return false;
-            };
-            
-            // Alternative: Show a message when clicked (for debugging)
+            // Make sure the logo is clickable
             adminLogo.style.cursor = 'pointer';
-            adminLogo.title = 'Click to access admin panel';
+            adminLogo.style.pointerEvents = 'auto';
+            adminLogo.title = 'Click 5 times to access admin panel';
+            
+            // Remove any existing click handlers first
+            adminLogo.replaceWith(adminLogo.cloneNode(true));
+            const newLogo = document.getElementById('adminLogo');
+            
+            // Add new click handler with counter
+            let clickCount = 0;
+            let clickTimer = null;
+            
+            function handleLogoClick(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                clickCount++;
+                console.log(`Logo clicked ${clickCount} times`);
+                
+                // Clear previous timer
+                if (clickTimer) {
+                    clearTimeout(clickTimer);
+                }
+                
+                // Set new timer to reset counter
+                clickTimer = setTimeout(() => {
+                    console.log('Resetting click counter');
+                    clickCount = 0;
+                }, 1000); // 1 second to click multiple times
+                
+                // Check for 5 clicks
+                if (clickCount >= 5) {
+                    console.log('5 clicks detected, going to admin panel...');
+                    goToAdmin();
+                    clickCount = 0;
+                }
+                
+                return false;
+            }
+            
+            // Add both click and touch event listeners
+            newLogo.addEventListener('click', handleLogoClick);
+            newLogo.addEventListener('touchend', handleLogoClick);
         }
         
         // Initialize when page loads
