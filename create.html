@@ -385,11 +385,11 @@
             
             console.log('Admin logo found, adding click handler...');
             
-            // Simple click handler - no timer, just log and redirect
+            // Simple click handler - use goToAdmin function
             adminLogo.onclick = function(e) {
-                console.log('Logo clicked!');
-                // For testing - redirect on single click
-                window.location.href = 'Admin.html';
+                e.preventDefault();
+                console.log('Logo clicked, going to admin panel...');
+                goToAdmin();
                 return false;
             };
             
@@ -436,6 +436,14 @@
                 const urlParams = new URLSearchParams(window.location.search);
                 const action = urlParams.get('action');
                 const redirect = urlParams.get('redirect');
+                const isAdminAccess = window.location.pathname.includes('Admin.html') || 
+                                     urlParams.get('admin') === 'true';
+                
+                // Don't redirect if user is trying to access Admin panel
+                if (isAdminAccess) {
+                    console.log('Admin access detected, skipping redirection');
+                    return;
+                }
                 
                 // Only redirect if not on create account page intentionally
                 if (action !== 'create' && redirect !== 'create') {
@@ -456,6 +464,17 @@
                 }
             }
         });
+        
+        // Function to handle admin access
+        function goToAdmin() {
+            console.log('Attempting to access admin panel...');
+            // Add admin flag to URL to prevent redirection
+            const url = new URL(window.location.href);
+            url.searchParams.set('admin', 'true');
+            window.history.replaceState({}, '', url);
+            // Now redirect to Admin.html
+            window.location.href = 'Admin.html';
+        }
     </script>
 </body>
 </html>
