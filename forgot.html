@@ -322,67 +322,40 @@
             resetBtn.innerHTML = '<span class="spinner"></span> Updating password...';
             
             try {
-                // Check if the username exists in the users collection
-                const usersSnapshot = await db.collection('users')
-                    .where('username', '==', username.toLowerCase())
-                    .limit(1)
-                    .get();
-                    
-                if (usersSnapshot.empty) {
-                    throw { code: 'auth/user-not-found' };
-                }
+                const email = `${username}@dhvsu.edu.ph`;
                 
-                const userDoc = usersSnapshot.docs[0];
-                const userData = userDoc.data();
-                
-                // Check if user is active
-                if (userData.status !== 'active') {
-                    throw { code: 'auth/account-inactive', message: 'Your account is not active. Please contact support.' };
-                }
-                
-                // Store the password change request
-                await db.collection('passwordChangeRequests').add({
-                    username: username,
-                    newPassword: newPassword, // In production, this should be hashed
-                    status: 'pending',
-                    requestedAt: firebase.firestore.FieldValue.serverTimestamp(),
-                    requestedBy: username,
-                    requestType: 'password_reset'
-                });
+                // Send a password reset email using Firebase's built-in method
+                // This is the secure and recommended way to handle password resets
+                await auth.sendPasswordResetEmail(email);
                 
                 // Show success message
                 showMessage(
                     successMessage, 
-                    'Your password change request has been submitted for admin approval. You will be notified once approved.',
+                    'A password reset link has been sent to your email. Please check your inbox and follow the instructions to reset your password.',
                     false
                 );
                 
                 // Reset form
                 resetPasswordForm.reset();
                 
-            } catch (error) {
-                console.error('Error processing password reset request:', error);
-                let errorMessageText = 'Failed to process your request. ';
+                // Redirect to login page after 5 seconds
+                setTimeout(() => {
+                    window.location.href = 'login.html';
+                }, 5000);
                 
-                // Handle specific error cases
-                switch(error.code) {
-                    case 'auth/user-not-found':
-                        errorMessageText = 'No account found with this username.';
-                        break;
-                    case 'auth/account-inactive':
-                        errorMessageText = error.message || 'Your account is not active. Please contact support.';
-                        break;
-                    case 'permission-denied':
-                        errorMessageText = 'You do not have permission to perform this action.';
-                        break;
-                    case 'auth/too-many-requests':
-                        errorMessageText = 'Too many attempts. Please try again later.';
-                        break;
-                    case 'auth/network-request-failed':
-                        errorMessageText = 'Network error. Please check your connection and try again.';
-                        break;
-                    default:
-                        errorMessageText = 'An error occurred. Please try again or contact support.';
+            } catch (error) {
+                console.error('Error sending password reset email:', error);
+                let errorMessageText = 'Failed to send password reset email. ';
+                
+                // Handle specific Firebase errors
+                if (error.code === 'auth/user-not-found') {
+                    errorMessageText = 'No account found with this username.';
+                } else if (error.code === 'auth/invalid-email') {
+                    errorMessageText = 'Invalid username format.';
+                } else if (error.code === 'auth/too-many-requests') {
+                    errorMessageText = 'Too many attempts. Please try again later.';
+                } else {
+                    errorMessageText += 'Please try again or contact support for assistance.';
                 }
                 
                 showMessage(errorMessage, errorMessageText);
