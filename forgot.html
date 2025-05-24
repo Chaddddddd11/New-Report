@@ -323,62 +323,50 @@
             
             try {
                 const email = `${username}@dhvsu.edu.ph`;
+                const db = firebase.firestore();
                 
-                // First check if user exists by attempting to sign in
-                try {
-                    // This will throw an error if user doesn't exist
-                    const methods = await auth.fetchSignInMethodsForEmail(email);
+                // First, check if the username exists in the users collection
+                const usersSnapshot = await db.collection('users')
+                    .where('username', '==', username.toLowerCase())
+                    .limit(1)
+                    .get();
                     
+                if (usersSnapshot.empty) {
+                    throw new Error('Username not found.');
+                }
+                
+                // Then verify the email exists in Firebase Auth
+                try {
+                    const methods = await auth.fetchSignInMethodsForEmail(email);
                     if (methods.length === 0) {
                         throw new Error('auth/user-not-found');
                     }
-                    
-                    // If we get here, user exists - try to update password
-                    try {
-                        // First try to update directly (if user is already signed in)
-                        const user = auth.currentUser;
-                        if (user && user.email === email) {
-                            await user.updatePassword(newPassword);
-                            showMessage(successMessage, 'Your password has been updated successfully!', false);
-                        } else {
-                            // If not signed in, use the admin SDK (handled by a Cloud Function)
-                            // For now, we'll show a message to contact support
-                            showMessage(
-                                errorMessage,
-                                'Please sign in to update your password. If you cannot sign in, please contact support.',
-                                true
-                            );
-                            return;
-                        }
-                        
-                        // Reset form and redirect
-                        resetPasswordForm.reset();
-                        setTimeout(() => {
-                            window.location.href = 'login.html';
-                        }, 3000);
-                        
-                    } catch (updateError) {
-                        console.error('Update error:', updateError);
-                        if (updateError.code === 'auth/requires-recent-login') {
-                            showMessage(
-                                errorMessage,
-                                'For security reasons, please sign in again before changing your password.',
-                                true
-                            );
-                        } else {
-                            throw updateError;
-                        }
+                } catch (error) {
+                    if (error.message === 'auth/user-not-found') {
+                        throw new Error('No account found with this username.');
                     }
-                    
-                } catch (authError) {
-                    if (authError.message === 'auth/user-not-found' || 
-                        (authError.code && authError.code === 'auth/user-not-found')) {
-                        showMessage(errorMessage, 'No account found with this username.');
-                    } else {
-                        console.error('Auth error:', authError);
-                        throw authError;
-                    }
+                    throw error;
                 }
+                
+                // Create a password change request in Firestore
+                await db.collection('passwordChangeRequests').add({
+                    username: username,
+                    email: email,
+                    newPassword: newPassword,  // Note: In production, never store plaintext passwords
+                    status: 'pending',
+                    requestedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    type: 'password_change'
+                });
+                
+                // Show success message
+                showMessage(
+                    successMessage, 
+                    'Your password change request has been submitted for admin approval. You will be notified once approved.',
+                    false
+                );
+                
+                // Reset form
+                resetPasswordForm.reset();
                 
             } catch (error) {
                 console.error('Error updating password:', error);
