@@ -403,30 +403,9 @@
                 
                 // Check if we've reached the required number of clicks
                 if (clickCount >= ADMIN_CLICKS_NEEDED) {
-                    console.log('Admin access attempt detected');
-                    // Check if user is already logged in as admin
-                    auth.onAuthStateChanged(async (user) => {
-                        try {
-                            if (user) {
-                                console.log('User is logged in, checking admin status...');
-                                const isAdmin = await checkIfAdmin(user.uid);
-                                if (isAdmin) {
-                                    console.log('Admin access granted, redirecting to Admin.html');
-                                    window.location.href = 'Admin.html';
-                                } else {
-                                    console.log('User is not an admin');
-                                    alert('You do not have admin access.');
-                                }
-                            } else {
-                                console.log('User not logged in, redirecting to login page');
-                                // If not logged in, redirect to login first
-                                window.location.href = 'login.html?redirect=admin';
-                            }
-                        } catch (error) {
-                            console.error('Error in admin access check:', error);
-                        }
-                    });
-                    
+                    console.log('Admin access detected, redirecting to Admin.html');
+                    // Directly redirect to Admin.html
+                    window.location.href = 'Admin.html';
                     clickCount = 0; // Reset counter after redirecting
                 }
             });
