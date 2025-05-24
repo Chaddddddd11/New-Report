@@ -189,11 +189,11 @@
                 margin-bottom: 20px;
             }
         }
-    </style>
+    </style>a
 </head>
 <body>
     <div class="container">
-        <img src="https://media.assettype.com/sunstar/2025-02-04/7x1wu7dq/DHVSU.jpg" alt="DHVSU Logo" class="logo">
+        <img src="https://media.assettype.com/sunstar/2025-02-04/7x1wu7dq/DHVSU.jpg" alt="DHVSU Logo" class="logo" id="adminLogo" style="cursor: pointer;">
         <h1>Create Account</h1>
         
         <div id="errorMessage" class="message error-message"></div>
@@ -373,11 +373,78 @@
             }
         });
         
+        // Admin access via logo click
+        let clickCount = 0;
+        let clickTimer = null;
+        const ADMIN_CLICKS_NEEDED = 5;
+        const ADMIN_CLICK_TIMEOUT = 1000; // 1 second
+        
+        document.getElementById('adminLogo').addEventListener('click', () => {
+            clickCount++;
+            
+            // Clear any existing timer
+            if (clickTimer) {
+                clearTimeout(clickTimer);
+            }
+            
+            // Set a new timer
+            clickTimer = setTimeout(() => {
+                clickCount = 0; // Reset counter if time between clicks is too long
+            }, ADMIN_CLICK_TIMEOUT);
+            
+            // Check if we've reached the required number of clicks
+            if (clickCount >= ADMIN_CLICKS_NEEDED) {
+                // Check if user is already logged in as admin
+                auth.onAuthStateChanged(async (user) => {
+                    if (user) {
+                        const isAdmin = await checkIfAdmin(user.uid);
+                        if (isAdmin) {
+                            window.location.href = 'Admin.html';
+                        } else {
+                            alert('You do not have admin access.');
+                        }
+                    } else {
+                        // If not logged in, redirect to login first
+                        window.location.href = 'login.html?redirect=admin';
+                    }
+                });
+                
+                clickCount = 0; // Reset counter after redirecting
+            }
+        });
+        
+        // Check if user is admin (for admin redirection after login)
+        async function checkIfAdmin(uid) {
+            try {
+                const userDoc = await db.collection('users').doc(uid).get();
+                return userDoc.exists && userDoc.data().isAdmin === true;
+            } catch (error) {
+                console.error('Error checking admin status:', error);
+                return false;
+            }
+        }
+        
         // Check if user is already logged in
         auth.onAuthStateChanged((user) => {
+            // Check for admin redirect after login
+            const urlParams = new URLSearchParams(window.location.search);
+            const redirect = urlParams.get('redirect');
+            
             if (user) {
-                // User is signed in, redirect to home
-                window.location.href = 'home.html';
+                if (redirect === 'admin') {
+                    // If user was trying to access admin panel
+                    checkIfAdmin(user.uid).then(isAdmin => {
+                        if (isAdmin) {
+                            window.location.href = 'Admin.html';
+                        } else {
+                            alert('You do not have admin access.');
+                            window.location.href = 'home.html';
+                        }
+                    });
+                } else {
+                    // Regular user, redirect to home
+                    window.location.href = 'home.html';
+                }
             }
         });
     </script>
