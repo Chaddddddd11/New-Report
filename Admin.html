@@ -352,20 +352,33 @@
             
             try {
                 const docRef = db.collection(collectionName).doc(docId);
+                const doc = await docRef.get();
+                const request = doc.data();
+                
+                // If approved and it's a password change request, update the password
+                if (action === 'approved' && collectionName === 'passwordChangeRequests') {
+                    try {
+                        // Get the user by email
+                        const user = await auth.getUserByEmail(request.email);
+                        
+                        // Update the user's password
+                        await auth.updateUser(user.uid, {
+                            password: request.newPassword
+                        });
+                        
+                        console.log(`Password updated for ${request.email}`);
+                    } catch (error) {
+                        console.error('Error updating password:', error);
+                        throw new Error(`Failed to update password: ${error.message}`);
+                    }
+                }
+                
+                // Update the request status
                 await docRef.update({
                     status: action,
                     processedAt: firebase.firestore.FieldValue.serverTimestamp(),
                     processedBy: auth.currentUser.uid
                 });
-                
-                // If approved and it's a password change request, update the password
-                if (action === 'approved' && collectionName === 'passwordChangeRequests') {
-                    const doc = await docRef.get();
-                    const request = doc.data();
-                    // In a real app, you would use Firebase Admin SDK to update the password
-                    // This is just a placeholder
-                    console.log(`Would update password for ${request.email} to ${request.newPassword}`);
-                }
                 
                 // Reload the appropriate list
                 if (collectionName === 'passwordChangeRequests') {
@@ -377,7 +390,7 @@
                 alert(`Request ${action} successfully.`);
             } catch (error) {
                 console.error(`Error ${action} request:`, error);
-                alert(`Failed to ${action} request. Please try again.`);
+                alert(`Failed to ${action} request: ${error.message}`);
             }
         }
 
