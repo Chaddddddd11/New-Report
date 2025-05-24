@@ -358,15 +358,13 @@
                 // If approved and it's a password change request, update the password
                 if (action === 'approved' && collectionName === 'passwordChangeRequests') {
                     try {
-                        // Get the user by email
-                        const user = await auth.getUserByEmail(request.email);
-                        
-                        // Update the user's password
-                        await auth.updateUser(user.uid, {
-                            password: request.newPassword
+                        // Call a Cloud Function to update the password
+                        const updatePassword = firebase.functions().httpsCallable('updateUserPassword');
+                        await updatePassword({
+                            email: request.email,
+                            newPassword: request.newPassword
                         });
-                        
-                        console.log(`Password updated for ${request.email}`);
+                        console.log(`Password update requested for ${request.email}`);
                     } catch (error) {
                         console.error('Error updating password:', error);
                         throw new Error(`Failed to update password: ${error.message}`);
