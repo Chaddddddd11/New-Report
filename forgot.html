@@ -322,39 +322,32 @@
             resetBtn.innerHTML = '<span class="spinner"></span> Updating password...';
             
             try {
-                const email = `${username}@dhvsu.edu.ph`;
-                const db = firebase.firestore();
-                
-                // First, check if the username exists in the users collection
+                // Check if the username exists in the users collection
                 const usersSnapshot = await db.collection('users')
                     .where('username', '==', username.toLowerCase())
                     .limit(1)
                     .get();
                     
                 if (usersSnapshot.empty) {
-                    throw new Error('Username not found.');
+                    throw { code: 'auth/user-not-found' };
                 }
                 
-                // Then verify the email exists in Firebase Auth
-                try {
-                    const methods = await auth.fetchSignInMethodsForEmail(email);
-                    if (methods.length === 0) {
-                        throw new Error('auth/user-not-found');
-                    }
-                } catch (error) {
-                    if (error.message === 'auth/user-not-found') {
-                        throw new Error('No account found with this username.');
-                    }
-                    throw error;
+                const userDoc = usersSnapshot.docs[0];
+                const userData = userDoc.data();
+                
+                // Check if user is active
+                if (userData.status !== 'active') {
+                    throw { code: 'auth/account-inactive', message: 'Your account is not active. Please contact support.' };
                 }
                 
-                // Store the password change request with the new password
+                // Store the password change request
                 await db.collection('passwordChangeRequests').add({
                     username: username,
-                    email: email,
-                    newPassword: newPassword, // Store the new password directly
+                    newPassword: newPassword, // In production, this should be hashed
                     status: 'pending',
-                    requestedAt: firebase.firestore.FieldValue.serverTimestamp()
+                    requestedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    requestedBy: username,
+                    requestType: 'password_reset'
                 });
                 
                 // Show success message
@@ -368,22 +361,28 @@
                 resetPasswordForm.reset();
                 
             } catch (error) {
-                console.error('Error updating password:', error);
-                let errorMessageText = 'Failed to update password. ';
+                console.error('Error processing password reset request:', error);
+                let errorMessageText = 'Failed to process your request. ';
                 
-                // Handle specific Firebase errors
-                if (error.code === 'auth/user-not-found') {
-                    errorMessageText = 'No account found with this username.';
-                } else if (error.code === 'auth/invalid-email') {
-                    errorMessageText = 'Invalid username format.';
-                } else if (error.code === 'auth/weak-password') {
-                    errorMessageText = 'Password is too weak. Please choose a stronger password.';
-                } else if (error.code === 'auth/requires-recent-login') {
-                    errorMessageText = 'Please sign in again to update your password.';
-                } else if (error.code === 'auth/too-many-requests') {
-                    errorMessageText = 'Too many attempts. Please try again later.';
-                } else {
-                    errorMessageText += 'Please try again or contact support for assistance.';
+                // Handle specific error cases
+                switch(error.code) {
+                    case 'auth/user-not-found':
+                        errorMessageText = 'No account found with this username.';
+                        break;
+                    case 'auth/account-inactive':
+                        errorMessageText = error.message || 'Your account is not active. Please contact support.';
+                        break;
+                    case 'permission-denied':
+                        errorMessageText = 'You do not have permission to perform this action.';
+                        break;
+                    case 'auth/too-many-requests':
+                        errorMessageText = 'Too many attempts. Please try again later.';
+                        break;
+                    case 'auth/network-request-failed':
+                        errorMessageText = 'Network error. Please check your connection and try again.';
+                        break;
+                    default:
+                        errorMessageText = 'An error occurred. Please try again or contact support.';
                 }
                 
                 showMessage(errorMessage, errorMessageText);
