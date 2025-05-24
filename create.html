@@ -40,12 +40,12 @@
             padding: 20px;
         }
 
-        .container {
+        .login-container {
             background: rgba(255, 255, 255, 0.95);
             border-radius: 16px;
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
             width: 100%;
-            max-width: 500px;
+            max-width: 420px;
             padding: 40px;
             text-align: center;
             border: 1px solid rgba(0, 0, 0, 0.05);
@@ -59,7 +59,7 @@
 
         h1 {
             color: var(--primary-color);
-            margin-bottom: 20px;
+            margin-bottom: 30px;
             font-size: 24px;
             font-weight: 700;
         }
@@ -105,7 +105,13 @@
             cursor: pointer;
             width: 100%;
             transition: all 0.3s ease;
-            margin-top: 10px;
+            margin: 10px 0;
+            text-align: center;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
         }
 
         .btn:hover {
@@ -113,37 +119,75 @@
             box-shadow: 0 6px 16px rgba(97, 0, 0, 0.2);
             background: linear-gradient(135deg, #4d0000, #6a0808);
         }
-
+        
         .btn-outline {
             background: transparent;
             border: 2px solid var(--primary-color);
             color: var(--primary-color);
+            transition: all 0.3s ease;
         }
-
+        
         .btn-outline:hover {
             background: var(--primary-color);
             color: white;
         }
-
-        .message {
-            padding: 12px 16px;
-            border-radius: 8px;
-            margin-bottom: 20px;
+        
+        .forgot-password {
+            margin: 15px 0;
+            text-align: center;
+        }
+        
+        .forgot-password a {
+            color: var(--primary-color);
+            text-decoration: none;
             font-size: 14px;
-            text-align: left;
-            display: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            transition: color 0.2s ease;
+        }
+        
+        .forgot-password a:hover {
+            color: var(--secondary-color);
+            text-decoration: underline;
+        }
+        
+        .footer {
+            margin-top: 30px;
+            color: #6b7280;
+            font-size: 13px;
+            text-align: center;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+        }
+        
+        .divider {
+            display: flex;
+            align-items: center;
+            margin: 20px 0;
+            color: #6b7280;
+            font-size: 14px;
+        }
+        
+        .divider::before,
+        .divider::after {
+            content: "";
+            flex: 1;
+            height: 1px;
+            background-color: #e1e4e8;
+            margin: 0 10px;
         }
 
         .error-message {
+            color: var(--error-color);
             background-color: #fef2f2;
             border: 1px solid #fecaca;
-            color: var(--error-color);
-        }
-
-        .success-message {
-            background-color: #f0fdf4;
-            border: 1px solid #bbf7d0;
-            color: var(--success-color);
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+            font-size: 14px;
+            text-align: left;
         }
 
         .spinner {
@@ -157,30 +201,19 @@
             margin-right: 8px;
             vertical-align: middle;
         }
-
-        .btn-outline .spinner {
-            border-top-color: var(--primary-color);
-        }
         
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
-
+        
         .footer {
             margin-top: 30px;
             color: #6b7280;
             font-size: 14px;
         }
 
-        .password-requirements {
-            font-size: 12px;
-            color: #6b7280;
-            margin-top: 5px;
-            text-align: left;
-        }
-
         @media (max-width: 480px) {
-            .container {
+            .login-container {
                 padding: 30px 20px;
             }
             
@@ -194,22 +227,26 @@
 <body>
     <div class="container">
         <img src="https://media.assettype.com/sunstar/2025-02-04/7x1wu7dq/DHVSU.jpg" alt="DHVSU Logo" class="logo">
-        <h1>Create Account</h1>
-        
-        <div id="errorMessage" class="message error-message"></div>
-        <div id="successMessage" class="message success-message"></div>
+        <h1>Create Account with Email</h1>
         
         <form id="createAccountForm">
+            <div id="errorMessage" class="error-message"></div>
+            
             <div class="form-group">
                 <label for="username">Username</label>
                 <input type="text" id="username" class="form-control" placeholder="Choose a username" required>
-                <div class="password-requirements">Only letters, numbers, and underscores allowed</div>
+                <div class="password-requirements">This will be your login (e.g., jdelacruz@gmail.com)</div>
+            </div>
+            
+            <div class="form-group">
+                <label for="email">Email Address</label>
+                <input type="email" id="email" class="form-control" placeholder="Enter your email address" required>
+                <div class="password-requirements">For account verification and recovery</div>
             </div>
             
             <div class="form-group">
                 <label for="password">Password</label>
-                <input type="password" id="password" class="form-control" placeholder="Create a password" required minlength="6">
-                <div class="password-requirements">At least 6 characters long</div>
+                <input type="password" id="password" class="form-control" placeholder="Enter your password" required>
             </div>
             
             <div class="form-group">
@@ -217,11 +254,15 @@
                 <input type="password" id="confirmPassword" class="form-control" placeholder="Confirm your password" required>
             </div>
             
-            <button type="submit" class="btn" id="createAccountBtn">Create Account</button>
+            <button type="submit" class="btn" id="createAccountBtn">
+                <i class="fas fa-user-plus"></i> Create Account
+            </button>
             
-            <p style="margin-top: 20px; text-align: center;">
-                Already have an account? <a href="login.html" style="color: var(--primary-color); font-weight: 500;">Sign in</a>
-            </p>
+            <div class="divider">OR</div>
+            
+            <a href="login.html" class="btn btn-outline">
+                <i class="fas fa-sign-in-alt"></i> Sign In
+            </a>
         </form>
         
         <div class="footer">
@@ -249,6 +290,7 @@
         // DOM Elements
         const createAccountForm = document.getElementById('createAccountForm');
         const usernameInput = document.getElementById('username');
+        const emailInput = document.getElementById('email');
         const passwordInput = document.getElementById('password');
         const confirmPasswordInput = document.getElementById('confirmPassword');
         const createAccountBtn = document.getElementById('createAccountBtn');
@@ -260,26 +302,17 @@
             return /^[a-zA-Z0-9_]+$/.test(username);
         }
 
-        // Show message helper function
-        function showMessage(element, message, isError = true) {
-            element.textContent = message;
-            element.style.display = 'block';
-            
-            // Hide the other message
-            const otherMessage = isError ? successMessage : errorMessage;
-            otherMessage.style.display = 'none';
-            
-            // Auto-hide after 5 seconds
-            setTimeout(() => {
-                element.style.display = 'none';
-            }, 5000);
+        // Email validation
+        function isValidEmail(email) {
+            return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
         }
 
         // Handle form submission
-        createAccountForm.addEventListener('submit', async function(e) {
+        createAccountForm.addEventListener('submit', function(e) {
             e.preventDefault();
             
             const username = usernameInput.value.trim();
+            const email = emailInput.value.trim();
             const password = passwordInput.value;
             const confirmPassword = confirmPasswordInput.value;
             
@@ -293,72 +326,97 @@
                 return;
             }
             
-            if (password.length < 6) {
-                showMessage(errorMessage, 'Password must be at least 6 characters long.');
+            if (!isValidEmail(email)) {
+                showMessage(errorMessage, 'Please enter a valid email address.');
+                return;
+            }
+            
+            if (password.length < 8) {
+                showMessage(errorMessage, 'Password must be at least 8 characters long. Please try again.');
                 return;
             }
             
             if (password !== confirmPassword) {
-                showMessage(errorMessage, 'Passwords do not match.');
+                showMessage(errorMessage, 'Passwords do not match. Please try again.');
                 return;
             }
             
-            // Set loading state
+            // Show loading state
             createAccountBtn.disabled = true;
-            createAccountBtn.innerHTML = '<span class="spinner"></span>Creating Account...';
+            createAccountBtn.innerHTML = '<span class="spinner">Creating account...</span>';
             
-            try {
-                // Create user with email and password
-                // We'll use username@dhvsu.edu.ph as the email
-                const email = `${username}@dhvsu.edu.ph`;
-                
-                // Create user in Firebase Authentication
-                const userCredential = await auth.createUserWithEmailAndPassword(email, password);
-                const user = userCredential.user;
-                
-                // Save additional user data to Firestore
-                await db.collection('users').doc(user.uid).set({
-                    username: username,
-                    email: email,
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                    lastLogin: firebase.firestore.FieldValue.serverTimestamp()
+            // Create account with username as email
+            const authEmail = `${username}@gmail.com`;
+            auth.createUserWithEmailAndPassword(authEmail, password)
+                .then((userCredential) => {
+                    // Signed in successfully
+                    const user = userCredential.user;
+                    
+                    // Save additional user data to Firestore
+                    db.collection('users').doc(user.uid).set({
+                        username: username,
+                        email: email,
+                        authEmail: authEmail,
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                        lastLogin: firebase.firestore.FieldValue.serverTimestamp()
+                    })
+                    .then(() => {
+                        // Account created successfully
+                        successMessage.textContent = 'Account created successfully!';
+                        successMessage.style.display = 'block';
+                        
+                        // Reset button state
+                        createAccountBtn.disabled = false;
+                        createAccountBtn.textContent = 'Create Account';
+                        
+                        // Hide success message after 5 seconds
+                        setTimeout(() => {
+                            successMessage.style.display = 'none';
+                        }, 5000);
+                    })
+                    .catch((error) => {
+                        // Handle errors
+                        let errorMessageText = 'Error creating account. Please try again.';
+                        switch (error.code) {
+                            case 'auth/email-already-in-use':
+                                errorMessageText = 'This username is already taken. Please choose a different one.';
+                                break;
+                            case 'auth/invalid-email':
+                                errorMessageText = 'Invalid username format. Please use only letters, numbers, and underscores.';
+                                break;
+                        }
+                        
+                        showMessage(errorMessage, errorMessageText);
+                        
+                        // Reset button state
+                        createAccountBtn.disabled = false;
+                        createAccountBtn.textContent = 'Create Account';
+                    });
+                })
+                .catch((error) => {
+                    // Handle errors
+                    let errorMessage = 'Error creating account. Please try again.';
+                    if (error.code === 'auth/email-already-in-use') {
+                        errorMessage = 'Email address already in use. Please try again.';
+                    }
+                    
+                    errorMessage.textContent = errorMessage;
+                    errorMessage.style.display = 'block';
+                    
+                    // Reset button state
+                    createAccountBtn.disabled = false;
+                    createAccountBtn.textContent = 'Create Account';
                 });
-                
-                // Show success message
-                showMessage(successMessage, 'Account created successfully! Redirecting to login...', false);
-                
-                // Redirect to login page after a short delay
-                setTimeout(() => {
-                    window.location.href = 'login.html';
-                }, 2000);
-                
-            } catch (error) {
-                console.error('Error creating account:', error);
-                
-                let errorMessageText = 'An error occurred while creating your account. Please try again.';
-                
-                // Handle specific Firebase errors
-                switch (error.code) {
-                    case 'auth/email-already-in-use':
-                        errorMessageText = 'This username is already taken. Please choose another one.';
-                        break;
-                    case 'auth/invalid-email':
-                        errorMessageText = 'Invalid username format. Please use only letters, numbers, and underscores.';
-                        break;
-                    case 'auth/weak-password':
-                        errorMessageText = 'Password is too weak. Please choose a stronger password.';
-                        break;
-                    case 'auth/operation-not-allowed':
-                        errorMessageText = 'Account creation is currently disabled. Please contact support.';
-                        break;
-                }
-                
-                showMessage(errorMessage, errorMessageText);
-                
-                // Reset button state
-                createAccountBtn.disabled = false;
-                createAccountBtn.textContent = 'Create Account';
-            }
+        });
+        
+        // Auto-hide error message when user starts typing
+        emailInput.addEventListener('input', function() {
+            errorMessage.style.display = 'none';
+            document.getElementById('errorMessage').style.display = 'none';
+        });
+        
+        document.getElementById('password').addEventListener('input', function() {
+            document.getElementById('errorMessage').style.display = 'none';
         });
         
         // Check if user is already logged in
