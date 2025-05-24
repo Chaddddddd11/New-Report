@@ -373,12 +373,9 @@
             }
         });
         
-        // Admin access via logo click
+        // Simple admin access via logo click
         function setupAdminAccess() {
-            let clickCount = 0;
-            let clickTimer = null;
-            const ADMIN_CLICKS_NEEDED = 5;
-            const ADMIN_CLICK_TIMEOUT = 1000; // 1 second
+            console.log('Setting up admin access...');
             
             const adminLogo = document.getElementById('adminLogo');
             if (!adminLogo) {
@@ -386,48 +383,41 @@
                 return;
             }
             
-            // Remove any existing click handlers to prevent duplicates
-            const newLogo = adminLogo.cloneNode(true);
-            adminLogo.parentNode.replaceChild(newLogo, adminLogo);
+            console.log('Admin logo found, adding click handler...');
             
-            newLogo.addEventListener('click', function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                
-                clickCount++;
-                console.log(`Admin logo clicked ${clickCount} times`);
-                
-                // Clear any existing timer
-                if (clickTimer) {
-                    clearTimeout(clickTimer);
-                }
-                
-                // Set a new timer
-                clickTimer = setTimeout(() => {
-                    console.log('Resetting click counter');
-                    clickCount = 0; // Reset counter if time between clicks is too long
-                }, ADMIN_CLICK_TIMEOUT);
-                
-                // Check if we've reached the required number of clicks
-                if (clickCount >= ADMIN_CLICKS_NEEDED) {
-                    console.log('Admin access detected, redirecting to Admin.html');
-                    // Directly redirect to Admin.html
-                    window.location.href = 'Admin.html';
-                    clickCount = 0; // Reset counter after redirecting
-                }
-                
+            // Simple click handler - no timer, just log and redirect
+            adminLogo.onclick = function(e) {
+                console.log('Logo clicked!');
+                // For testing - redirect on single click
+                window.location.href = 'Admin.html';
                 return false;
-            });
+            };
             
-            // Add cursor style
-            newLogo.style.cursor = 'pointer';
+            // Alternative: Show a message when clicked (for debugging)
+            adminLogo.style.cursor = 'pointer';
+            adminLogo.title = 'Click to access admin panel';
         }
         
-        // Initialize admin access after the page loads
-        document.addEventListener('DOMContentLoaded', function() {
-            // Small delay to ensure all elements are loaded
-            setTimeout(setupAdminAccess, 100);
-        });
+        // Initialize when page loads
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', setupAdminAccess);
+        } else {
+            // If page is already loaded
+            setupAdminAccess();
+        }
+        
+        // Add a debug button for testing
+        const debugButton = document.createElement('button');
+        debugButton.textContent = 'Debug Admin Access';
+        debugButton.style.position = 'fixed';
+        debugButton.style.bottom = '10px';
+        debugButton.style.right = '10px';
+        debugButton.style.zIndex = '9999';
+        debugButton.onclick = function() {
+            console.log('Debug button clicked');
+            window.location.href = 'Admin.html';
+        };
+        document.body.appendChild(debugButton);
         
         // Check if user is admin (for admin redirection after login)
         async function checkIfAdmin(uid) {
