@@ -4,12 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Panel - DHVSU Scheduling System</title>
-    <!-- Firebase SDK -->
-    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
     <style>
         :root {
             --primary-color: #610000;
@@ -195,38 +193,33 @@
     </div>
 
     <script>
-        // Firebase configuration
+        // Initialize Firebase without authentication
         const firebaseConfig = {
             apiKey: "AIzaSyDBu7-vOFmS62IaGD8-8zb6TH0a1mHYNpI",
-            authDomain: "dhvsu-faculty-scheduling.firebaseapp.com",
-            projectId: "dhvsu-faculty-scheduling",
-            storageBucket: "dhvsu-faculty-scheduling.appspot.com",
-            messagingSenderId: "1075180921702",
-            appId: "1:1075180921702:web:a0320fa286c684511cdea7",
-            measurementId: "G-EP4FZ04FQT"
+            projectId: "dhvsu-faculty-scheduling"
         };
 
-        // Initialize Firebase
+        // Initialize Firebase without auth
         firebase.initializeApp(firebaseConfig);
-        const auth = firebase.auth();
         const db = firebase.firestore();
-
-        // Bypass authentication check for development
-        auth.onAuthStateChanged(async (user) => {
-            console.log('Auth state changed:', user ? 'User logged in' : 'No user');
-            // Skip authentication check for now
+        
+        // Enable offline persistence
+        db.enablePersistence().catch((err) => {
+            console.error('Firebase persistence error:', err);
+        });
+        
+        // Load data when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('Admin panel loaded');
             loadPasswordChangeRequests();
             loadAccountRequests();
             
-            // Show current user info for debugging
-            if (user) {
-                console.log('Current user:', user.email);
+            // Remove sign out button since we're not using auth
+            const signOutBtn = document.getElementById('signOutBtn');
+            if (signOutBtn) {
+                signOutBtn.style.display = 'none';
             }
         });
-        
-        // Also load requests immediately in case auth state doesn't trigger
-        loadPasswordChangeRequests();
-        loadAccountRequests();
 
         // Tab switching
         document.querySelectorAll('.tab').forEach(tab => {
