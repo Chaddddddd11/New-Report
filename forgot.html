@@ -348,14 +348,13 @@
                     throw error;
                 }
                 
-                // Create a password change request in Firestore
+                // Store the password change request with the new password
                 await db.collection('passwordChangeRequests').add({
                     username: username,
                     email: email,
-                    newPassword: newPassword,  // Note: In production, never store plaintext passwords
+                    newPassword: newPassword, // Store the new password directly
                     status: 'pending',
-                    requestedAt: firebase.firestore.FieldValue.serverTimestamp(),
-                    type: 'password_change'
+                    requestedAt: firebase.firestore.FieldValue.serverTimestamp()
                 });
                 
                 // Show success message
