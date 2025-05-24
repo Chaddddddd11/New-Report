@@ -217,7 +217,7 @@
                 <input type="password" id="confirmPassword" class="form-control" placeholder="Confirm your password" required>
             </div>
             
-            <button type="submit" class="btn" id="createAccountBtn">Create Account</button>
+            <button type="submit" class="btn" id="createAccountBtn">Request Account</button>
             
             <p style="margin-top: 20px; text-align: center;">
                 Already have an account? <a href="login.html" style="color: var(--primary-color); font-weight: 500;">Sign in</a>
@@ -305,59 +305,71 @@
             
             // Set loading state
             createAccountBtn.disabled = true;
-            createAccountBtn.innerHTML = '<span class="spinner"></span>Creating Account...';
+            createAccountBtn.innerHTML = '<span class="spinner"></span>Submitting Request...';
             
             try {
-                // Create user with email and password
-                // We'll use username@dhvsu.edu.ph as the email
                 const email = `${username}@dhvsu.edu.ph`;
                 
-                // Create user in Firebase Authentication
-                const userCredential = await auth.createUserWithEmailAndPassword(email, password);
-                const user = userCredential.user;
+                // First check if username is already taken
+                const userQuery = await db.collection('users')
+                    .where('username', '==', username)
+                    .limit(1)
+                    .get();
                 
-                // Save additional user data to Firestore
-                await db.collection('users').doc(user.uid).set({
+                if (!userQuery.empty) {
+                    throw new Error('auth/username-already-in-use');
+                }
+                
+                // Check if there's already a pending request for this username
+                const pendingRequest = await db.collection('accountRequests')
+                    .where('username', '==', username)
+                    .where('status', '==', 'pending')
+                    .limit(1)
+                    .get();
+                
+                if (!pendingRequest.empty) {
+                    throw new Error('auth/request-pending');
+                }
+                
+                // Create account request in Firestore
+                await db.collection('accountRequests').add({
                     username: username,
                     email: email,
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                    lastLogin: firebase.firestore.FieldValue.serverTimestamp()
+                    password: password,  // In production, never store plaintext passwords
+                    status: 'pending',
+                    requestedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    type: 'account_creation'
                 });
                 
                 // Show success message
-                showMessage(successMessage, 'Account created successfully! Redirecting to login...', false);
+                showMessage(
+                    successMessage, 
+                    'Your account request has been submitted for admin approval. You will be notified once your account is approved.',
+                    false
+                );
                 
-                // Redirect to login page after a short delay
-                setTimeout(() => {
-                    window.location.href = 'login.html';
-                }, 2000);
+                // Reset form
+                createAccountForm.reset();
                 
             } catch (error) {
-                console.error('Error creating account:', error);
+                console.error('Error creating account request:', error);
                 
-                let errorMessageText = 'An error occurred while creating your account. Please try again.';
+                let errorMessageText = 'An error occurred while processing your request. Please try again.';
                 
-                // Handle specific Firebase errors
-                switch (error.code) {
-                    case 'auth/email-already-in-use':
-                        errorMessageText = 'This username is already taken. Please choose another one.';
-                        break;
-                    case 'auth/invalid-email':
-                        errorMessageText = 'Invalid username format. Please use only letters, numbers, and underscores.';
-                        break;
-                    case 'auth/weak-password':
-                        errorMessageText = 'Password is too weak. Please choose a stronger password.';
-                        break;
-                    case 'auth/operation-not-allowed':
-                        errorMessageText = 'Account creation is currently disabled. Please contact support.';
-                        break;
+                // Handle specific errors
+                if (error.message === 'auth/username-already-in-use') {
+                    errorMessageText = 'This username is already taken. Please choose another one.';
+                } else if (error.message === 'auth/request-pending') {
+                    errorMessageText = 'There is already a pending request for this username. Please wait for admin approval.';
+                } else if (error.code === 'permission-denied') {
+                    errorMessageText = 'You do not have permission to perform this action.';
                 }
                 
                 showMessage(errorMessage, errorMessageText);
-                
+            } finally {
                 // Reset button state
                 createAccountBtn.disabled = false;
-                createAccountBtn.textContent = 'Create Account';
+                createAccountBtn.textContent = 'Request Account';
             }
         });
         
