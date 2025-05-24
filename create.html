@@ -432,24 +432,27 @@
         
         // Check if user is already logged in
         auth.onAuthStateChanged((user) => {
-            // Check for admin redirect after login
-            const urlParams = new URLSearchParams(window.location.search);
-            const redirect = urlParams.get('redirect');
-            
             if (user) {
-                if (redirect === 'admin') {
-                    // If user was trying to access admin panel
-                    checkIfAdmin(user.uid).then(isAdmin => {
-                        if (isAdmin) {
-                            window.location.href = 'Admin.html';
-                        } else {
-                            alert('You do not have admin access.');
-                            window.location.href = 'home.html';
-                        }
-                    });
-                } else {
-                    // Regular user, redirect to home
-                    window.location.href = 'home.html';
+                const urlParams = new URLSearchParams(window.location.search);
+                const action = urlParams.get('action');
+                const redirect = urlParams.get('redirect');
+                
+                // Only redirect if not on create account page intentionally
+                if (action !== 'create' && redirect !== 'create') {
+                    if (redirect === 'admin') {
+                        // If user was trying to access admin panel
+                        checkIfAdmin(user.uid).then(isAdmin => {
+                            if (isAdmin) {
+                                window.location.href = 'Admin.html';
+                            } else {
+                                alert('You do not have admin access.');
+                                window.location.href = 'home.html';
+                            }
+                        });
+                    } else {
+                        // Regular user, redirect to home
+                        window.location.href = 'home.html';
+                    }
                 }
             }
         });
