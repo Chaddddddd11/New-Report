@@ -576,16 +576,49 @@
                 // Handle account creation for approved account requests
                 if (action === 'approved' && collectionName === 'accountRequests') {
                     try {
-                        // Call a Cloud Function to create the user account
-                        const createUser = firebase.functions().httpsCallable('createUserAccount');
-                        await createUser({
+                        // First, check if user already exists
+                        const userCheck = await db.collection('users')
+                            .where('username', '==', request.username)
+                            .limit(1)
+                            .get();
+                        
+                        if (!userCheck.empty) {
+                            throw new Error('User already exists');
+                        }
+                        
+                        // Create user document in Firestore
+                        const userData = {
                             username: request.username,
-                            password: request.password,
-                            // Add any additional user data from the request
-                            role: request.role || 'user',
-                            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                            fullName: request.fullName || '',
+                            studentId: request.studentId || '',
+                            department: request.department || '',
+                            role: request.role || 'student',
+                            status: 'active',
+                            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                            lastLogin: null,
+                            accountCreatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                        };
+                        
+                        // Add year level if it's a student
+                        if (request.role === 'student' && request.yearLevel) {
+                            userData.yearLevel = request.yearLevel;
+                        }
+                        
+                        // Create the user document
+                        await db.collection('users').doc(request.username).set(userData);
+                        
+                        // IMPORTANT: In a production environment, you should use a Cloud Function
+                        // to handle password hashing and user creation in Firebase Auth
+                        console.log(`User document created for ${request.username}`);
+                        
+                        // Log the account creation
+                        await db.collection('auditLogs').add({
+                            type: 'account_created',
+                            username: request.username,
+                            createdBy: auth.currentUser?.uid || 'admin',
+                            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                            requestId: docId
                         });
-                        console.log(`User account created for ${request.username}`);
                         
                     } catch (error) {
                         console.error('Error creating user account:', error);
