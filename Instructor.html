@@ -297,20 +297,19 @@
 
         // Your web app's Firebase configuration
         const firebaseConfig = {
-            // Your Firebase config here
-            apiKey: "YOUR_API_KEY",
-            authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-            projectId: "YOUR_PROJECT_ID",
-            storageBucket: "YOUR_PROJECT_ID.appspot.com",
-            messagingSenderId: "YOUR_SENDER_ID",
-            appId: "YOUR_APP_ID"
+            apiKey: "AIzaSyDeqxzp_-kKjM3hPr6CLGfTn38e4swSKbo",
+            authDomain: "room-management-system-8e899.firebaseapp.com",
+            projectId: "room-management-system-8e899",
+            storageBucket: "room-management-system-8e899.appspot.com",
+            messagingSenderId: "667821278853",
+            appId: "1:667821278853:web:a3a80c985073772670cbec"
         };
 
         // Initialize Firebase
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
-        const instructorsCollectionRef = collection(db, "Instructors");
-        const roomsCollectionRef = collection(db, "Rooms");
+        const instructorsCollectionRef = collection(db, 'Instructors');
+        const roomsCollectionRef = collection(db, 'rooms'); // Note: Using 'rooms' (lowercase) to match the original
 
         // DOM Elements
         const nameInput = document.getElementById('name');
