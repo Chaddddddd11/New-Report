@@ -181,8 +181,17 @@
     }
 
     .schedule-entry .room {
-      font-size: 0.8em;
-      opacity: 0.9;
+      color: #4a4a4a;
+      font-size: 0.9em;
+      line-height: 1.4;
+    }
+
+    .room-capacity {
+      color: #666;
+      font-size: 0.85em;
+      font-style: italic;
+      display: block;
+      margin-top: 2px;
     }
 
     .filters {
@@ -693,10 +702,10 @@
           
           // If instructor found, fill the cell with their info
           if (instructor) {
-            // Format room display with capacity in parentheses on the same line
+            // Format room display with capacity on a separate line
             const roomName = instructor.roomName || 'TBA';
             const roomDisplay = instructor.roomCapacity 
-              ? `${roomName} (Capacity: ${instructor.roomCapacity})`
+              ? `${roomName}<br><span class="room-capacity">Capacity: ${instructor.roomCapacity}</span>`
               : roomName;
               
             cell.innerHTML = `
