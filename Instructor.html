@@ -447,9 +447,13 @@
 
         // Global variables
         let allRooms = [];
+        let isUpdateMode = false;
         let currentInstructorId = null;
-        let isEditMode = false;
+        let originalRoomId = null;
         let originalInstructorData = null;
+        
+        // Initialize debounce timer as a property of the function
+        updateRoomSelectState.debounceTimer = null;
         
         // Student capacity map (course -> year -> section -> capacity)
         const studentCapacityMap = {
@@ -483,9 +487,6 @@
             }
         };
 
-        // State
-        let isUpdateMode = false;
-
         // Show loading state
         function showLoading(isLoading) {
             const spinner = document.getElementById('submitSpinner');
@@ -510,62 +511,122 @@
                 const docRef = doc(db, "Instructors", instructorId);
                 const docSnap = await getDoc(docRef);
                 
-                if (docSnap.exists()) {
-                    const data = docSnap.data();
-                    
-                    // Set form values
-                    if (nameInput) nameInput.value = data.name || '';
-                    if (subjectInput) subjectInput.value = data.subject || '';
-                    if (courseSelect) courseSelect.value = data.course || '';
-                    if (yearSelect) yearSelect.value = data.year || '';
-                    if (sectionSelect) sectionSelect.value = data.section || '';
-                    if (daySelect) daySelect.value = data.day || '';
-                    if (timeSelect) timeSelect.value = data.time || '';
-                    
-                    // Set color
-                    if (scheduleColorInput) {
-                        scheduleColorInput.value = data.scheduleColor || '#800000';
-                        if (colorPreview) {
-                            colorPreview.style.backgroundColor = scheduleColorInput.value;
-                        }
-                    }
-                    
-                    // Update button text
-                    if (submitBtn) {
-                        submitBtn.textContent = 'Update Instructor';
-                    }
-                    
-                    // Show delete button
-                    const deleteBtn = document.getElementById('deleteBtn');
-                    if (deleteBtn) {
-                        deleteBtn.style.display = 'inline-block';
-                    }
-                    
-                    // Load rooms and select the correct one
-                    await loadRooms();
-                    
-                    // Set room after a small delay to ensure dropdown is populated
-                    setTimeout(() => {
-                        if (roomSelect && data.roomId) {
-                            // Find and select the room
-                            for (let i = 0; i < roomSelect.options.length; i++) {
-                                if (roomSelect.options[i].value === data.roomId) {
-                                    roomSelect.selectedIndex = i;
-                                    break;
-                                }
-                            }
-                        }
-                    }, 500);
-                    
-                } else {
-                    console.error('No such document!');
-                    showError('Instructor not found');
+                if (!docSnap.exists()) {
+                    throw new Error('Instructor not found');
                 }
+
+                const data = docSnap.data();
+                
+                // Store original room ID for conflict checking
+                originalRoomId = data.roomId || null;
+                
+                // Set form values using helper function
+                setFormValues(data);
+                
+                // Update UI for edit mode
+                updateUIForEditMode();
+                
+                // Load rooms and handle room selection
+                await handleRoomSelection(data);
+                
             } catch (error) {
                 console.error('Error loading instructor:', error);
-                showError('Failed to load instructor data');
+                showError('Failed to load instructor data: ' + (error.message || 'Unknown error'));
             } finally {
                 showLoading(false);
+            }
+        }
+
+        // Helper function to set form values
+        function setFormValues(data) {
+            const fieldMappings = {
+                'name': nameInput,
+                'subject': subjectInput,
+                'course': courseSelect,
+                'year': yearSelect,
+                'section': sectionSelect,
+                'day': daySelect,
+                'time': timeSelect
+            };
+
+            // Set all form fields
+            Object.entries(fieldMappings).forEach(([field, element]) => {
+                if (element && data[field] !== undefined) {
+                    element.value = data[field] || '';
+                }
+            });
+
+            // Handle color picker
+            if (scheduleColorInput) {
+                scheduleColorInput.value = data.scheduleColor || '#800000';
+                if (colorPreview) {
+                    colorPreview.style.backgroundColor = scheduleColorInput.value;
+                }
+            }
+        }
+
+        // Update UI for edit mode
+        function updateUIForEditMode() {
+            // Update button text
+            if (submitBtn) {
+                submitBtn.textContent = 'Update Instructor';
+                submitBtn.disabled = false;
+            }
+            
+            // Show delete button
+            const deleteBtn = document.getElementById('deleteBtn');
+            if (deleteBtn) {
+                deleteBtn.style.display = 'inline-block';
+            }
+        }
+
+        // Handle room selection
+        async function handleRoomSelection(data) {
+            if (!roomSelect) return;
+            
+            // Show loading state
+            const originalRoomText = roomSelect.innerHTML;
+            roomSelect.innerHTML = '<option value="">Loading rooms...</option>';
+            
+            try {
+                // Load rooms
+                await loadRooms();
+                
+                // After rooms are loaded, select the original room
+                if (data.roomId) {
+                    // Small delay to ensure DOM is updated
+                    setTimeout(() => {
+                        selectRoom(data.roomId, data.roomName);
+                    }, 100);
+                }
+            } catch (error) {
+                console.error('Error handling room selection:', error);
+                roomSelect.innerHTML = originalRoomText;
+                showError('Failed to load room information');
+            }
+        }
+
+        // Helper function to select a room
+        function selectRoom(roomId, roomName) {
+            if (!roomSelect) return;
+            
+            // First try to find the room in the dropdown
+            for (let i = 0; i < roomSelect.options.length; i++) {
+                if (roomSelect.options[i].value === roomId) {
+                    roomSelect.selectedIndex = i;
+                    return;
+                }
+            }
+            
+            // If room not found, add it
+            if (roomId) {
+                const option = new Option(
+                    `${roomName || roomId} (Current Assignment)`, 
+                    roomId
+                );
+                option.dataset.original = 'true';
+                roomSelect.add(option);
+                roomSelect.value = roomId;
             }
         }
 
@@ -711,12 +772,14 @@
                 const yearSelected = yearSelect?.value;
                 const sectionSelected = sectionSelect?.value;
                 
-                const allFieldsSelected = daySelected && timeSelected && courseSelected && yearSelected && sectionSelected;
+                const allFieldsSelected = daySelected && timeSelected && courseSelected && 
+                                      yearSelected && sectionSelected;
                 
                 if (!allFieldsSelected) {
                     // If we have a current room but not all fields are selected, keep it
                     if (currentRoomId) {
-                        roomSelect.innerHTML = `<option value="${currentRoomId}">${currentRoomId} (Current Assignment)</option>`;
+                        roomSelect.innerHTML = '';
+                        addRoomOption(currentRoomId, `${getRoomName(currentRoomId)} (Current Assignment)`, true);
                         roomSelect.value = currentRoomId;
                     } else {
                         roomSelect.innerHTML = '<option value="">Please fill all fields first</option>';
@@ -727,53 +790,185 @@
                 // Proceed with room availability check
                 await updateAvailableRooms();
                 
-                // If we had a current room and it's not in the dropdown, add it back
-                if (currentRoomId && !Array.from(roomSelect.options).some(opt => opt.value === currentRoomId)) {
-                    const option = new Option(`${currentRoomId} (Current Assignment)`, currentRoomId);
-                    option.setAttribute('data-preserved', 'true');
-                    roomSelect.add(option);
-                    roomSelect.value = currentRoomId;
+                // Ensure original room is always in the list when editing
+                if (isUpdateMode && originalRoomId && 
+                    !Array.from(roomSelect.options).some(opt => opt.value === originalRoomId)) {
+                    addRoomOption(
+                        originalRoomId, 
+                        `${getRoomName(originalRoomId)} (Currently Assigned)`,
+                        true
+                    );
                 }
                 
             } catch (error) {
                 console.error('Error in updateRoomSelectState:', error);
-                roomSelect.innerHTML = currentRoomId ? 
-                    `<option value="${currentRoomId}">${currentRoomId} (Error loading rooms)</option>` :
-                    '<option value="">Error checking availability</option>';
+                showError('Error checking room availability');
+                
+                // Restore current selection if available
+                if (currentRoomId) {
+                    roomSelect.innerHTML = '';
+                    addRoomOption(currentRoomId, `${getRoomName(currentRoomId)} (Current)`);
+                    roomSelect.value = currentRoomId;
+                }
             } finally {
                 roomSelect.disabled = false;
-                
-                // If we're in edit mode and have a current room, ensure it's selected
-                if (isUpdateMode && currentRoomId) {
-                    const option = Array.from(roomSelect.options).find(opt => opt.value === currentRoomId);
-                    if (option) {
-                        roomSelect.value = currentRoomId;
-                    }
+            }
+        };
+        
+        // Helper function to add a room option
+        function addRoomOption(value, text, isOriginal = false) {
+            if (!roomSelect) return null;
+            
+            const option = new Option(text, value);
+            if (isOriginal) {
+                option.dataset.original = 'true';
+                option.style.fontWeight = 'bold';
+            }
+            roomSelect.add(option);
+            return option;
+        }
+        
+        // Helper function to get room name by ID
+        function getRoomName(roomId) {
+            if (!roomSelect) return roomId;
+            for (let i = 0; i < roomSelect.options.length; i++) {
+                if (roomSelect.options[i].value === roomId) {
+                    return roomSelect.options[i].text.split(' (')[0] || roomId;
                 }
             }
+            return roomId;
         }
 
+        /**
+         * Updates the list of available rooms based on selected criteria
+         * @returns {Promise<void>}
+         */
         async function updateAvailableRooms() {
-            const daySelected = daySelect?.value;
-            const timeSelected = timeSelect?.value;
-            const courseSelected = courseSelect?.value;
-            const yearSelected = yearSelect?.value;
-            const sectionSelected = sectionSelect?.value;
+            const roomSelect = document.getElementById('room');
+            if (!roomSelect) return;
             
-            const querySnapshot = await getDocs(query(
-                roomsCollectionRef,
-                where("availableDays", "array-contains", daySelected),
-                where("availableTimes", "array-contains", timeSelected)
-            ));
+            // Show loading state
+            const previousState = roomSelect.innerHTML;
+            roomSelect.innerHTML = '<option value="">Loading rooms...</option>';
+            roomSelect.disabled = true;
             
-            roomSelect.innerHTML = '<option value="">Select a room</option>';
-            querySnapshot.forEach((doc) => {
-                const room = doc.data();
-                const option = document.createElement('option');
-                option.value = doc.id;
-                option.textContent = `${room.name} (Capacity: ${room.capacity})`;
-                roomSelect.appendChild(option);
-            });
+            try {
+                const daySelected = daySelect?.value;
+                const timeSelected = timeSelect?.value;
+                const courseSelected = courseSelect?.value;
+                const yearSelected = yearSelect?.value;
+                const sectionSelected = sectionSelect?.value;
+                
+                // Validate all required fields are selected
+                if (!daySelected || !timeSelected || !courseSelected || !yearSelected || !sectionSelected) {
+                    roomSelect.innerHTML = '<option value="">Please fill all fields first</option>';
+                    return;
+                }
+                
+                // Get current enrollment count for the course, year, and section
+                const enrollmentQuery = query(
+                    instructorsCollectionRef,
+                    where("course", "==", courseSelected),
+                    where("year", "==", yearSelected),
+                    where("section", "==", sectionSelected)
+                );
+                
+                let currentEnrollment = 0;
+                try {
+                    const enrollmentSnapshot = await getCountFromServer(enrollmentQuery);
+                    currentEnrollment = enrollmentSnapshot.data().count;
+                } catch (error) {
+                    console.error('Error getting enrollment count:', error);
+                    throw new Error('Failed to check current enrollment');
+                }
+                
+                // Get available rooms that can accommodate the class
+                const roomsQuery = query(
+                    roomsCollectionRef,
+                    where("availableDays", "array-contains", daySelected),
+                    where("availableTimes", "array-contains", timeSelected),
+                    where("capacity", ">=", currentEnrollment + 1)
+                );
+                
+                const querySnapshot = await getDocs(roomsQuery);
+                
+                // Clear existing options
+                roomSelect.innerHTML = '';
+                
+                // Add default option
+                const defaultOption = new Option(
+                    querySnapshot.empty ? 'No available rooms' : 'Select a room',
+                    ''
+                );
+                roomSelect.add(defaultOption);
+                
+                // Add available rooms if any
+                if (!querySnapshot.empty) {
+                    querySnapshot.forEach((doc) => {
+                        const room = doc.data();
+                        const availableSlots = room.capacity - currentEnrollment;
+                        const option = new Option(
+                            `${room.name} (Capacity: ${room.capacity}, Available: ${availableSlots})`,
+                            doc.id
+                        );
+                        
+                        // Mark if this is the original room in edit mode
+                        if (isUpdateMode && doc.id === originalRoomId) {
+                            option.dataset.original = 'true';
+                            option.style.fontWeight = 'bold';
+                        }
+                        
+                        roomSelect.add(option);
+                    });
+                    
+                    // If in edit mode and original room wasn't added, add it
+                    if (isUpdateMode && originalRoomId && 
+                        !Array.from(roomSelect.options).some(opt => opt.value === originalRoomId)) {
+                        await ensureOriginalRoomInList(roomSelect, originalRoomId);
+                    }
+                }
+                
+            } catch (error) {
+                console.error('Error updating available rooms:', error);
+                roomSelect.innerHTML = previousState;
+                showError(error.message || 'Failed to load room availability. Please try again.');
+            } finally {
+                roomSelect.disabled = false;
+            }
+        }
+        
+        /**
+         * Ensures the original room is in the room select dropdown
+         * @param {HTMLSelectElement} roomSelect - The room select element
+         * @param {string} roomId - The original room ID
+         * @returns {Promise<void>}
+         */
+        async function ensureOriginalRoomInList(roomSelect, roomId) {
+            try {
+                // Try to get the room details
+                const roomDoc = await getDoc(doc(roomsCollectionRef, roomId));
+                if (roomDoc.exists()) {
+                    const room = roomDoc.data();
+                    const option = new Option(
+                        `${room.name} (Currently assigned - Capacity: ${room.capacity})`,
+                        roomId
+                    );
+                    option.dataset.original = 'true';
+                    option.style.fontWeight = 'bold';
+                    roomSelect.add(option);
+                    roomSelect.value = roomId;
+                }
+            } catch (error) {
+                console.error('Error ensuring original room in list:', error);
+                // If we can't get room details, just add the ID
+                const option = new Option(
+                    `Room ${roomId} (Currently assigned)`,
+                    roomId
+                );
+                option.dataset.original = 'true';
+                roomSelect.add(option);
+                roomSelect.value = roomId;
+            }
         }
 
         // Initialize event listeners
@@ -785,40 +980,72 @@
                 if (control) {
                     // Remove any existing listeners to prevent duplicates
                     control.removeEventListener('change', updateRoomSelectState);
-                    // Add new listener
-                    control.addEventListener('change', updateRoomSelectState);
+                    // Add new listener with debounce to prevent rapid firing
+                    control.addEventListener('change', () => {
+                        // Debounce the room update to prevent excessive queries
+                        clearTimeout(updateRoomSelectState.debounceTimer);
+                        updateRoomSelectState.debounceTimer = setTimeout(updateRoomSelectState, 300);
+                    });
                 }
             });
             
             // Add event listener for room select
             if (roomSelect) {
-                roomSelect.removeEventListener('change', updateRoomSelectState);
-                roomSelect.addEventListener('change', updateRoomSelectState);
+                roomSelect.removeEventListener('change', handleRoomChange);
+                roomSelect.addEventListener('change', handleRoomChange);
+            }
+            
+            // Initialize delete button if in edit mode
+            if (isUpdateMode) {
+                initializeDeleteButton();
             }
         }
+        
+        // Handle room selection change
+        function handleRoomChange() {
+            const roomSelect = document.getElementById('room');
+            if (!roomSelect) return;
+            
+            const selectedOption = roomSelect.options[roomSelect.selectedIndex];
+            if (selectedOption && selectedOption.dataset.original) {
+                selectedOption.style.fontWeight = 'bold';
+            }
+        }
+        
+        // Debounce timer for room selection updates
+        updateRoomSelectState.debounceTimer = null;
         
         // Initialize delete button event listener
         function initializeDeleteButton() {
             const deleteBtn = document.getElementById('deleteBtn');
-            if (deleteBtn) {
-                deleteBtn.addEventListener('click', async (e) => {
-                    e.preventDefault();
-                    if (confirm('Are you sure you want to delete this instructor?')) {
-                        try {
-                            showLoading(true);
-                            await deleteDoc(doc(db, "Instructors", currentInstructorId));
-                            showSuccess('Instructor deleted successfully!');
-                            setTimeout(() => {
-                                window.location.href = 'InstructorList.html';
-                            }, 1500);
-                        } catch (error) {
-                            console.error('Error deleting instructor:', error);
-                            showError('Failed to delete instructor. Please try again.');
-                            showLoading(false);
-                        }
+            if (!deleteBtn) return;
+            
+            // Remove any existing listeners
+            const newDeleteBtn = deleteBtn.cloneNode(true);
+            deleteBtn.parentNode.replaceChild(newDeleteBtn, deleteBtn);
+            
+            newDeleteBtn.addEventListener('click', async (e) => {
+                e.preventDefault();
+                if (confirm('Are you sure you want to delete this instructor? This action cannot be undone.')) {
+                    try {
+                        showLoading(true);
+                        // First, remove any room assignments
+                        const instructorRef = doc(db, "Instructors", currentInstructorId);
+                        await deleteDoc(instructorRef);
+                        
+                        showSuccess('Instructor deleted successfully!');
+                        setTimeout(() => {
+                            window.location.href = 'InstructorList.html';
+                        }, 1500);
+                    } catch (error) {
+                        console.error('Error deleting instructor:', error);
+                        showError('Failed to delete instructor. Please try again.');
+                        showLoading(false);
+                    } finally {
+                        showLoading(false);
                     }
-                });
-            }
+                }
+            });
         }
         
         // Initial state setup
