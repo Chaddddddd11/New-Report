@@ -155,7 +155,29 @@
             align-items: center;
             margin-bottom: 20px;
             flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .search-container {
+            display: flex;
             gap: 10px;
+            flex-grow: 1;
+            max-width: 500px;
+        }
+
+        .search-container input[type="text"] {
+            flex-grow: 1;
+            padding: 10px 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+        }
+
+        .search-container input[type="text"]:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 2px rgba(182, 8, 8, 0.2);
         }
 
         .btn {
@@ -280,6 +302,10 @@
         </div>
 
         <div class="controls">
+            <div class="search-container">
+                <input type="text" id="searchInput" placeholder="Search instructors...">
+                <button id="searchBtn" class="btn">Search</button>
+            </div>
             <a href="index.html" class="btn">← Back to Main Menu</a>
             <a href="Instructor.html" class="btn">+ Register New Instructor</a>
         </div>
@@ -437,6 +463,17 @@
                 });
         }
         
+        // Filter instructors based on search term
+        function filterInstructors(searchTerm) {
+            const rows = document.querySelectorAll('tbody tr');
+            const searchLower = searchTerm.toLowerCase();
+            
+            rows.forEach(row => {
+                const text = row.textContent.toLowerCase();
+                row.style.display = text.includes(searchLower) ? '' : 'none';
+            });
+        }
+
         // Initialize the page
         document.addEventListener('DOMContentLoaded', () => {
             // Fetch instructors when the page loads
@@ -444,6 +481,22 @@
             
             // Set up real-time updates
             setupRealtimeListener();
+
+            // Set up search functionality
+            const searchInput = document.getElementById('searchInput');
+            const searchBtn = document.getElementById('searchBtn');
+            
+            // Search on button click
+            searchBtn.addEventListener('click', () => {
+                filterInstructors(searchInput.value);
+            });
+
+            // Search on Enter key
+            searchInput.addEventListener('keyup', (e) => {
+                if (e.key === 'Enter') {
+                    filterInstructors(searchInput.value);
+                }
+            });
         });
     </script>
 </body>
