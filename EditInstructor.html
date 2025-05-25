@@ -278,8 +278,8 @@
                 </select>
             </div>
             <div class="form-group required">
-                <label for="time">Class Time*</label>
-                <select id="time" name="time" required>
+                <label for="classTime">Class Time*</label>
+                <select id="classTime" name="time" required>
                     <option value="">Select Class Time</option>
                     <option value="07:00-08:00">07:00-08:00</option>
                     <option value="08:00-09:00">08:00-09:00</option>
@@ -299,7 +299,10 @@
                     <option value="">Select course, year, section, day and time</option>
                 </select>
             </div>
-            <div id="errorMessage" class="error-message"></div>
+            
+            <!-- Error message container -->
+            <div id="errorMessage" class="error-message" style="display: none;"></div>
+            
             <div class="form-actions">
                 <button type="button" id="updateBtn" class="btn">Update Instructor</button>
                 <button type="button" id="deleteBtn" class="btn btn-delete">Delete Instructor</button>
@@ -356,11 +359,11 @@
         const yearSelect = document.getElementById('year');
         const sectionSelect = document.getElementById('section');
         const daySelect = document.getElementById('day');
-        const timeSelect = document.getElementById('time');
+        const timeSelect = document.getElementById('classTime'); // Changed from 'time' to 'classTime'
         const roomSelect = document.getElementById('room');
         const updateBtn = document.getElementById('updateBtn');
         const deleteBtn = document.getElementById('deleteBtn');
-        const errorMessage = document.getElementById('errorMessage');
+        const errorMessage = document.querySelector('.error-message'); // Changed to use class selector
         const studentCapacitySpan = document.getElementById('studentCapacity');
         const studentCapacityContainer = document.getElementById('studentCapacityContainer');
         
@@ -425,24 +428,32 @@
 
         // Load instructor data
         async function loadInstructorData() {
-            if (!instructorId) return;
+            console.log('Starting to load instructor data...');
+            if (!instructorId) {
+                console.error('No instructor ID provided');
+                return;
+            }
 
             try {
+                console.log('Fetching instructor document with ID:', instructorId);
                 const docRef = doc(db, 'Instructors', instructorId);
                 const docSnap = await getDoc(docRef);
                 
                 if (docSnap.exists()) {
                     const data = docSnap.data();
+                    console.log('Retrieved instructor data:', data);
                     currentInstructor = data;
                     
                     // Populate form fields
-                    nameInput.value = data.name || '';
-                    subjectInput.value = data.subject || '';
-                    courseSelect.value = data.course || '';
-                    yearSelect.value = data.year || '';
-                    sectionSelect.value = data.section || '';
-                    daySelect.value = data.day || '';
-                    timeSelect.value = data.time || '';
+                    if (nameInput) nameInput.value = data.name || '';
+                    if (subjectInput) subjectInput.value = data.subject || '';
+                    if (courseSelect) courseSelect.value = data.course || '';
+                    if (yearSelect) yearSelect.value = data.year || '';
+                    if (sectionSelect) sectionSelect.value = data.section || '';
+                    if (daySelect) daySelect.value = data.day || '';
+                    if (timeSelect) timeSelect.value = data.time || '';
+                    
+                    console.log('Form fields populated with data');
                     
                     // Update student capacity and available rooms
                     updateStudentCapacity();
@@ -450,17 +461,27 @@
                     
                     // Set the room after a short delay to ensure options are loaded
                     setTimeout(() => {
-                        if (data.roomName) {
+                        if (data.roomName && roomSelect) {
+                            console.log('Setting room to:', data.roomName);
                             roomSelect.value = data.roomName;
                         }
-                    }, 1000);
+                    }, 1500);
+                    
+                    return true;
                 } else {
-                    console.error('No such document!');
-                    showError('Instructor not found');
+                    const errorMsg = 'No instructor found with ID: ' + instructorId;
+                    console.error(errorMsg);
+                    displayError('Instructor not found. Please check the instructor ID and try again.');
+                    setTimeout(() => {
+                        window.location.href = 'InstructorList.html';
+                    }, 3000);
+                    return false;
                 }
             } catch (error) {
-                console.error('Error getting instructor:', error);
-                showError('Error loading instructor data: ' + error.message);
+                const errorMsg = 'Error loading instructor data: ' + error.message;
+                console.error(errorMsg, error);
+                displayError('Failed to load instructor data. Please try again later.');
+                return false;
             }
         }
 
@@ -481,8 +502,9 @@
                 console.log('Total rooms loaded:', allRooms.length);
                 return allRooms;
             } catch (error) {
-                console.error('Error fetching rooms:', error);
-                showError('Error loading rooms');
+                const errorMsg = 'Error fetching rooms: ' + error.message;
+                console.error(errorMsg, error);
+                displayError('Failed to load room data. Some features may be limited.');
                 return [];
             }
         }
@@ -503,8 +525,9 @@
                 });
                 return allInstructors;
             } catch (error) {
-                console.error('Error fetching instructors:', error);
-                showError('Error loading instructor data');
+                const errorMsg = 'Error fetching instructors: ' + error.message;
+                console.error(errorMsg, error);
+                displayError('Failed to load instructor data. Some features may be limited.');
                 return [];
             }
         }
@@ -880,32 +903,32 @@
                 return false;
             }
             if (!courseSelect.value) {
-                showError('Please select course');
+                displayError('Please select course');
                 courseSelect.focus();
                 return false;
             }
             if (!yearSelect.value) {
-                showError('Please select year level');
+                displayError('Please select year level');
                 yearSelect.focus();
                 return false;
             }
             if (!sectionSelect.value) {
-                showError('Please select section');
+                displayError('Please select section');
                 sectionSelect.focus();
                 return false;
             }
             if (!daySelect.value) {
-                showError('Please select day');
+                displayError('Please select day');
                 daySelect.focus();
                 return false;
             }
             if (!classTimeSelect.value) {
-                showError('Please select class time');
+                displayError('Please select class time');
                 classTimeSelect.focus();
                 return false;
             }
             if (!roomSelect.value) {
-                showError('Please select a room');
+                displayError('Please select a room');
                 roomSelect.focus();
                 return false;
             }
@@ -921,39 +944,101 @@
             }, 5000);
         }
 
+        // Enhanced error message handler
+        function displayError(message) {
+            console.error('Error:', message);
+            
+            // Try to find the error message element
+            let errorElement = document.getElementById('errorMessage');
+            
+            // If error element doesn't exist, create it
+            if (!errorElement) {
+                console.log('Creating error message element');
+                errorElement = document.createElement('div');
+                errorElement.id = 'errorMessage';
+                errorElement.className = 'error-message';
+                errorElement.style.color = '#dc3545';
+                errorElement.style.margin = '10px 0';
+                errorElement.style.padding = '10px';
+                errorElement.style.backgroundColor = '#f8d7da';
+                errorElement.style.border = '1px solid #f5c6cb';
+                errorElement.style.borderRadius = '4px';
+                
+                // Try to add it to the form, or fall back to body
+                const form = document.querySelector('form');
+                if (form) {
+                    form.prepend(errorElement);
+                } else {
+                    document.body.prepend(errorElement);
+                }
+            }
+            
+            // Set the error message
+            errorElement.textContent = message;
+            errorElement.style.display = 'block';
+            
+            // Scroll to the error message
+            setTimeout(() => {
+                try {
+                    errorElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                } catch (e) {
+                    console.error('Error scrolling to error message:', e);
+                }
+            }, 100);
+            
+            // Hide the error after 5 seconds
+            setTimeout(() => {
+                if (errorElement && errorElement.style) {
+                    errorElement.style.display = 'none';
+                }
+            }, 5000);
+            
+            return errorElement;
+        }
+        
         // Event Listeners
         document.addEventListener('DOMContentLoaded', () => {
+            console.log('DOM fully loaded');
+            
             // Initialize form
             updateRoomSelectState();
             
             // Load instructor data if in edit mode
             if (instructorId) {
-                loadInstructorData();
+                console.log('Loading instructor data for ID:', instructorId);
+                loadInstructorData().then(() => {
+                    console.log('Instructor data loaded successfully');
+                }).catch(error => {
+                    console.error('Error loading instructor data:', error);
+                });
             } else {
+                console.error('No instructor ID provided');
                 window.location.href = 'InstructorList.html';
             }
             
             // Add event listeners for form fields
-            daySelect.addEventListener('change', updateAvailableRooms);
-            timeSelect.addEventListener('change', updateAvailableRooms);
-            courseSelect.addEventListener('change', updateStudentCapacity);
-            yearSelect.addEventListener('change', updateStudentCapacity);
-            sectionSelect.addEventListener('change', updateStudentCapacity);
+            if (daySelect) daySelect.addEventListener('change', updateAvailableRooms);
+            if (timeSelect) timeSelect.addEventListener('change', updateAvailableRooms);
+            if (courseSelect) courseSelect.addEventListener('change', updateStudentCapacity);
+            if (yearSelect) yearSelect.addEventListener('change', updateStudentCapacity);
+            if (sectionSelect) sectionSelect.addEventListener('change', updateStudentCapacity);
             
             // Add event listeners for buttons
-            updateBtn.addEventListener('click', updateInstructor);
-            deleteBtn.addEventListener('click', deleteInstructor);
+            if (updateBtn) updateBtn.addEventListener('click', updateInstructor);
+            if (deleteBtn) deleteBtn.addEventListener('click', deleteInstructor);
             
             // Hide error message when user starts typing/selecting
             document.querySelectorAll('input, select').forEach(input => {
                 input.addEventListener('input', () => {
-                    errorMessage.style.display = 'none';
+                    if (errorMessage) errorMessage.style.display = 'none';
                 });
             });
             
-            // Initial update of student capacity
+            // Initial update of student capacity and rooms
             updateStudentCapacity();
             updateAvailableRooms();
+            
+            console.log('Event listeners initialized');
         });
     </script>
 </body>
