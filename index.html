@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>DHVSU INSTRUCTOR SCHEDULING SYSTEM</title>
+  <title>DHVSU Scheduling System</title>
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
   <style>
     body {
@@ -181,17 +181,8 @@
     }
 
     .schedule-entry .room {
-      color: #4a4a4a;
-      font-size: 0.9em;
-      line-height: 1.4;
-    }
-
-    .room-capacity {
-      color: #666;
-      font-size: 0.85em;
-      font-style: italic;
-      display: block;
-      margin-top: 2px;
+      font-size: 0.8em;
+      opacity: 0.9;
     }
 
     .filters {
@@ -238,7 +229,7 @@
       <div class="logo-container left">
         <img src="https://media.assettype.com/sunstar/2025-02-04/7x1wu7dq/DHVSU.jpg?w=1200&h=675&auto=format%2Ccompress&fit=max&enlarge=true" alt="DHVSU Logo" class="logo">
       </div>
-      <h2>DHVSU INSTRUCTOR SCHEDULING SYSTEM</h2>
+      <h2>DHVSU Automatic Scheduling System</h2>
       <div class="logo-container right">
         <img src="https://dhvsu.edu.ph/images/college-of-business-studies/01202025%20-%20College%20of%20Business%20Studies%20LOGO%20-%20Samantha%20F.%20Batalla.png" alt="DHVSU CBS Logo" class="logo">
       </div>
@@ -264,7 +255,7 @@
       </select>
       
       <div id="studentCapacity" class="student-capacity">
-        Student Capacity: -
+        Capacity: -
       </div>
     </div>
     
@@ -297,17 +288,11 @@
       collection, 
       onSnapshot, 
       query, 
-      doc, 
-      getDoc, 
-      getDocs,
-      addDoc, 
-      updateDoc, 
-      deleteDoc, 
       where, 
-      orderBy,
+      getDocs,
       limit,
-      serverTimestamp 
-    } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+      orderBy
+    } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
     // Your web app's Firebase configuration
     const firebaseConfig = {
@@ -333,11 +318,9 @@
       // Make db available globally for debugging
       window.db = db;
       
-      // Collection references
+      // Collection reference with correct case sensitivity
       instructorsCollectionRef = collection(db, 'Instructors');
-      const roomsCollectionRef = collection(db, 'Rooms');
       window.instructorsCollectionRef = instructorsCollectionRef;
-      window.roomsCollectionRef = roomsCollectionRef;
       
       window.firebaseInitialized = true;
       console.log('Firebase initialized successfully');
@@ -397,34 +380,14 @@
       
       if (course && year && section) {
         const capacity = studentCapacityMap[course]?.[year]?.[section] || '-';
-        studentCapacity.textContent = `Student Capacity: ${capacity}`;
+        studentCapacity.textContent = `Capacity: ${capacity}`;
       } else {
-        studentCapacity.textContent = 'Student Capacity: -';
-      }
-    }
-
-    // Function to fetch room capacity by room name
-    async function getRoomCapacity(roomName) {
-      if (!roomName || roomName === 'TBA') return null;
-      
-      try {
-        const roomsRef = collection(db, 'Rooms');
-        const q = query(roomsRef, where('roomName', '==', roomName), limit(1));
-        const querySnapshot = await getDocs(q);
-        
-        if (!querySnapshot.empty) {
-          const roomData = querySnapshot.docs[0].data();
-          return roomData.capacity || null;
-        }
-        return null;
-      } catch (error) {
-        console.error('Error fetching room capacity:', error);
-        return null;
+        studentCapacity.textContent = 'Capacity: -';
       }
     }
 
     // Set up real-time listener for instructors
-    async function setupFirebaseListener() {
+    function setupFirebaseListener() {
       console.log('Setting up Firebase listener...');
       
       if (!db || !instructorsCollectionRef) {
@@ -439,13 +402,9 @@
         
         const unsubscribe = onSnapshot(q, 
           // Success callback
-          async (querySnapshot) => {
+          (querySnapshot) => {
             console.log('Received data snapshot with', querySnapshot.size, 'documents');
             allInstructorsData = [];
-            
-            // Process all instructors first
-            const instructors = [];
-            const roomPromises = [];
             
             querySnapshot.forEach((doc) => {
               if (!doc.exists()) {
@@ -489,24 +448,11 @@
                 section: data.section || ''
               };
               
-              // Add a promise to fetch room capacity if we have a room name
-              if (instructor.roomName && instructor.roomName !== 'TBA') {
-                const roomPromise = getRoomCapacity(instructor.roomName).then(capacity => {
-                  instructor.roomCapacity = capacity;
-                });
-                roomPromises.push(roomPromise);
-              }
-              
-              instructors.push(instructor);
+              allInstructorsData.push(instructor);
               console.log('Added instructor:', instructor.name);
             });
             
-            // Wait for all room capacity fetches to complete
-            await Promise.all(roomPromises);
-            
-            // Now that we have all room capacities, update the allInstructorsData
-            allInstructorsData = instructors;
-            console.log('All instructors loaded with room capacities. Total:', allInstructorsData.length);
+            console.log('All instructors loaded. Total:', allInstructorsData.length);
             
             // If we have selections, re-render the schedule
             if (courseSelect.value && yearSelect.value && sectionSelect.value) {
@@ -702,17 +648,11 @@
           
           // If instructor found, fill the cell with their info
           if (instructor) {
-            // Format room display with capacity on a separate line
-            const roomName = instructor.roomName || 'TBA';
-            const roomDisplay = instructor.roomCapacity 
-              ? `${roomName}<br><span class="room-capacity">Capacity: ${instructor.roomCapacity}</span>`
-              : roomName;
-              
             cell.innerHTML = `
               <div class="schedule-entry">
                 <div class="subject">${instructor.subject || 'N/A'}</div>
                 <div class="instructor">${instructor.name || 'N/A'}</div>
-                <div class="room">${roomDisplay}</div>
+                <div class="room">${instructor.roomName || 'TBA'}</div>
               </div>
             `;
           }
