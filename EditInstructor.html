@@ -297,9 +297,14 @@
 
             try {
                 // Show loading state
-                document.getElementById('updateBtn').disabled = true;
-                document.getElementById('updateBtn').textContent = 'Loading...';
+                updateBtn.disabled = true;
+                updateBtn.textContent = 'Loading...';
                 
+                // Disable all form fields while loading
+                const formInputs = [nameInput, subjectInput, courseSelect, yearSelect, sectionSelect, daySelect, timeSelect, roomSelect];
+                formInputs.forEach(input => input.disabled = true);
+                
+                // Fetch instructor data
                 const docRef = db.collection('Instructors').doc(instructorId);
                 const doc = await docRef.get();
                 
@@ -317,40 +322,65 @@
                 // Store the original data for comparison
                 window.originalInstructorData = { ...data };
                 
-                // Populate form fields
+                // First, load all rooms
+                console.log('Loading rooms...');
+                await loadRooms();
+                
+                // Then set all form fields using the correct field names from the database
                 nameInput.value = data.name || '';
                 subjectInput.value = data.subject || '';
                 courseSelect.value = data.course || '';
-                yearSelect.value = data.year || '';
+                yearSelect.value = data.year ? data.year.toString() : ''; // Ensure year is a string for comparison
                 sectionSelect.value = data.section || '';
                 daySelect.value = data.day || '';
                 timeSelect.value = data.time || '';
                 
-                // Load rooms first
-                console.log('Loading rooms...');
-                await loadRooms();
+                // Enable all fields
+                formInputs.forEach(input => input.disabled = false);
                 
-                // If room is already set, try to select it
-                if (data.room) {
-                    console.log('Setting room to:', data.room);
+                // Load rooms with availability check
+                console.log('Loading rooms with availability check...');
+                await loadRooms(); // This will handle the room selection and availability
+                
+                // Update the UI to show the current room is being loaded
+                const roomToSelect = data.roomName;
+                if (roomToSelect) {
+                    console.log('Attempting to select room:', roomToSelect);
+                    
                     // Small delay to ensure room options are populated
                     setTimeout(() => {
-                        roomSelect.value = data.room;
-                        console.log('Room set to:', roomSelect.value);
-                    }, 500);
+                        const roomOption = Array.from(roomSelect.options).find(opt => opt.value === roomToSelect);
+                        if (roomOption) {
+                            if (!roomOption.disabled) {
+                                roomSelect.value = roomToSelect;
+                                console.log('Room set to:', roomSelect.value);
+                            } else {
+                                console.warn(`Warning: Previously assigned room ${roomToSelect} is no longer available`);
+                                showError(`Warning: Previously assigned room ${roomToSelect} is no longer available`);
+                                roomOption.selected = true; // Keep it selected but show as unavailable
+                            }
+                        } else {
+                            console.warn(`Warning: Room ${roomToSelect} not found in room list`);
+                            showError(`Warning: Room ${roomToSelect} not found`);
+                            
+                            // Add the missing room as a disabled option
+                            const roomOption = document.createElement('option');
+                            roomOption.value = roomToSelect;
+                            roomOption.textContent = `${roomToSelect} (Not available)`;
+                            roomOption.disabled = true;
+                            roomOption.selected = true;
+                            roomSelect.insertBefore(roomOption, roomSelect.firstChild.nextSibling);
+                        }
+                    }, 100);
                 }
                 
                 // Set up event listeners for room updates
                 daySelect.addEventListener('change', handleRoomUpdate);
                 timeSelect.addEventListener('change', handleRoomUpdate);
                 
-                // Initial update of available rooms
-                console.log('Updating available rooms...');
-                await updateAvailableRooms();
-                
                 // Re-enable the update button
-                document.getElementById('updateBtn').disabled = false;
-                document.getElementById('updateBtn').textContent = 'Update Instructor';
+                updateBtn.disabled = false;
+                updateBtn.textContent = 'Update Instructor';
                 
                 console.log('Instructor data loaded successfully');
                 
@@ -360,8 +390,8 @@
                 showError('Failed to load instructor data. Please try again.');
                 
                 // Re-enable the update button even if there's an error
-                document.getElementById('updateBtn').disabled = false;
-                document.getElementById('updateBtn').textContent = 'Update Instructor';
+                updateBtn.disabled = false;
+                updateBtn.textContent = 'Update Instructor';
             }
         }
         
@@ -383,23 +413,117 @@
             }
         }
 
-        // Load rooms
+        // Load rooms and check availability
         async function loadRooms() {
             try {
-                const snapshot = await db.collection('rooms').get();
-                roomSelect.innerHTML = '<option value="">Select a room</option>';
+                // Get all rooms and current instructor data
+                const [roomsSnapshot, instructorDoc] = await Promise.all([
+                    db.collection('rooms').get(),
+                    instructorId ? db.collection('Instructors').doc(instructorId).get() : Promise.resolve(null)
+                ]);
                 
-                snapshot.forEach(doc => {
-                    const room = doc.data();
-                    const option = document.createElement('option');
-                    option.value = room.name || doc.id;
-                    option.textContent = room.name || doc.id;
-                    roomSelect.appendChild(option);
+                // Get current instructor's room and schedule
+                const instructorData = instructorDoc?.exists ? instructorDoc.data() : null;
+                const currentRoom = instructorData?.roomName || '';
+                const currentDay = instructorData?.day || '';
+                const currentTime = instructorData?.time || '';
+                
+                // Clear and prepare room select
+                roomSelect.innerHTML = '';
+                const defaultOption = document.createElement('option');
+                defaultOption.value = '';
+                defaultOption.textContent = 'Select a room';
+                roomSelect.appendChild(defaultOption);
+                
+                // Process each room
+                const rooms = [];
+                roomsSnapshot.forEach(doc => {
+                    const room = { id: doc.id, ...doc.data() };
+                    rooms.push(room);
                 });
+                
+                // Check room availability if we have a day and time
+                if (currentDay && currentTime) {
+                    // Get all instructors for the same day and time
+                    const [startTime, endTime] = currentTime.split('-').map(t => t.trim());
+                    const conflictingInstructors = await db.collection('Instructors')
+                        .where('day', '==', currentDay)
+                        .where('time', '==', currentTime)
+                        .get();
+                    
+                    // Get list of booked rooms for this time slot
+                    const bookedRoomNames = new Set();
+                    conflictingInstructors.forEach(doc => {
+                        const data = doc.data();
+                        if (doc.id !== instructorId && data.roomName) {
+                            bookedRoomNames.add(data.roomName);
+                        }
+                    });
+                    
+                    // Add rooms to select with availability status
+                    rooms.forEach(room => {
+                        const option = document.createElement('option');
+                        option.value = room.roomName;  // Use roomName as the value
+                        
+                        // Check if room is booked
+                        const isBooked = bookedRoomNames.has(room.roomName);
+                        const capacity = parseInt(room.capacity) || 0;
+                        const studentCapacity = studentCapacityMap[courseSelect.value]?.[yearSelect.value]?.[sectionSelect.value] || 0;
+                        const hasCapacity = capacity >= studentCapacity;
+                        
+                        // Set option properties based on availability
+                        if (isBooked) {
+                            option.disabled = true;
+                            option.textContent = `${room.roomName} (Booked)`;
+                        } else if (!hasCapacity) {
+                            option.disabled = true;
+                            option.textContent = `${room.roomName} (Too small: ${capacity} < ${studentCapacity} students)`;
+                        } else {
+                            option.textContent = `${room.roomName} (${capacity} seats)`;
+                        }
+                        
+                        // Select current room if it matches
+                        if (room.roomName === currentRoom) {
+                            option.selected = true;
+                            if (isBooked || !hasCapacity) {
+                                // Show warning if current room is no longer suitable
+                                const warning = isBooked ? 'currently booked' : 'too small';
+                                showError(`Warning: Previously assigned room ${room.roomName} is ${warning} for this time slot`);
+                            }
+                        }
+                        
+                        roomSelect.appendChild(option);
+                    });
+                    
+                    // If current room isn't in the list, add it as unavailable
+                    if (currentRoom && !rooms.some(r => r.roomName === currentRoom)) {
+                        const option = document.createElement('option');
+                        option.value = currentRoom;
+                        option.textContent = `${currentRoom} (Not available)`;
+                        option.disabled = true;
+                        option.selected = true;
+                        roomSelect.insertBefore(option, roomSelect.firstChild.nextSibling);
+                    }
+                } else {
+                    // If no day/time selected, just show all rooms
+                    rooms.forEach(room => {
+                        const option = document.createElement('option');
+                        option.value = room.roomName;
+                        option.textContent = `${room.roomName} (${room.capacity} seats)`;
+                        if (room.roomName === currentRoom) {
+                            option.selected = true;
+                        }
+                        roomSelect.appendChild(option);
+                    });
+                }
+                
+                roomSelect.disabled = false;
                 
             } catch (error) {
                 console.error('Error loading rooms:', error);
                 showError('Failed to load rooms');
+                roomSelect.innerHTML = '<option value="">Error loading rooms</option>';
+                roomSelect.disabled = true;
             }
         }
 
@@ -532,25 +656,50 @@
                 
                 // Add available rooms to select
                 let hasAvailableRooms = false;
+                let currentRoomSelected = false;
+                
+                // First, add all available rooms
                 roomAvailability.forEach((roomInfo, roomName) => {
                     const option = document.createElement('option');
                     option.value = roomName;
                     
-                    if (roomInfo.isBooked || !roomInfo.isAvailable) {
-                        option.disabled = true;
-                        option.textContent = `${roomName} (${roomInfo.isBooked ? 'Booked' : 'Too small'})`;
-                    } else {
+                    // Check if room is available and has enough capacity
+                    const isAvailable = !roomInfo.isBooked && roomInfo.isAvailable;
+                    
+                    if (isAvailable) {
                         hasAvailableRooms = true;
                         option.textContent = `${roomName} (${roomInfo.capacity} seats)`;
+                    } else {
+                        option.disabled = true;
+                        option.textContent = `${roomName} (${roomInfo.isBooked ? 'Booked' : 'Too small'})`;
                     }
                     
-                    // Preserve previous selection if still available
-                    if (roomName === currentRoom && !option.disabled) {
-                        option.selected = true;
+                    // Check if this is the current room and it's available
+                    if (roomName === currentRoom) {
+                        if (isAvailable) {
+                            option.selected = true;
+                            currentRoomSelected = true;
+                        } else {
+                            console.warn(`Previously selected room ${currentRoom} is no longer available`);
+                        }
                     }
                     
                     roomSelect.appendChild(option);
                 });
+                
+                // If current room wasn't in the list but exists in the database, add it as disabled
+                if (currentRoom && !currentRoomSelected) {
+                    const roomExists = Array.from(roomSelect.options).some(opt => opt.value === currentRoom);
+                    if (!roomExists) {
+                        const option = document.createElement('option');
+                        option.value = currentRoom;
+                        option.disabled = true;
+                        option.textContent = `${currentRoom} (Unavailable)`;
+                        option.selected = true; // Keep it selected but disabled
+                        roomSelect.insertBefore(option, roomSelect.firstChild);
+                        console.warn(`Room ${currentRoom} is not available but was previously assigned`);
+                    }
+                }
                 
                 roomSelect.disabled = false;
                 
@@ -578,7 +727,7 @@
                 updateBtn.disabled = true;
                 updateBtn.textContent = 'Updating...';
                 
-                const instructorData = {
+                const updatedData = {
                     name: nameInput.value.trim(),
                     subject: subjectInput.value.trim(),
                     course: courseSelect.value,
@@ -586,11 +735,12 @@
                     section: sectionSelect.value,
                     day: daySelect.value,
                     time: timeSelect.value,
-                    room: roomSelect.value,
-                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                    roomId: roomSelect.value,  
+                    roomName: roomSelect.options[roomSelect.selectedIndex]?.text.split(' (')[0] || roomSelect.value,
+                    updatedAt: new Date()
                 };
                 
-                await db.collection('Instructors').doc(instructorId).update(instructorData);
+                await db.collection('Instructors').doc(instructorId).update(updatedData);
                 
                 showSuccess('Instructor updated successfully');
                 
