@@ -403,90 +403,159 @@
             }
         }
 
+        // Helper function to convert time string to minutes (24-hour format)
+        function timeToMinutes(timeStr) {
+            // Remove any AM/PM and trim whitespace
+            const cleanTime = timeStr.trim().replace(/\s*[aApP][mM]\s*$/, '').trim();
+            
+            // Split into hours and minutes
+            const [hours, minutes = '00'] = cleanTime.split(':');
+            
+            // Convert to 24-hour format and calculate total minutes
+            let hours24 = parseInt(hours, 10);
+            // Handle 12-hour format conversion if needed
+            if (timeStr.toLowerCase().includes('pm') && hours24 < 12) {
+                hours24 += 12;
+            } else if (timeStr.toLowerCase().includes('am') && hours24 === 12) {
+                hours24 = 0;
+            }
+            
+            return hours24 * 60 + parseInt(minutes, 10);
+        }
+
         // Update available rooms based on day and time
         async function updateAvailableRooms() {
-            const day = daySelect.value;
-            const time = timeSelect.value;
+            console.log('=== UPDATING AVAILABLE ROOMS ===');
+            
+            const selectedDay = daySelect.value;
+            const classTime = timeSelect.value;
+            const course = courseSelect.value;
+            const year = yearSelect.value;
+            const section = sectionSelect.value;
             const currentRoom = roomSelect.value;
             
-            console.log(`Updating rooms for day: ${day}, time: ${time}`);
+            console.log(`[updateAvailableRooms] Selected Criteria: Day='${selectedDay}', Time='${classTime}', Course='${course}', Year='${year}', Section='${section}'`);
             
-            if (!day || !time) {
+            // Check if all required fields are selected
+            if (!selectedDay || !classTime || !course || !year || !section) {
                 roomSelect.disabled = true;
-                roomSelect.innerHTML = '<option value="">Please select day and time first</option>';
+                roomSelect.innerHTML = '<option value="">Please select all fields first</option>';
                 return;
             }
             
             try {
-                // Store the current room selection
-                const previousRoom = currentRoom;
-                
                 // Show loading state
                 roomSelect.disabled = true;
-                roomSelect.innerHTML = '<option value="">Loading available rooms...</option>';
+                roomSelect.innerHTML = '<option value="">Checking room availability...</option>';
                 
-                // Get all instructors except the current one
-                const snapshot = await db.collection('Instructors')
-                    .where('day', '==', day)
-                    .where('time', '==', time)
-                    .get();
+                // Get student capacity for the selected course/year/section
+                const studentCapacity = studentCapacityMap[course]?.[year]?.[section] || 0;
+                console.log(`[updateAvailableRooms] Required Student Capacity: ${studentCapacity}`);
                 
-                const bookedRooms = new Set();
-                snapshot.forEach(doc => {
-                    const data = doc.data();
-                    if (doc.id !== instructorId && data.room) {
-                        bookedRooms.add(data.room);
-                    }
-                });
+                // Get all rooms and instructors
+                const [roomsSnapshot, instructorsSnapshot] = await Promise.all([
+                    db.collection('rooms').get(),
+                    db.collection('Instructors').get()
+                ]);
                 
-                console.log('Booked rooms:', Array.from(bookedRooms));
+                console.log(`[updateAvailableRooms] Fetched ${instructorsSnapshot.size} instructors and ${roomsSnapshot.size} room documents.`);
                 
-                // Reload all rooms
-                await loadRooms();
+                // Parse selected time from dropdown into minutes
+                const [selectedTimeStartStr, selectedTimeEndStr] = classTime.split('-').map(t => t.trim());
+                const selectedStartMinutes = timeToMinutes(selectedTimeStartStr);
+                const selectedEndMinutes = timeToMinutes(selectedTimeEndStr);
                 
-                // Enable all options first
-                Array.from(roomSelect.options).forEach(option => {
-                    option.disabled = false;
-                });
+                console.log(`[updateAvailableRooms] Parsed selected time: StartMinutes=${selectedStartMinutes}, EndMinutes=${selectedEndMinutes}`);
                 
-                // Disable booked rooms and mark them
-                let hasAvailableRooms = false;
-                Array.from(roomSelect.options).forEach(option => {
-                    if (option.value) {  // Skip the default/placeholder option
-                        if (bookedRooms.has(option.value)) {
-                            option.disabled = true;
-                            option.textContent += ' (Booked)';
-                        } else {
-                            hasAvailableRooms = true;
-                        }
-                    }
-                });
+                // Create a map to track room availability
+                const roomAvailability = new Map();
                 
-                // If the previously selected room is still available, keep it selected
-                if (previousRoom) {
-                    const option = Array.from(roomSelect.options).find(
-                        opt => opt.value === previousRoom && !opt.disabled
-                    );
+                // Initialize all rooms as available
+                roomsSnapshot.forEach(doc => {
+                    const roomData = doc.data();
+                    const roomName = roomData.name || doc.id;
+                    const roomCapacity = parseInt(roomData.capacity) || 0;
                     
-                    if (option) {
-                        roomSelect.value = previousRoom;
-                        console.log('Keeping previous room selection:', previousRoom);
-                    } else if (hasAvailableRooms) {
-                        // Select the first available room if previous is no longer available
-                        const firstAvailable = Array.from(roomSelect.options).find(
-                            opt => opt.value && !opt.disabled
-                        );
-                        if (firstAvailable) {
-                            roomSelect.value = firstAvailable.value;
-                            console.log('Selected first available room:', firstAvailable.value);
-                        }
+                    roomAvailability.set(roomName, {
+                        id: doc.id,
+                        name: roomName,
+                        capacity: roomCapacity,
+                        isAvailable: roomCapacity >= studentCapacity,
+                        isBooked: false
+                    });
+                });
+                
+                // Mark rooms as booked based on instructor schedules
+                instructorsSnapshot.forEach(doc => {
+                    const instructor = doc.data();
+                    // Skip current instructor or entries without required data
+                    if (doc.id === instructorId || !instructor.room || !instructor.day || !instructor.time) {
+                        return;
                     }
-                }
+                    
+                    // Skip if not the same day
+                    if (instructor.day !== selectedDay) {
+                        return;
+                    }
+                    
+                    // Skip if time format is invalid
+                    if (typeof instructor.time !== 'string') {
+                        return;
+                    }
+                    
+                    try {
+                        const [instructorStartStr, instructorEndStr] = instructor.time.split('-').map(t => t.trim());
+                        const instructorStartMinutes = timeToMinutes(instructorStartStr);
+                        const instructorEndMinutes = timeToMinutes(instructorEndStr);
+                        
+                        // Check for time overlap
+                        if (selectedStartMinutes < instructorEndMinutes && selectedEndMinutes > instructorStartMinutes) {
+                            // There's a time conflict, mark the room as booked
+                            const roomInfo = roomAvailability.get(instructor.room);
+                            if (roomInfo) {
+                                roomInfo.isBooked = true;
+                            }
+                        }
+                    } catch (e) {
+                        console.warn(`Error processing instructor time: ${instructor.time}`, e);
+                    }
+                });
+                
+                // Update room select options
+                roomSelect.innerHTML = '';
+                
+                // Add default option
+                const defaultOption = document.createElement('option');
+                defaultOption.value = '';
+                defaultOption.textContent = 'Select a room';
+                roomSelect.appendChild(defaultOption);
+                
+                // Add available rooms to select
+                let hasAvailableRooms = false;
+                roomAvailability.forEach((roomInfo, roomName) => {
+                    const option = document.createElement('option');
+                    option.value = roomName;
+                    
+                    if (roomInfo.isBooked || !roomInfo.isAvailable) {
+                        option.disabled = true;
+                        option.textContent = `${roomName} (${roomInfo.isBooked ? 'Booked' : 'Too small'})`;
+                    } else {
+                        hasAvailableRooms = true;
+                        option.textContent = `${roomName} (${roomInfo.capacity} seats)`;
+                    }
+                    
+                    // Preserve previous selection if still available
+                    if (roomName === currentRoom && !option.disabled) {
+                        option.selected = true;
+                    }
+                    
+                    roomSelect.appendChild(option);
+                });
                 
                 roomSelect.disabled = false;
                 
-                if (!hasAvailableRooms && roomSelect.options.length > 1) {
-                    showError('No rooms available for the selected day and time');
+                if (!hasAvailableRooms) {
+                    showError('No rooms available for the selected criteria. Please try a different day/time.');
                 }
                 
                 console.log('Available rooms updated');
@@ -641,27 +710,42 @@
             }, 3000);
         }
         
-        // Event Listeners
+        // Set up event listeners
         document.addEventListener('DOMContentLoaded', () => {
-            if (!instructorId) {
+            // Disable room selection initially
+            roomSelect.disabled = true;
+            roomSelect.innerHTML = '<option value="">Please select all fields first</option>';
+            
+            // Load instructor data if in edit mode
+            if (instructorId) {
+                loadInstructorData();
+            } else {
                 showError('No instructor ID provided');
                 return;
             }
             
-            loadInstructorData();
-            
-            // Update available rooms when day or time changes
-            daySelect.addEventListener('change', updateAvailableRooms);
-            timeSelect.addEventListener('change', updateAvailableRooms);
-            
-            // Form submission
-            updateBtn.addEventListener('click', updateInstructor);
-            deleteBtn.addEventListener('click', deleteInstructor);
-            
-            // Prevent form submission
+            // Set up form submission
             form.addEventListener('submit', (e) => {
                 e.preventDefault();
                 updateInstructor();
+            });
+            
+            // Set up delete button
+            deleteBtn.addEventListener('click', deleteInstructor);
+            
+            // Set up event listeners for room updates when any required field changes
+            const fieldsToWatch = [courseSelect, yearSelect, sectionSelect, daySelect, timeSelect];
+            fieldsToWatch.forEach(field => {
+                field.addEventListener('change', () => {
+                    // Only update rooms if all required fields have values
+                    const allFieldsFilled = fieldsToWatch.every(f => f.value);
+                    if (allFieldsFilled) {
+                        updateAvailableRooms();
+                    } else {
+                        roomSelect.disabled = true;
+                        roomSelect.innerHTML = '<option value="">Please select all fields first</option>';
+                    }
+                });
             });
         });
     </script>
