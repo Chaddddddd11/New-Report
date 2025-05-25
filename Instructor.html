@@ -946,7 +946,8 @@
             const section = sectionSelect.value;
             const day = daySelect.value;
             const timeSlot = timeSelect.value;
-            const roomName = roomAvailableSelect.value;
+            const roomSelect = document.getElementById('room');
+            const roomName = roomSelect.value;
 
             if (!name || !subject || !course || !year || !section || !day || !timeSlot || !roomName) {
                 showError("All fields marked with * are required.");
