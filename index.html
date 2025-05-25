@@ -229,7 +229,7 @@
       <div class="logo-container left">
         <img src="https://media.assettype.com/sunstar/2025-02-04/7x1wu7dq/DHVSU.jpg?w=1200&h=675&auto=format%2Ccompress&fit=max&enlarge=true" alt="DHVSU Logo" class="logo">
       </div>
-      <h2>DHVSU Automatic Scheduling System</h2>
+      <h2>DHVSU INSTRUCTOR SCHEDULING SYSTEM</h2>
       <div class="logo-container right">
         <img src="https://dhvsu.edu.ph/images/college-of-business-studies/01202025%20-%20College%20of%20Business%20Studies%20LOGO%20-%20Samantha%20F.%20Batalla.png" alt="DHVSU CBS Logo" class="logo">
       </div>
@@ -380,9 +380,9 @@
       
       if (course && year && section) {
         const capacity = studentCapacityMap[course]?.[year]?.[section] || '-';
-        studentCapacity.textContent = `Capacity: ${capacity}`;
+        studentCapacity.textContent = `Student Capacity: ${capacity}`;
       } else {
-        studentCapacity.textContent = 'Capacity: -';
+        studentCapacity.textContent = 'Student Capacity: -';
       }
     }
 
