@@ -6,12 +6,13 @@
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --primary-color: #1A5F7A;
-            --secondary-color: #2C8EBB;
+            --primary-color: #610000;
+            --secondary-color: #800a0a;
             --accent-color: #F7B32D;
             --background-color: #F4F7F6;
             --text-color: #333;
             --error-color: #dc3545;
+            --success-color: #28a745;
         }
 
         * {
@@ -22,17 +23,25 @@
 
         body {
             font-family: 'Roboto', Arial, sans-serif;
-            background-color: var(--background-color);
+            background-image: linear-gradient(rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.9)), 
+                            url('https://the-post-assets.sgp1.digitaloceanspaces.com/2023/03/DHVSU_thumbnail.png');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            min-height: 100vh;
+            padding: 20px 0;
             color: var(--text-color);
             line-height: 1.6;
         }
 
         .container {
-            position: relative;
-            width: 100%;
+            background-color: rgba(255, 255, 255, 0.95);
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            padding: 25px;
+            margin: 20px auto;
             max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
+            position: relative;
         }
 
         .back-btn {
@@ -40,35 +49,42 @@
             top: 20px;
             left: 20px;
             padding: 8px 15px;
-            background-color: var(--secondary-color);
+            background-color: var(--primary-color);
             color: white;
             border: none;
             border-radius: 4px;
             cursor: pointer;
             text-decoration: none;
             font-size: 14px;
-            transition: background-color 0.3s ease;
+            transition: all 0.3s;
         }
 
         .back-btn:hover {
             background-color: var(--accent-color);
+            transform: translateY(-2px);
         }
 
-        .header {
-            background-color: var(--primary-color);
-            color: white;
+        .header-container {
             text-align: center;
-            padding: 15px;
             margin-bottom: 20px;
-            border-radius: 5px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .logo {
+            max-width: 100px;
+            height: auto;
+            margin-bottom: 15px;
+        }
+
+        h1 {
+            color: var(--primary-color);
+            margin-bottom: 10px;
         }
 
         .form-container {
-            background-color: white;
-            padding: 20px;
-            border-radius: 5px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
         }
 
         .form-group {
@@ -79,28 +95,84 @@
             display: block;
             margin-bottom: 5px;
             font-weight: 500;
-            color: var(--text-color);
         }
 
-        input, select {
+        input[type="text"],
+        input[type="color"],
+        select {
             width: 100%;
             padding: 10px;
             border: 1px solid #ddd;
             border-radius: 4px;
             font-size: 16px;
-            transition: all 0.3s ease;
         }
 
-        input:focus, select:focus {
-            outline: none;
-            border-color: var(--accent-color);
-            box-shadow: 0 0 5px rgba(247, 179, 45, 0.5);
+        .color-preview {
+            width: 30px;
+            height: 30px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            display: inline-block;
+            vertical-align: middle;
+            margin-left: 10px;
+        }
+
+        .btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.3s;
+            text-decoration: none;
+            display: inline-block;
+            margin-top: 10px;
+        }
+
+        .btn:hover {
+            background-color: var(--secondary-color);
+            transform: translateY(-2px);
         }
 
         .btn-container {
             display: flex;
             justify-content: space-between;
             margin-top: 20px;
+        }
+
+        .error-message {
+            color: var(--error-color);
+            margin-top: 10px;
+            padding: 10px;
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            border-radius: 4px;
+            display: none;
+        }
+
+        .success-message {
+            color: var(--success-color);
+            margin-top: 10px;
+            padding: 10px;
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            border-radius: 4px;
+            display: none;
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+        }
+
+        .btn-delete {
+            background-color: #dc3545;
+            margin-left: 10px;
+        }
+
+        .btn-delete:hover {
+            background-color: #c82333;
         }
 
         .btn {
