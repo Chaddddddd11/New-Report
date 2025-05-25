@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <title>DHVSU Instructor Enrollment</title>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
             --primary-color: #610000;
@@ -192,6 +193,15 @@
         /* Delete button styles */
         .btn-delete {
             background-color: #dc3545;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: background-color 0.2s;
             margin-left: 10px;
         }
         
@@ -204,11 +214,17 @@
             background-color: #e7f3ff;
             border-left: 4px solid #007bff;
             padding: 12px 20px;
-            margin-bottom: 25px;
+            margin: 0 0 25px 0;
             border-radius: 4px;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
     </style>
 </head>
@@ -223,7 +239,7 @@
             </div>
             <div>
                 <button id="deleteBtn" class="btn btn-delete" style="display: none;">
-                    Delete Instructor
+                    <i class="fas fa-trash"></i> Delete Instructor
                 </button>
             </div>
         </div>
@@ -579,8 +595,10 @@
                 // Update UI for edit mode
                 document.getElementById('formTitle').textContent = 'Edit Instructor';
                 document.getElementById('submitText').textContent = 'Update Instructor';
-                document.getElementById('editModeBanner').style.display = 'flex';
-                document.getElementById('deleteBtn').style.display = 'inline-block';
+                const editBanner = document.getElementById('editModeBanner');
+                const deleteBtn = document.getElementById('deleteBtn');
+                if (editBanner) editBanner.style.display = 'flex';
+                if (deleteBtn) deleteBtn.style.display = 'block';
                 
                 // Populate form fields
                 if (nameInput) nameInput.value = instructor.name || '';
