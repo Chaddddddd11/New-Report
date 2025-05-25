@@ -327,20 +327,28 @@
                 </select>
             </div>
 
+            <div class="form-group">
+                <label for="scheduleColor">Schedule Color*</label>
+                <div style="display: flex; align-items: center;">
+                    <input type="color" id="scheduleColor" value="#800000" required
+                           style="width: 60px; height: 40px; padding: 2px;">
+                    <div id="colorPreview" class="color-preview" 
+                         style="width: 30px; height: 30px; margin-left: 10px; border: 1px solid #ddd; border-radius: 4px; background-color: #800000;"></div>
+                </div>
+            </div>
+
             <div id="errorMessage" class="error-message"></div>
 
             <div class="btn-container">
                 <a href="InstructorList.html" class="btn">View Instructor List</a>
-                <button type="button" id="submitBtn" class="btn">Register Instructor</button>
+                <button type="button" id="submitBtn" class="btn">Enroll Instructor</button>
             </div>
         </div>
     </div>
 
     <!-- Firebase SDKs -->
-    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
     <script type="module">
+        // Import the functions you need from the SDKs you need
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
         import { 
             getFirestore, 
@@ -356,9 +364,11 @@
             orderBy, 
             deleteDoc, 
             onSnapshot,
-            serverTimestamp 
+            serverTimestamp,
+            Timestamp
         } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
-
+        import { getStorage } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js';
+        
         // Your web app's Firebase configuration
         const firebaseConfig = {
             apiKey: "AIzaSyDeqxzp_-kKjM3hPr6CLGfTn38e4swSKbo",
@@ -626,9 +636,37 @@
         }
 
         document.addEventListener('DOMContentLoaded', async () => {
-            // Add click handler for register/update button
-            const registerBtn = document.getElementById('submitBtn');
-            registerBtn.addEventListener('click', registerInstructor);
+            try {
+                // Add color picker event listener
+                const scheduleColorInput = document.getElementById('scheduleColor');
+                const colorPreview = document.getElementById('colorPreview');
+                
+                if (scheduleColorInput && colorPreview) {
+                    scheduleColorInput.addEventListener('input', (e) => {
+                        colorPreview.style.backgroundColor = e.target.value;
+                    });
+                }
+                
+                // Add click handler for register/update button
+                const registerBtn = document.getElementById('submitBtn');
+                registerBtn.addEventListener('click', registerInstructor);
+                
+                // Load rooms
+                await loadRooms();
+                
+                // Check if we're in edit mode
+                const urlParams = new URLSearchParams(window.location.search);
+                const instructorId = urlParams.get('id');
+                
+                if (instructorId) {
+                    currentInstructorId = instructorId;
+                    isUpdateMode = true;
+                    await loadInstructorData(instructorId);
+                }
+            } catch (error) {
+                console.error('Error initializing page:', error);
+                showError('An error occurred while initializing the page. Please refresh and try again.');
+            }
             
             console.log('=== PAGE INITIALIZATION STARTED ===');
             
@@ -1064,8 +1102,11 @@
                     time, // Store as 'HH:00-HH:00'
                     roomName,
                     scheduleColor: scheduleColor,
-                    timestamp: serverTimestamp()
+                    timestamp: serverTimestamp(),
+                    updatedAt: new Date().toISOString()
                 };
+                
+                console.log('Saving instructor data:', instructorData);
 
                 if (isUpdateMode && currentInstructorId) {
                     const instructorDocRef = doc(db, "Instructors", currentInstructorId);
