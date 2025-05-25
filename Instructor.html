@@ -72,14 +72,40 @@
         }
 
         .header-container {
-            text-align: center;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
             margin-bottom: 20px;
+            padding: 15px 0;
+            border-bottom: 2px solid #e0e0e0;
         }
 
         .logo {
-            max-width: 100px;
+            max-width: 120px;
             height: auto;
-            margin-bottom: 15px;
+        }
+        
+        .logo-container {
+            flex: 0 0 auto;
+        }
+        
+        .logo-container.left {
+            text-align: left;
+        }
+        
+        .logo-container.right {
+            text-align: right;
+        }
+        
+        .header {
+            flex: 1;
+            text-align: center;
+        }
+        
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+            color: var(--primary-color);
         }
 
         h1 {
@@ -465,6 +491,9 @@
         
         // Set up event listeners
         document.addEventListener('DOMContentLoaded', async () => {
+            // Initialize form elements
+            initializeFormElements();
+            
             // Add delete button click handler
             document.getElementById('deleteBtn').addEventListener('click', async () => {
                 if (confirm('Are you sure you want to delete this instructor?')) {
@@ -843,30 +872,26 @@
                 roomSelect.disabled = !shouldEnable;
                 if (!shouldEnable) {
                     roomSelect.innerHTML = '<option value="">Select day and time first</option>';
-                } else {
+                } else if (daySelect.value && timeSelect.value) {
                     updateAvailableRooms();
                 }
             }
-        }
-
+        };
+        
         // Initialize event listeners
         function initializeEventListeners() {
-            // Add event listeners for form field changes
-            if (daySelect) daySelect.addEventListener('change', updateRoomSelectState);
-            if (timeSelect) timeSelect.addEventListener('change', updateRoomSelectState);
+            // Add event listeners for form controls that affect room availability
+            const formControls = [daySelect, timeSelect, courseSelect, yearSelect, sectionSelect];
             
-            // Also update when course/year/section changes (for capacity checking)
-            [courseSelect, yearSelect, sectionSelect].forEach(select => {
-                if (select) {
-                    select.addEventListener('change', () => {
-                        if (daySelect.value && timeSelect.value) {
-                            updateAvailableRooms();
-                        }
-                    });
+            formControls.forEach(control => {
+                if (control) {
+                    control.addEventListener('change', updateRoomSelectState);
                 }
             });
-            
-            // Initialize delete button event listener
+        }
+        
+        // Initialize delete button event listener
+        function initializeDeleteButton() {
             const deleteBtn = document.getElementById('deleteBtn');
             if (deleteBtn) {
                 deleteBtn.addEventListener('click', async (e) => {
@@ -892,6 +917,7 @@
         // Initial state setup
         document.addEventListener('DOMContentLoaded', () => {
             initializeEventListeners();
+            initializeDeleteButton();
             updateRoomSelectState();
         });
 
