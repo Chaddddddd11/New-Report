@@ -483,10 +483,6 @@
                 }
             });
             
-            // Update room select state when day or time changes
-            document.getElementById('day').addEventListener('change', updateRoomSelectState);
-            document.getElementById('time').addEventListener('change', updateRoomSelectState);
-            
             // Color picker preview
             if (scheduleColorInput && colorPreview) {
                 colorPreview.style.backgroundColor = scheduleColorInput.value;
@@ -499,6 +495,9 @@
             if (submitBtn) {
                 submitBtn.addEventListener('click', registerInstructor);
             }
+            
+            // Initialize all event listeners
+            initializeEventListeners();
 
             // Load rooms
             loadRooms();
