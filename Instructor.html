@@ -339,13 +339,16 @@
         import { 
             getFirestore, 
             collection, 
-            addDoc, 
-            getDocs, 
-            query, 
-            where,
             doc, 
             getDoc, 
-            updateDoc
+            getDocs, 
+            addDoc, 
+            updateDoc,
+            deleteDoc, 
+            query, 
+            where, 
+            orderBy, 
+            serverTimestamp 
         } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
         // Your web app's Firebase configuration
@@ -878,16 +881,29 @@
                     }
                 });
                 
+                // Get the currently assigned room if in edit mode
+                let currentRoomName = '';
+                if (currentInstructorId) {
+                    try {
+                        const instructorDoc = await getDoc(doc(db, 'Instructors', currentInstructorId));
+                        if (instructorDoc.exists()) {
+                            currentRoomName = instructorDoc.data().roomName || '';
+                        }
+                    } catch (error) {
+                        console.warn('Error getting current instructor data:', error);
+                    }
+                }
+
                 // Filter available rooms based on day, parsed time match, capacity, and booking status
                 console.log('[updateAvailableRooms] Filtering available rooms from roomSchedules:');
                 const availableRooms = Array.from(roomSchedules.values()).filter(room => {
                     const dayMatches = room.day.toLowerCase() === selectedDay.toLowerCase();
                     const timeMatches = room.startMinutes === selectedStartMinutes && room.endMinutes === selectedEndMinutes;
                     const hasCapacity = room.capacity >= studentCapacity;
-                    const isAvailable = !room.isBooked;
+                    const isAvailable = !room.isBooked || room.name === currentRoomName; // Include current room even if booked
                     
                     console.log(`  Filtering room '${room.name}': DayMatches=${dayMatches} (RoomDay: ${room.day}), TimeMatches=${timeMatches} (RoomTime: ${room.startMinutes}-${room.endMinutes} vs Selected: ${selectedStartMinutes}-${selectedEndMinutes}), HasCapacity=${hasCapacity} (RoomCap: ${room.capacity}), IsAvailable=${isAvailable}`);
-                    return dayMatches && timeMatches && hasCapacity && isAvailable;
+                    return dayMatches && timeMatches && hasCapacity && (isAvailable || room.name === currentRoomName);
                 });
                 console.log('[updateAvailableRooms] Filtered availableRooms:', JSON.parse(JSON.stringify(availableRooms)));
                 
@@ -907,12 +923,27 @@
                 defaultOption.textContent = '-- Select a room --';
                 roomSelect.appendChild(defaultOption);
                 
+                // Sort rooms by name for better UX
+                availableRooms.sort((a, b) => a.name.localeCompare(b.name));
+                
                 availableRooms.forEach(room => {
                     const option = document.createElement('option');
                     option.value = room.name;
-                    option.textContent = `${room.name} (Capacity: ${room.capacity}, Time: ${room.timeString})`; // Display original time string
+                    let roomText = `${room.name} (Capacity: ${room.capacity}, Time: ${room.timeString})`;
+                    
+                    // Add a note if this is the currently assigned room
+                    if (currentRoomName && room.name === currentRoomName) {
+                        roomText += ' (Currently Assigned)';
+                    }
+                    
+                    option.textContent = roomText;
                     option.setAttribute('data-capacity', room.capacity);
                     roomSelect.appendChild(option);
+                    
+                    // Select the current room if in edit mode
+                    if (currentRoomName && room.name === currentRoomName) {
+                        option.selected = true;
+                    }
                 });
                 console.log('[updateAvailableRooms] Room dropdown populated.');
                 
