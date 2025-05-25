@@ -255,7 +255,7 @@
       </select>
       
       <div id="studentCapacity" class="student-capacity">
-        Capacity: -
+        Student Capacity: -
       </div>
     </div>
     
@@ -648,11 +648,16 @@
           
           // If instructor found, fill the cell with their info
           if (instructor) {
+            // Format room display with capacity if available
+            const roomDisplay = instructor.roomCapacity 
+              ? `${instructor.roomName || 'TBA'} (capacity: ${instructor.roomCapacity})`
+              : (instructor.roomName || 'TBA');
+              
             cell.innerHTML = `
               <div class="schedule-entry">
                 <div class="subject">${instructor.subject || 'N/A'}</div>
                 <div class="instructor">${instructor.name || 'N/A'}</div>
-                <div class="room">${instructor.roomName || 'TBA'}</div>
+                <div class="room">${roomDisplay}</div>
               </div>
             `;
           }
