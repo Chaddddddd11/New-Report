@@ -511,13 +511,12 @@
                 console.log(`[updateAvailableRooms] Selected Criteria: Day='${selectedDay}', Time='${classTime}', Course='${course}', Year='${year}', Section='${section}'`);
                 console.log(`[updateAvailableRooms] Required Student Capacity: ${studentCapacity}`);
                 
-                // Get all rooms and instructors
-                const [roomsSnapshot, instructorsSnapshot] = await Promise.all([
-                    getDocs(roomsCollectionRef),
-                    getDocs(query(instructorsCollectionRef, where("day", "==", selectedDay)))
-                ]);
+                // Get all instructors for the selected day
+                const instructorsSnapshot = await getDocs(
+                    query(instructorsCollectionRef, where("day", "==", selectedDay))
+                );
                 
-                console.log(`[updateAvailableRooms] Fetched ${instructorsSnapshot.size} instructors and ${roomsSnapshot.size} rooms`);
+                console.log(`[updateAvailableRooms] Fetched ${instructorsSnapshot.size} instructors`);
                 
                 // Parse selected time from dropdown into minutes
                 const [selectedTimeStartStr, selectedTimeEndStr] = classTime.split('-').map(t => t.trim());
@@ -525,33 +524,33 @@
                 const selectedEndMinutes = timeToMinutes(selectedTimeEndStr);
                 console.log(`[updateAvailableRooms] Parsed selected time: StartMinutes=${selectedStartMinutes}, EndMinutes=${selectedEndMinutes}`);
                 
-                // Create a map of room schedules, parsing their times into minutes
+                // Create a set to track all unique room names
+                const allRooms = new Set();
                 const roomSchedules = new Map();
-                console.log('[updateAvailableRooms] Processing roomsSnapshot to build roomSchedules:');
                 
-                roomsSnapshot.forEach(doc => {
-                    const roomData = doc.data();
-                    console.log(`  Processing room doc ID: ${doc.id}, Data:`, JSON.parse(JSON.stringify(roomData)));
-                    
-                    if (!roomData.name || !roomData.capacity) {
-                        console.warn(`  Skipping room doc ID: ${doc.id} due to missing name or capacity`);
-                        return;
+                // First pass: Collect all unique room names from instructors
+                instructorsSnapshot.forEach(doc => {
+                    const instructor = doc.data();
+                    if (instructor.roomName) {
+                        allRooms.add(instructor.roomName);
                     }
-                    
-                    // For each room, assume it's available for the selected time slot
-                    roomSchedules.set(roomData.name, {
-                        id: doc.id,
-                        name: roomData.name,
-                        capacity: parseInt(roomData.capacity) || 0,
-                        day: selectedDay, // Use the selected day
-                        timeString: classTime, // Use the selected time
+                });
+                
+                console.log(`[updateAvailableRooms] Found ${allRooms.size} unique rooms from instructor data`);
+                
+                // Initialize room schedules with default capacity
+                allRooms.forEach(roomName => {
+                    roomSchedules.set(roomName, {
+                        id: roomName, // Using room name as ID since we don't have a separate rooms collection
+                        name: roomName,
+                        capacity: 30, // Default capacity since it's not in the data
+                        day: selectedDay,
+                        timeString: classTime,
                         startMinutes: selectedStartMinutes,
                         endMinutes: selectedEndMinutes,
                         isBooked: false
                     });
                 });
-                
-                console.log('[updateAvailableRooms] Room schedules initialized:', Array.from(roomSchedules.entries()));
                 
                 // Mark rooms as booked based on instructor schedules
                 console.log('[updateAvailableRooms] Checking for booked rooms:');
@@ -573,7 +572,7 @@
                         }
                         
                         // Check if this instructor's booking conflicts with the selected time
-                        if (instructor.day.trim().toLowerCase() === selectedDay.toLowerCase() &&
+                        if (instructor.day && instructor.day.trim().toLowerCase() === selectedDay.toLowerCase() &&
                             instructorStartMinutes === selectedStartMinutes &&
                             instructorEndMinutes === selectedEndMinutes) {
                             console.log(`  Room '${instructor.roomName}' is booked by instructor '${instructor.name}'`);
