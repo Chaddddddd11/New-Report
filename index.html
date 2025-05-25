@@ -648,11 +648,24 @@
           
           // If instructor found, fill the cell with their info
           if (instructor) {
+            // Generate or get color for this instructor
+            const instructorName = instructor.name || 'Unknown';
+            const instructorColor = stringToColor(instructorName);
+            const textColor = getContrastColor(instructorColor);
+            const borderColor = adjustColor(instructorColor, -30);
+            
             cell.innerHTML = `
-              <div class="schedule-entry">
-                <div class="subject">${instructor.subject || 'N/A'}</div>
-                <div class="instructor">${instructor.name || 'N/A'}</div>
-                <div class="room">${instructor.roomName || 'TBA'}</div>
+              <div class="schedule-entry" 
+                   style="background-color: ${instructorColor};
+                          color: ${textColor};
+                          border-left: 4px solid ${borderColor};
+                          border-radius: 4px;
+                          padding: 8px;
+                          margin: 2px 0;
+                          box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+                <div class="subject" style="font-weight: bold; margin-bottom: 4px;">${instructor.subject || 'N/A'}</div>
+                <div class="instructor" style="font-size: 0.9em;">${instructor.name || 'N/A'}</div>
+                <div class="room" style="font-size: 0.8em; opacity: 0.9;">${instructor.roomName || 'TBA'}</div>
               </div>
             `;
           }
