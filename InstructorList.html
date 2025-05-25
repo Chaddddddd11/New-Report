@@ -324,6 +324,7 @@
                         <th>Day</th>
                         <th>Time</th>
                         <th>Room</th>
+                        <th>Color</th>
                         <th>Actions</th>
                     </tr>
                 </thead>
@@ -382,6 +383,9 @@
                     `${instructor.year}${instructor.year.endsWith('st') || instructor.year.endsWith('nd') || 
                     instructor.year.endsWith('rd') || instructor.year.endsWith('th') ? '' : ' Year'}` : 'N/A';
                 
+                // Default to maroon if no color is set
+                const scheduleColor = instructor.scheduleColor || '#800000';
+                
                 row.innerHTML = `
                     <td>${instructor.name || 'N/A'}</td>
                     <td>${instructor.subject || 'N/A'}</td>
@@ -391,10 +395,12 @@
                     <td>${instructor.day || 'N/A'}</td>
                     <td>${instructor.time || 'N/A'}</td>
                     <td>${instructor.roomName || 'N/A'}</td>
+                    <td>
+                        <div style="width: 24px; height: 24px; background-color: ${scheduleColor}; border: 1px solid #ccc; border-radius: 4px; margin: 0 auto;"></div>
+                    </td>
                     <td class="actions">
                         <button class="btn-edit" data-id="${instructor.id}">Edit</button>
-                    </td>
-                `;
+                    </td>`;
                 
                 instructorTableBody.appendChild(row);
             });
