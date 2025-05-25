@@ -832,22 +832,50 @@
             }
         }
 
-        // Add event listeners for form field changes
-        if (daySelect) daySelect.addEventListener('change', updateRoomSelectState);
-        if (timeSelect) timeSelect.addEventListener('change', updateRoomSelectState);
-        
-        // Initial state setup
-        updateRoomSelectState();
-        
-        // Also update when course/year/section changes (for capacity checking)
-        [courseSelect, yearSelect, sectionSelect].forEach(select => {
-            if (select) {
-                select.addEventListener('change', () => {
-                    if (daySelect.value && timeSelect.value) {
-                        updateAvailableRooms();
+        // Initialize event listeners
+        function initializeEventListeners() {
+            // Add event listeners for form field changes
+            if (daySelect) daySelect.addEventListener('change', updateRoomSelectState);
+            if (timeSelect) timeSelect.addEventListener('change', updateRoomSelectState);
+            
+            // Also update when course/year/section changes (for capacity checking)
+            [courseSelect, yearSelect, sectionSelect].forEach(select => {
+                if (select) {
+                    select.addEventListener('change', () => {
+                        if (daySelect.value && timeSelect.value) {
+                            updateAvailableRooms();
+                        }
+                    });
+                }
+            });
+            
+            // Initialize delete button event listener
+            const deleteBtn = document.getElementById('deleteBtn');
+            if (deleteBtn) {
+                deleteBtn.addEventListener('click', async (e) => {
+                    e.preventDefault();
+                    if (confirm('Are you sure you want to delete this instructor?')) {
+                        try {
+                            showLoading(true);
+                            await deleteDoc(doc(db, "Instructors", currentInstructorId));
+                            showSuccess('Instructor deleted successfully!');
+                            setTimeout(() => {
+                                window.location.href = 'InstructorList.html';
+                            }, 1500);
+                        } catch (error) {
+                            console.error('Error deleting instructor:', error);
+                            showError('Failed to delete instructor. Please try again.');
+                            showLoading(false);
+                        }
                     }
                 });
             }
+        }
+        
+        // Initial state setup
+        document.addEventListener('DOMContentLoaded', () => {
+            initializeEventListeners();
+            updateRoomSelectState();
         });
 
         async function registerInstructor() {
