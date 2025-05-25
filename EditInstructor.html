@@ -7,13 +7,14 @@
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --primary-color: #610000;
-            --secondary-color: #800a0a;
-            --accent-color: #F7B32D;
-            --background-color: #F4F7F6;
+            --primary-color: #8B0000;  /* Dark Red */
+            --secondary-color: #A52A2A;  /* Brown Red */
+            --accent-color: #D4AF37;  /* Gold */
+            --background-color: #F5F5DC;  /* Beige */
             --text-color: #333;
-            --error-color: #dc3545;
-            --success-color: #28a745;
+            --error-color: #DC143C;  /* Crimson */
+            --success-color: #228B22;  /* Forest Green */
+            --input-bg: #FFF8DC;  /* Cornsilk */
         }
 
         * {
@@ -24,7 +25,11 @@
 
         body {
             font-family: 'Roboto', Arial, sans-serif;
-            background-color: var(--background-color);
+            background-image: linear-gradient(rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.9)), 
+                            url('https://the-post-assets.sgp1.digitaloceanspaces.com/2023/03/DHVSU_thumbnail.png');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
             min-height: 100vh;
             padding: 20px;
             color: var(--text-color);
@@ -32,13 +37,14 @@
         }
 
         .container {
-            background-color: white;
+            background-color: rgba(255, 255, 255, 0.95);
             border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-            padding: 25px;
-            margin: 0 auto;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+            margin: 20px auto;
             max-width: 800px;
             position: relative;
+            border: 1px solid #ddd;
         }
 
         .back-btn {
@@ -77,21 +83,34 @@
         input[type="text"],
         select {
             width: 100%;
-            padding: 10px;
-            border: 1px solid #ddd;
+            padding: 12px 15px;
+            border: 1px solid #ccc;
             border-radius: 4px;
             font-size: 16px;
+            background-color: var(--input-bg);
+            transition: all 0.3s ease;
+        }
+        
+        input[type="text"]:focus,
+        select:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.2rem rgba(139, 0, 0, 0.25);
+            outline: none;
         }
 
         button {
             background-color: var(--primary-color);
             color: white;
             border: none;
-            padding: 10px 20px;
+            padding: 12px 24px;
             border-radius: 4px;
             cursor: pointer;
             font-size: 16px;
-            margin-right: 10px;
+            margin-right: 15px;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            transition: all 0.3s ease;
         }
 
         button:hover {
@@ -100,10 +119,13 @@
 
         .btn-delete {
             background-color: var(--error-color);
+            margin-left: 10px;
         }
 
         .btn-delete:hover {
-            background-color: #c82333;
+            background-color: #B22222;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
         }
 
         .error-message {
@@ -263,21 +285,37 @@
 
         // Load instructor data
         async function loadInstructorData() {
+            console.log('Loading instructor data for ID:', instructorId);
+            
             if (!instructorId) {
-                showError('No instructor ID provided');
+                const errorMsg = 'No instructor ID provided';
+                console.error(errorMsg);
+                showError(errorMsg);
+                setTimeout(() => window.location.href = 'InstructorList.html', 2000);
                 return;
             }
 
             try {
+                // Show loading state
+                document.getElementById('updateBtn').disabled = true;
+                document.getElementById('updateBtn').textContent = 'Loading...';
+                
                 const docRef = db.collection('Instructors').doc(instructorId);
                 const doc = await docRef.get();
                 
                 if (!doc.exists) {
-                    showError('Instructor not found');
+                    const errorMsg = `No instructor found with ID: ${instructorId}`;
+                    console.error(errorMsg);
+                    showError('Instructor not found. Redirecting...');
+                    setTimeout(() => window.location.href = 'InstructorList.html', 2000);
                     return;
                 }
                 
                 const data = doc.data();
+                console.log('Retrieved instructor data:', data);
+                
+                // Store the original data for comparison
+                window.originalInstructorData = { ...data };
                 
                 // Populate form fields
                 nameInput.value = data.name || '';
@@ -288,18 +326,60 @@
                 daySelect.value = data.day || '';
                 timeSelect.value = data.time || '';
                 
-                // Load rooms and set the selected room
+                // Load rooms first
+                console.log('Loading rooms...');
                 await loadRooms();
+                
+                // If room is already set, try to select it
                 if (data.room) {
-                    roomSelect.value = data.room;
+                    console.log('Setting room to:', data.room);
+                    // Small delay to ensure room options are populated
+                    setTimeout(() => {
+                        roomSelect.value = data.room;
+                        console.log('Room set to:', roomSelect.value);
+                    }, 500);
                 }
                 
-                // Load available rooms based on day and time
-                updateAvailableRooms();
+                // Set up event listeners for room updates
+                daySelect.addEventListener('change', handleRoomUpdate);
+                timeSelect.addEventListener('change', handleRoomUpdate);
+                
+                // Initial update of available rooms
+                console.log('Updating available rooms...');
+                await updateAvailableRooms();
+                
+                // Re-enable the update button
+                document.getElementById('updateBtn').disabled = false;
+                document.getElementById('updateBtn').textContent = 'Update Instructor';
+                
+                console.log('Instructor data loaded successfully');
                 
             } catch (error) {
-                console.error('Error loading instructor:', error);
-                showError('Failed to load instructor data');
+                const errorMsg = `Error loading instructor: ${error.message}`;
+                console.error(errorMsg, error);
+                showError('Failed to load instructor data. Please try again.');
+                
+                // Re-enable the update button even if there's an error
+                document.getElementById('updateBtn').disabled = false;
+                document.getElementById('updateBtn').textContent = 'Update Instructor';
+            }
+        }
+        
+        // Handle room updates when day or time changes
+        async function handleRoomUpdate() {
+            console.log('Day or time changed, updating rooms...');
+            await updateAvailableRooms();
+            
+            // If the previously selected room is still available, keep it selected
+            const currentRoom = roomSelect.value;
+            if (currentRoom) {
+                const optionExists = Array.from(roomSelect.options).some(option => 
+                    option.value === currentRoom && !option.disabled
+                );
+                
+                if (!optionExists) {
+                    roomSelect.value = '';
+                }
             }
         }
 
@@ -327,13 +407,21 @@
         async function updateAvailableRooms() {
             const day = daySelect.value;
             const time = timeSelect.value;
+            const currentRoom = roomSelect.value;
+            
+            console.log(`Updating rooms for day: ${day}, time: ${time}`);
             
             if (!day || !time) {
                 roomSelect.disabled = true;
+                roomSelect.innerHTML = '<option value="">Please select day and time first</option>';
                 return;
             }
             
             try {
+                // Store the current room selection
+                const previousRoom = currentRoom;
+                
+                // Show loading state
                 roomSelect.disabled = true;
                 roomSelect.innerHTML = '<option value="">Loading available rooms...</option>';
                 
@@ -351,23 +439,63 @@
                     }
                 });
                 
+                console.log('Booked rooms:', Array.from(bookedRooms));
+                
                 // Reload all rooms
                 await loadRooms();
                 
-                // Disable booked rooms
+                // Enable all options first
                 Array.from(roomSelect.options).forEach(option => {
-                    if (option.value && bookedRooms.has(option.value)) {
-                        option.disabled = true;
-                        option.textContent += ' (Booked)';
+                    option.disabled = false;
+                });
+                
+                // Disable booked rooms and mark them
+                let hasAvailableRooms = false;
+                Array.from(roomSelect.options).forEach(option => {
+                    if (option.value) {  // Skip the default/placeholder option
+                        if (bookedRooms.has(option.value)) {
+                            option.disabled = true;
+                            option.textContent += ' (Booked)';
+                        } else {
+                            hasAvailableRooms = true;
+                        }
                     }
                 });
                 
+                // If the previously selected room is still available, keep it selected
+                if (previousRoom) {
+                    const option = Array.from(roomSelect.options).find(
+                        opt => opt.value === previousRoom && !opt.disabled
+                    );
+                    
+                    if (option) {
+                        roomSelect.value = previousRoom;
+                        console.log('Keeping previous room selection:', previousRoom);
+                    } else if (hasAvailableRooms) {
+                        // Select the first available room if previous is no longer available
+                        const firstAvailable = Array.from(roomSelect.options).find(
+                            opt => opt.value && !opt.disabled
+                        );
+                        if (firstAvailable) {
+                            roomSelect.value = firstAvailable.value;
+                            console.log('Selected first available room:', firstAvailable.value);
+                        }
+                    }
+                }
+                
                 roomSelect.disabled = false;
+                
+                if (!hasAvailableRooms && roomSelect.options.length > 1) {
+                    showError('No rooms available for the selected day and time');
+                }
+                
+                console.log('Available rooms updated');
                 
             } catch (error) {
                 console.error('Error updating available rooms:', error);
                 showError('Failed to update room availability');
                 roomSelect.innerHTML = '<option value="">Error loading rooms</option>';
+                roomSelect.disabled = true;
             }
         }
 
