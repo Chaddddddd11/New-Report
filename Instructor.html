@@ -280,6 +280,12 @@
                 </select>
             </div>
 
+            <div class="form-group">
+                <label for="scheduleColor">Schedule Color*</label>
+                <input type="color" id="scheduleColor" value="#800000" required>
+                <div class="color-preview" style="display: inline-block; width: 20px; height: 20px; margin-left: 10px; border: 1px solid #ccc; vertical-align: middle; background-color: #800000;"></div>
+            </div>
+
             <div class="form-group" id="studentCapacityContainer" style="display: none; padding: 10px; background-color: #f8f9fa; border-radius: 4px; margin-bottom: 15px;">
                 <strong>Student Capacity: </strong><span id="studentCapacity">-</span>
             </div>
@@ -375,10 +381,16 @@
         const sectionSelect = document.getElementById('section');
         const daySelect = document.getElementById('day');
         const timeSelect = document.getElementById('classTime');
-        const roomSelect = document.getElementById('room'); // This was the source of the ReferenceError
-        const roomAvailableSelect = document.getElementById('room'); // Alias for clarity if used interchangeably, or ensure ID is 'room'
-        const errorMessageDiv = document.getElementById('errorMessage');
+        const roomSelect = document.getElementById('room');
+        const scheduleColorInput = document.getElementById('scheduleColor');
+        const colorPreview = document.querySelector('.color-preview');
         const submitBtn = document.getElementById('submitBtn');
+        const form = document.querySelector('form');
+        
+        // Update color preview when color changes
+        scheduleColorInput.addEventListener('input', (e) => {
+            colorPreview.style.backgroundColor = e.target.value;
+        });
 
         // Global state variables (example, adjust as needed)
         let isUpdateMode = false;
@@ -523,10 +535,16 @@
             console.log('Populating form with instructor data:', instructor);
             if (!instructor) return;
             
-            // Set basic fields
+            // Set basic fieldsa
             document.getElementById('name').value = instructor.name || '';
             document.getElementById('subject').value = instructor.subject || '';
             document.getElementById('course').value = instructor.course || '';
+            
+            // Set schedule color if it exists, otherwise use default maroon
+            if (instructor.scheduleColor) {
+                scheduleColorInput.value = instructor.scheduleColor;
+                colorPreview.style.backgroundColor = instructor.scheduleColor;
+            }
             
             // Set year level if it exists
             if (instructor.year) {
@@ -1035,7 +1053,8 @@
                     day,
                     time, // Store as 'HH:00-HH:00'
                     roomName,
-                    timestamp: new Date() // For ordering or tracking
+                    scheduleColor: scheduleColorInput.value,
+                    timestamp: serverTimestamp()
                 };
 
                 if (isUpdateMode && currentInstructorId) {
