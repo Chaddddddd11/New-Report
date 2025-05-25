@@ -497,9 +497,14 @@
             const year = yearSelect.value;
             const section = sectionSelect.value;
             
-            if (!selectedDay || !classTime || !course || !year || !section) {
-                roomSelect.innerHTML = '<option value="">Select all fields first</option>';
+            if (!selectedDay || !classTime) {
+                roomSelect.innerHTML = '<option value="">Select day and time first</option>';
                 return;
+            }
+            
+            // We'll still check these for capacity validation but won't block room selection
+            if (!course || !year || !section) {
+                console.log('Course/year/section not selected, using default capacity');
             }
             
             try {
@@ -632,15 +637,39 @@
             return 30;
         }
 
+        // Function to update room select state
+        function updateRoomSelectState() {
+            const daySelected = daySelect && daySelect.value;
+            const timeSelected = timeSelect && timeSelect.value;
+            const shouldEnable = daySelected && timeSelected;
+            
+            if (roomSelect) {
+                roomSelect.disabled = !shouldEnable;
+                if (!shouldEnable) {
+                    roomSelect.innerHTML = '<option value="">Select day and time first</option>';
+                } else {
+                    updateAvailableRooms();
+                }
+            }
+        }
+
         // Add event listeners for form field changes
-        [daySelect, timeSelect, courseSelect, yearSelect, sectionSelect].forEach(select => {
+        if (daySelect) daySelect.addEventListener('change', updateRoomSelectState);
+        if (timeSelect) timeSelect.addEventListener('change', updateRoomSelectState);
+        
+        // Initial state setup
+        updateRoomSelectState();
+        
+        // Also update when course/year/section changes (for capacity checking)
+        [courseSelect, yearSelect, sectionSelect].forEach(select => {
             if (select) {
-                select.addEventListener('change', updateAvailableRooms);
+                select.addEventListener('change', () => {
+                    if (daySelect.value && timeSelect.value) {
+                        updateAvailableRooms();
+                    }
+                });
             }
         });
-        
-        // Initial update of available rooms
-        updateAvailableRooms();
 
         async function registerInstructor() {
             // Validate required fields
