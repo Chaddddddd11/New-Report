@@ -467,56 +467,207 @@
             }
         }
 
+        // Helper function to convert time string to minutes (24-hour format)
+        function timeToMinutes(timeStr) {
+            if (!timeStr) return 0;
+            const [hours, minutes] = timeStr.split(':').map(Number);
+            return hours * 60 + (minutes || 0);
+        }
+
+        // Function to check if two time ranges overlap
+        function hasTimeConflict(timeRange1, timeRange2) {
+            if (!timeRange1 || !timeRange2) return false;
+            
+            const [start1, end1] = timeRange1.split('-').map(t => timeToMinutes(t.trim()));
+            const [start2, end2] = timeRange2.split('-').map(t => timeToMinutes(t.trim()));
+            
+            return (start1 < end2 && end1 > start2);
+        }
+
+        // Update available rooms based on selected day and time
+        async function updateAvailableRooms() {
+            const selectedDay = daySelect.value;
+            const classTime = timeSelect.value;
+            
+            if (!selectedDay || !classTime) {
+                roomSelect.innerHTML = '<option value="">Select day and time first</option>';
+                return;
+            }
+            
+            roomSelect.innerHTML = '<option value="">Loading available rooms...</option>';
+            
+            try {
+                // Get all rooms
+                const roomsSnapshot = await getDocs(roomsCollectionRef);
+                const roomSchedules = new Map();
+                
+                // Initialize room schedules
+                roomsSnapshot.docs.forEach(roomDoc => {
+                    roomSchedules.set(roomDoc.data().name, []);
+                });
+                
+                // Get all instructors for the selected day
+                const instructorsSnapshot = await getDocs(query(
+                    instructorsCollectionRef,
+                    where("day", "==", selectedDay)
+                ));
+                
+                // Process instructor schedules
+                instructorsSnapshot.forEach(doc => {
+                    const instructor = doc.data();
+                    if (instructor.roomName && roomSchedules.has(instructor.roomName)) {
+                        roomSchedules.get(instructor.roomName).push(instructor.time);
+                    }
+                });
+                
+                // Update room dropdown
+                roomSelect.innerHTML = '<option value="">Select a room</option>';
+                let availableRooms = 0;
+                
+                roomsSnapshot.docs.forEach(roomDoc => {
+                    const roomData = roomDoc.data();
+                    const scheduledTimes = roomSchedules.get(roomData.name) || [];
+                    
+                    // Check if room is available at the selected time
+                    const isAvailable = !scheduledTimes.some(scheduledTime => 
+                        hasTimeConflict(classTime, scheduledTime)
+                    );
+                    
+                    if (isAvailable) {
+                        const option = document.createElement('option');
+                        option.value = roomDoc.id;
+                        option.textContent = `${roomData.name} (Capacity: ${roomData.capacity})`;
+                        roomSelect.appendChild(option);
+                        availableRooms++;
+                    }
+                });
+                
+                if (availableRooms === 0) {
+                    roomSelect.innerHTML = '<option value="">No available rooms at this time</option>';
+                }
+                
+            } catch (error) {
+                console.error('Error updating rooms:', error);
+                roomSelect.innerHTML = '<option value="">Error loading rooms</option>';
+                showError('Failed to load room availability. Please try again.');
+            }
+        }
+
+        // Add event listeners for day and time changes
+        if (daySelect && timeSelect) {
+            daySelect.addEventListener('change', updateAvailableRooms);
+            timeSelect.addEventListener('change', updateAvailableRooms);
+        }
+
         async function registerInstructor() {
             // Validate required fields
-            if (!nameInput || !nameInput.value.trim()) {
+            const name = nameInput.value.trim();
+            const subject = subjectInput.value.trim();
+            const course = courseSelect.value;
+            const year = yearSelect.value;
+            const section = sectionSelect.value;
+            const day = daySelect.value;
+            const time = timeSelect.value;
+            const roomId = roomSelect.value;
+            const roomName = roomSelect.options[roomSelect.selectedIndex]?.text.split(' (')[0];
+            
+            // Basic validation
+            if (!name) {
                 showError('Please enter instructor name');
                 return;
             }
-            if (!subjectInput || !subjectInput.value.trim()) {
+            if (!subject) {
                 showError('Please enter subject');
                 return;
             }
-            if (!courseSelect || !courseSelect.value) {
+            if (!course) {
                 showError('Please select a course');
                 return;
             }
-            if (!yearSelect || !yearSelect.value) {
+            if (!year) {
                 showError('Please select a year level');
                 return;
             }
-            if (!sectionSelect || !sectionSelect.value) {
+            if (!section) {
                 showError('Please select a section');
                 return;
             }
-            if (!daySelect || !daySelect.value) {
+            if (!day) {
                 showError('Please select a day');
                 return;
             }
-            if (!timeSelect || !timeSelect.value) {
+            if (!time) {
                 showError('Please select a time slot');
                 return;
             }
-            if (!roomSelect || !roomSelect.value) {
+            if (!roomId) {
                 showError('Please select a room');
                 return;
             }
-
-            const instructorData = {
-                name: nameInput.value.trim(),
-                subject: subjectInput.value.trim(),
-                course: courseSelect.value,
-                year: yearSelect.value,
-                section: sectionSelect.value,
-                day: daySelect.value,
-                time: timeSelect.value,
-                roomId: roomSelect.value,
-                roomName: roomSelect.options[roomSelect.selectedIndex].text,
-                scheduleColor: scheduleColorInput ? scheduleColorInput.value : '#800000',
-                timestamp: serverTimestamp()
-            };
-
+            
+            // Check for schedule conflicts
             try {
+                // Check for room availability
+                const roomConflictQuery = query(
+                    instructorsCollectionRef,
+                    where("day", "==", day),
+                    where("roomId", "==", roomId)
+                );
+                
+                const roomConflicts = await getDocs(roomConflictQuery);
+                let hasRoomConflict = false;
+                
+                roomConflicts.forEach(doc => {
+                    // Skip current instructor in update mode
+                    if (isUpdateMode && doc.id === currentInstructorId) return;
+                    
+                    const instructor = doc.data();
+                    if (hasTimeConflict(time, instructor.time)) {
+                        showError(`Room ${roomName} is already booked at ${instructor.time} on ${day}`);
+                        hasRoomConflict = true;
+                    }
+                });
+                
+                if (hasRoomConflict) return;
+                
+                // Check for instructor's schedule conflict
+                const instructorConflictQuery = query(
+                    instructorsCollectionRef,
+                    where("name", "==", name),
+                    where("day", "==", day)
+                );
+                
+                const instructorConflicts = await getDocs(instructorConflictQuery);
+                let hasInstructorConflict = false;
+                
+                instructorConflicts.forEach(doc => {
+                    // Skip current instructor in update mode
+                    if (isUpdateMode && doc.id === currentInstructorId) return;
+                    
+                    const instructor = doc.data();
+                    if (hasTimeConflict(time, instructor.time)) {
+                        showError(`Instructor ${name} already has a class at ${instructor.time} on ${day}`);
+                        hasInstructorConflict = true;
+                    }
+                });
+                
+                if (hasInstructorConflict) return;
+                
+                // If we get here, there are no conflicts
+                const instructorData = {
+                    name: name,
+                    subject: subject,
+                    course: course,
+                    year: year,
+                    section: section,
+                    day: day,
+                    time: time,
+                    roomId: roomId,
+                    roomName: roomName,
+                    scheduleColor: scheduleColorInput ? scheduleColorInput.value : '#800000',
+                    timestamp: serverTimestamp()
+                };
+
                 if (isUpdateMode && currentInstructorId) {
                     // Update existing instructor
                     await updateDoc(doc(db, "Instructors", currentInstructorId), instructorData);
@@ -533,10 +684,10 @@
                     window.location.href = 'InstructorList.html';
                 }, 1500);
             } catch (error) {
-                console.error('Error saving instructor:', error);
-                showError('Failed to save instructor. Please try again.');
+                console.error('Error processing registration:', error);
+                showError('An error occurred. Please try again.');
             }
-        }
+        } // End of registerInstructor function
     </script>
 </body>
 </html>
