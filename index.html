@@ -648,16 +648,17 @@
           
           // If instructor found, fill the cell with their info
           if (instructor) {
-            // Format room display with capacity on a new line if available
+            // Format room display with capacity in parentheses on the same line
             const roomName = instructor.roomName || 'TBA';
-            const roomCapacity = instructor.roomCapacity ? 
-              `<div class="room-capacity">Capacity: ${instructor.roomCapacity}</div>` : '';
+            const roomDisplay = instructor.roomCapacity 
+              ? `${roomName} (Capacity: ${instructor.roomCapacity})`
+              : roomName;
               
             cell.innerHTML = `
               <div class="schedule-entry">
                 <div class="subject">${instructor.subject || 'N/A'}</div>
                 <div class="instructor">${instructor.name || 'N/A'}</div>
-                <div class="room">${roomName}${roomCapacity ? '<br>' + roomCapacity : ''}</div>
+                <div class="room">${roomDisplay}</div>
               </div>
             `;
           }
