@@ -223,50 +223,50 @@
         </div>
 
         <form id="editInstructorForm">
-            <div class="form-group">
-                <label for="name">Instructor Name:</label>
+            <div class="form-group required">
+                <label for="name">Instructor Name*</label>
                 <input type="text" id="name" name="name" required>
             </div>
-            <div class="form-group">
-                <label for="subject">Subject:</label>
+            <div class="form-group required">
+                <label for="subject">Subject*</label>
                 <input type="text" id="subject" name="subject" required>
             </div>
-            <div class="form-group">
-                <label for="course">Course:</label>
+            <div class="form-group required">
+                <label for="course">Course*</label>
                 <select id="course" name="course" required>
                     <option value="">Select Course</option>
                     <option value="BSA">BSA</option>
-                    <option value="BSIT">BSIT</option>
-                    <option value="BSCS">BSCS</option>
-                    <option value="BSCE">BSCE</option>
-                    <option value="BSEE">BSEE</option>
-                    <option value="BSME">BSME</option>
-                    <option value="BSN">BSN</option>
-                    <option value="BSBA">BSBA</option>
+                    <option value="BSAIS">BSAIS</option>
+                    <option value="MSMarketing">MS Marketing</option>
+                    <option value="BSE">BSE</option>
+                    <option value="BSPublicAdministration">BS Public Administration</option>
                 </select>
             </div>
-            <div class="form-group">
-                <label for="year">Year Level:</label>
+            <div class="form-group required">
+                <label for="year">Year*</label>
                 <select id="year" name="year" required>
-                    <option value="">Select Year Level</option>
-                    <option value="1">1st Year</option>
-                    <option value="2">2nd Year</option>
-                    <option value="3">3rd Year</option>
-                    <option value="4">4th Year</option>
+                    <option value="">Select Year</option>
+                    <option value="1st">1st Year</option>
+                    <option value="2nd">2nd Year</option>
+                    <option value="3rd">3rd Year</option>
+                    <option value="4th">4th Year</option>
                 </select>
             </div>
-            <div class="form-group">
-                <label for="section">Section:</label>
+            <div class="form-group required">
+                <label for="section">Section*</label>
                 <select id="section" name="section" required>
                     <option value="">Select Section</option>
-                    <option value="A">A</option>
-                    <option value="B">B</option>
-                    <option value="C">C</option>
-                    <option value="D">D</option>
+                    <option value="A">Section A</option>
+                    <option value="B">Section B</option>
+                    <option value="C">Section C</option>
+                    <option value="D">Section D</option>
                 </select>
             </div>
-            <div class="form-group">
-                <label for="day">Day:</label>
+            <div class="form-group" id="studentCapacityContainer" style="display: none; padding: 10px; background-color: #f8f9fa; border-radius: 4px; margin-bottom: 15px;">
+                <strong>Student Capacity: </strong><span id="studentCapacity">-</span>
+            </div>
+            <div class="form-group required">
+                <label for="day">Day*</label>
                 <select id="day" name="day" required>
                     <option value="">Select Day</option>
                     <option value="Monday">Monday</option>
@@ -277,35 +277,32 @@
                     <option value="Saturday">Saturday</option>
                 </select>
             </div>
-            <div class="form-group">
-                <label for="time">Time:</label>
+            <div class="form-group required">
+                <label for="time">Class Time*</label>
                 <select id="time" name="time" required>
-                    <option value="">Select Time</option>
-                    <option value="07:00-08:00">07:00 AM - 08:00 AM</option>
-                    <option value="08:00-09:00">08:00 AM - 09:00 AM</option>
-                    <option value="09:00-10:00">09:00 AM - 10:00 AM</option>
-                    <option value="10:00-11:00">10:00 AM - 11:00 AM</option>
-                    <option value="11:00-12:00">11:00 AM - 12:00 PM</option>
-                    <option value="12:00-13:00">12:00 PM - 01:00 PM</option>
-                    <option value="13:00-14:00">01:00 PM - 02:00 PM</option>
-                    <option value="14:00-15:00">02:00 PM - 03:00 PM</option>
-                    <option value="15:00-16:00">03:00 PM - 04:00 PM</option>
-                    <option value="16:00-17:00">04:00 PM - 05:00 PM</option>
+                    <option value="">Select Class Time</option>
+                    <option value="07:00-08:00">07:00-08:00</option>
+                    <option value="08:00-09:00">08:00-09:00</option>
+                    <option value="09:00-10:00">09:00-10:00</option>
+                    <option value="10:00-11:00">10:00-11:00</option>
+                    <option value="11:00-12:00">11:00-12:00</option>
+                    <option value="12:00-13:00">12:00-13:00</option>
+                    <option value="13:00-14:00">13:00-14:00</option>
+                    <option value="14:00-15:00">14:00-15:00</option>
+                    <option value="15:00-16:00">15:00-16:00</option>
+                    <option value="16:00-17:00">16:00-17:00</option>
                 </select>
             </div>
-            <div class="form-group">
-                <label for="room">Room:</label>
-                <select id="room" name="room" required disabled>
-                    <option value="">Select day and time first</option>
+            <div class="form-group required">
+                <label for="room">Room*</label>
+                <select id="room" name="room" required>
+                    <option value="">Select course, year, section, day and time</option>
                 </select>
             </div>
-            <div class="form-group">
-                <label for="scheduleColor">Schedule Color:</label>
-                <input type="color" id="scheduleColor" name="scheduleColor" value="#800000">
-            </div>
+            <div id="errorMessage" class="error-message"></div>
             <div class="form-actions">
-                <button type="button" id="updateBtn" class="btn btn-primary">Update Instructor</button>
-                <button type="button" id="deleteBtn" class="btn btn-danger">Delete Instructor</button>
+                <button type="button" id="updateBtn" class="btn">Update Instructor</button>
+                <button type="button" id="deleteBtn" class="btn btn-delete">Delete Instructor</button>
             </div>
         </form>
     </div>
@@ -314,7 +311,26 @@
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
-    <script>
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+        import { 
+            getFirestore, 
+            collection, 
+            addDoc, 
+            getDocs, 
+            query, 
+            where,
+            doc, 
+            getDoc, 
+            updateDoc,
+            deleteDoc,
+            serverTimestamp
+        } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
         // Your web app's Firebase configuration
         const firebaseConfig = {
             apiKey: "AIzaSyDeqxzp_-kKjM3hPr6CLGfTn38e4swSKbo",
@@ -326,14 +342,12 @@
         };
 
         // Initialize Firebase
-        const app = firebase.initializeApp(firebaseConfig);
-        const db = firebase.firestore();
-        const auth = firebase.auth();
-        
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
         // Collections
-        const instructorsCollection = db.collection('Instructors');
-        const roomsCollection = db.collection('Rooms');
-        const coursesCollection = db.collection('Courses');
+        const instructorsCollectionRef = collection(db, 'Instructors');
+        const roomsCollectionRef = collection(db, 'rooms');
 
         // DOM Elements
         const nameInput = document.getElementById('name');
@@ -344,47 +358,46 @@
         const daySelect = document.getElementById('day');
         const timeSelect = document.getElementById('time');
         const roomSelect = document.getElementById('room');
-        const scheduleColorInput = document.getElementById('scheduleColor');
         const updateBtn = document.getElementById('updateBtn');
         const deleteBtn = document.getElementById('deleteBtn');
         const errorMessage = document.getElementById('errorMessage');
+        const studentCapacitySpan = document.getElementById('studentCapacity');
+        const studentCapacityContainer = document.getElementById('studentCapacityContainer');
         
         // Get URL parameters and initialize instructor data
         const urlParams = new URLSearchParams(window.location.search);
         const instructorId = urlParams.get('id');
         let currentInstructor = null;
-
+        
         // Student capacity map (course -> year -> section -> capacity)
         const studentCapacityMap = {
             'BSA': {
-                '1': { 'A': 30, 'B': 30, 'C': 30, 'D': 30 },
-                '2': { 'A': 25, 'B': 25, 'C': 25, 'D': 25 },
-                '3': { 'A': 20, 'B': 20, 'C': 20, 'D': 20 },
-                '4': { 'A': 15, 'B': 15, 'C': 15, 'D': 15 }
+                '1st': { 'A': 30, 'B': 30, 'C': 30, 'D': 30 },
+                '2nd': { 'A': 25, 'B': 25, 'C': 25, 'D': 25 },
+                '3rd': { 'A': 20, 'B': 20, 'C': 20, 'D': 20 },
+                '4th': { 'A': 15, 'B': 15, 'C': 15, 'D': 15 }
             },
-            'BSCS': {
-                '1': { 'A': 30, 'B': 30 },
-                '2': { 'A': 25, 'B': 25 },
-                '3': { 'A': 20, 'B': 20 },
-                '4': { 'A': 15, 'B': 15 }
+            'BSAIS': {
+                '1st': { 'A': 30, 'B': 30 },
+                '2nd': { 'A': 25, 'B': 25 },
+                '3rd': { 'A': 20, 'B': 20 },
+                '4th': { 'A': 15, 'B': 15 }
             },
-            'BSIT': {
-                '1': { 'A': 35, 'B': 35 },
-                '2': { 'A': 30, 'B': 30 },
-                '3': { 'A': 25, 'B': 25 },
-                '4': { 'A': 20, 'B': 20 }
+            'BSE': {
+                '1st': { 'A': 25, 'B': 25 },
+                '2nd': { 'A': 20, 'B': 20 },
+                '3rd': { 'A': 15, 'B': 15 },
+                '4th': { 'A': 10, 'B': 10 }
             },
-            'BSCE': {
-                '1': { 'A': 30 },
-                '2': { 'A': 25 },
-                '3': { 'A': 20 },
-                '4': { 'A': 15 }
+            'BSPublicAdministration': {
+                '1st': { 'A': 25 },
+                '2nd': { 'A': 20 },
+                '3rd': { 'A': 15 },
+                '4th': { 'A': 10 }
             },
-            'BSME': {
-                '1': { 'A': 25 },
-                '2': { 'A': 20 },
-                '3': { 'A': 15 },
-                '4': { 'A': 10 }
+            'MSMarketing': {
+                '1st': { 'A': 20 },
+                '2nd': { 'A': 15 }
             },
             'BSEE': {
                 '1': { 'A': 25 },
@@ -412,40 +425,37 @@
 
         // Load instructor data
         async function loadInstructorData() {
-            if (!instructorId) {
-                showError('No instructor ID provided');
-                return;
-            }
+            if (!instructorId) return;
 
             try {
-                const doc = await instructorsCollection.doc(instructorId).get();
-                if (!doc.exists) {
-                    nameInput.value = currentInstructor.name || '';
-                    subjectInput.value = currentInstructor.subject || '';
-                    courseSelect.value = currentInstructor.course || '';
-                    yearSelect.value = currentInstructor.year || '';
-                    sectionSelect.value = currentInstructor.section || '';
-                    daySelect.value = currentInstructor.day || '';
-                    timeSelect.value = currentInstructor.time || '';
+                const docRef = doc(db, 'Instructors', instructorId);
+                const docSnap = await getDoc(docRef);
+                
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    currentInstructor = data;
                     
-                    // Set color if it exists
-                    if (scheduleColorInput && currentInstructor.scheduleColor) {
-                        scheduleColorInput.value = currentInstructor.scheduleColor;
-                    }
+                    // Populate form fields
+                    nameInput.value = data.name || '';
+                    subjectInput.value = data.subject || '';
+                    courseSelect.value = data.course || '';
+                    yearSelect.value = data.year || '';
+                    sectionSelect.value = data.section || '';
+                    daySelect.value = data.day || '';
+                    timeSelect.value = data.time || '';
                     
-                    // Update room select state based on day and time
-                    updateRoomSelectState();
+                    // Update student capacity and available rooms
+                    updateStudentCapacity();
+                    updateAvailableRooms();
                     
-                    // If we have a room name, set it after a short delay to ensure room list is loaded
-                    if (currentInstructor.roomName) {
-                        setTimeout(() => {
-                            if (roomSelect) {
-                                roomSelect.value = currentInstructor.roomName;
-                                console.log('Set room to:', currentInstructor.roomName);
-                            }
-                        }, 1000);
-                    }
+                    // Set the room after a short delay to ensure options are loaded
+                    setTimeout(() => {
+                        if (data.roomName) {
+                            roomSelect.value = data.roomName;
+                        }
+                    }, 1000);
                 } else {
+                    console.error('No such document!');
                     showError('Instructor not found');
                 }
             } catch (error) {
@@ -548,7 +558,7 @@
         async function updateAvailableRooms() {
             console.log('=== UPDATING AVAILABLE ROOMS ===');
             const selectedDay = daySelect.value;
-            const classTime = classTimeSelect.value;
+            const classTime = timeSelect.value;
             const course = courseSelect.value;
             const year = yearSelect.value;
             const section = sectionSelect.value;
@@ -565,67 +575,53 @@
                 // Get student capacity for the selected course/year/section
                 const studentCapacity = studentCapacityMap[course]?.[year]?.[section] || 0;
                 
-                // Normalize the selected day for comparison
-                const selectedDayLower = selectedDay.trim().toLowerCase();
+                // Get all rooms and instructors in parallel
+                const [roomsSnapshot, instructorsSnapshot] = await Promise.all([
+                    getDocs(collection(db, 'rooms')),
+                    getDocs(query(
+                        collection(db, 'Instructors'),
+                        where('day', '==', selectedDay),
+                        where('time', '==', classTime)
+                    ))
+                ]);
                 
-                // 1. First, get all rooms for the selected day (single field query doesn't need composite index)
-                const roomsSnapshot = await db.collection('room')
-                    .where('day', '==', selectedDay)
-                    .get();
-                
-                console.log('=== ROOMS FROM FIRESTORE ===');
-                console.log('Querying for day:', selectedDay);
-                
-                // Filter rooms by capacity in memory
-                const rooms = [];
-                roomsSnapshot.forEach(doc => {
-                    const room = { id: doc.id, ...doc.data() };
-                    // Convert capacity to number for comparison
-                    room.capacity = parseInt(room.capacity) || 0;
-                    if (room.capacity >= studentCapacity) {
-                        rooms.push(room);
-                    }
-                });
-                
-                console.log(`Found ${rooms.length} rooms with sufficient capacity (>= ${studentCapacity})`);
-                
-                // 2. Get all instructors that might be using rooms at this time
-                const [startTime, endTime] = classTime.split('-').map(t => t.trim());
-                
-                // Get all instructors who are booked at this time
-                const instructorsSnapshot = await db.collection('Instructors')
-                    .where('day', '==', selectedDay)
-                    .where('time', '==', classTime)
-                    .get();
+                console.log(`Found ${roomsSnapshot.docs.length} rooms and ${instructorsSnapshot.docs.length} instructors`);
                 
                 // Get list of booked room names
                 const bookedRoomNames = new Set();
                 instructorsSnapshot.forEach(doc => {
-                    const instructor = doc.data();
-                    if (instructor.roomName) {
-                        bookedRoomNames.add(instructor.roomName);
+                    // Skip current instructor when checking for conflicts
+                    if (doc.id !== instructorId) {
+                        const instructor = doc.data();
+                        if (instructor.roomName) {
+                            bookedRoomNames.add(instructor.roomName);
+                        }
                     }
                 });
                 
                 console.log('Booked rooms at this time:', Array.from(bookedRoomNames));
                 
-                // 3. Filter available rooms
+                // Filter available rooms
                 const availableRooms = [];
                 roomsSnapshot.forEach(doc => {
                     const room = { id: doc.id, ...doc.data() };
-                    const isBooked = bookedRoomNames.has(room.roomName || room.name);
+                    const roomName = room.roomName || room.name;
+                    const isBooked = bookedRoomNames.has(roomName);
+                    const roomCapacity = parseInt(room.capacity) || 0;
+                    const hasCapacity = roomCapacity >= studentCapacity;
                     
-                    console.log(`Room ${room.roomName || room.name}:`, {
+                    console.log(`Room ${roomName}:`, {
                         isBooked,
-                        capacity: room.capacity,
-                        studentCapacity: studentCapacity
+                        roomCapacity,
+                        studentCapacity,
+                        hasCapacity
                     });
                     
-                    if (!isBooked && room.capacity >= studentCapacity) {
+                    if (!isBooked && hasCapacity) {
                         availableRooms.push({
                             id: room.id,
-                            name: room.roomName || room.name,
-                            capacity: room.capacity
+                            name: roomName,
+                            capacity: roomCapacity
                         });
                     }
                 });
@@ -634,9 +630,13 @@
                 
                 // Update room select
                 roomSelect.innerHTML = '';
+                
+                // Add default option
                 const defaultOption = document.createElement('option');
                 defaultOption.value = '';
-                defaultOption.textContent = 'Select a room';
+                defaultOption.textContent = availableRooms.length > 0 
+                    ? 'Select a room' 
+                    : 'No rooms available';
                 roomSelect.appendChild(defaultOption);
                 
                 // Add available rooms to select
@@ -646,23 +646,23 @@
                     option.textContent = `${room.name} (Capacity: ${room.capacity})`;
                     
                     // Select the room if it matches the current instructor's room
-                    if (currentInstructor?.room === room.name) {
+                    if (currentInstructor?.roomName === room.name) {
                         option.selected = true;
                     }
                     
                     roomSelect.appendChild(option);
                 });
                 
-                // If current room is not in available rooms but exists, add it
-                if (currentInstructor?.room && !availableRooms.some(r => r.name === currentInstructor.room)) {
-                    const currentRoom = roomsSnapshot.docs
+                // If current room is not in available rooms but exists, add it as an option
+                if (currentInstructor?.roomName && !availableRooms.some(r => r.name === currentInstructor.roomName)) {
+                    const currentRoom = Array.from(roomsSnapshot.docs)
                         .map(doc => ({ id: doc.id, ...doc.data() }))
-                        .find(r => (r.roomName === currentInstructor.room || r.name === currentInstructor.room));
+                        .find(r => (r.roomName === currentInstructor.roomName || r.name === currentInstructor.roomName));
                     
                     if (currentRoom) {
                         const option = document.createElement('option');
-                        option.value = currentInstructor.room;
-                        option.textContent = `${currentInstructor.room} (Capacity: ${currentRoom.capacity}) - Currently Booked`;
+                        option.value = currentInstructor.roomName;
+                        option.textContent = `${currentInstructor.roomName} (Capacity: ${currentRoom.capacity}) - Currently Booked`;
                         option.selected = true;
                         roomSelect.appendChild(option);
                     }
@@ -671,9 +671,113 @@
                 roomSelect.disabled = false;
             } catch (error) {
                 console.error('Error updating available rooms:', error);
-                roomSelect.innerHTML = '<option value="">Error loading rooms</option>';
+                roomSelect.innerHTML = '<option value="">Error loading rooms. Please try again.</option>';
                 roomSelect.disabled = true;
             }
+        }
+        
+        // Update instructor
+        async function updateInstructor() {
+            const name = nameInput.value.trim();
+            const subject = subjectInput.value.trim();
+            const course = courseSelect.value;
+            const year = yearSelect.value;
+            const section = sectionSelect.value;
+            const day = daySelect.value;
+            const time = timeSelect.value;
+            const roomName = roomSelect.value;
+            
+            // Basic validation
+            if (!name || !subject || !course || !year || !section || !day || !time || !roomName) {
+                showError('Please fill in all required fields');
+                return;
+            }
+            
+            try {
+                // Show loading state
+                updateBtn.disabled = true;
+                updateBtn.textContent = 'Updating...';
+                
+                // Check for room conflicts (excluding current instructor)
+                const roomConflictQuery = query(
+                    collection(db, 'Instructors'),
+                    where('day', '==', day),
+                    where('time', '==', time),
+                    where('roomName', '==', roomName)
+                );
+                
+                const roomConflicts = await getDocs(roomConflictQuery);
+                let hasRoomConflict = false;
+                
+                roomConflicts.forEach(doc => {
+                    // Skip current instructor when checking for conflicts
+                    if (doc.id !== instructorId) {
+                        hasRoomConflict = true;
+                    }
+                });
+                
+                if (hasRoomConflict) {
+                    showError(`Room ${roomName} is already booked at ${time} on ${day}`);
+                    updateBtn.disabled = false;
+                    updateBtn.textContent = 'Update Instructor';
+                    return;
+                }
+                
+                // Update instructor data
+                const instructorData = {
+                    name: name,
+                    subject: subject,
+                    course: course,
+                    year: year,
+                    section: section,
+                    day: day,
+                    time: time,
+                    roomName: roomName,
+                    updatedAt: serverTimestamp()
+                };
+
+                // Update instructor in Firestore
+                await updateDoc(doc(db, 'Instructors', instructorId), instructorData);
+                
+                // Show success message and redirect
+                alert('Instructor updated successfully!');
+                window.location.href = 'InstructorList.html';
+            } catch (error) {
+                console.error('Error updating instructor:', error);
+                showError('Error updating instructor: ' + error.message);
+                updateBtn.disabled = false;
+                updateBtn.textContent = 'Update Instructor';
+            }
+        }
+        
+        // Delete instructor
+        async function deleteInstructor() {
+            if (!confirm('Are you sure you want to delete this instructor?')) {
+                return;
+            }
+
+            try {
+                deleteBtn.disabled = true;
+                deleteBtn.textContent = 'Deleting...';
+                
+                await deleteDoc(doc(db, 'Instructors', instructorId));
+                alert('Instructor deleted successfully!');
+                window.location.href = 'InstructorList.html';
+            } catch (error) {
+                console.error('Error deleting instructor:', error);
+                showError('Error deleting instructor: ' + error.message);
+                deleteBtn.disabled = false;
+                deleteBtn.textContent = 'Delete Instructor';
+            }
+        }
+        
+        // Show error message
+        function showError(message) {
+            errorMessage.textContent = message;
+            errorMessage.style.display = 'block';
+            setTimeout(() => {
+                errorMessage.style.display = 'none';
+            }, 5000);
         }
         
         // Helper function to check time conflicts
@@ -825,51 +929,31 @@
             // Load instructor data if in edit mode
             if (instructorId) {
                 loadInstructorData();
+            } else {
+                window.location.href = 'InstructorList.html';
             }
             
-            // Add event listeners for day and time changes
-            if (daySelect) daySelect.addEventListener('change', updateRoomSelectState);
-            if (timeSelect) timeSelect.addEventListener('change', updateRoomSelectState);
+            // Add event listeners for form fields
+            daySelect.addEventListener('change', updateAvailableRooms);
+            timeSelect.addEventListener('change', updateAvailableRooms);
+            courseSelect.addEventListener('change', updateStudentCapacity);
+            yearSelect.addEventListener('change', updateStudentCapacity);
+            sectionSelect.addEventListener('change', updateStudentCapacity);
             
-            // Add event listeners for update and delete buttons
-            if (updateBtn) {
-                updateBtn.addEventListener('click', updateInstructor);
-            }
-            
-            if (deleteBtn) {
-                deleteBtn.addEventListener('click', deleteInstructor);
-            }
-            
-            // Add submit handler for form
-            const form = document.getElementById('editInstructorForm');
-            if (form) {
-                form.addEventListener('submit', (e) => {
-                    e.preventDefault();
-                    updateInstructor();
-                });
-            }
-            
-            // Update student capacity when course/year/section changes
-            courseSelect.addEventListener('change', () => {
-                updateStudentCapacity();
-                updateAvailableRooms();
-            });
-            yearSelect.addEventListener('change', () => {
-                updateStudentCapacity();
-                updateAvailableRooms();
-            });
-            sectionSelect.addEventListener('change', () => {
-                updateStudentCapacity();
-                updateAvailableRooms();
-            });
+            // Add event listeners for buttons
+            updateBtn.addEventListener('click', updateInstructor);
+            deleteBtn.addEventListener('click', deleteInstructor);
             
             // Hide error message when user starts typing/selecting
-            const formInputs = document.querySelectorAll('input, select');
-            formInputs.forEach(input => {
+            document.querySelectorAll('input, select').forEach(input => {
                 input.addEventListener('input', () => {
                     errorMessage.style.display = 'none';
                 });
             });
+            
+            // Initial update of student capacity
+            updateStudentCapacity();
+            updateAvailableRooms();
         });
     </script>
 </body>
