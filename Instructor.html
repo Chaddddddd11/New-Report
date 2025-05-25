@@ -888,22 +888,28 @@
                     currentEnrollment = 0;
                 }
                 
-                // First get all rooms that are available on the selected day
-                const roomsOnDayQuery = query(
+                // First get all rooms that can accommodate the class size
+                // We'll filter the rest on the client side to avoid composite index requirements
+                const roomsQuery = query(
                     roomsCollectionRef,
-                    where("availableDays", "array-contains", daySelected),
                     where("capacity", ">=", currentEnrollment + 1)
                 );
                 
-                // We'll filter the times on the client side to work around Firestore's limitation
-                const querySnapshot = await getDocs(roomsOnDayQuery);
+                const querySnapshot = await getDocs(roomsQuery);
                 const availableRooms = [];
                 
-                // Filter rooms that are available at the selected time
+                // Filter rooms that are available on the selected day and time
                 for (const doc of querySnapshot.docs) {
                     const room = doc.data();
-                    if (room.availableTimes && room.availableTimes.includes(timeSelected)) {
-                        availableRooms.push({ id: doc.id, ...room });
+                    const isAvailableOnDay = room.availableDays && room.availableDays.includes(daySelected);
+                    const isAvailableAtTime = room.availableTimes && room.availableTimes.includes(timeSelected);
+                    
+                    if (isAvailableOnDay && isAvailableAtTime) {
+                        availableRooms.push({ 
+                            id: doc.id, 
+                            ...room,
+                            name: room.name || `Room ${doc.id}`  // Ensure room has a name
+                        });
                     }
                 }
                 
