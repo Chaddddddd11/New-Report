@@ -485,78 +485,121 @@
 
         // Update available rooms based on selected day and time
         async function updateAvailableRooms() {
-            const selectedDay = daySelect.value;
-            const classTime = timeSelect.value;
-            
-            if (!selectedDay || !classTime) {
-                roomSelect.innerHTML = '<option value="">Select day and time first</option>';
+            console.log('=== UPDATING AVAILABLE ROOMS ===');
+            if (!roomSelect) {
+                console.error('Room select element not found!');
                 return;
             }
             
-            roomSelect.innerHTML = '<option value="">Loading available rooms...</option>';
+            const selectedDay = daySelect.value;
+            const classTime = timeSelect.value;
+            const course = courseSelect.value;
+            const year = yearSelect.value;
+            const section = sectionSelect.value;
+            
+            if (!selectedDay || !classTime || !course || !year || !section) {
+                roomSelect.innerHTML = '<option value="">Select all fields first</option>';
+                return;
+            }
             
             try {
-                // Get all rooms
-                const roomsSnapshot = await getDocs(roomsCollectionRef);
+                // Show loading state
+                roomSelect.innerHTML = '<option value="">Checking room availability...</option>';
+                
+                // Get student capacity for the selected course/year/section
+                const studentCapacity = getStudentCapacity(course, year, section);
+                console.log(`[updateAvailableRooms] Required Student Capacity: ${studentCapacity}`);
+                
+                // Get all rooms and instructors
+                const [roomsSnapshot, instructorsSnapshot] = await Promise.all([
+                    getDocs(roomsCollectionRef),
+                    getDocs(query(instructorsCollectionRef, where("day", "==", selectedDay)))
+                ]);
+                
+                console.log(`[updateAvailableRooms] Fetched ${instructorsSnapshot.size} instructors and ${roomsSnapshot.size} rooms`);
+                
+                // Create a map of room schedules
                 const roomSchedules = new Map();
+                const [selectedStartMinutes, selectedEndMinutes] = classTime.split('-').map(t => timeToMinutes(t.trim()));
                 
-                // Initialize room schedules
-                roomsSnapshot.docs.forEach(roomDoc => {
-                    roomSchedules.set(roomDoc.data().name, []);
-                });
-                
-                // Get all instructors for the selected day
-                const instructorsSnapshot = await getDocs(query(
-                    instructorsCollectionRef,
-                    where("day", "==", selectedDay)
-                ));
-                
-                // Process instructor schedules
-                instructorsSnapshot.forEach(doc => {
-                    const instructor = doc.data();
-                    if (instructor.roomName && roomSchedules.has(instructor.roomName)) {
-                        roomSchedules.get(instructor.roomName).push(instructor.time);
-                    }
-                });
-                
-                // Update room dropdown
-                roomSelect.innerHTML = '<option value="">Select a room</option>';
-                let availableRooms = 0;
-                
+                // Initialize rooms from the database
                 roomsSnapshot.docs.forEach(roomDoc => {
                     const roomData = roomDoc.data();
-                    const scheduledTimes = roomSchedules.get(roomData.name) || [];
-                    
-                    // Check if room is available at the selected time
-                    const isAvailable = !scheduledTimes.some(scheduledTime => 
-                        hasTimeConflict(classTime, scheduledTime)
-                    );
-                    
-                    if (isAvailable) {
-                        const option = document.createElement('option');
-                        option.value = roomDoc.id;
-                        option.textContent = `${roomData.name} (Capacity: ${roomData.capacity})`;
-                        roomSelect.appendChild(option);
-                        availableRooms++;
+                    roomSchedules.set(roomData.name, {
+                        id: roomDoc.id,
+                        name: roomData.name,
+                        capacity: parseInt(roomData.capacity) || 0,
+                        isBooked: false
+                    });
+                });
+                
+                // Mark rooms as booked based on instructor schedules
+                instructorsSnapshot.forEach(doc => {
+                    const instructor = doc.data();
+                    if (instructor.roomName && instructor.time && roomSchedules.has(instructor.roomName)) {
+                        if (hasTimeConflict(classTime, instructor.time)) {
+                            console.log(`Room ${instructor.roomName} is booked at this time`);
+                            roomSchedules.get(instructor.roomName).isBooked = true;
+                        }
                     }
                 });
                 
-                if (availableRooms === 0) {
-                    roomSelect.innerHTML = '<option value="">No available rooms at this time</option>';
+                // Filter available rooms based on capacity and booking status
+                const availableRooms = Array.from(roomSchedules.values()).filter(room => 
+                    !room.isBooked && room.capacity >= studentCapacity
+                );
+                
+                console.log(`[updateAvailableRooms] Found ${availableRooms.length} available rooms`);
+                
+                // Update room dropdown
+                roomSelect.innerHTML = '';
+                
+                if (availableRooms.length === 0) {
+                    const noRoomOption = document.createElement('option');
+                    noRoomOption.value = '';
+                    noRoomOption.textContent = 'No rooms available for the selected criteria';
+                    roomSelect.appendChild(noRoomOption);
+                    return;
                 }
                 
+                // Add default option
+                const defaultOption = document.createElement('option');
+                defaultOption.value = '';
+                defaultOption.textContent = '-- Select a room --';
+                roomSelect.appendChild(defaultOption);
+                
+                // Add available rooms
+                availableRooms.forEach(room => {
+                    const option = document.createElement('option');
+                    option.value = room.id;
+                    option.textContent = `${room.name} (Capacity: ${room.capacity})`;
+                    option.setAttribute('data-capacity', room.capacity);
+                    roomSelect.appendChild(option);
+                });
+                
             } catch (error) {
-                console.error('Error updating rooms:', error);
+                console.error('Error updating available rooms:', error);
                 roomSelect.innerHTML = '<option value="">Error loading rooms</option>';
                 showError('Failed to load room availability. Please try again.');
             }
         }
-
-        // Add event listeners for day and time changes
-        if (daySelect && timeSelect) {
-            daySelect.addEventListener('change', updateAvailableRooms);
-            timeSelect.addEventListener('change', updateAvailableRooms);
+        
+        // Helper function to get student capacity based on course, year, and section
+        function getStudentCapacity(course, year, section) {
+            // This is a simplified version - you should implement your actual capacity logic here
+            // For now, return a default capacity of 30
+            return 30;
         }
+
+        // Add event listeners for form field changes
+        [daySelect, timeSelect, courseSelect, yearSelect, sectionSelect].forEach(select => {
+            if (select) {
+                select.addEventListener('change', updateAvailableRooms);
+            }
+        });
+        
+        // Initial update of available rooms
+        updateAvailableRooms();
 
         async function registerInstructor() {
             // Validate required fields
