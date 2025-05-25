@@ -288,11 +288,17 @@
       collection, 
       onSnapshot, 
       query, 
-      where, 
+      doc, 
+      getDoc, 
       getDocs,
+      addDoc, 
+      updateDoc, 
+      deleteDoc, 
+      where, 
+      orderBy,
       limit,
-      orderBy
-    } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+      serverTimestamp 
+    } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
     // Your web app's Firebase configuration
     const firebaseConfig = {
@@ -318,9 +324,11 @@
       // Make db available globally for debugging
       window.db = db;
       
-      // Collection reference with correct case sensitivity
+      // Collection references
       instructorsCollectionRef = collection(db, 'Instructors');
+      const roomsCollectionRef = collection(db, 'Rooms');
       window.instructorsCollectionRef = instructorsCollectionRef;
+      window.roomsCollectionRef = roomsCollectionRef;
       
       window.firebaseInitialized = true;
       console.log('Firebase initialized successfully');
@@ -386,8 +394,28 @@
       }
     }
 
+    // Function to fetch room capacity by room name
+    async function getRoomCapacity(roomName) {
+      if (!roomName || roomName === 'TBA') return null;
+      
+      try {
+        const roomsRef = collection(db, 'Rooms');
+        const q = query(roomsRef, where('roomName', '==', roomName), limit(1));
+        const querySnapshot = await getDocs(q);
+        
+        if (!querySnapshot.empty) {
+          const roomData = querySnapshot.docs[0].data();
+          return roomData.capacity || null;
+        }
+        return null;
+      } catch (error) {
+        console.error('Error fetching room capacity:', error);
+        return null;
+      }
+    }
+
     // Set up real-time listener for instructors
-    function setupFirebaseListener() {
+    async function setupFirebaseListener() {
       console.log('Setting up Firebase listener...');
       
       if (!db || !instructorsCollectionRef) {
@@ -402,9 +430,13 @@
         
         const unsubscribe = onSnapshot(q, 
           // Success callback
-          (querySnapshot) => {
+          async (querySnapshot) => {
             console.log('Received data snapshot with', querySnapshot.size, 'documents');
             allInstructorsData = [];
+            
+            // Process all instructors first
+            const instructors = [];
+            const roomPromises = [];
             
             querySnapshot.forEach((doc) => {
               if (!doc.exists()) {
@@ -441,7 +473,6 @@
                 name: data.name || 'N/A',
                 subject: data.subject || 'N/A',
                 roomName: data.roomName || 'TBA',
-                roomCapacity: data.roomCapacity || null,  // Add room capacity
                 day: data.day ? data.day.trim() : '',
                 time: normalizedTime,
                 course: data.course || '',
@@ -449,11 +480,24 @@
                 section: data.section || ''
               };
               
-              allInstructorsData.push(instructor);
+              // Add a promise to fetch room capacity if we have a room name
+              if (instructor.roomName && instructor.roomName !== 'TBA') {
+                const roomPromise = getRoomCapacity(instructor.roomName).then(capacity => {
+                  instructor.roomCapacity = capacity;
+                });
+                roomPromises.push(roomPromise);
+              }
+              
+              instructors.push(instructor);
               console.log('Added instructor:', instructor.name);
             });
             
-            console.log('All instructors loaded. Total:', allInstructorsData.length);
+            // Wait for all room capacity fetches to complete
+            await Promise.all(roomPromises);
+            
+            // Now that we have all room capacities, update the allInstructorsData
+            allInstructorsData = instructors;
+            console.log('All instructors loaded with room capacities. Total:', allInstructorsData.length);
             
             // If we have selections, re-render the schedule
             if (courseSelect.value && yearSelect.value && sectionSelect.value) {
