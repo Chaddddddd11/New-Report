@@ -834,7 +834,7 @@
         }
 
         // Function to update room select state
-        function updateRoomSelectState() {
+        window.updateRoomSelectState = function() {
             const daySelected = daySelect && daySelect.value;
             const timeSelected = timeSelect && timeSelect.value;
             const shouldEnable = daySelected && timeSelected;
