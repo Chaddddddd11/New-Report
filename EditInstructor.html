@@ -302,15 +302,21 @@
                 </div>
 
                 <div class="form-group required">
-                    <label for="room">Room*</label>
-                    <select id="room" class="form-control" required>
-                        <option value="">Loading rooms...</option>
-                    </select>
+                    <label for="scheduleColor">Schedule Color*</label>
+                    <div style="display: flex; align-items: center;">
+                        <input type="color" id="scheduleColor" class="form-control" value="#800000" required
+                               style="width: 60px; height: 40px; padding: 2px;">
+                        <div id="colorPreview" class="color-preview" 
+                             style="width: 30px; height: 30px; margin-left: 10px; border: 1px solid #ddd; border-radius: 4px; background-color: #800000;"></div>
+                    </div>
                 </div>
-                
-                <!-- Hidden field to store the instructor ID -->
-                <input type="hidden" id="instructorId">
-            </form>
+
+            .btn-container {
+                display: flex;
+                justify-content: space-between;
+                margin-top: 25px;
+                gap: 15px;
+            }
 
             <div class="btn-container">
                 <a href="InstructorList.html" class="btn btn-secondary">← Back to List</a>
@@ -389,9 +395,26 @@
                     
                     console.log('Instructor data loaded:', currentInstructor);
                     
-                    // Populate name and subject fields
+                    // Populate form fields
                     nameInput.value = currentInstructor.name || '';
                     subjectInput.value = currentInstructor.subject || '';
+                    
+                    // Set schedule color if it exists, otherwise use default maroon
+                    const scheduleColorInput = document.getElementById('scheduleColor');
+                    const colorPreview = document.getElementById('colorPreview');
+                    if (currentInstructor.scheduleColor) {
+                        scheduleColorInput.value = currentInstructor.scheduleColor;
+                        colorPreview.style.backgroundColor = currentInstructor.scheduleColor;
+                    } else {
+                        // Default to maroon if no color is set
+                        scheduleColorInput.value = '#800000';
+                        colorPreview.style.backgroundColor = '#800000';
+                    }
+                    
+                    // Add event listener for color change
+                    scheduleColorInput.addEventListener('input', (e) => {
+                        colorPreview.style.backgroundColor = e.target.value;
+                    });
                     
                     // Store the current room ID for later use
                     const currentRoomId = currentInstructor.roomId || currentInstructor.roomName;
@@ -737,6 +760,9 @@
                 const roomId = roomSelect.value;
                 const roomName = roomSelect.options[roomSelect.selectedIndex].text.split(' (Capacity:')[0].trim();
                 
+                // Get the selected color
+                const scheduleColor = document.getElementById('scheduleColor').value;
+                
                 // Prepare the update data
                 const updateData = {
                     name: nameInput.value.trim(),
@@ -749,6 +775,7 @@
                     time: timeSelect.value,
                     roomId: roomId,
                     roomName: roomName,
+                    scheduleColor: scheduleColor,
                     updatedAt: new Date().toISOString()
                 };
                 
