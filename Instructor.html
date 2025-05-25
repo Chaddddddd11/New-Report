@@ -380,8 +380,7 @@
         const errorMessageDiv = document.getElementById('errorMessage');
         const submitBtn = document.getElementById('submitBtn');
 
-        // Global state variables (example, adjust as needed)
-        let isUpdateMode = false;
+        // Global state variables
         let currentInstructorId = null;
         let allRooms = []; // To be populated by fetchRooms, if still used this way
 
@@ -642,6 +641,7 @@
                 try {
                     const instructorDoc = await getDoc(doc(db, 'Instructors', instructorId));
                     if (instructorDoc.exists()) {
+                        currentInstructorId = instructorId; // Set the currentInstructorId
                         populateFormWithInstructorData({
                             id: instructorDoc.id,
                             ...instructorDoc.data()
@@ -656,6 +656,7 @@
                 }
             } else {
                 // Set up for new instructor
+                currentInstructorId = null; // Ensure it's null for new instructors
                 formTitle.textContent = 'Register New Instructor';
                 submitBtn.textContent = 'Register Instructor';
             }
@@ -982,6 +983,7 @@
             const urlParams = new URLSearchParams(window.location.search);
             const instructorId = urlParams.get('edit');
             const isUpdateMode = !!instructorId;
+            currentInstructorId = instructorId; // Set the currentInstructorId from URL
 
             const name = nameInput.value.trim();
             const subject = subjectInput.value.trim();
@@ -1107,10 +1109,10 @@
                 if (isUpdateMode && currentInstructorId) {
                     const instructorDocRef = doc(db, "Instructors", currentInstructorId);
                     await updateDoc(instructorDocRef, instructorData);
-                    showError(`Instructor ${name} updated successfully!`); // Using showError for success message styling
+                    console.log(`Updated instructor with ID: ${currentInstructorId}`);
                 } else {
-                    await addDoc(instructorsCollectionRef, instructorData);
-                    showError(`Instructor ${name} registered successfully!`); // Using showError for success message styling
+                    const docRef = await addDoc(instructorsCollectionRef, instructorData);
+                    console.log(`Added new instructor with ID: ${docRef.id}`);
                 }
 
                 clearForm();
