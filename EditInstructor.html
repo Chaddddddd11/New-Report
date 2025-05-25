@@ -249,6 +249,9 @@
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
     
     <script>
+        // Debug Firebase
+        console.log('Initializing Firebase...');
+        
         // Initialize Firebase
         const firebaseConfig = {
             // Add your Firebase config here
@@ -261,8 +264,27 @@
         };
 
         // Initialize Firebase
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.firestore();
+        try {
+            const app = initializeApp(firebaseConfig);
+            console.log('Firebase app initialized:', app.name);
+            
+            // Enable offline persistence with error handling
+            const db = getFirestore(app);
+            enablePersistence(db).catch((err) => {
+                if (err.code === 'failed-precondition') {
+                    console.warn('Offline persistence can only be enabled in one tab at a time.');
+                } else if (err.code === 'unimplemented') {
+                    console.warn('The current browser does not support offline persistence.');
+                }
+                console.error('Persistence error:', err);
+            });
+            
+            console.log('Firestore initialized with offline persistence');
+        } catch (error) {
+            console.error('Firebase initialization error:', error);
+            showError('Failed to initialize Firebase. Please check your configuration.');
+            throw error; // Re-throw to prevent further execution
+        }
 
         // Get URL parameters
         const urlParams = new URLSearchParams(window.location.search);
@@ -385,13 +407,54 @@
                 console.log('Instructor data loaded successfully');
                 
             } catch (error) {
-                const errorMsg = `Error loading instructor: ${error.message}`;
-                console.error(errorMsg, error);
-                showError('Failed to load instructor data. Please try again.');
+                // Enhanced error handling
+                console.group('Firestore Error Details');
+                console.error('Error loading instructor:', error);
+                console.log('Error name:', error.name);
+                console.log('Error code:', error.code);
+                console.log('Error message:', error.message);
+                console.log('Error stack:', error.stack);
                 
-                // Re-enable the update button even if there's an error
+                // Check Firebase specific errors
+                if (error.code) {
+                    switch(error.code) {
+                        case 'permission-denied':
+                            console.error('Firestore Permission Denied. Check your security rules.');
+                            showError('Permission denied. Please check if you have the necessary permissions.');
+                            break;
+                        case 'unauthenticated':
+                            console.error('User not authenticated');
+                            showError('Please sign in to continue');
+                            break;
+                        case 'not-found':
+                            console.error('Document not found');
+                            showError('Instructor data not found');
+                            break;
+                        default:
+                            console.error('Firestore error:', error.code, error.message);
+                            showError(`Database error: ${error.message}`);
+                    }
+                } else {
+                    console.error('Non-Firebase error:', error);
+                    showError(`Error: ${error.message || 'Unknown error occurred'}`);
+                }
+                
+                console.groupEnd();
+                
+                // Re-enable the update button
                 updateBtn.disabled = false;
                 updateBtn.textContent = 'Update Instructor';
+                
+                // Log network status
+                console.log('Online status:', navigator.onLine ? 'Online' : 'Offline');
+                
+                // Try to detect if Firebase is initialized correctly
+                if (typeof firebase === 'undefined' || !firebase.apps.length) {
+                    console.error('Firebase is not properly initialized');
+                    showError('Firebase is not properly initialized. Please refresh the page.');
+                } else {
+                    console.log('Firebase is initialized:', firebase.apps[0].name);
+                }
             }
         }
         
