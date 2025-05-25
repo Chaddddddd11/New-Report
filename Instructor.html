@@ -75,9 +75,12 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 20px;
-            padding: 15px 0;
-            border-bottom: 2px solid #e0e0e0;
+            margin-bottom: 30px;
+            padding: 15px 25px;
+            background-color: #fff;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
         }
 
         .logo {
@@ -141,13 +144,21 @@
         }
 
         .color-preview {
-            width: 30px;
-            height: 30px;
+            width: 40px;
+            height: 40px;
             border: 1px solid #ddd;
             border-radius: 4px;
             display: inline-block;
             vertical-align: middle;
-            margin-left: 10px;
+            margin-left: 15px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        
+        .color-preview:hover {
+            transform: scale(1.05);
+            box-shadow: 0 2px 6px rgba(0,0,0,0.15);
         }
 
         .btn {
@@ -512,11 +523,17 @@
                 }
             });
             
-            // Color picker preview
+            // Initialize color picker preview
+            const scheduleColorInput = document.getElementById('scheduleColor');
+            const colorPreview = document.getElementById('colorPreview');
+            
             if (scheduleColorInput && colorPreview) {
+                // Set initial color
                 colorPreview.style.backgroundColor = scheduleColorInput.value;
+                
+                // Update preview when color changes
                 scheduleColorInput.addEventListener('input', (e) => {
-                    colorPreview.style.backgroundColor = e.target.value;
+                    colorPreview.style.background = e.target.value;
                 });
             }
             
@@ -866,13 +883,17 @@
         window.updateRoomSelectState = function() {
             const daySelected = daySelect && daySelect.value;
             const timeSelected = timeSelect && timeSelect.value;
-            const shouldEnable = daySelected && timeSelected;
+            const courseSelected = courseSelect && courseSelect.value;
+            const yearSelected = yearSelect && yearSelect.value;
+            const sectionSelected = sectionSelect && sectionSelect.value;
+            
+            const allFieldsSelected = daySelected && timeSelected && courseSelected && yearSelected && sectionSelected;
             
             if (roomSelect) {
-                roomSelect.disabled = !shouldEnable;
-                if (!shouldEnable) {
-                    roomSelect.innerHTML = '<option value="">Select day and time first</option>';
-                } else if (daySelect.value && timeSelect.value) {
+                roomSelect.disabled = !allFieldsSelected;
+                if (!allFieldsSelected) {
+                    roomSelect.innerHTML = '<option value="">Please fill all fields first</option>';
+                } else {
                     updateAvailableRooms();
                 }
             }
