@@ -492,6 +492,8 @@
             const spinner = document.getElementById('submitSpinner');
             const submitBtn = document.getElementById('submitBtn');
             
+            if (!spinner || !submitBtn) return;
+            
             if (isLoading) {
                 spinner.style.display = 'inline-block';
                 submitBtn.disabled = true;
@@ -882,34 +884,42 @@
                     throw new Error('Failed to check current enrollment');
                 }
                 
-                // Get available rooms that can accommodate the class
-                const roomsQuery = query(
+                // First get all rooms that are available on the selected day
+                const roomsOnDayQuery = query(
                     roomsCollectionRef,
                     where("availableDays", "array-contains", daySelected),
-                    where("availableTimes", "array-contains", timeSelected),
                     where("capacity", ">=", currentEnrollment + 1)
                 );
                 
-                const querySnapshot = await getDocs(roomsQuery);
+                // We'll filter the times on the client side to work around Firestore's limitation
+                const querySnapshot = await getDocs(roomsOnDayQuery);
+                const availableRooms = [];
+                
+                // Filter rooms that are available at the selected time
+                for (const doc of querySnapshot.docs) {
+                    const room = doc.data();
+                    if (room.availableTimes && room.availableTimes.includes(timeSelected)) {
+                        availableRooms.push({ id: doc.id, ...room });
+                    }
+                }
                 
                 // Clear existing options
                 roomSelect.innerHTML = '';
                 
                 // Add default option
                 const defaultOption = new Option(
-                    querySnapshot.empty ? 'No available rooms' : 'Select a room',
+                    availableRooms.length === 0 ? 'No available rooms' : 'Select a room',
                     ''
                 );
                 roomSelect.add(defaultOption);
                 
                 // Add available rooms if any
-                if (!querySnapshot.empty) {
-                    querySnapshot.forEach((doc) => {
-                        const room = doc.data();
+                if (availableRooms.length > 0) {
+                    availableRooms.forEach((room) => {
                         const availableSlots = room.capacity - currentEnrollment;
                         const option = new Option(
                             `${room.name} (Capacity: ${room.capacity}, Available: ${availableSlots})`,
-                            doc.id
+                            room.id
                         );
                         
                         // Mark if this is the original room in edit mode
