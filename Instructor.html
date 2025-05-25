@@ -345,14 +345,19 @@
         import { 
             getFirestore, 
             collection, 
-            addDoc, 
-            getDocs, 
-            query, 
-            where,
             doc, 
             getDoc, 
-            updateDoc
-        } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+            getDocs, 
+            setDoc, 
+            updateDoc, 
+            addDoc, 
+            query, 
+            where, 
+            orderBy, 
+            deleteDoc, 
+            onSnapshot,
+            serverTimestamp 
+        } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
         // Your web app's Firebase configuration
         const firebaseConfig = {
@@ -1045,6 +1050,10 @@
                 // Combine timeStart and timeEnd into a single time string
                 const time = `${timeStart}-${timeEnd}`;
                 
+                // Get the schedule color input element
+                const scheduleColorInput = document.getElementById('scheduleColor');
+                const scheduleColor = scheduleColorInput ? scheduleColorInput.value : '#800000'; // Default to maroon if not found
+                
                 const instructorData = {
                     name,
                     subject,
@@ -1054,7 +1063,7 @@
                     day,
                     time, // Store as 'HH:00-HH:00'
                     roomName,
-                    scheduleColor: scheduleColorInput.value,
+                    scheduleColor: scheduleColor,
                     timestamp: serverTimestamp()
                 };
 
