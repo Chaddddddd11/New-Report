@@ -228,7 +228,7 @@
                 <img src="https://media.assettype.com/sunstar/2025-02-04/7x1wu7dq/DHVSU.jpg?w=1200&h=675&auto=format%2Ccompress&fit=max&enlarge=true" alt="DHVSU Logo" class="logo">
             </div>
             <div class="header">
-                <h1>Instructor Registration</h1>
+                <h1>Instructor Enrollment</h1>
             </div>
             <div class="logo-container right">
                 <img src="https://dhvsu.edu.ph/images/college-of-business-studies/01202025%20-%20College%20of%20Business%20Studies%20LOGO%20-%20Samantha%20F.%20Batalla.png" alt="DHVSU CBS Logo" class="logo">
@@ -340,7 +340,8 @@
 
             <div class="btn-container">
                 <a href="InstructorList.html" class="btn">View Instructor List</a>
-                <button type="submit" id="submitBtn" class="btn">Register Instructor</button>
+                <button type="submit" class="btn" id="submitBtn">Enroll Instructor</button>
+                <button type="button" class="btn btn-danger" id="deleteBtn" style="background-color: #dc3545; margin-left: 10px; display: none;">Delete</button>
             </div>
         </form>
     </div>
@@ -360,7 +361,8 @@
             where,
             doc, 
             getDoc, 
-            updateDoc
+            updateDoc,
+            deleteDoc
         } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
         // Your web app's Firebase configuration
@@ -401,14 +403,21 @@
         let currentInstructorId = null;
         let allRooms = []; // To be populated by fetchRooms, if still used this way
 
-        // Function to fetch rooms from Firestore with detailed logging
+        // Function to fetch instructor data and populate the form
         async function loadInstructorData(instructorId) {
             try {
+                console.log('Loading instructor data for ID:', instructorId);
                 const instructorDocRef = doc(db, "Instructors", instructorId);
                 const instructorSnap = await getDoc(instructorDocRef);
 
                 if (instructorSnap.exists()) {
                     const data = instructorSnap.data();
+                    console.log('Instructor data loaded:', data);
+                    
+                    // Store the original room name for later use
+                    const originalRoom = data.room || '';
+                    
+                    // Populate basic fields
                     nameInput.value = data.name || '';
                     subjectInput.value = data.subject || '';
                     courseSelect.value = data.course || '';
@@ -416,6 +425,7 @@
                     sectionSelect.value = data.section || '';
                     daySelect.value = data.day || '';
                     
+                    // Handle time slot
                     if (data.time) {
                         // Handle both old format (timeStart/timeEnd) and new format (time)
                         const timeValue = data.time || `${data.timeStart}-${data.timeEnd}`;
@@ -430,8 +440,32 @@
                     } else {
                         timeSelect.value = '';
                     }
-
-                    roomInput.value = data.room || '';
+                    
+                    // Set schedule color if available
+                    if (data.scheduleColor) {
+                        scheduleColorInput.value = data.scheduleColor;
+                        colorPreview.style.backgroundColor = data.scheduleColor;
+                    }
+                    
+                    // Wait for rooms to be loaded before setting the room value
+                    const checkRoomsLoaded = setInterval(() => {
+                        if (allRooms && allRooms.length > 0) {
+                            clearInterval(checkRoomsLoaded);
+                            console.log('Rooms loaded, now setting room value:', originalRoom);
+                            
+                            // Force update of available rooms based on current selections
+                            updateAvailableRooms().then(() => {
+                                // Set the room value after rooms are updated
+                                roomInput.value = originalRoom;
+                                console.log('Room value set to:', originalRoom);
+                                
+                                // Manually trigger any dependent updates
+                                if (typeof updateStudentCapacity === 'function') {
+                                    updateStudentCapacity();
+                                }
+                            });
+                        }
+                    }, 100);
 
                     // Change the button text to indicate update mode
                     const registerBtn = document.getElementById('submitBtn');
@@ -439,6 +473,13 @@
                         registerBtn.textContent = 'Update Instructor';
                         registerBtn.dataset.mode = 'update';
                         registerBtn.dataset.instructorId = instructorId;
+                        registerBtn.disabled = false;
+                    }
+                    
+                    // Show delete button in edit mode
+                    const deleteBtn = document.getElementById('deleteBtn');
+                    if (deleteBtn) {
+                        deleteBtn.style.display = 'inline-block';
                     }
                     
                     // Change the page title
@@ -543,60 +584,64 @@
             console.log('Populating form with instructor data:', instructor);
             if (!instructor) return;
             
-            // Set basic fields
-            document.getElementById('name').value = instructor.name || '';
-            document.getElementById('subject').value = instructor.subject || '';
-            document.getElementById('course').value = instructor.course || '';
-            
-            // Set year level if it exists
-            if (instructor.year) {
-                const yearSelect = document.getElementById('year');
-                if (yearSelect) {
-                    yearSelect.value = instructor.year;
+            try {
+                // Set basic fields
+                if (instructor.name) document.getElementById('name').value = instructor.name;
+                if (instructor.subject) document.getElementById('subject').value = instructor.subject;
+                if (instructor.course) document.getElementById('course').value = instructor.course;
+                
+                // Set year level if it exists
+                if (instructor.year) {
+                    const yearSelect = document.getElementById('year');
+                    if (yearSelect) {
+                        yearSelect.value = instructor.year;
+                    }
                 }
-            }
-            
-            // Set section if it exists
-            if (instructor.section) {
-                const sectionSelect = document.getElementById('section');
-                if (sectionSelect) {
-                    sectionSelect.value = instructor.section;
+                
+                // Set section if it exists
+                if (instructor.section) {
+                    const sectionSelect = document.getElementById('section');
+                    if (sectionSelect) {
+                        sectionSelect.value = instructor.section;
+                    }
                 }
-            }
-            
-            // Set day if it exists
-            if (instructor.day) {
-                const daySelect = document.getElementById('day');
-                if (daySelect) {
-                    daySelect.value = instructor.day;
+                
+                // Set day if it exists
+                if (instructor.day) {
+                    const daySelect = document.getElementById('day');
+                    if (daySelect) {
+                        daySelect.value = instructor.day;
+                    }
                 }
-            }
-            
-            // Set time if it exists
-            if (instructor.time) {
-                const timeValue = instructor.time;
-                let timeOptionExists = Array.from(timeSelect.options).some(opt => opt.value === timeValue);
-                if(timeOptionExists) {
-                   timeSelect.value = timeValue;
-                } else {
-                    console.warn(`Saved time slot ${timeValue} not found in dropdown. Clearing selection.`);
-                    timeSelect.value = ''; 
+                
+                // Set time if it exists
+                if (instructor.time) {
+                    const timeValue = instructor.time;
+                    let timeOptionExists = Array.from(timeSelect.options).some(opt => opt.value === timeValue);
+                    if(timeOptionExists) {
+                       timeSelect.value = timeValue;
+                    } else {
+                        console.warn(`Saved time slot ${timeValue} not found in dropdown.`);
+                    }
                 }
-            } else {
-                timeSelect.value = '';
-            }
 
-            // Set room if it exists
-            if (instructor.room) {
-                roomInput.value = instructor.room;
-            }
+                // Set room if it exists (check both room and roomName for backward compatibility)
+                const roomValue = instructor.room || instructor.roomName;
+                if (roomValue && roomInput) {
+                    roomInput.value = roomValue;
+                }
 
-            // Change the button text to indicate update mode
-            const registerBtn = document.getElementById('submitBtn');
-            if (registerBtn) {
-                registerBtn.textContent = 'Update Instructor';
-                registerBtn.dataset.mode = 'update';
-                registerBtn.dataset.instructorId = instructor.id;
+                // Change the button text to indicate update mode
+                const registerBtn = document.getElementById('submitBtn');
+                if (registerBtn) {
+                    registerBtn.textContent = 'Update Instructor';
+                    registerBtn.dataset.mode = 'update';
+                    if (instructor.id) {
+                        registerBtn.dataset.instructorId = instructor.id;
+                    }
+                }
+            } catch (error) {
+                console.error('Error populating form data:', error);
             }
             
             // Change the page title
@@ -646,6 +691,45 @@
             console.trace('Form submission from:');
         });
         
+        // Function to delete an instructor
+        async function deleteInstructor() {
+            if (!currentInstructorId) {
+                console.error('No instructor ID available for deletion');
+                return;
+            }
+
+            if (!confirm('Are you sure you want to delete this instructor? This action cannot be undone.')) {
+                return;
+            }
+
+            const deleteBtn = document.getElementById('deleteBtn');
+            const originalBtnText = deleteBtn ? deleteBtn.innerHTML : 'Delete';
+            
+            try {
+                // Show loading state
+                if (deleteBtn) {
+                    deleteBtn.disabled = true;
+                    deleteBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Deleting...';
+                }
+
+                // Delete the instructor from Firestore
+                await deleteDoc(doc(db, 'Instructors', currentInstructorId));
+                
+                // Show success message
+                alert('Instructor deleted successfully!');
+                
+                // Redirect to instructor list
+                window.location.href = 'InstructorList.html';
+            } catch (error) {
+                console.error('Error deleting instructor:', error);
+                showError('Failed to delete instructor. Please try again.');
+                if (deleteBtn) {
+                    deleteBtn.disabled = false;
+                    deleteBtn.innerHTML = originalBtnText;
+                }
+            }
+        }
+
         document.addEventListener('DOMContentLoaded', async () => {
             console.log('DOMContentLoaded event fired');
             try {
@@ -674,6 +758,15 @@
                     });
                 }
                 
+                // Add delete button event listener
+                const deleteBtn = document.getElementById('deleteBtn');
+                if (deleteBtn) {
+                    deleteBtn.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        deleteInstructor();
+                    });
+                }
+                
                 console.log('=== PAGE INITIALIZATION STARTED ===');
                 
                 // Check if we're in edit mode
@@ -681,20 +774,40 @@
                 const instructorId = urlParams.get('id');
                 
                 if (instructorId) {
+                    console.log('Edit mode - Loading instructor data for ID:', instructorId);
                     currentInstructorId = instructorId;
                     isUpdateMode = true;
+                    
+                    // Show delete button in edit mode
+                    const deleteBtn = document.getElementById('deleteBtn');
+                    if (deleteBtn) {
+                        deleteBtn.style.display = 'inline-block';
+                    }
+                    
                     await loadInstructorData(instructorId);
+                    
+                    // Update the form title
+                    const header = document.querySelector('.header h1');
+                    if (header) {
+                        header.textContent = 'Edit Instructor';
+                    }
+                } else {
+                    // Only check URL params if not in edit mode
+                    const instructorData = getUrlParams();
+                    if (instructorData.id) {
+                        console.log('Populating form with URL parameters:', instructorData);
+                        await populateFormWithInstructorData(instructorData);
+                        
+                        // Update the form title if we're editing from URL params
+                        const header = document.querySelector('.header h1');
+                        if (header && instructorData.id) {
+                            header.textContent = 'Edit Instructor';
+                        }
+                    }
                 }
             } catch (error) {
                 console.error('Error initializing page:', error);
                 showError('An error occurred while initializing the page. Please refresh and try again.');
-            }
-            
-            // Check if we're in edit mode and populate the form
-            const instructorData = getUrlParams();
-            if (instructorData.id) {
-                console.log('Edit mode - Populating form with instructor data:', instructorData);
-                await populateFormWithInstructorData(instructorData);
             }
             try {
                 console.log('1. Initializing Firebase...');
@@ -1110,7 +1223,7 @@
                 // Show loading state
                 if (submitBtn) {
                     submitBtn.disabled = true;
-                    submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Processing...';
+                    submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Enrolling...';
                 }
                 
                 // Validate required fields
@@ -1262,16 +1375,57 @@
                         section: formData.section,
                         day: formData.day,
                         time, // Store as 'HH:00-HH:00'
-                        roomName: formData.room,
+                        room: formData.room, // Make sure we're using 'room' consistently
                         scheduleColor: formData.scheduleColor,
-                        timestamp: new Date() // For ordering or tracking
+                        timestamp: new Date(), // For ordering or tracking
+                        updatedAt: new Date() // Add updatedAt timestamp for updates
                     };
+                    
+                    console.log('Prepared instructor data:', instructorData);
 
-                    // Save to Firestore
+                    // Save or update in Firestore
                     try {
-                        await addDoc(collection(db, 'Instructors'), instructorData);
-                        showSuccess('Instructor registered successfully!');
-                        form.reset();
+                        if (isUpdateMode && currentInstructorId) {
+                            console.log('Updating instructor with ID:', currentInstructorId);
+                            console.log('Update data:', instructorData);
+                            
+                            // Update existing instructor
+                            const instructorRef = doc(db, 'Instructors', currentInstructorId);
+                            console.log('Instructor ref:', instructorRef);
+                            
+                            try {
+                                // Use set with merge: true to only update the specified fields
+                                await updateDoc(instructorRef, instructorData);
+                                console.log('Update successful');
+                                showSuccess('Instructor updated successfully!');
+                                
+                                // Redirect after successful update
+                                if (formSubmittedByUser) {
+                                    console.log('Redirecting to InstructorList.html after update...');
+                                    setTimeout(() => {
+                                        window.location.href = 'InstructorList.html';
+                                    }, 1500);
+                                }
+                            } catch (updateError) {
+                                console.error('Error updating document:', updateError);
+                                throw new Error('Failed to update instructor: ' + updateError.message);
+                            }
+                        } else {
+                            console.log('Adding new instructor');
+                            // Add new instructor
+                            const docRef = await addDoc(collection(db, 'Instructors'), instructorData);
+                            console.log('New instructor added with ID:', docRef.id);
+                            showSuccess('Instructor registered successfully!');
+                            form.reset();
+                            
+                            // Redirect after successful registration
+                            if (formSubmittedByUser) {
+                                console.log('Redirecting to InstructorList.html after registration...');
+                                setTimeout(() => {
+                                    window.location.href = 'InstructorList.html';
+                                }, 1500);
+                            }
+                        }
                         
                         // Only redirect if form was submitted by user
                         if (formSubmittedByUser) {
@@ -1293,11 +1447,11 @@
                     }
                 } catch (error) {
                     console.error(`Error ${isUpdateMode ? 'updating' : 'saving'} instructor: `, error);
-                    showError(`Failed to ${isUpdateMode ? 'update' : 'register'} instructor. Please try again. ${error.message}`);
+                    showError(`Failed to ${isUpdateMode ? 'update' : 'enroll'} instructor. Please try again. ${error.message}`);
                 }
             } catch (error) {
                 console.error('Error registering instructor:', error);
-                showError(`Failed to register instructor. Please try again. ${error.message}`);
+                showError(`Failed to enroll instructor. Please try again. ${error.message}`);
                 if (submitBtn) {
                     submitBtn.disabled = false;
                     submitBtn.innerHTML = originalBtnText;
