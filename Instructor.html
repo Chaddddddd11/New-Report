@@ -541,20 +541,36 @@
 
         // Helper function to set form values
         function setFormValues(data) {
-            const fieldMappings = {
-                'name': nameInput,
-                'subject': subjectInput,
+            console.log('Setting form values:', data);
+            
+            // Set basic fields
+            if (nameInput && data.name !== undefined) nameInput.value = data.name || '';
+            if (subjectInput && data.subject !== undefined) subjectInput.value = data.subject || '';
+            
+            // Set select fields with validation
+            const selectFields = {
                 'course': courseSelect,
                 'year': yearSelect,
                 'section': sectionSelect,
                 'day': daySelect,
                 'time': timeSelect
             };
-
-            // Set all form fields
-            Object.entries(fieldMappings).forEach(([field, element]) => {
+            
+            Object.entries(selectFields).forEach(([field, element]) => {
                 if (element && data[field] !== undefined) {
-                    element.value = data[field] || '';
+                    const value = data[field] || '';
+                    // Find and select the option
+                    for (let i = 0; i < element.options.length; i++) {
+                        if (element.options[i].value === value) {
+                            element.selectedIndex = i;
+                            break;
+                        }
+                    }
+                    // If not found, set the value directly (for dynamic options)
+                    if (element.value !== value) {
+                        element.value = value;
+                    }
+                    console.log(`Set ${field} to:`, value);
                 }
             });
 
@@ -564,6 +580,11 @@
                 if (colorPreview) {
                     colorPreview.style.backgroundColor = scheduleColorInput.value;
                 }
+            }
+            
+            // Force UI update
+            if (typeof updateRoomSelectState === 'function') {
+                updateRoomSelectState();
             }
         }
 
@@ -1111,49 +1132,41 @@
         });
 
         async function registerInstructor() {
-            // Validate required fields
-            const name = nameInput.value.trim();
-            const subject = subjectInput.value.trim();
-            const course = courseSelect.value;
-            const year = yearSelect.value;
-            const section = sectionSelect.value;
-            const day = daySelect.value;
-            const time = timeSelect.value;
-            const roomId = roomSelect.value;
-            const roomName = roomSelect.options[roomSelect.selectedIndex]?.text.split(' (')[0];
+            console.log('Form submission started');
             
-            // Basic validation
-            if (!name) {
-                showError('Please enter instructor name');
-                return;
-            }
-            if (!subject) {
-                showError('Please enter subject');
-                return;
-            }
-            if (!course) {
-                showError('Please select a course');
-                return;
-            }
-            if (!year) {
-                showError('Please select a year level');
-                return;
-            }
-            if (!section) {
-                showError('Please select a section');
-                return;
-            }
-            if (!day) {
-                showError('Please select a day');
-                return;
-            }
-            if (!time) {
-                showError('Please select a time slot');
-                return;
-            }
-            if (!roomId) {
-                showError('Please select a room');
-                return;
+            // Get values with better null checks and logging
+            const name = nameInput ? nameInput.value.trim() : '';
+            const subject = subjectInput ? subjectInput.value.trim() : '';
+            const course = courseSelect ? courseSelect.value : '';
+            const year = yearSelect ? yearSelect.value : '';
+            const section = sectionSelect ? sectionSelect.value : '';
+            const day = daySelect ? daySelect.value : '';
+            const time = timeSelect ? timeSelect.value : '';
+            const roomId = roomSelect ? roomSelect.value : '';
+            const roomOption = roomSelect ? roomSelect.options[roomSelect.selectedIndex] : null;
+            const roomName = roomOption ? roomOption.text.split(' (')[0] : '';
+            
+            console.log('Form values:', { name, subject, course, year, section, day, time, roomId, roomName });
+            
+            // Enhanced validation with better error messages
+            const validations = [
+                { value: name, field: 'Instructor name' },
+                { value: subject, field: 'Subject' },
+                { value: course, field: 'Course' },
+                { value: year, field: 'Year level' },
+                { value: section, field: 'Section' },
+                { value: day, field: 'Day' },
+                { value: time, field: 'Time slot' },
+                { value: roomId, field: 'Room' }
+            ];
+            
+            for (const { value, field } of validations) {
+                if (!value) {
+                    const errorMsg = `Please ${field.startsWith('Please') ? '' : 'enter/select '}${field.toLowerCase()}`;
+                    console.error('Validation failed:', errorMsg);
+                    showError(errorMsg);
+                    return;
+                }
             }
             
             // Check for schedule conflicts
