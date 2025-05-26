@@ -1136,151 +1136,110 @@
             }
         }
         
-        /**
-         * Converts a time string (HH:MM) to total minutes since midnight
-         * @param {string} timeStr - Time string in format "HH:MM"
-         * @returns {number} Total minutes since midnight
-         */
+        // Convert HH:MM to minutes since midnight
         function timeToMinutes(timeStr) {
             if (!timeStr) return 0;
-            const [hours, minutes] = timeStr.split(':').map(Number);
-            return hours * 60 + (minutes || 0);
+            const [h, m] = timeStr.split(':').map(Number);
+            return h * 60 + (m || 0);
         }
 
-        /**
-         * Ensures the original room is in the room select dropdown
-         * @param {HTMLSelectElement} roomSelect - The room select element
-         * @param {string} roomId - The original room ID
-         * @returns {Promise<void>}
-         */
+        // Check for time overlap between two time ranges
+        function hasTimeOverlap(aStart, aEnd, bStart, bEnd) {
+            return aStart < bEnd && aEnd > bStart;
+        }
+
+        // Ensure the original room is in the room select dropdown
         async function ensureOriginalRoomInList(roomSelect, roomId) {
             if (!roomSelect || !roomId) return;
             
-            console.log('Ensuring original room is in the list:', roomId);
+            console.log('Checking room:', roomId);
             
             try {
-                // First check if the room already exists in the dropdown
+                // Check if room already in dropdown
                 const existingOption = Array.from(roomSelect.options).find(opt => opt.value === roomId);
                 if (existingOption) {
-                    console.log('Original room already exists in the dropdown');
                     existingOption.selected = true;
                     return;
                 }
                 
-                // Get current form values for conflict checking
+                // Get room details
+                const roomDoc = await getDoc(doc(db, "Rooms", roomId));
+                if (!roomDoc.exists()) {
+                    console.warn('Room not found:', roomId);
+                    return;
+                }
+                
+                const { name, capacity, time: roomTime } = roomDoc.data();
+                const roomName = name || `Room ${roomId}`;
+                const roomCapacity = parseInt(capacity) || 0;
+                
+                // Parse room time
+                let [roomStart, roomEnd] = [0, 0];
+                if (roomTime) {
+                    const [start, end] = roomTime.split('-').map(s => s.trim());
+                    roomStart = timeToMinutes(start);
+                    roomEnd = timeToMinutes(end);
+                }
+                
+                // Check for booking conflicts
+                let conflict = null;
                 const day = daySelect?.value;
                 const time = timeSelect?.value;
                 
-                // Try to get the room details
-                const roomDoc = await getDoc(doc(db, "Rooms", roomId));
-                if (!roomDoc.exists()) {
-                    console.warn('Original room not found in database:', roomId);
-                    return;
-                }
-
-                const roomData = roomDoc.data();
-                const roomName = roomData.name || `Room ${roomId}`;
-                const roomCapacity = parseInt(roomData.capacity) || 0;
-                const roomTime = roomData.time || '';
-                
-                // Parse room time into minutes
-                let startMinutes = 0;
-                let endMinutes = 0;
-                if (roomTime) {
-                    try {
-                        const [startStr, endStr] = roomTime.split('-').map(s => s.trim());
-                        startMinutes = timeToMinutes(startStr);
-                        endMinutes = timeToMinutes(endStr);
-                    } catch (e) {
-                        console.warn('Error parsing room time:', roomTime, e);
-                    }
-                }
-                
-                // Check for conflicts
-                let isBooked = false;
-                let conflictDetails = [];
-                
                 if (day && time) {
                     try {
-                        // Get all instructors with the same room, day, and time
-                        const bookingsQuery = query(
+                        const querySnapshot = await getDocs(query(
                             instructorsCollectionRef,
                             where("day", "==", day),
                             where("roomId", "==", roomId)
-                        );
+                        ));
                         
-                        const querySnapshot = await getDocs(bookingsQuery);
+                        const [selStart, selEnd] = time.split('-').map(s => timeToMinutes(s.trim()));
                         
-                        // Parse the selected time
-                        const [selectedStartStr, selectedEndStr] = time.split('-').map(s => s.trim());
-                        const selectedStartMinutes = timeToMinutes(selectedStartStr);
-                        const selectedEndMinutes = timeToMinutes(selectedEndStr);
-                        
-                        // Check each booking for time conflicts
-                        querySnapshot.forEach(doc => {
-                            if (doc.id === currentInstructorId) return; // Skip current instructor
+                        for (const doc of querySnapshot.docs) {
+                            if (doc.id === currentInstructorId) continue;
                             
                             const booking = doc.data();
-                            if (!booking.time) return;
+                            if (!booking.time) continue;
                             
-                            try {
-                                const [bookingStartStr, bookingEndStr] = booking.time.split('-').map(s => s.trim());
-                                const bookingStart = timeToMinutes(bookingStartStr);
-                                const bookingEnd = timeToMinutes(bookingEndStr);
-                                
-                                // Check for time overlap
-                                if (selectedStartMinutes < bookingEnd && selectedEndMinutes > bookingStart) {
-                                    isBooked = true;
-                                    conflictDetails.push({
-                                        instructor: booking.name || 'Unknown Instructor',
-                                        course: booking.course || 'Unknown Course',
-                                        year: booking.year || '',
-                                        section: booking.section || ''
-                                    });
-                                }
-                            } catch (e) {
-                                console.warn('Error parsing booking time:', booking.time, e);
+                            const [bookStart, bookEnd] = booking.time.split('-').map(s => timeToMinutes(s.trim()));
+                            
+                            if (hasTimeOverlap(selStart, selEnd, bookStart, bookEnd)) {
+                                conflict = {
+                                    instructor: booking.name || 'Unknown',
+                                    course: booking.course || 'Unknown',
+                                    year: booking.year || '',
+                                    section: booking.section || ''
+                                };
+                                break;
                             }
-                        });
-                        
-                        console.log(`Room ${roomId} is ${isBooked ? 'already booked' : 'available'}`);
+                        }
                     } catch (error) {
-                        console.error('Error checking room booking status:', error);
+                        console.error('Error checking conflicts:', error);
                     }
                 }
                 
-                // Create the option text in the format: "Room Name (Capacity: X, Time: HH:MM-HH:MM)"
-                let optionText = `${roomName} (Capacity: ${roomCapacity}`;
-                if (roomTime) {
-                    optionText += `, Time: ${roomTime}`;
-                }
-                optionText += ')';
+                // Create option text
+                const timeInfo = roomTime ? `, Time: ${roomTime}` : '';
+                let optionText = `${roomName} (Capacity: ${roomCapacity}${timeInfo})`;
                 
-                // Add conflict info if needed
-                if (isBooked && conflictDetails.length > 0) {
-                    const conflict = conflictDetails[0];
+                if (conflict) {
                     optionText += ` [Conflict: ${conflict.instructor} - ${conflict.course} ${conflict.year}${conflict.section}]`;
                 }
                 
-                // Create and configure the option
+                // Create and add option
                 const option = new Option(optionText, roomId);
                 option.dataset.original = 'true';
                 option.style.fontWeight = 'bold';
                 option.selected = true;
                 
-                if (isBooked) {
+                if (conflict) {
                     option.style.color = 'red';
-                    option.title = conflictDetails.length > 0 ? 
-                        `This room is already booked by ${conflictDetails[0].instructor} for ${conflictDetails[0].course} ${conflictDetails[0].year}${conflictDetails[0].section}` :
-                        'This room has a scheduling conflict with the selected time slot.';
-                } else {
-                    option.title = 'This is the currently assigned room';
+                    option.title = `Booked by ${conflict.instructor} for ${conflict.course} ${conflict.year}${conflict.section}`;
                 }
                 
-                // Add the option to the select
                 roomSelect.add(option);
-                
-                console.log('Added original room to dropdown:', roomName, isBooked ? '(with conflict)' : '');
+                console.log(`${conflict ? '⚠️ ' : ''}Added room: ${roomName}`, conflict || '');
                 
             } catch (error) {
                 console.error('Error ensuring original room is in list:', error);
@@ -1289,7 +1248,6 @@
                     `Room ${roomId} (Currently assigned - Error loading details)`,
                     roomId
                 );
-                option.dataset.original = 'true';
                 option.style.color = 'orange';
                 roomSelect.add(option);
                 roomSelect.value = roomId;
