@@ -249,10 +249,23 @@
             measurementId: "G-EP4FZ04FQT"
         };
 
-        // Initialize Firebase
-        firebase.initializeApp(firebaseConfig);
-        const auth = firebase.auth();
-        const db = firebase.firestore();
+        // Initialize Firebase with error handling
+        let auth, db;
+        try {
+            // Initialize Firebase
+            const app = firebase.initializeApp(firebaseConfig);
+            auth = firebase.auth();
+            db = firebase.firestore();
+            
+            // Enable offline persistence (optional)
+            // await db.enablePersistence();
+            
+            console.log('Firebase initialized successfully');
+        } catch (error) {
+            console.error('Firebase initialization error:', error);
+            alert('Failed to initialize the app. Please check your internet connection and try again.');
+            return; // Stop execution if Firebase fails to initialize
+        }
 
         // DOM Elements
         const forgotPasswordForm = document.getElementById('forgotPasswordForm');
