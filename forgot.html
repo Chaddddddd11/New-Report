@@ -250,20 +250,28 @@
         };
 
         // Initialize Firebase with error handling
-        let auth, db;
+        let auth, app;
         try {
-            // Initialize Firebase
-            const app = firebase.initializeApp(firebaseConfig);
+            console.log('Initializing Firebase...');
+            // Check if Firebase is already initialized
+            if (firebase.apps.length === 0) {
+                app = firebase.initializeApp(firebaseConfig);
+                console.log('Firebase app initialized');
+            } else {
+                app = firebase.app();
+                console.log('Using existing Firebase app');
+            }
+            
             auth = firebase.auth();
-            db = firebase.firestore();
+            console.log('Firebase Auth initialized');
             
-            // Enable offline persistence (optional)
-            // await db.enablePersistence();
+            // Verify Firebase is properly initialized
+            console.log('Firebase app name:', app.name);
+            console.log('Current user:', auth.currentUser);
             
-            console.log('Firebase initialized successfully');
         } catch (error) {
             console.error('Firebase initialization error:', error);
-            alert('Failed to initialize the app. Please check your internet connection and try again.');
+            alert('Failed to initialize the app. Error: ' + error.message);
             return; // Stop execution if Firebase fails to initialize
         }
 
@@ -318,15 +326,29 @@
             resetBtn.innerHTML = '<span class="spinner"></span> Sending reset link...';
             
             try {
-                // Send password reset email directly using Firebase Auth
+                console.log('Attempting to send password reset email to:', email);
+                
+                // First, verify the email exists
+                const methods = await auth.fetchSignInMethodsForEmail(email);
+                console.log('Sign-in methods for email:', methods);
+                
+                if (methods && methods.length === 0) {
+                    throw { code: 'auth/user-not-found' };
+                }
+                
+                // Send password reset email
                 await auth.sendPasswordResetEmail(email);
+                console.log('Password reset email sent successfully');
                 
                 // Password reset email sent successfully
                 showMessage(
                     successMessage, 
-                    'Password reset link has been sent to your email. Please check your inbox and follow the instructions to reset your password. If you don\'t see the email, check your spam folder.',
+                    'Password reset link has been sent to your email. Please check your inbox and follow the instructions to reset your password. If you don\'t see the email, please check your spam folder or try again in a few minutes.',
                     false
                 );
+                
+                // Clear the email field
+                usernameInput.value = '';
                 resetBtn.textContent = 'Resend Reset Link';
                 
             } catch (error) {
