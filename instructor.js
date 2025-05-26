@@ -44,7 +44,83 @@ const studentCapacityMap = {
 document.addEventListener('DOMContentLoaded', () => {
     initializeForm();
     setupEventListeners();
+    
+    // Initialize room selection
+    initializeRoomSelection();
 });
+
+// Room Selection
+let roomSelectionInstance = null;
+
+function initializeRoomSelection() {
+    // Wait for the DOM to be fully loaded
+    if (!document.querySelector('.room-selection')) {
+        console.warn('Room selection element not found');
+        return;
+    }
+    
+    roomSelectionInstance = new RoomSelection({
+        onRoomSelect: (room) => {
+            if (room) {
+                // Update the hidden input
+                document.getElementById('selectedRoom').value = room.id;
+                
+                // Show the selected room display
+                const display = document.getElementById('selectedRoomDisplay');
+                const nameSpan = document.getElementById('selectedRoomName');
+                
+                nameSpan.textContent = `${room.name} (${room.building} - ${room.type}, ${room.capacity} persons)`;
+                display.style.display = 'block';
+                
+                // Hide the room selection dropdown
+                const content = document.querySelector('.room-selection-content');
+                const header = document.querySelector('.room-selection-header');
+                if (content && header) {
+                    content.setAttribute('aria-hidden', 'true');
+                    header.setAttribute('aria-expanded', 'false');
+                }
+                
+                // Update the form validation
+                validateRoomSelection();
+            }
+        }
+    });
+    
+    // Handle change room button
+    const changeRoomBtn = document.getElementById('changeRoomBtn');
+    if (changeRoomBtn) {
+        changeRoomBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            document.getElementById('selectedRoomDisplay').style.display = 'none';
+            document.getElementById('selectedRoom').value = '';
+            
+            // Show the room selection dropdown
+            const content = document.querySelector('.room-selection-content');
+            const header = document.querySelector('.room-selection-header');
+            if (content && header) {
+                content.setAttribute('aria-hidden', 'false');
+                header.setAttribute('aria-expanded', 'true');
+            }
+        });
+    }
+}
+
+function validateRoomSelection() {
+    const roomInput = document.getElementById('selectedRoom');
+    const isValid = roomInput.value.trim() !== '';
+    
+    // Update UI to show validation state
+    const roomGroup = roomInput.closest('.form-group');
+    if (roomGroup) {
+        if (isValid) {
+            roomGroup.classList.remove('error');
+        } else {
+            roomGroup.classList.add('error');
+        }
+    }
+    
+    return isValid;
+}
 
 function initializeForm() {
     // Initialize form fields and event listeners
@@ -82,67 +158,126 @@ async function handleFormSubmit(e) {
     
     if (isSubmitting) return;
     
+    setLoading(true);
+    
     try {
-        isSubmitting = true;
-        setLoading(true);
-        
         const formData = getFormData();
-        const validationResult = validateFormData(formData);
+        const validation = validateFormData(formData);
         
-        if (!validationResult.isValid) {
-            showError(validationResult.message);
+        if (!validation.valid) {
+            showError(validation.message);
+            setLoading(false);
             return;
         }
         
         // Check room availability
         const isRoomAvailable = await checkRoomAvailability(formData);
+        
         if (!isRoomAvailable) {
             showError('The selected room is not available at the chosen time.');
+            setLoading(false);
             return;
+        }
+        
+        // Get the selected room data
+        const selectedRoomId = document.getElementById('selectedRoom').value;
+        const roomSelection = roomSelectionInstance?.rooms?.find(r => r.id === selectedRoomId);
+        
+        if (roomSelection) {
+            // Add room details to form data
+            formData.roomName = roomSelection.name;
+            formData.roomBuilding = roomSelection.building;
+            formData.roomCapacity = roomSelection.capacity;
         }
         
         // Save instructor data
         await saveInstructor(formData);
+        
+        // Show success message
         showSuccess('Instructor enrolled successfully!');
+        
+        // Reset form
         form.reset();
         
+        // Reset room selection
+        if (roomSelectionInstance) {
+            roomSelectionInstance.selectedRoom = null;
+            document.getElementById('selectedRoom').value = '';
+            document.getElementById('selectedRoomDisplay').style.display = 'none';
+            const roomGrid = document.querySelector('.room-grid');
+            if (roomGrid) roomGrid.innerHTML = '';
+        }
+        
     } catch (error) {
-        console.error('Form submission error:', error);
+        console.error('Error submitting form:', error);
         showError('An error occurred. Please try again.');
     } finally {
         setLoading(false);
-        isSubmitting = false;
     }
 }
 
 function getFormData() {
-    return {
-        name: document.getElementById('name')?.value,
+    const formData = {};
+    const formElements = form.elements;
+    
+    for (let element of formElements) {
+        if (element.name && element.type !== 'button') {
+            if (element.type === 'checkbox') {
+                formData[element.name] = element.checked;
+            } else if (element.type === 'radio') {
+                if (element.checked) {
+                    formData[element.name] = element.value;
+                }
+            } else {
+                formData[element.name] = element.value;
+            }
+        }
+    }
+    
+    // Add selected room data if available
+    const selectedRoomId = document.getElementById('selectedRoom')?.value;
+    if (selectedRoomId) {
+        formData.room = selectedRoomId;
+    }
+    
+    // Add any additional fields that might not be caught by the form elements loop
+    const additionalFields = {
         email: document.getElementById('email')?.value,
         department: document.getElementById('department')?.value,
         course: document.getElementById('course')?.value,
         year: document.getElementById('year')?.value,
         section: document.getElementById('section')?.value,
-        room: document.getElementById('room')?.value,
         day: document.getElementById('day')?.value,
         time: document.getElementById('time')?.value,
         scheduleColor: document.getElementById('scheduleColor')?.value
     };
+    
+    // Merge additional fields into formData
+    Object.assign(formData, additionalFields);
+    
+    return formData;
 }
 
 function validateFormData(data) {
-    // Basic validation - expand as needed
-    if (!data.name) return { isValid: false, message: 'Instructor name is required' };
-    if (!data.email) return { isValid: false, message: 'Email is required' };
-    if (!data.course) return { isValid: false, message: 'Course is required' };
-    if (!data.room) return { isValid: false, message: 'Room is required' };
-    if (!data.day) return { isValid: false, message: 'Day is required' };
-    if (!data.time) return { isValid: false, message: 'Time is required' };
+    // Check required fields
+    const requiredFields = ['name', 'employeeId', 'department', 'subject', 'room', 'day', 'time'];
+    const missingFields = requiredFields.filter(field => !data[field]?.trim());
     
-    // Email validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(data.email)) {
-        return { isValid: false, message: 'Please enter a valid email address' };
+    if (missingFields.length > 0) {
+        return { valid: false, message: `Please fill in all required fields: ${missingFields.join(', ')}` };
+    }
+    
+    // Validate room selection
+    if (!validateRoomSelection()) {
+        return { valid: false, message: 'Please select a valid room' };
+    }
+    
+    // Email validation if email field exists
+    if (data.email) {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(data.email)) {
+            return { valid: false, message: 'Please enter a valid email address' };
+        }
     }
     
     return { isValid: true };
