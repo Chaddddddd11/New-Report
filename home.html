@@ -26,6 +26,10 @@
     window.firebase = firebase;
   </script>
   
+  <!-- Firebase Auth UI (optional, for better UI components) -->
+  <script src="https://www.gstatic.com/firebasejs/ui/6.0.1/firebase-ui-auth.js"></script>
+  <link type="text/css" rel="stylesheet" href="https://www.gstatic.com/firebasejs/ui/6.0.1/firebase-ui-auth.css" />
+  
   <!-- Shared Authentication -->
   <script src="auth-check.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
@@ -165,6 +169,7 @@
   <div class="container">
     <img src="https://the-post-assets.sgp1.digitaloceanspaces.com/2023/03/DHVSU_thumbnail.png" alt="DHVSU Logo" class="logo">
     <h1>DHVSU INSTRUCTOR SCHEDULING SYSTEM</h1>
+    <p id="welcomeMessage" style="margin-bottom: 20px; color: var(--primary-color); font-weight: 500;"></p>
     
     <div class="buttons-container">
       <a href="index.html" class="nav-button">Scheduling System</a>
@@ -175,21 +180,26 @@
   </div>
 
   <script>
-    // Simple logout functionality
+    // Enhanced logout functionality
     document.addEventListener('DOMContentLoaded', function() {
       const logoutBtn = document.getElementById('logoutBtn');
       if (logoutBtn) {
         logoutBtn.addEventListener('click', function() {
-          // This will trigger the auth state change in auth-check.js
-          firebase.auth().signOut()
-            .then(() => {
-              // Redirect handled by auth state change listener
-            })
-            .catch(error => {
-              console.error('Logout failed:', error);
-              alert('Failed to log out. Please try again.');
-            });
+          // Use the logout function from auth-check.js
+          logout().catch(error => {
+            console.error('Logout failed:', error);
+            alert('Failed to log out. Please try again.');
+          });
         });
+      }
+      
+      // Show welcome message with user info if available
+      const currentUser = getCurrentUser();
+      if (currentUser) {
+        const welcomeElement = document.getElementById('welcomeMessage');
+        if (welcomeElement) {
+          welcomeElement.textContent = `Welcome, ${currentUser.email || 'User'}!`;
+        }
       }
     });
   </script>
