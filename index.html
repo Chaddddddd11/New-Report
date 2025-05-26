@@ -313,7 +313,7 @@
         Student Capacity: -
       </div>
       
-      <button id="printButton" class="btn" onclick="printSchedule()" disabled>
+      <button id="printButton" class="btn" disabled>
         <i class="fas fa-print"></i> Print Schedule
       </button>
     </div>
@@ -870,17 +870,29 @@
         });
       }
       
-      // Update print button state based on selections
-      [courseSelect, yearSelect, sectionSelect].forEach(select => {
-        if (select) {
-          select.addEventListener('change', () => {
-            const printBtn = document.getElementById('printButton');
-            if (printBtn) {
-              printBtn.disabled = !(courseSelect.value && yearSelect.value && sectionSelect.value);
-            }
-          });
-        }
-      });
+      // Set up print button
+      const printBtn = document.getElementById('printButton');
+      if (printBtn) {
+        // Update print button state based on selections
+        const updatePrintButtonState = () => {
+          printBtn.disabled = !(courseSelect && courseSelect.value && 
+                              yearSelect && yearSelect.value && 
+                              sectionSelect && sectionSelect.value);
+        };
+        
+        // Add event listeners for dropdown changes
+        [courseSelect, yearSelect, sectionSelect].forEach(select => {
+          if (select) {
+            select.addEventListener('change', updatePrintButtonState);
+          }
+        });
+        
+        // Add click event for printing
+        printBtn.addEventListener('click', printSchedule);
+        
+        // Initial state update
+        updatePrintButtonState();
+      }
       
       // Initial log
       logCurrentState();
