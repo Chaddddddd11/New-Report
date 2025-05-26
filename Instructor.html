@@ -730,26 +730,22 @@
             const year = yearSelect.value;
             const section = sectionSelect.value;
             
-            if (!selectedDay || !classTime || !course || !year || !section) {
-                console.log('Please select all fields first.');
+            if (!selectedDay || !classTime) {
+                console.log('Please select day and time first.');
+                updateRoomDropdown([], 0);
                 return;
             }
             
             try {
                 // Get student capacity for the selected course/year/section
-                const studentCapacity = studentCapacityMap[course]?.[year]?.[section] || 0;
+                const studentCapacity = course && year && section ? 
+                    (studentCapacityMap[course]?.[year]?.[section] || 0) : 0;
                 
                 // Get all instructors and rooms using v9+ syntax
                 const [instructorsSnapshot, roomsSnapshot] = await Promise.all([
                     getDocs(instructorsCollectionRef),
                     getDocs(roomsCollectionRef)
                 ]);
-                
-                let rawRoomsData = [];
-                roomsSnapshot.forEach(doc => rawRoomsData.push({ id: doc.id, ...doc.data() }));
-                
-                let rawInstructorsData = [];
-                instructorsSnapshot.forEach(doc => rawInstructorsData.push({ id: doc.id, ...doc.data() }));
                 
                 // Parse selected time from dropdown into minutes
                 const [selectedTimeStartStr, selectedTimeEndStr] = classTime.split('-').map(t => t.trim());
@@ -758,84 +754,144 @@
                 
                 // Create a map of room schedules, parsing their times into minutes
                 const roomSchedules = new Map();
+                const allRooms = [];
+                
                 roomsSnapshot.forEach(doc => {
                     const data = doc.data();
-                    if (!data.roomName || !data.day || !data.time || typeof data.time !== 'string') {
-                        console.warn(`Skipping room doc ID: ${doc.id} due to missing or invalid roomName, day, or time.`);
+                    if (!data.roomName) {
+                        console.warn(`Skipping room doc ID: ${doc.id} due to missing roomName.`);
                         return;
                     }
-                    try {
-                        const [roomTimeStartStr, roomTimeEndStr] = data.time.trim().split('-').map(t => t.trim());
-                        const roomStartMinutes = timeToMinutes(roomTimeStartStr);
-                        const roomEndMinutes = timeToMinutes(roomTimeEndStr);
-
-                        if (isNaN(roomStartMinutes) || isNaN(roomEndMinutes)) {
-                            console.warn(`Skipping room doc ID: ${doc.id} due to invalid time format that couldn't be parsed to minutes: ${data.time}`);
-                            return;
-                        }
-
-                        roomSchedules.set(data.roomName, {
-                            id: doc.id,
-                            name: data.roomName,
-                            capacity: parseInt(data.capacity) || 0,
-                            day: data.day.trim(),
-                            timeString: data.time.trim(), // Keep original time string for reference
-                            startMinutes: roomStartMinutes,
-                            endMinutes: roomEndMinutes,
-                            isBooked: false
-                        });
-                    } catch (e) {
-                        console.warn(`Error parsing time for room doc ID: ${doc.id}, time: '${data.time}'. Error: ${e.message}`);
-                    }
+                    
+                    const roomInfo = {
+                        id: doc.id,
+                        name: data.roomName,
+                        capacity: parseInt(data.capacity) || 0,
+                        isAvailable: true,
+                        conflictReason: ''
+                    };
+                    
+                    allRooms.push(roomInfo);
+                    roomSchedules.set(data.roomName, roomInfo);
                 });
                 
                 // Mark rooms as booked based on instructor schedules, using parsed times
                 instructorsSnapshot.forEach(doc => {
                     const instructor = doc.data();
-                    if (!instructor.roomName || !instructor.day || !instructor.time || typeof instructor.time !== 'string') return;
+                    if (!instructor.roomName || !instructor.day || !instructor.time || 
+                        typeof instructor.time !== 'string') return;
                     
-                    const roomSchedule = roomSchedules.get(instructor.roomName);
-                    if (!roomSchedule) return;
+                    const roomInfo = roomSchedules.get(instructor.roomName);
+                    if (!roomInfo) return;
                     
                     try {
                         const [instTimeStartStr, instTimeEndStr] = instructor.time.trim().split('-').map(t => t.trim());
                         const instructorStartMinutes = timeToMinutes(instTimeStartStr);
                         const instructorEndMinutes = timeToMinutes(instTimeEndStr);
-
+                        
                         if (isNaN(instructorStartMinutes) || isNaN(instructorEndMinutes)) {
-                             console.warn(`Skipping booking check for instructor ${instructor.name} due to invalid time format: ${instructor.time}`);
+                            console.warn(`Skipping booking check for instructor ${instructor.name} due to invalid time format: ${instructor.time}`);
                             return;
                         }
-
+                        
+                        // Check for time conflict with selected time slot
                         if (instructor.day.trim().toLowerCase() === selectedDay.toLowerCase() &&
-                            instructorStartMinutes === selectedStartMinutes &&
-                            instructorEndMinutes === selectedEndMinutes) {
-                            console.log(`Room '${instructor.roomName}' is booked by instructor '${instructor.name}' for selected slot (match by minutes).`);
-                            roomSchedule.isBooked = true;
+                            !(selectedEndMinutes <= instructorStartMinutes || selectedStartMinutes >= instructorEndMinutes)) {
+                            console.log(`Room '${instructor.roomName}' has a scheduling conflict with instructor '${instructor.name}'`);
+                            roomInfo.isAvailable = false;
+                            roomInfo.conflictReason = `Booked by ${instructor.name} (${instructor.time})`;
                         }
                     } catch (e) {
-                        console.warn(`Error parsing time for instructor ${instructor.name}, time: '${instructor.time}'. Error: ${e.message}`);
+                        console.warn(`Error processing instructor ${instructor.name}:`, e);
                     }
                 });
                 
-                // Filter available rooms based on day, parsed time match, capacity, and booking status
-                const availableRooms = Array.from(roomSchedules.values()).filter(room => {
-                    const dayMatches = room.day.toLowerCase() === selectedDay.toLowerCase();
-                    const timeMatches = room.startMinutes === selectedStartMinutes && room.endMinutes === selectedEndMinutes;
-                    const hasCapacity = room.capacity >= studentCapacity;
-                    const isAvailable = !room.isBooked;
-                    
-                    console.log(`Filtering room '${room.name}': DayMatches=${dayMatches} (RoomDay: ${room.day}), TimeMatches=${timeMatches} (RoomTime: ${room.startMinutes}-${room.endMinutes} vs Selected: ${selectedStartMinutes}-${selectedEndMinutes}), HasCapacity=${hasCapacity} (RoomCap: ${room.capacity}), IsAvailable=${isAvailable}`);
-                    return dayMatches && timeMatches && hasCapacity && isAvailable;
+                // Filter and sort available rooms
+                const availableRooms = allRooms.filter(room => {
+                    const hasCapacity = studentCapacity === 0 || room.capacity >= studentCapacity;
+                    if (!hasCapacity) {
+                        room.conflictReason = `Insufficient capacity (Needs: ${studentCapacity})`;
+                    }
+                    return room.isAvailable && hasCapacity;
+                }).sort((a, b) => {
+                    // Sort by capacity closest to required capacity
+                    if (studentCapacity > 0) {
+                        const aDiff = Math.abs(a.capacity - studentCapacity);
+                        const bDiff = Math.abs(b.capacity - studentCapacity);
+                        return aDiff - bDiff;
+                    }
+                    return a.name.localeCompare(b.name);
                 });
                 
-                // Update room input value
-                roomInput.value = availableRooms.length > 0 ? availableRooms[0].name : '';
+                // Update room dropdown with available rooms
+                updateRoomDropdown(availableRooms, studentCapacity);
                 
             } catch (error) {
                 console.error('Error updating available rooms:', error);
+                updateRoomDropdown([], 0);
             }
         }
+        
+        // Helper function to update room dropdown
+        function updateRoomDropdown(availableRooms, studentCapacity) {
+            // Clear existing options except the first one
+            while (roomInput.options.length > 1) {
+                roomInput.remove(1);
+            }
+            
+            // Update room capacity display
+            const roomCapacityDisplay = document.getElementById('roomCapacity');
+            
+            if (availableRooms.length === 0) {
+                roomInput.disabled = true;
+                roomInput.innerHTML = '<option value="">No available rooms for the selected criteria</option>';
+                roomCapacityDisplay.textContent = 'No available rooms';
+                roomCapacityDisplay.style.color = 'red';
+                return;
+            }
+            
+            roomInput.disabled = false;
+            
+            // Add available rooms to dropdown
+            availableRooms.forEach(room => {
+                const option = document.createElement('option');
+                option.value = room.name;
+                option.textContent = `${room.name} (Capacity: ${room.capacity})`;
+                option.dataset.capacity = room.capacity;
+                roomInput.appendChild(option);
+            });
+            
+            // Update capacity display
+            if (studentCapacity > 0) {
+                roomCapacityDisplay.textContent = `Room capacity: ${availableRooms[0]?.capacity || 0} (${studentCapacity} required)`;
+                roomCapacityDisplay.style.color = availableRooms[0]?.capacity >= studentCapacity ? 'green' : 'red';
+            } else {
+                roomCapacityDisplay.textContent = `Room capacity: ${availableRooms[0]?.capacity || 0}`;
+                roomCapacityDisplay.style.color = 'black';
+            }
+            
+            // Trigger change event to update any dependent UI
+            roomInput.dispatchEvent(new Event('change'));
+        }
+        
+        // Update room capacity display when selection changes
+        roomInput.addEventListener('change', function() {
+            const selectedOption = this.options[this.selectedIndex];
+            const roomCapacity = selectedOption ? parseInt(selectedOption.dataset.capacity) || 0 : 0;
+            const roomCapacityDisplay = document.getElementById('roomCapacity');
+            
+            if (selectedOption && selectedOption.value) {
+                roomCapacityDisplay.textContent = `Room capacity: ${roomCapacity}`;
+                roomCapacityDisplay.style.color = 'black';
+            }
+        });
+        
+        // Add event listeners for fields that affect room availability
+        [daySelect, timeSelect, courseSelect, yearSelect, sectionSelect].forEach(element => {
+            if (element) {
+                element.addEventListener('change', updateAvailableRooms);
+            }
+        });
 
         function updateStudentCapacity() {
             const course = courseSelect.value;
