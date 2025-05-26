@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>DHVSU Edit Instructor</title>
+    <title>DHVSU Instructor Registration</title>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
     <style>
         body {
@@ -222,7 +222,7 @@
 </head>
 <body>
     <div class="container">
-        <a href="InstructorList.html" class="back-btn">← Back to List</a>
+        <a href="index.html" class="back-btn">← Back to Schedule</a>
         <div class="header-container">
             <div class="logo-container left">
                 <img src="https://media.assettype.com/sunstar/2025-02-04/7x1wu7dq/DHVSU.jpg?w=1200&h=675&auto=format%2Ccompress&fit=max&enlarge=true" alt="DHVSU Logo" class="logo">
@@ -340,8 +340,7 @@
 
             <div class="btn-container">
                 <a href="InstructorList.html" class="btn">View Instructor List</a>
-                <button type="submit" class="btn" id="submitBtn">Update Instructor</button>
-                <button type="button" class="btn btn-danger" id="deleteBtn" style="background-color: #dc3545; margin-left: 10px;">Delete</button>
+                <button type="submit" id="submitBtn" class="btn">Register Instructor</button>
             </div>
         </form>
     </div>
@@ -361,8 +360,7 @@
             where,
             doc, 
             getDoc, 
-            updateDoc,
-            deleteDoc
+            updateDoc
         } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
         // Your web app's Firebase configuration
@@ -619,57 +617,28 @@
                 
                 // Handle form submission
                 const form = document.getElementById('instructorForm');
-                form.addEventListener('submit', () => registerInstructor(true));
+                form.addEventListener('submit', registerInstructor);
                 
                 console.log('=== PAGE INITIALIZATION STARTED ===');
                 
-                // Check if we're in edit mode (URL has an ID parameter)
+                // Check if we're in edit mode
                 const urlParams = new URLSearchParams(window.location.search);
                 const instructorId = urlParams.get('id');
                 
-                // If no ID is provided, redirect to list
-                if (!instructorId) {
-                    window.location.href = 'InstructorList.html';
-                    return;
-                }
-                
-                // Set up delete button
-                const deleteBtn = document.getElementById('deleteBtn');
-                if (deleteBtn) {
-                    deleteBtn.addEventListener('click', async () => {
-                        if (confirm('Are you sure you want to delete this instructor?')) {
-                            try {
-                                await deleteDoc(doc(db, 'Instructors', instructorId));
-                                alert('Instructor deleted successfully');
-                                window.location.href = 'InstructorList.html';
-                            } catch (error) {
-                                console.error('Error deleting instructor:', error);
-                                alert('Failed to delete instructor. Please try again.');
-                            }
-                        }
-                    });
-                }
-                
-                // Load instructor data if in edit mode
                 if (instructorId) {
                     currentInstructorId = instructorId;
                     isUpdateMode = true;
-                    try {
-                        await loadInstructorData(instructorId);
-                    } catch (error) {
-                        console.error('Error loading instructor data:', error);
-                        showError('Failed to load instructor data. Please try again.');
-                    }
+                    await loadInstructorData(instructorId);
                 }
             } catch (error) {
                 console.error('Error initializing page:', error);
                 showError('An error occurred while initializing the page. Please refresh and try again.');
             }
             
-            // Load instructor data from URL parameters if present (for backward compatibility)
+            // Check if we're in edit mode and populate the form
             const instructorData = getUrlParams();
-            if (instructorData.id && instructorData.id !== currentInstructorId) {
-                console.log('Loading instructor data from URL parameters:', instructorData);
+            if (instructorData.id) {
+                console.log('Edit mode - Populating form with instructor data:', instructorData);
                 await populateFormWithInstructorData(instructorData);
             }
             try {
@@ -1139,24 +1108,21 @@
                 }
 
                 try {
-                    // Conflict Validation: Check for instructor schedule conflict
+                    // Check for instructor schedule conflict
                     const instructorTimeConflictQuery = query(
                         collection(db, 'Instructors'),
                         where("name", "==", formData.name.trim()),
-                        where("day", "==", formData.day),
-                        where("time", "==", formData.time)
+                        where("day", "==", formData.day)
                     );
                     
-                    const conflictSnapshot = await getDocs(instructorTimeConflictQuery);
-                    if (!conflictSnapshot.empty) {
-                        throw new Error('This instructor already has a class scheduled at this time');
-                    }
                     const instructorTimeConflictSnapshot = await getDocs(instructorTimeConflictQuery);
                     let hasInstructorConflict = false;
+                    
                     instructorTimeConflictSnapshot.forEach(docInstance => {
                         if (isUpdateMode && docInstance.id === currentInstructorId) {
-                            return; // Skip self in update mode for this specific check
+                            return; // Skip self in update mode
                         }
+                        
                         const booking = docInstance.data();
                         let existingStartHour, existingEndHour;
                         
@@ -1176,12 +1142,17 @@
                         if (existingStartHour !== undefined && existingEndHour !== undefined) {
                             if (startHour < existingEndHour && endHour > existingStartHour) {
                                 hasInstructorConflict = true;
+                                return; // Exit early if conflict found
                             }
                         }
                     });
 
                     if (hasInstructorConflict) {
                         showError(`Instructor ${formData.name} already has a conflicting schedule on ${formData.day} between ${timeStart} and ${timeEnd}.`);
+                        if (submitBtn) {
+                            submitBtn.disabled = false;
+                            submitBtn.innerHTML = originalBtnText;
+                        }
                         return;
                     }
 
