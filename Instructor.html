@@ -609,45 +609,41 @@
         // Flag to track if form was submitted by user
         let formSubmittedByUser = false;
         
-        // Debug logging for redirects
+        // Track redirections
         console.log('=== PAGE LOADED ===');
         
-        // Store original functions
-        const originalLocationHref = window.location.href;
+        // Store the original functions
+        const originalHref = window.location.href;
         const originalAssign = window.location.assign;
         const originalReplace = window.location.replace;
         
-        // Override location.href
-        Object.defineProperty(window.location, 'href', {
-            set: function(value) {
-                console.log('Attempting to set location.href to:', value);
-                console.trace('location.href set from:');
-                return originalLocationHref.set.call(this, value);
-            },
-            get: function() {
-                console.trace('location.href accessed from:');
-                return originalLocationHref.get.call(this);
-            }
+        // Log all navigation attempts
+        window.navigation.addEventListener('navigate', (event) => {
+            console.log('Navigation detected to:', event.destination.url);
+            console.trace('Navigation initiated from:');
         });
         
-        // Override location.assign
-        window.location.assign = function() {
-            console.log('location.assign called with:', arguments[0]);
-            console.trace('location.assign called from:');
-            return originalAssign.apply(this, arguments);
-        };
-        
-        // Override location.replace
-        window.location.replace = function() {
-            console.log('location.replace called with:', arguments[0]);
-            console.trace('location.replace called from:');
-            return originalReplace.apply(this, arguments);
-        };
-        
-        // Log all navigation events
-        window.addEventListener('beforeunload', function() {
+        // Log beforeunload events
+        window.addEventListener('beforeunload', function(event) {
             console.log('Page is about to unload - navigation detected');
             console.trace('Navigation initiated from:');
+            
+            // This will show the full stack trace of what caused the navigation
+            const stack = new Error().stack;
+            console.log('Navigation stack trace:', stack);
+        });
+        
+        // Log any direct location changes
+        const originalLocation = window.location;
+        window.addEventListener('popstate', function(event) {
+            console.log('popstate event:', event);
+            console.log('New URL:', window.location.href);
+        });
+        
+        // Log form submissions
+        document.addEventListener('submit', function(event) {
+            console.log('Form submitted:', event.target);
+            console.trace('Form submission from:');
         });
         
         document.addEventListener('DOMContentLoaded', async () => {
