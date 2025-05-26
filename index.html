@@ -229,7 +229,7 @@
       <div class="logo-container left">
         <img src="https://media.assettype.com/sunstar/2025-02-04/7x1wu7dq/DHVSU.jpg?w=1200&h=675&auto=format%2Ccompress&fit=max&enlarge=true" alt="DHVSU Logo" class="logo">
       </div>
-      <h2>DHVSU Automatic Scheduling System</h2>
+      <h2>DHVSU Instructor Scheduling System</h2>
       <div class="logo-container right">
         <img src="https://dhvsu.edu.ph/images/college-of-business-studies/01202025%20-%20College%20of%20Business%20Studies%20LOGO%20-%20Samantha%20F.%20Batalla.png" alt="DHVSU CBS Logo" class="logo">
       </div>
@@ -255,7 +255,7 @@
       </select>
       
       <div id="studentCapacity" class="student-capacity">
-        Capacity: -
+        Student Capacity: -
       </div>
     </div>
     
@@ -380,9 +380,9 @@
       
       if (course && year && section) {
         const capacity = studentCapacityMap[course]?.[year]?.[section] || '-';
-        studentCapacity.textContent = `Capacity: ${capacity}`;
+        studentCapacity.textContent = `Student Capacity: ${capacity}`;
       } else {
-        studentCapacity.textContent = 'Capacity: -';
+        studentCapacity.textContent = 'Student Capacity: -';
       }
     }
 
@@ -648,13 +648,17 @@
           
           // If instructor found, fill the cell with their info
           if (instructor) {
+            // Use the instructor's scheduleColor from Firestore, default to a light gray if not set
+            const bgColor = instructor.scheduleColor || '#f0f0f0';
+            // Determine text color based on background brightness for better readability
+            const textColor = getContrastYIQ(bgColor);
+            
             cell.innerHTML = `
-              <div class="schedule-entry">
+              <div class="schedule-entry" style="background-color: ${bgColor}; color: ${textColor};">
                 <div class="subject">${instructor.subject || 'N/A'}</div>
                 <div class="instructor">${instructor.name || 'N/A'}</div>
                 <div class="room">${instructor.roomName || 'TBA'}</div>
-              </div>
-            `;
+              </div>`;
           }
           
           row.appendChild(cell);
@@ -709,6 +713,23 @@
       // Initial log
       logCurrentState();
     });
+    
+    // Function to determine if text should be light or dark based on background color
+    function getContrastYIQ(hexcolor) {
+      // Remove the hash if it exists
+      hexcolor = hexcolor.replace('#', '');
+      
+      // Convert hex to RGB
+      const r = parseInt(hexcolor.substr(0, 2), 16);
+      const g = parseInt(hexcolor.substr(2, 2), 16);
+      const b = parseInt(hexcolor.substr(4, 2), 16);
+      
+      // Calculate YIQ (brightness) value
+      const yiq = ((r * 299) + (g * 587) + (b * 114)) / 1000;
+      
+      // Return black for light colors, white for dark colors
+      return (yiq >= 128) ? '#000000' : '#ffffff';
+    }
   </script>
 </body>
 </html>
