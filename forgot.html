@@ -5,9 +5,31 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Forgot Password - DHVSU Scheduling System</title>
     <!-- Firebase SDK -->
-    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+    <script type="module">
+        // Import the functions you need from the SDKs you need
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+        import { getAuth, sendPasswordResetEmail, fetchSignInMethodsForEmail } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+        
+        // Your web app's Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyDBu7-vOFmS62IaGD8-8zb6TH0a1mHYNpI",
+            authDomain: "dhvsu-faculty-scheduling.firebaseapp.com",
+            projectId: "dhvsu-faculty-scheduling",
+            storageBucket: "dhvsu-faculty-scheduling.appspot.com",
+            messagingSenderId: "1075180921702",
+            appId: "1:1075180921702:web:a0320fa286c684511cdea7",
+            measurementId: "G-EP4FZ04FQT"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        
+        // Make auth available globally
+        window.auth = auth;
+        window.sendPasswordResetEmail = sendPasswordResetEmail;
+        window.fetchSignInMethodsForEmail = fetchSignInMethodsForEmail;
+    </script>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
@@ -238,163 +260,137 @@
     </div>
 
     <script>
-        // Firebase configuration
-        const firebaseConfig = {
-            apiKey: "AIzaSyDBu7-vOFmS62IaGD8-8zb6TH0a1mHYNpI",
-            authDomain: "dhvsu-faculty-scheduling.firebaseapp.com",
-            projectId: "dhvsu-faculty-scheduling",
-            storageBucket: "dhvsu-faculty-scheduling.appspot.com",
-            messagingSenderId: "1075180921702",
-            appId: "1:1075180921702:web:a0320fa286c684511cdea7",
-            measurementId: "G-EP4FZ04FQT"
-        };
-
-        // Initialize Firebase when the page loads
-        document.addEventListener('DOMContentLoaded', async () => {
+        // Initialize the application when the page loads
+        document.addEventListener('DOMContentLoaded', function() {
             try {
-                // Initialize Firebase
-                console.log('Initializing Firebase...');
-                let app, auth;
+                console.log('Initializing application...');
                 
-                // Check if Firebase is already initialized
-                if (firebase.apps.length === 0) {
-                    app = firebase.initializeApp(firebaseConfig);
-                    console.log('Firebase app initialized');
-                } else {
-                    app = firebase.app();
-                    console.log('Using existing Firebase app');
+                if (!window.auth) {
+                    throw new Error('Firebase Authentication not initialized');
                 }
                 
-                auth = firebase.auth();
-                console.log('Firebase Auth initialized');
+                console.log('Firebase Auth is ready');
                 
-                // Initialize the form
-                initializePasswordResetForm(auth);
+                // Get DOM elements
+                const forgotPasswordForm = document.getElementById('forgotPasswordForm');
+                const usernameInput = document.getElementById('username');
+                const resetBtn = document.getElementById('resetBtn');
+                const errorMessage = document.getElementById('errorMessage');
+                const successMessage = document.getElementById('successMessage');
+                
+                // Show message helper function
+                function showMessage(element, message, isError = true) {
+                    element.textContent = message;
+                    element.style.display = 'block';
+                    
+                    // Hide the other message
+                    const otherMessage = isError ? successMessage : errorMessage;
+                    otherMessage.style.display = 'none';
+                    
+                    // Auto-hide after 10 seconds for success messages
+                    if (!isError) {
+                        setTimeout(() => {
+                            element.style.display = 'none';
+                        }, 10000);
+                    }
+                }
+                
+                // Handle form submission
+                forgotPasswordForm.addEventListener('submit', async function(e) {
+                    e.preventDefault();
+                    
+                    const email = usernameInput.value.trim();
+                    
+                    // Reset messages
+                    errorMessage.style.display = 'none';
+                    successMessage.style.display = 'none';
+                    
+                    // Validate email
+                    if (!email) {
+                        showMessage(errorMessage, 'Please enter your email address.');
+                        return;
+                    }
+                    
+                    // Basic email validation
+                    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                        showMessage(errorMessage, 'Please enter a valid email address.');
+                        return;
+                    }
+                    
+                    // Set loading state
+                    resetBtn.disabled = true;
+                    resetBtn.innerHTML = '<span class="spinner"></span> Sending reset link...';
+                    
+                    try {
+                        console.log('Attempting to send password reset email to:', email);
+                        
+                        // First, check if email exists
+                        console.log('Checking if email exists:', email);
+                        const methods = await fetchSignInMethodsForEmail(auth, email);
+                        console.log('Sign-in methods for email:', methods);
+                        
+                        if (!methods || methods.length === 0) {
+                            console.log('No user found with this email address');
+                            throw { 
+                                code: 'auth/user-not-found',
+                                message: 'No account found with this email address. Please check the email or register for a new account.'
+                            };
+                        }
+                        
+                        // Send password reset email
+                        console.log('Sending password reset email to:', email);
+                        await sendPasswordResetEmail(auth, email);
+                        
+                        console.log('Password reset email sent successfully');
+                        
+                        // Show success message
+                        showMessage(
+                            successMessage, 
+                            'Password reset link has been sent to your email. Please check your inbox and spam folder. If you don\'t see it, please try again in a few minutes.',
+                            false
+                        );
+                        
+                        // Clear the email field
+                        usernameInput.value = '';
+                        
+                    } catch (error) {
+                        console.error('Error processing password reset:', error);
+                        
+                        let errorMessageText = 'An error occurred while processing your request. Please try again.';
+                        
+                        // Handle specific Firebase errors
+                        switch (error.code) {
+                            case 'auth/user-not-found':
+                                errorMessageText = error.message || 'No account found with this email address. Please check the email or register for a new account.';
+                                break;
+                            case 'auth/invalid-email':
+                                errorMessageText = 'Please enter a valid email address.';
+                                break;
+                            case 'auth/too-many-requests':
+                                errorMessageText = 'Too many attempts. Please try again later.';
+                                break;
+                            case 'auth/operation-not-allowed':
+                                errorMessageText = 'Password reset is not enabled. Please contact support.';
+                                break;
+                        }
+                        
+                        showMessage(errorMessage, errorMessageText);
+                    } finally {
+                        resetBtn.disabled = false;
+                        resetBtn.innerHTML = '<i class="fas fa-key"></i> Reset Password';
+                    }
+                });
+                
+                // Auto-hide error message when user starts typing
+                usernameInput.addEventListener('input', function() {
+                    errorMessage.style.display = 'none';
+                });
                 
             } catch (error) {
-                console.error('Failed to initialize Firebase:', error);
+                console.error('Failed to initialize application:', error);
                 alert('Failed to initialize the application. Please refresh the page and try again.');
             }
         });
-
-        // Initialize the password reset form
-        function initializePasswordResetForm(auth) {
-            // Get DOM elements
-            const forgotPasswordForm = document.getElementById('forgotPasswordForm');
-            const usernameInput = document.getElementById('username');
-            const resetBtn = document.getElementById('resetBtn');
-            const errorMessage = document.getElementById('errorMessage');
-            const successMessage = document.getElementById('successMessage');
-            
-            // Show message helper function
-            function showMessage(element, message, isError = true) {
-                element.textContent = message;
-                element.style.display = 'block';
-                
-                // Hide the other message
-                const otherMessage = isError ? successMessage : errorMessage;
-                otherMessage.style.display = 'none';
-                
-                // Auto-hide after 10 seconds for success messages
-                if (!isError) {
-                    setTimeout(() => {
-                        element.style.display = 'none';
-                    }, 10000);
-                }
-            }
-            
-            // Handle form submission
-            forgotPasswordForm.addEventListener('submit', async function(e) {
-                e.preventDefault();
-                
-                const email = usernameInput.value.trim();
-                
-                // Reset messages
-                errorMessage.style.display = 'none';
-                successMessage.style.display = 'none';
-                
-                // Validate email
-                if (!email) {
-                    showMessage(errorMessage, 'Please enter your email address.');
-                    return;
-                }
-                
-                // Basic email validation
-                if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-                    showMessage(errorMessage, 'Please enter a valid email address.');
-                    return;
-                }
-                
-                // Set loading state
-                resetBtn.disabled = true;
-                resetBtn.innerHTML = '<span class="spinner"></span> Sending reset link...';
-                
-                try {
-                    console.log('Attempting to send password reset email to:', email);
-                    
-                    // First, check if email exists
-                    console.log('Checking if email exists:', email);
-                    const methods = await auth.fetchSignInMethodsForEmail(email);
-                    console.log('Sign-in methods for email:', methods);
-                    
-                    if (!methods || methods.length === 0) {
-                        throw { code: 'auth/user-not-found' };
-                    }
-                    
-                    // Send password reset email
-                    console.log('Sending password reset email to:', email);
-                    await auth.sendPasswordResetEmail(email)
-                        .then(() => {
-                            console.log('Password reset email sent successfully');
-                            
-                            // Show success message
-                            showMessage(
-                                successMessage, 
-                                'Password reset link has been sent to your email. Please check your inbox and spam folder. If you don\'t see it, please try again in a few minutes.',
-                                false
-                            );
-                            
-                            // Clear the email field
-                            usernameInput.value = '';
-                        })
-                        .catch(error => {
-                            console.error('Error sending password reset email:', error);
-                            throw error; // Re-throw to be caught by the outer catch
-                        });
-                    
-                } catch (error) {
-                    console.error('Error processing password reset:', error);
-                    
-                    let errorMessageText = 'An error occurred while processing your request. Please try again.';
-                    
-                    // Handle specific Firebase errors
-                    switch (error.code) {
-                        case 'auth/user-not-found':
-                            errorMessageText = 'No account found with this email address.';
-                            break;
-                        case 'auth/invalid-email':
-                            errorMessageText = 'Please enter a valid email address.';
-                            break;
-                        case 'auth/too-many-requests':
-                            errorMessageText = 'Too many attempts. Please try again later.';
-                            break;
-                        case 'auth/operation-not-allowed':
-                            errorMessageText = 'Password reset is not enabled. Please contact support.';
-                            break;
-                    }
-                    
-                    showMessage(errorMessage, errorMessageText);
-                } finally {
-                    resetBtn.disabled = false;
-                    resetBtn.innerHTML = '<i class="fas fa-key"></i> Reset Password';
-                }
-            });
-            
-            // Auto-hide error message when user starts typing
-            usernameInput.addEventListener('input', function() {
-                errorMessage.style.display = 'none';
-            });
-        }
     </script>
 </body>
 </html>
