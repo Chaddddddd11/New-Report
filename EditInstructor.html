@@ -1341,11 +1341,19 @@
                         timestamp: new Date() // For ordering or tracking
                     };
 
-                    // Save to Firestore
+                    // Save or update in Firestore
                     try {
-                        await addDoc(collection(db, 'Instructors'), instructorData);
-                        showSuccess('Instructor registered successfully!');
-                        form.reset();
+                        if (isUpdateMode && currentInstructorId) {
+                            // Update existing instructor
+                            const instructorRef = doc(db, 'Instructors', currentInstructorId);
+                            await updateDoc(instructorRef, instructorData);
+                            showSuccess('Instructor updated successfully!');
+                        } else {
+                            // Add new instructor
+                            await addDoc(collection(db, 'Instructors'), instructorData);
+                            showSuccess('Instructor registered successfully!');
+                            form.reset();
+                        }
                         
                         // Only redirect if form was submitted by user
                         if (formSubmittedByUser) {
