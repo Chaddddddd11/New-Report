@@ -543,60 +543,64 @@
             console.log('Populating form with instructor data:', instructor);
             if (!instructor) return;
             
-            // Set basic fields
-            document.getElementById('name').value = instructor.name || '';
-            document.getElementById('subject').value = instructor.subject || '';
-            document.getElementById('course').value = instructor.course || '';
-            
-            // Set year level if it exists
-            if (instructor.year) {
-                const yearSelect = document.getElementById('year');
-                if (yearSelect) {
-                    yearSelect.value = instructor.year;
+            try {
+                // Set basic fields
+                if (instructor.name) document.getElementById('name').value = instructor.name;
+                if (instructor.subject) document.getElementById('subject').value = instructor.subject;
+                if (instructor.course) document.getElementById('course').value = instructor.course;
+                
+                // Set year level if it exists
+                if (instructor.year) {
+                    const yearSelect = document.getElementById('year');
+                    if (yearSelect) {
+                        yearSelect.value = instructor.year;
+                    }
                 }
-            }
-            
-            // Set section if it exists
-            if (instructor.section) {
-                const sectionSelect = document.getElementById('section');
-                if (sectionSelect) {
-                    sectionSelect.value = instructor.section;
+                
+                // Set section if it exists
+                if (instructor.section) {
+                    const sectionSelect = document.getElementById('section');
+                    if (sectionSelect) {
+                        sectionSelect.value = instructor.section;
+                    }
                 }
-            }
-            
-            // Set day if it exists
-            if (instructor.day) {
-                const daySelect = document.getElementById('day');
-                if (daySelect) {
-                    daySelect.value = instructor.day;
+                
+                // Set day if it exists
+                if (instructor.day) {
+                    const daySelect = document.getElementById('day');
+                    if (daySelect) {
+                        daySelect.value = instructor.day;
+                    }
                 }
-            }
-            
-            // Set time if it exists
-            if (instructor.time) {
-                const timeValue = instructor.time;
-                let timeOptionExists = Array.from(timeSelect.options).some(opt => opt.value === timeValue);
-                if(timeOptionExists) {
-                   timeSelect.value = timeValue;
-                } else {
-                    console.warn(`Saved time slot ${timeValue} not found in dropdown. Clearing selection.`);
-                    timeSelect.value = ''; 
+                
+                // Set time if it exists
+                if (instructor.time) {
+                    const timeValue = instructor.time;
+                    let timeOptionExists = Array.from(timeSelect.options).some(opt => opt.value === timeValue);
+                    if(timeOptionExists) {
+                       timeSelect.value = timeValue;
+                    } else {
+                        console.warn(`Saved time slot ${timeValue} not found in dropdown.`);
+                    }
                 }
-            } else {
-                timeSelect.value = '';
-            }
 
-            // Set room if it exists
-            if (instructor.room) {
-                roomInput.value = instructor.room;
-            }
+                // Set room if it exists (check both room and roomName for backward compatibility)
+                const roomValue = instructor.room || instructor.roomName;
+                if (roomValue && roomInput) {
+                    roomInput.value = roomValue;
+                }
 
-            // Change the button text to indicate update mode
-            const registerBtn = document.getElementById('submitBtn');
-            if (registerBtn) {
-                registerBtn.textContent = 'Update Instructor';
-                registerBtn.dataset.mode = 'update';
-                registerBtn.dataset.instructorId = instructor.id;
+                // Change the button text to indicate update mode
+                const registerBtn = document.getElementById('submitBtn');
+                if (registerBtn) {
+                    registerBtn.textContent = 'Update Instructor';
+                    registerBtn.dataset.mode = 'update';
+                    if (instructor.id) {
+                        registerBtn.dataset.instructorId = instructor.id;
+                    }
+                }
+            } catch (error) {
+                console.error('Error populating form data:', error);
             }
             
             // Change the page title
@@ -681,20 +685,33 @@
                 const instructorId = urlParams.get('id');
                 
                 if (instructorId) {
+                    console.log('Edit mode - Loading instructor data for ID:', instructorId);
                     currentInstructorId = instructorId;
                     isUpdateMode = true;
                     await loadInstructorData(instructorId);
+                    
+                    // Update the form title
+                    const header = document.querySelector('.header h1');
+                    if (header) {
+                        header.textContent = 'Edit Instructor';
+                    }
+                } else {
+                    // Only check URL params if not in edit mode
+                    const instructorData = getUrlParams();
+                    if (instructorData.id) {
+                        console.log('Populating form with URL parameters:', instructorData);
+                        await populateFormWithInstructorData(instructorData);
+                        
+                        // Update the form title if we're editing from URL params
+                        const header = document.querySelector('.header h1');
+                        if (header && instructorData.id) {
+                            header.textContent = 'Edit Instructor';
+                        }
+                    }
                 }
             } catch (error) {
                 console.error('Error initializing page:', error);
                 showError('An error occurred while initializing the page. Please refresh and try again.');
-            }
-            
-            // Check if we're in edit mode and populate the form
-            const instructorData = getUrlParams();
-            if (instructorData.id) {
-                console.log('Edit mode - Populating form with instructor data:', instructorData);
-                await populateFormWithInstructorData(instructorData);
             }
             try {
                 console.log('1. Initializing Firebase...');
