@@ -386,34 +386,78 @@
                 // Default to maroon if no color is set
                 const scheduleColor = instructor.scheduleColor || '#800000';
                 
-                row.innerHTML = `
-                    <td>${instructor.name || 'N/A'}</td>
-                    <td>${instructor.subject || 'N/A'}</td>
-                    <td>${instructor.course || 'N/A'}</td>
-                    <td>${yearDisplay}</td>
-                    <td>${instructor.section ? `Section ${instructor.section}` : 'N/A'}</td>
-                    <td>${instructor.day || 'N/A'}</td>
-                    <td>${instructor.time || 'N/A'}</td>
-                    <td>${instructor.roomName || 'N/A'}</td>
-                    <td>
-                        <div style="width: 24px; height: 24px; background-color: ${scheduleColor}; border: 1px solid #ccc; border-radius: 4px; margin: 0 auto;"></div>
-                    </td>
-                    <td class="actions">
-                        <button class="btn-edit" data-id="${instructor.id}">Edit</button>
-                    </td>`;
+                // Create cells individually for better control
+                const nameCell = document.createElement('td');
+                nameCell.textContent = instructor.name || 'N/A';
+                
+                const subjectCell = document.createElement('td');
+                subjectCell.textContent = instructor.subject || 'N/A';
+                
+                const courseCell = document.createElement('td');
+                courseCell.textContent = instructor.course || 'N/A';
+                
+                const yearCell = document.createElement('td');
+                yearCell.textContent = yearDisplay;
+                
+                const sectionCell = document.createElement('td');
+                sectionCell.textContent = instructor.section ? `Section ${instructor.section}` : 'N/A';
+                
+                const dayCell = document.createElement('td');
+                dayCell.textContent = instructor.day || 'N/A';
+                
+                const timeCell = document.createElement('td');
+                timeCell.textContent = instructor.time || 'N/A';
+                
+                const roomCell = document.createElement('td');
+                roomCell.textContent = instructor.roomName || 'N/A';
+                
+                const colorCell = document.createElement('td');
+                const colorDiv = document.createElement('div');
+                colorDiv.style.width = '24px';
+                colorDiv.style.height = '24px';
+                colorDiv.style.backgroundColor = scheduleColor;
+                colorDiv.style.border = '1px solid #ccc';
+                colorDiv.style.borderRadius = '4px';
+                colorDiv.style.margin = '0 auto';
+                colorCell.appendChild(colorDiv);
+                
+                const actionsCell = document.createElement('td');
+                actionsCell.className = 'actions';
+                const editButton = document.createElement('button');
+                editButton.className = 'btn-edit';
+                editButton.textContent = 'Edit';
+                editButton.onclick = function() {
+                    window.location.href = `EditInstructor.html?id=${instructor.id}`;
+                    return false;
+                };
+                actionsCell.appendChild(editButton);
+                
+                // Append all cells to the row
+                row.appendChild(nameCell);
+                row.appendChild(subjectCell);
+                row.appendChild(courseCell);
+                row.appendChild(yearCell);
+                row.appendChild(sectionCell);
+                row.appendChild(dayCell);
+                row.appendChild(timeCell);
+                row.appendChild(roomCell);
+                row.appendChild(colorCell);
+                row.appendChild(actionsCell);
                 
                 instructorTableBody.appendChild(row);
             });
             
-            // Add event listeners to edit buttons
-            document.querySelectorAll('.btn-edit').forEach(button => {
-                button.addEventListener('click', (e) => {
+            // Event delegation for edit buttons
+            instructorTableBody.addEventListener('click', function(e) {
+                const editButton = e.target.closest('.btn-edit');
+                if (editButton) {
                     e.preventDefault();
-                    const instructorId = button.getAttribute('data-id');
+                    const row = editButton.closest('tr');
+                    const instructorId = row ? row.getAttribute('data-instructor-id') : null;
                     if (instructorId) {
-                        window.location.href = `Instructor.html?edit=${instructorId}`;
+                        window.location.href = `EditInstructor.html?id=${instructorId}`;
                     }
-                });
+                }
             });
         }
         
