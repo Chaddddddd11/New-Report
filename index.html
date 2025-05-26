@@ -140,14 +140,16 @@
       border-collapse: collapse;
       margin-top: 15px;
       box-shadow: 0 2px 3px rgba(0,0,0,0.1);
-      background-color: rgb(218, 150, 6);
+      background-color: #fff;
+      table-layout: fixed;
     }
 
     #scheduleTable th, #scheduleTable td {
       border: 1px solid #ddd;
-      padding: 0; /* Remove padding from cells since we're adding it to schedule-entry */
+      padding: 8px;
       text-align: center;
-      vertical-align: top; /* Align content to the top of the cell */
+      vertical-align: top;
+      height: 100%;
     }
 
     #scheduleTable th {
@@ -163,15 +165,24 @@
     #scheduleTable tr:hover {
       background-color: #f1f1f1;
     }
+    
+    /* Ensure time column has consistent width */
+    #scheduleTable th:first-child,
+    #scheduleTable td:first-child {
+      width: 100px;
+      background-color: #f5f5f5;
+      font-weight: bold;
+    }
 
     .schedule-entry {
       padding: 8px;
       border-radius: 4px;
-      /* Remove default background color to allow inline styles to work */
       color: white;
-      /* Ensure the background covers the entire cell */
-      height: 100%;
+      display: block;
+      min-height: 100%;
       box-sizing: border-box;
+      /* Ensure the background covers the entire cell */
+      background-color: inherit !important;
     }
 
     .schedule-entry .subject {
@@ -657,8 +668,11 @@
             // Determine text color based on background brightness for better readability
             const textColor = getContrastYIQ(bgColor);
             
+            // Set the background color on the cell itself
+            cell.style.backgroundColor = bgColor;
+            
             cell.innerHTML = `
-              <div class="schedule-entry" style="background-color: ${bgColor}; color: ${textColor};">
+              <div class="schedule-entry" style="color: ${textColor};">
                 <div class="subject">${instructor.subject || 'N/A'}</div>
                 <div class="instructor">${instructor.name || 'N/A'}</div>
                 <div class="room">${instructor.roomName || 'TBA'}</div>
