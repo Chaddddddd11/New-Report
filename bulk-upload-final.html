@@ -7,6 +7,25 @@
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+    <script>
+    // Your web app's Firebase configuration
+    const firebaseConfig = {
+        apiKey: "AIzaSyDBu7-vOFmS62IaGD8-8zb6TH0a1mHYNpI",
+        authDomain: "dhvsu-faculty-scheduling.firebaseapp.com",
+        projectId: "dhvsu-faculty-scheduling",
+        storageBucket: "dhvsu-faculty-scheduling.appspot.com",
+        messagingSenderId: "1075180921702",
+        appId: "1:1075180921702:web:a0320fa286c684511cdea7",
+        measurementId: "G-EP4FZ04FQT"
+    };
+
+    // Initialize Firebase
+    const app = firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    </script>
     <style>
         :root {
             --primary-color: #610000;
@@ -207,14 +226,26 @@
             <p><strong>Note:</strong> For best results, download and use our template files:</p>
             
             <div class="template-buttons" style="margin-top: 15px; display: flex; gap: 10px; flex-wrap: wrap;">
-                <button onclick="downloadTemplate('excel')" class="download-btn" style="background-color: #217346;">
-                    <i class="fas fa-file-excel"></i> Download Excel Template
+                <button onclick="downloadTemplate('excel', 'instructors')" class="download-btn" style="background-color: #217346;">
+                    <i class="fas fa-file-excel"></i> Download Instructors Template (Excel)
                 </button>
-                <button onclick="downloadTemplate('csv')" class="download-btn" style="background-color: #1e6b57;">
-                    <i class="fas fa-file-csv"></i> Download CSV Template
+                <button onclick="downloadTemplate('csv', 'instructors')" class="download-btn" style="background-color: #1e6b57;">
+                    <i class="fas fa-file-csv"></i> Download Instructors Template (CSV)
                 </button>
-                <button onclick="downloadTemplate('json')" class="download-btn" style="background-color: #f5b041;">
-                    <i class="fas fa-file-code"></i> Download JSON Template
+                <button onclick="downloadTemplate('json', 'instructors')" class="download-btn" style="background-color: #f5b041;">
+                    <i class="fas fa-file-code"></i> Download Instructors Template (JSON)
+                </button>
+            </div>
+            
+            <div class="template-buttons" style="margin-top: 10px; display: flex; gap: 10px; flex-wrap: wrap;">
+                <button onclick="downloadTemplate('excel', 'rooms')" class="download-btn" style="background-color: #3f51b5;">
+                    <i class="fas fa-file-excel"></i> Download Rooms Template (Excel)
+                </button>
+                <button onclick="downloadTemplate('csv', 'rooms')" class="download-btn" style="background-color: #3949ab;">
+                    <i class="fas fa-file-csv"></i> Download Rooms Template (CSV)
+                </button>
+                <button onclick="downloadTemplate('json', 'rooms')" class="download-btn" style="background-color: #5c6bc0;">
+                    <i class="fas fa-file-code"></i> Download Rooms Template (JSON)
                 </button>
             </div>
         </div>
@@ -305,7 +336,7 @@
         });
 
         // File upload handling
-        function setupFileUpload(uploadAreaId, fileInputId, previewId, uploadBtnId, statusId) {
+        function setupFileUpload(uploadAreaId, fileInputId, previewId, uploadBtnId, statusId, uploadType) {
             const uploadArea = document.getElementById(uploadAreaId);
             const fileInput = document.getElementById(fileInputId);
             const preview = document.getElementById(previewId);
@@ -414,26 +445,114 @@
                 if (!fileInput.files.length) return;
                 
                 const file = fileInput.files[0];
-                const formData = new FormData();
-                formData.append('file', file);
+                const reader = new FileReader();
                 
-                try {
-                    // Replace with your actual upload endpoint
-                    const response = await fetch('/api/upload', {
-                        method: 'POST',
-                        body: formData
-                    });
-                    
-                    const result = await response.json();
-                    
-                    if (response.ok) {
-                        showStatus(status, `Successfully uploaded ${result.processed} records`, 'success');
-                    } else {
-                        throw new Error(result.message || 'Upload failed');
+                reader.onload = async function(e) {
+                    try {
+                        uploadBtn.disabled = true;
+                        uploadBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Uploading...';
+                        
+                        const data = new Uint8Array(e.target.result);
+                        const workbook = XLSX.read(data, { type: 'array' });
+                        const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                        const jsonData = XLSX.utils.sheet_to_json(firstSheet);
+                        
+                        // Get Firestore instance
+                        const db = firebase.firestore();
+                        const batch = db.batch();
+                        const collectionRef = db.collection(uploadType === 'instructors' ? 'Instructors' : 'Rooms');
+                        
+                        // Process each row
+                        let successCount = 0;
+                        const errors = [];
+                        
+                        for (let i = 0; i < jsonData.length; i++) {
+                            const row = jsonData[i];
+                            
+                            try {
+                                let docData;
+                                
+                                if (uploadType === 'instructors') {
+                                    // Validate required fields for instructors
+                                    if (!row.name || !row.course || !row.subject) {
+                                        throw new Error(`Row ${i + 2}: Missing required fields (name, course, subject)`);
+                                    }
+                                    
+                                    // Prepare instructor document data
+                                    docData = {
+                                        course: String(row.course || ''),
+                                        day: String(row.day || ''),
+                                        name: String(row.name || ''),
+                                        roomId: String(row.roomId || ''),
+                                        roomName: String(row.roomName || row.roomId || ''),
+                                        scheduleColor: String(row.scheduleColor || '#000000'),
+                                        section: String(row.section || ''),
+                                        subject: String(row.subject || ''),
+                                        time: String(row.time || ''),
+                                        year: String(row.year || ''),
+                                        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                                    };
+                                } else {
+                                    // Validate required fields for rooms
+                                    if (!row.roomName || row.capacity === undefined || row.capacity === '') {
+                                        throw new Error(`Row ${i + 2}: Missing required fields (roomName, capacity)`);
+                                    }
+                                    
+                                    // Prepare room document data
+                                    docData = {
+                                        capacity: Number(row.capacity) || 0,
+                                        day: String(row.day || ''),
+                                        roomName: String(row.roomName || ''),
+                                        time: String(row.time || ''),
+                                        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                                    };
+                                    
+                                    // Convert capacity to number if it's a string
+                                    if (typeof docData.capacity === 'string') {
+                                        docData.capacity = Number(docData.capacity) || 0;
+                                    }
+                                }
+                                
+                                // Add to batch
+                                const newDocRef = collectionRef.doc();
+                                batch.set(newDocRef, docData);
+                                successCount++;
+                                
+                            } catch (error) {
+                                errors.push(`Row ${i + 2}: ${error.message}`);
+                            }
+                        }
+                        
+                        // Commit the batch
+                        await batch.commit();
+                        
+                        // Show results
+                        let message = `Successfully uploaded ${successCount} records.`;
+                        if (errors.length > 0) {
+                            message += `\n${errors.length} records had errors.`;
+                            console.error('Upload errors:', errors);
+                        }
+                        
+                        showStatus(status, message, 'success');
+                        
+                    } catch (error) {
+                        console.error('Upload error:', error);
+                        showStatus(status, `Error: ${error.message}`, 'error');
+                    } finally {
+                        uploadBtn.disabled = false;
+                        uploadBtn.innerHTML = 'Upload File';
                     }
-                } catch (error) {
-                    showStatus(status, `Error: ${error.message}`, 'error');
-                }
+                };
+                
+                reader.onerror = (error) => {
+                    console.error('File reading error:', error);
+                    showStatus(status, 'Error reading file', 'error');
+                    uploadBtn.disabled = false;
+                    uploadBtn.innerHTML = 'Upload File';
+                };
+                
+                // Start reading the file
+                reader.readAsArrayBuffer(file);
             });
             
             function showStatus(element, message, type) {
@@ -455,7 +574,8 @@
                 'instructors-file',
                 'instructors-preview',
                 'upload-instructors',
-                'instructors-status'
+                'instructors-status',
+                'instructors'
             );
             
             setupFileUpload(
@@ -463,39 +583,59 @@
                 'rooms-file',
                 'rooms-preview',
                 'upload-rooms',
-                'rooms-status'
+                'rooms-status',
+                'rooms'
             );
         });
         
-        function downloadTemplate(format) {
-            // Sample data structure for the templates
-            const sampleData = [
-                {
-                    // For Instructors
-                    type: 'instructor',
-                    id: 'INST001',
-                    name: 'Juan Dela Cruz',
-                    email: 'jdelacruz@dhvsu.edu.ph',
-                    department: 'CCS',
-                    status: 'Active',
-                    subjects: 'CS 101, CS 102',
-                    maxLoad: '24',
-                    preferredTime: 'Morning',
-                    unavailableDays: 'Saturday, Sunday'
-                },
-                {
-                    // For Rooms
-                    type: 'room',
-                    id: 'RM101',
-                    name: 'Computer Lab 1',
-                    building: 'CCS Building',
-                    capacity: '30',
-                    roomType: 'Laboratory',
-                    available: 'true',
-                    equipment: 'Projector, Computers',
-                    notes: 'Air-conditioned'
-                }
-            ];
+        function downloadTemplate(format, type = 'instructors') {
+            let sampleData;
+            
+            if (type === 'instructors') {
+                // Sample data for Instructors collection
+                sampleData = [
+                    {
+                        course: 'BSA',
+                        day: 'Monday',
+                        name: 'Prof. Garcia',
+                        roomId: 'CBS BLG 5 222',
+                        roomName: 'CBS BLG 5 222',
+                        scheduleColor: '#000000',
+                        section: 'A',
+                        subject: 'Math',
+                        time: '07:00-08:00',
+                        year: '1'
+                    },
+                    {
+                        course: 'BSIT',
+                        day: 'Tuesday',
+                        name: 'Prof. Reyes',
+                        roomId: 'CCS BLG 3 101',
+                        roomName: 'CCS BLG 3 101',
+                        scheduleColor: '#1e88e5',
+                        section: 'B',
+                        subject: 'Programming',
+                        time: '09:00-10:30',
+                        year: '2'
+                    }
+                ];
+            } else {
+                // Sample data for Rooms collection
+                sampleData = [
+                    {
+                        capacity: 35,
+                        day: 'Wednesday',
+                        roomName: 'CBS BLDG 1 102',
+                        time: '9:00-10:00'
+                    },
+                    {
+                        capacity: 40,
+                        day: 'Thursday',
+                        roomName: 'CCS BLDG 2 201',
+                        time: '10:00-11:30'
+                    }
+                ];
+            }
             
             if (format === 'json') {
                 downloadJSON(sampleData);
