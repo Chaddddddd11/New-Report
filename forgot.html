@@ -249,140 +249,155 @@
             measurementId: "G-EP4FZ04FQT"
         };
 
-        // Initialize Firebase with error handling
+        // Initialize Firebase
         let auth, app;
-        try {
-            console.log('Initializing Firebase...');
-            // Check if Firebase is already initialized
-            if (firebase.apps.length === 0) {
-                app = firebase.initializeApp(firebaseConfig);
-                console.log('Firebase app initialized');
-            } else {
-                app = firebase.app();
-                console.log('Using existing Firebase app');
-            }
-            
-            auth = firebase.auth();
-            console.log('Firebase Auth initialized');
-            
-            // Verify Firebase is properly initialized
-            console.log('Firebase app name:', app.name);
-            console.log('Current user:', auth.currentUser);
-            
-        } catch (error) {
-            console.error('Firebase initialization error:', error);
-            alert('Failed to initialize the app. Error: ' + error.message);
-            return; // Stop execution if Firebase fails to initialize
-        }
-
-        // DOM Elements
-        const forgotPasswordForm = document.getElementById('forgotPasswordForm');
-        const usernameInput = document.getElementById('username');
-        const resetBtn = document.getElementById('resetBtn');
-        const errorMessage = document.getElementById('errorMessage');
-        const successMessage = document.getElementById('successMessage');
-
-        // Show message helper function
-        function showMessage(element, message, isError = true) {
-            element.textContent = message;
-            element.style.display = 'block';
-            
-            // Hide the other message
-            const otherMessage = isError ? successMessage : errorMessage;
-            otherMessage.style.display = 'none';
-            
-            // Auto-hide after 5 seconds
-            if (!isError) {
-                setTimeout(() => {
-                    element.style.display = 'none';
-                }, 10000);
-            }
-        }
-
-        // Handle form submission
-        forgotPasswordForm.addEventListener('submit', async function(e) {
-            e.preventDefault();
-            
-            const email = usernameInput.value.trim();
-            
-            // Reset messages
-            errorMessage.style.display = 'none';
-            successMessage.style.display = 'none';
-            
-            // Validate email
-            if (!email) {
-                showMessage(errorMessage, 'Please enter your email address.');
-                return;
-            }
-            
-            // Basic email validation
-            if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-                showMessage(errorMessage, 'Please enter a valid email address.');
-                return;
-            }
-            
-            // Set loading state
-            resetBtn.disabled = true;
-            resetBtn.innerHTML = '<span class="spinner"></span> Sending reset link...';
-            
+        
+        async function initializeFirebase() {
             try {
-                console.log('Attempting to send password reset email to:', email);
-                
-                // First, verify the email exists
-                const methods = await auth.fetchSignInMethodsForEmail(email);
-                console.log('Sign-in methods for email:', methods);
-                
-                if (methods && methods.length === 0) {
-                    throw { code: 'auth/user-not-found' };
+                console.log('Initializing Firebase...');
+                // Check if Firebase is already initialized
+                if (firebase.apps.length === 0) {
+                    app = firebase.initializeApp(firebaseConfig);
+                    console.log('Firebase app initialized');
+                } else {
+                    app = firebase.app();
+                    console.log('Using existing Firebase app');
                 }
                 
-                // Send password reset email
-                await auth.sendPasswordResetEmail(email);
-                console.log('Password reset email sent successfully');
+                auth = firebase.auth();
+                console.log('Firebase Auth initialized');
                 
-                // Password reset email sent successfully
-                showMessage(
-                    successMessage, 
-                    'Password reset link has been sent to your email. Please check your inbox and follow the instructions to reset your password. If you don\'t see the email, please check your spam folder or try again in a few minutes.',
-                    false
-                );
+                // Verify Firebase is properly initialized
+                console.log('Firebase app name:', app.name);
+                console.log('Current user:', auth.currentUser);
                 
-                // Clear the email field
-                usernameInput.value = '';
-                resetBtn.textContent = 'Resend Reset Link';
+                // Initialize the rest of the app
+                initializeApp();
                 
             } catch (error) {
-                console.error('Error processing password reset:', error);
-                
-                let errorMessageText = 'An error occurred while processing your request. Please try again.';
-                
-                // Handle specific Firebase errors
-                switch (error.code) {
-                    case 'auth/user-not-found':
-                        errorMessageText = 'No account found with this email address.';
-                        break;
-                    case 'auth/invalid-email':
-                        errorMessageText = 'Please enter a valid email address.';
-                        break;
-                    case 'auth/too-many-requests':
-                        errorMessageText = 'Too many attempts. Please try again later.';
-                        break;
-                    case 'auth/operation-not-allowed':
-                        errorMessageText = 'Password reset is not enabled. Please contact support.';
-                        break;
-                }
-                
-                showMessage(errorMessage, errorMessageText);
-            } finally {
-                resetBtn.disabled = false;
-                resetBtn.innerHTML = '<i class="fas fa-key"></i> Reset Password';
+                console.error('Firebase initialization error:', error);
+                alert('Failed to initialize the app. Error: ' + error.message);
+                // Don't return here, just log the error
             }
-        });
+        }
         
-        // Auto-hide error message when user starts typing
-        usernameInput.addEventListener('input', function() {
-            errorMessage.style.display = 'none';
-        });
+        // Initialize the application
+        function initializeApp() {
+            // DOM Elements
+            const forgotPasswordForm = document.getElementById('forgotPasswordForm');
+            const usernameInput = document.getElementById('username');
+            const resetBtn = document.getElementById('resetBtn');
+            const errorMessage = document.getElementById('errorMessage');
+            const successMessage = document.getElementById('successMessage');
+
+            // Show message helper function
+            function showMessage(element, message, isError = true) {
+                element.textContent = message;
+                element.style.display = 'block';
+                
+                // Hide the other message
+                const otherMessage = isError ? successMessage : errorMessage;
+                otherMessage.style.display = 'none';
+                
+                // Auto-hide after 5 seconds if it's a success message
+                if (!isError) {
+                    setTimeout(() => {
+                        element.style.display = 'none';
+                    }, 10000);
+                }
+            }
+
+
+                // Handle form submission
+                forgotPasswordForm.addEventListener('submit', async function(e) {
+                    e.preventDefault();
+                    
+                    const email = usernameInput.value.trim();
+                    
+                    // Reset messages
+                    errorMessage.style.display = 'none';
+                    successMessage.style.display = 'none';
+                    
+                    // Validate email
+                    if (!email) {
+                        showMessage(errorMessage, 'Please enter your email address.');
+                        return;
+                    }
+                    
+                    // Basic email validation
+                    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                        showMessage(errorMessage, 'Please enter a valid email address.');
+                        return;
+                    }
+                    
+                    // Set loading state
+                    resetBtn.disabled = true;
+                    resetBtn.innerHTML = '<span class="spinner"></span> Sending reset link...';
+                    
+                    try {
+                        console.log('Attempting to send password reset email to:', email);
+                        
+                        // First, verify the email exists
+                        const methods = await auth.fetchSignInMethodsForEmail(email);
+                        console.log('Sign-in methods for email:', methods);
+                        
+                        if (methods && methods.length === 0) {
+                            throw { code: 'auth/user-not-found' };
+                        }
+                        
+                        // Send password reset email
+                        await auth.sendPasswordResetEmail(email);
+                        console.log('Password reset email sent successfully');
+                        
+                        // Password reset email sent successfully
+                        showMessage(
+                            successMessage, 
+                            'Password reset link has been sent to your email. Please check your inbox and follow the instructions to reset your password. If you don\'t see the email, please check your spam folder or try again in a few minutes.',
+                            false
+                        );
+                        
+                        // Clear the email field
+                        usernameInput.value = '';
+                        resetBtn.textContent = 'Resend Reset Link';
+                        
+                    } catch (error) {
+                        console.error('Error processing password reset:', error);
+                        
+                        let errorMessageText = 'An error occurred while processing your request. Please try again.';
+                        
+                        // Handle specific Firebase errors
+                        switch (error.code) {
+                            case 'auth/user-not-found':
+                                errorMessageText = 'No account found with this email address.';
+                                break;
+                            case 'auth/invalid-email':
+                                errorMessageText = 'Please enter a valid email address.';
+                                break;
+                            case 'auth/too-many-requests':
+                                errorMessageText = 'Too many attempts. Please try again later.';
+                                break;
+                            case 'auth/operation-not-allowed':
+                                errorMessageText = 'Password reset is not enabled. Please contact support.';
+                                break;
+                        }
+                        
+                        showMessage(errorMessage, errorMessageText);
+                    } finally {
+                        resetBtn.disabled = false;
+                        resetBtn.innerHTML = '<i class="fas fa-key"></i> Reset Password';
+                    }
+                });
+                
+                // Auto-hide error message when user starts typing
+                usernameInput.addEventListener('input', function() {
+                    errorMessage.style.display = 'none';
+                });
+            }
+            
+            // Start the app
+            document.addEventListener('DOMContentLoaded', function() {
+                initializeFirebase();
+            });
     </script>
 </body>
 </html>
