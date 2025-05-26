@@ -224,13 +224,183 @@
         }
     </style>
 </head>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - DHVSU Scheduling System</title>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #610000;
+            --secondary-color: #800a0a;
+            --accent-color: #F7B32D;
+            --background-color: #f5f5f5;
+            --text-color: #333;
+            --error-color: #dc3545;
+            --success-color: #28a745;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Roboto', sans-serif;
+        }
+
+        body {
+            background: linear-gradient(rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.9)),
+                        url('https://the-post-assets.sgp1.digitaloceanspaces.com/2023/03/DHVSU_thumbnail.png');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .login-container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 450px;
+            padding: 40px;
+            text-align: center;
+        }
+
+        .logo {
+            max-width: 120px;
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            color: var(--primary-color);
+            margin-bottom: 10px;
+            font-size: 24px;
+        }
+
+        h2 {
+            color: var(--text-color);
+            margin-bottom: 25px;
+            font-size: 20px;
+            font-weight: 400;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: 500;
+        }
+
+        input[type="email"],
+        input[type="password"] {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        input[type="email"]:focus,
+        input[type="password"]:focus {
+            border-color: var(--primary-color);
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(97, 0, 0, 0.1);
+        }
+
+        .btn {
+            display: inline-block;
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            width: 100%;
+            transition: background-color 0.3s;
+        }
+
+        .btn:hover {
+            background: var(--secondary-color);
+        }
+
+        .login-footer {
+            margin-top: 25px;
+            color: #666;
+            font-size: 14px;
+        }
+
+        .login-footer a {
+            color: var(--primary-color);
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .login-footer a:hover {
+            text-decoration: underline;
+        }
+
+        .alert {
+            padding: 12px 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .alert-danger {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+    </style>
+</head>
 <body>
     <div class="login-container">
         <img src="https://media.assettype.com/sunstar/2025-02-04/7x1wu7dq/DHVSU.jpg" alt="DHVSU Logo" class="logo">
-        <h1>Sign In with Email</h1>
+        <h1>DHVSU Scheduling System</h1>
+        <h2>Sign In to Your Account</h2>
         
-        <form id="loginForm">
-            <div id="errorMessage" class="error-message"></div>
+        <!-- Error Message -->
+        <div id="errorMessage" class="alert alert-danger"></div>
+        
+        <!-- Login Form -->
+        <form id="loginForm" class="login-form">
+            <div class="form-group">
+                <label for="email">Email Address</label>
+                <input type="email" id="email" class="form-control" placeholder="Enter your email" required>
+            </div>
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" class="form-control" placeholder="Enter your password" required>
+            </div>
+            <button type="submit" class="btn">
+                <i class="fas fa-sign-in-alt"></i> Sign In
+            </button>
+        </form>
+        
+        <div class="login-footer">
+            <p>Don't have an account? <a href="create.html">Create Account</a></p>
+            <p><a href="forgot.html">Forgot Password?</a></p>
+        </div>
             
             <div class="form-group">
                 <label for="username">Username</label>
@@ -344,10 +514,23 @@
         // Check if user is already logged in
         auth.onAuthStateChanged((user) => {
             if (user) {
-                // User is signed in, redirect to home
-                window.location.href = 'home.html';
+                // User is signed in, redirect to home or stored redirect URL
+                const redirectUrl = sessionStorage.getItem('redirectAfterLogin') || 'home.html';
+                sessionStorage.removeItem('redirectAfterLogin');
+                window.location.href = redirectUrl;
             }
         });
+        
+        // Add this to handle the case when user is redirected from a protected page
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('redirected') === 'true') {
+            const errorMessage = document.getElementById('errorMessage');
+            errorMessage.textContent = 'Please sign in to access this page';
+            errorMessage.style.display = 'block';
+        }
     </script>
+    
+    <!-- Add auth-check.js at the end of body -->
+    <script src="auth-check.js"></script>
 </body>
 </html>
