@@ -938,36 +938,59 @@
                     
                     const querySnapshot = await getDocs(enrollmentQuery);
                     currentEnrollment = querySnapshot.size;
+                    console.log(`Current enrollment: ${currentEnrollment} students`);
                 } catch (error) {
                     console.error('Error getting enrollment count:', error);
                     // Continue with 0 if we can't get the count
                     currentEnrollment = 0;
                 }
                 
-                // First get all rooms that can accommodate the class size
-                // We'll filter the rest on the client side to avoid composite index requirements
-                const roomsQuery = query(
-                    roomsCollectionRef,
-                    where("capacity", ">=", currentEnrollment + 1)
-                );
-                
-                const querySnapshot = await getDocs(roomsQuery);
+                // First get all rooms
+                const querySnapshot = await getDocs(roomsCollectionRef);
+                const allRooms = [];
                 const availableRooms = [];
                 
-                // Filter rooms that are available on the selected day and time
-                for (const doc of querySnapshot.docs) {
-                    const room = doc.data();
-                    const isAvailableOnDay = room.availableDays && room.availableDays.includes(daySelected);
-                    const isAvailableAtTime = room.availableTimes && room.availableTimes.includes(timeSelected);
-                    
-                    if (isAvailableOnDay && isAvailableAtTime) {
-                        availableRooms.push({ 
-                            id: doc.id, 
-                            ...room,
-                            name: room.name || `Room ${doc.id}`  // Ensure room has a name
-                        });
+                // Get all rooms first
+                querySnapshot.forEach((doc) => {
+                    const room = { id: doc.id, ...doc.data() };
+                    room.name = room.name || `Room ${doc.id}`;  // Ensure room has a name
+                    allRooms.push(room);
+                });
+                
+                console.log(`Found ${allRooms.length} total rooms`);
+                
+                // Check room availability for the selected time
+                const roomBookingsQuery = query(
+                    instructorsCollectionRef,
+                    where("day", "==", daySelected),
+                    where("time", "==", timeSelected)
+                );
+                
+                const bookedRoomsSnapshot = await getDocs(roomBookingsQuery);
+                const bookedRoomIds = new Set();
+                
+                bookedRoomsSnapshot.forEach(doc => {
+                    const booking = doc.data();
+                    if (booking.roomId && (!isUpdateMode || doc.id !== currentInstructorId)) {
+                        bookedRoomIds.add(booking.roomId);
                     }
-                }
+                });
+                
+                console.log(`Found ${bookedRoomIds.size} booked rooms for ${daySelected} at ${timeSelected}`);
+                
+                // Filter available rooms
+                allRooms.forEach(room => {
+                    const isBooked = bookedRoomIds.has(room.id);
+                    const hasCapacity = room.capacity >= (currentEnrollment + 1);
+                    const isAvailableOnDay = !room.availableDays || room.availableDays.includes(daySelected);
+                    const isAvailableAtTime = !room.availableTimes || room.availableTimes.includes(timeSelected);
+                    
+                    if (!isBooked && hasCapacity && isAvailableOnDay && isAvailableAtTime) {
+                        availableRooms.push(room);
+                    }
+                });
+                
+                console.log(`Found ${availableRooms.length} available rooms`);
                 
                 // Clear existing options
                 roomSelect.innerHTML = '';
@@ -989,15 +1012,16 @@
                         );
                         
                         // Mark if this is the original room in edit mode
-                        if (isUpdateMode && doc.id === originalRoomId) {
+                        if (isUpdateMode && room.id === originalRoomId) {
                             option.dataset.original = 'true';
                             option.style.fontWeight = 'bold';
+                            option.selected = true; // Ensure original room is selected
                         }
                         
                         roomSelect.add(option);
                     });
                     
-                    // If in edit mode and original room wasn't added, add it
+                    // If in edit mode and original room wasn't added, add it as a special option
                     if (isUpdateMode && originalRoomId && 
                         !Array.from(roomSelect.options).some(opt => opt.value === originalRoomId)) {
                         await ensureOriginalRoomInList(roomSelect, originalRoomId);
