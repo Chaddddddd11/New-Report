@@ -327,25 +327,7 @@
                         console.log('Email length:', email.length);
                         console.log('Auth object exists:', !!auth);
                         
-                        // Debug: List all users (this is just for debugging, not for production)
-                        try {
-                            const allUsers = await auth.listUsers();
-                            console.log('Total users in auth:', allUsers.users.length);
-                            const userExists = allUsers.users.some(user => 
-                                user.email && user.email.toLowerCase() === email.toLowerCase()
-                            );
-                            console.log('User exists (case-insensitive check):', userExists);
-                            if (userExists) {
-                                const actualEmail = allUsers.users.find(u => 
-                                    u.email && u.email.toLowerCase() === email.toLowerCase()
-                                )?.email;
-                                console.log('Actual email in system:', actualEmail);
-                            }
-                        } catch (listError) {
-                            console.warn('Could not list users (this is normal in client-side code):', listError);
-                        }
-                        
-                        // Try to send the password reset email directly
+                        // Directly attempt to send password reset email
                         console.log('Attempting to send password reset email to:', email);
                         await sendPasswordResetEmail(auth, email);
                         
