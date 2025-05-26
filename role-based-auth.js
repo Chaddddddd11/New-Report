@@ -9,18 +9,56 @@ const ROLES = {
 const ROLE_ACCESS = {
     // Public routes (no authentication required)
     'login.html': [ROLES.ADMIN, ROLES.INSTRUCTOR, ROLES.STUDENT],
-    'create.html': [ROLES.ADMIN, ROLES.INSTRUCTOR, ROLES.STUDENT],
+    'create.html': [ROLES.ADMIN],
     'forgot.html': [ROLES.ADMIN, ROLES.INSTRUCTOR, ROLES.STUDENT],
+    
+    // Student accessible pages
+    'home.html': [ROLES.ADMIN, ROLES.INSTRUCTOR, ROLES.STUDENT],
+    'index.html': [ROLES.ADMIN, ROLES.INSTRUCTOR, ROLES.STUDENT],
+    
     // Admin only routes
     'admin-dashboard.html': [ROLES.ADMIN],
     'manage-users.html': [ROLES.ADMIN],
-    // Instructor routes
-    'instructor-dashboard.html': [ROLES.ADMIN, ROLES.INSTRUCTOR],
-    'my-schedule.html': [ROLES.ADMIN, ROLES.INSTRUCTOR],
-    // Student routes
-    'student-dashboard.html': [ROLES.ADMIN, ROLES.STUDENT],
-    'view-schedule.html': [ROLES.ADMIN, ROLES.STUDENT]
+    'RoomList.html': [ROLES.ADMIN],
+    'InstructorList.html': [ROLES.ADMIN],
+    'EditInstructor.html': [ROLES.ADMIN],
+    
+    // Instructor accessible pages
+    'Instructor.html': [ROLES.ADMIN, ROLES.INSTRUCTOR],
+    'Room.html': [ROLES.ADMIN, ROLES.INSTRUCTOR],
+    'bulk-upload-final.html': [ROLES.ADMIN, ROLES.INSTRUCTOR],
+    
+    // Other restricted pages (admin only by default)
+    'student-dashboard.html': [ROLES.ADMIN],
+    'view-schedule.html': [ROLES.ADMIN],
+    'instructor-dashboard.html': [ROLES.ADMIN],
+    'my-schedule.html': [ROLES.ADMIN],
+    
+    // Catch-all for admin access to all other pages
+    '*': [ROLES.ADMIN]
 };
+
+// Function to check if a user has access to a specific page
+function hasAccess(userRole, page) {
+    // If page is not specified, default to current page
+    page = page || getCurrentPage();
+    
+    // Admin has access to everything
+    if (userRole === ROLES.ADMIN) return true;
+    
+    // Check if there are specific rules for this page
+    if (ROLE_ACCESS[page]) {
+        return ROLE_ACCESS[page].includes(userRole);
+    }
+    
+    // If no specific rules, check for wildcard
+    if (ROLE_ACCESS['*']) {
+        return ROLE_ACCESS['*'].includes(userRole);
+    }
+    
+    // Default deny
+    return false;
+}
 
 // Default redirects based on role
 const DEFAULT_ROUTE = {
