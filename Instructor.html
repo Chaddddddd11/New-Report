@@ -645,10 +645,10 @@
                 console.log('1. Initializing Firebase...');
                 console.log('Firebase app initialized:', app.name);
                 
-                // Fetch rooms from Firestore
+                // Fetch rooms from Firestore using v9+ syntax
                 console.log('2. Fetching rooms from Firestore...');
                 try {
-                    const roomsSnapshot = await db.collection('rooms').get();
+                    const roomsSnapshot = await getDocs(collection(db, 'rooms'));
                     allRooms = [];
                     
                     roomsSnapshot.forEach(doc => {
