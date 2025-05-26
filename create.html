@@ -4,10 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Create Account - DHVSU Scheduling System</title>
-    <!-- Firebase SDK -->
-    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+    <!-- Firebase SDK will be loaded in the main script -->
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -234,15 +231,19 @@
             <div id="successMessage" class="success-message" style="display: none;"></div>
             
             <div class="form-group">
-                <label for="username">Username</label>
-                <input type="text" id="username" class="form-control" placeholder="Choose a username" required>
-                <div class="password-requirements">This will be your login (e.g., jdelacruz@gmail.com)</div>
+                <label for="username">Display Name</label>
+                <input type="text" id="username" class="form-control" 
+                       placeholder="Choose a display name (e.g., JohnDoe)" 
+                       title="This will be your public display name" required>
+                <small class="form-text text-muted">This is how you'll appear to others in the system</small>
             </div>
             
             <div class="form-group">
                 <label for="email">Email Address</label>
-                <input type="email" id="email" class="form-control" placeholder="Enter your email address" required>
-                <div class="password-requirements">For account verification and recovery</div>
+                <input type="email" id="email" class="form-control" 
+                       placeholder="Enter your email address" 
+                       title="Used for account recovery and notifications" required>
+                <small class="form-text text-muted">We'll use this for account recovery and important notifications</small>
             </div>
             
             <div class="form-group">
@@ -271,8 +272,25 @@
         </div>
     </div>
 
-    <script>
-        // Firebase configuration and initialization
+    <script type="module">
+        // Import the functions you need from the SDKs you need
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+        import { 
+            getAuth, 
+            createUserWithEmailAndPassword, 
+            sendEmailVerification, 
+            fetchSignInMethodsForEmail,
+            connectAuthEmulator,
+            updateProfile
+        } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+        import { 
+            getFirestore, 
+            doc, 
+            setDoc, 
+            serverTimestamp 
+        } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+        
+        // Your web app's Firebase configuration
         const firebaseConfig = {
             apiKey: "AIzaSyDBu7-vOFmS62IaGD8-8zb6TH0a1mHYNpI",
             authDomain: "dhvsu-faculty-scheduling.firebaseapp.com",
@@ -283,12 +301,40 @@
             measurementId: "G-EP4FZ04FQT"
         };
 
-        // Initialize Firebase if not already initialized
-        if (!firebase.apps.length) {
-            firebase.initializeApp(firebaseConfig);
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        
+        // For development only - connect to emulator if on localhost
+        if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+            console.log('Connecting to Auth Emulator');
+            connectAuthEmulator(auth, 'http://localhost:9099');
         }
-        const auth = firebase.auth();
-        const db = firebase.firestore();
+        
+        console.log('Firebase initialized successfully');
+        
+        // Make auth and db available globally
+        window.firebaseAuth = {
+            createUserWithEmailAndPassword: (auth, email, password) => 
+                createUserWithEmailAndPassword(auth, email, password),
+            sendEmailVerification: (user) => 
+                sendEmailVerification(user),
+            fetchSignInMethodsForEmail: (auth, email) => 
+                fetchSignInMethodsForEmail(auth, email),
+            updateProfile: (user, profile) => 
+                updateProfile(user, profile),
+            auth
+        };
+        window.firebaseFirestore = {
+            doc: (path, ...pathSegments) => 
+                doc(db, path, ...pathSegments),
+            setDoc: (docRef, data) => 
+                setDoc(docRef, data),
+            serverTimestamp: () => 
+                serverTimestamp(),
+            db
+        };
 
         // DOM Elements
         const createAccountForm = document.getElementById('createAccountForm');
@@ -331,9 +377,11 @@
             throw new Error(`Missing required elements: ${missingElements.join(', ')}`);
         }
 
-        // Username validation
-        function isValidUsername(username) {
-            return /^[a-zA-Z0-9_]+$/.test(username);
+        // Display name validation
+        function isValidUsername(displayName) {
+            // Allow letters, numbers, spaces, and common punctuation
+            const displayNameRegex = /^[\p{L}\p{N}\s'.,-]+$/u;
+            return displayNameRegex.test(displayName);
         }
 
         // Email validation
@@ -373,8 +421,18 @@
             if (successMessage) successMessage.style.display = 'none';
             
             // Validate inputs
+            if (username.length < 3) {
+                showMessage(errorMessage, 'Display name must be at least 3 characters long.');
+                return;
+            }
+            
+            if (username.length > 30) {
+                showMessage(errorMessage, 'Display name cannot exceed 30 characters.');
+                return;
+            }
+            
             if (!isValidUsername(username)) {
-                showMessage(errorMessage, 'Username can only contain letters, numbers, and underscores.');
+                showMessage(errorMessage, 'Display name can only contain letters, numbers, spaces, hyphens, and apostrophes.');
                 return;
             }
             
@@ -395,73 +453,89 @@
             
             // Show loading state
             createAccountBtn.disabled = true;
-            createAccountBtn.innerHTML = '<span class="spinner">Creating account...</span>';
+            createAccountBtn.innerHTML = '<span class="spinner"></span> Creating Account...';
             
-            // Create account with username as email
-            const authEmail = `${username}@gmail.com`;
-            auth.createUserWithEmailAndPassword(authEmail, password)
-                .then((userCredential) => {
-                    // Signed in successfully
-                    const user = userCredential.user;
-                    
-                    // Save additional user data to Firestore
-                    db.collection('users').doc(user.uid).set({
-                        username: username,
-                        email: email,
-                        authEmail: authEmail,
-                        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                        lastLogin: firebase.firestore.FieldValue.serverTimestamp()
-                    })
-                    .then(() => {
-                        // Account created successfully
-                        successMessage.textContent = 'Account created successfully!';
-                        successMessage.style.display = 'block';
-                        
-                        // Reset button state
-                        createAccountBtn.disabled = false;
-                        createAccountBtn.textContent = 'Create Account';
-                        
-                        // Hide success message after 5 seconds
-                        setTimeout(() => {
-                            successMessage.style.display = 'none';
-                        }, 5000);
-                    })
-                    .catch((error) => {
-                        // Handle errors
-                        let errorMessageText = 'Error creating account. Please try again.';
-                        switch (error.code) {
-                            case 'auth/email-already-in-use':
-                                errorMessageText = 'This username is already taken. Please choose a different one.';
-                                break;
-                            case 'auth/invalid-email':
-                                errorMessageText = 'Invalid username format. Please use only letters, numbers, and underscores.';
-                                break;
-                        }
-                        
-                        showMessage(errorMessage, errorMessageText);
-                        
-                        // Reset button state
-                        createAccountBtn.disabled = false;
-                        createAccountBtn.textContent = 'Create Account';
-                    });
-                })
-                .catch((error) => {
-                    // Handle errors
-                    let errorMsg = 'Error creating account. Please try again.';
-                    if (error.code === 'auth/email-already-in-use') {
-                        errorMsg = 'This username is already taken. Please choose a different one.';
-                    } else if (error.code === 'auth/weak-password') {
-                        errorMsg = 'Password is too weak. Please use at least 6 characters.';
-                    } else if (error.code) {
-                        errorMsg = `Error: ${error.message}`;
-                    }
-                    
-                    showMessage(errorMessage, errorMsg);
-                    
-                    // Reset button state
-                    createAccountBtn.disabled = false;
-                    createAccountBtn.textContent = 'Create Account';
+            try {
+                const { auth, fetchSignInMethodsForEmail } = window.firebaseAuth;
+                const { doc, setDoc, serverTimestamp, db } = window.firebaseFirestore;
+                
+                // First check if email already exists
+                const methods = await fetchSignInMethodsForEmail(auth, email);
+                if (methods && methods.length > 0) {
+                    throw { 
+                        code: 'auth/email-already-in-use', 
+                        message: 'This email is already registered. Please use a different email or try signing in.' 
+                    };
+                }
+                
+                // Create user with email and password
+                const userCredential = await window.firebaseAuth.createUserWithEmailAndPassword(
+                    auth, 
+                    email, 
+                    password
+                );
+                
+                const user = userCredential.user;
+                
+                // Update user profile with display name
+                await window.firebaseAuth.updateProfile(user, {
+                    displayName: username
                 });
+                
+                // Send email verification
+                await window.firebaseAuth.sendEmailVerification(user);
+                
+                // Save additional user data to Firestore
+                await window.firebaseFirestore.setDoc(
+                    window.firebaseFirestore.doc('users', user.uid),
+                    {
+                        displayName: username,
+                        email: email,
+                        createdAt: window.firebaseFirestore.serverTimestamp(),
+                        lastLogin: window.firebaseFirestore.serverTimestamp(),
+                        emailVerified: false,
+                        role: 'user' // Default role
+                    }
+                );
+                
+                // Show success message
+                showMessage(
+                    successMessage, 
+                    'Account created successfully! Please check your email to verify your account.',
+                    false
+                );
+                
+                // Reset form
+                createAccountForm.reset();
+                
+                // Redirect to login page after 5 seconds
+                setTimeout(() => {
+                    window.location.href = 'login.html';
+                }, 5000);
+                
+            } catch (error) {
+                console.error('Account creation error:', error);
+                let errorMessageText = 'Error creating account. Please try again.';
+                
+                // Handle specific Firebase errors
+                if (error.code === 'auth/email-already-in-use') {
+                    errorMessageText = 'This email is already registered. Please use a different email or try signing in.';
+                } else if (error.code === 'auth/weak-password') {
+                    errorMessageText = 'Password should be at least 6 characters';
+                } else if (error.code === 'auth/invalid-email') {
+                    errorMessageText = 'Invalid email address format';
+                } else if (error.code === 'auth/operation-not-allowed') {
+                    errorMessageText = 'Email/password accounts are not enabled';
+                } else if (error.message) {
+                    errorMessageText = error.message;
+                }
+                
+                showMessage(errorMessage, errorMessageText);
+            } finally {
+                // Reset button state
+                createAccountBtn.disabled = false;
+                createAccountBtn.innerHTML = 'Create Account';
+            }
         });
         
         // Auto-hide error message when user starts typing
