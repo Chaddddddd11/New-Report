@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bulk Upload - DHVSU Scheduling System</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        :root {
+            --primary-color: #610000;
+            --secondary-color: #570404;
+            --accent-color: #F7B32D;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Roboto', sans-serif;
+        }
+        
+        body {
+            background-color: #f5f5f5;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            color: var(--primary-color);
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        .tabs {
+            display: flex;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+        }
+        
+        .tab.active {
+            border-bottom: 3px solid var(--primary-color);
+            font-weight: 500;
+        }
+        
+        .tab-content {
+            display: none;
+            padding: 20px 0;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .upload-area {
+            border: 2px dashed #ccc;
+            padding: 30px;
+            text-align: center;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .upload-area:hover {
+            border-color: var(--primary-color);
+            background: #fff8f8;
+        }
+        
+        .upload-icon {
+            font-size: 48px;
+            color: var(--primary-color);
+            margin-bottom: 15px;
+        }
+        
+        .file-input {
+            display: none;
+        }
+        
+        .btn {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 15px;
+        }
+        
+        .btn:hover {
+            background: var(--secondary-color);
+        }
+        
+        .btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        
+        .preview {
+            margin-top: 20px;
+            overflow-x: auto;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        
+        th {
+            background-color: #f2f2f2;
+        }
+        
+        .status {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 4px;
+            display: none;
+        }
+        
+        .success {
+            background-color: #dff0d8;
+            color: #3c763d;
+            border: 1px solid #d6e9c6;
+        }
+        
+        .error {
+            background-color: #f2dede;
+            color: #a94442;
+            border: 1px solid #ebccd1;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Bulk Upload</h1>
+        
+        <div class="tabs">
+            <div class="tab active" data-tab="instructors">Instructors</div>
+            <div class="tab" data-tab="rooms">Rooms</div>
+        </div>
+        
+        <!-- Instructors Tab Content -->
+        <div id="instructors-tab" class="tab-content active">
+            <div class="upload-area" id="instructors-upload-area">
+                <div class="upload-icon">
+                    <i class="fas fa-file-upload"></i>
+                </div>
+                <h3>Upload Instructors File</h3>
+                <p>Drag & drop your file here or click to browse</p>
+                <input type="file" id="instructors-file" class="file-input" accept=".xlsx, .xls, .csv">
+                <label for="instructors-file" class="btn">Choose File</label>
+                <div id="instructors-file-name" class="file-name"></div>
+            </div>
+            
+            <div class="preview" id="instructors-preview"></div>
+            
+            <button id="upload-instructors" class="btn" disabled>Upload Instructors</button>
+            <div id="instructors-status" class="status"></div>
+        </div>
+        
+        <!-- Rooms Tab Content -->
+        <div id="rooms-tab" class="tab-content">
+            <div class="upload-area" id="rooms-upload-area">
+                <div class="upload-icon">
+                    <i class="fas fa-file-upload"></i>
+                </div>
+                <h3>Upload Rooms File</h3>
+                <p>Drag & drop your file here or click to browse</p>
+                <input type="file" id="rooms-file" class="file-input" accept=".xlsx, .xls, .csv">
+                <label for="rooms-file" class="btn">Choose File</label>
+                <div id="rooms-file-name" class="file-name"></div>
+            </div>
+            
+            <div class="preview" id="rooms-preview"></div>
+            
+            <button id="upload-rooms" class="btn" disabled>Upload Rooms</button>
+            <div id="rooms-status" class="status"></div>
+        </div>
+    </div>
+
+    <script>
+        // Tab switching
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                // Remove active class from all tabs and contents
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                
+                // Add active class to clicked tab and corresponding content
+                tab.classList.add('active');
+                const tabId = tab.getAttribute('data-tab') + '-tab';
+                document.getElementById(tabId).classList.add('active');
+            });
+        });
+
+        // File upload handling
+        function setupFileUpload(uploadAreaId, fileInputId, previewId, uploadBtnId, statusId) {
+            const uploadArea = document.getElementById(uploadAreaId);
+            const fileInput = document.getElementById(fileInputId);
+            const preview = document.getElementById(previewId);
+            const uploadBtn = document.getElementById(uploadBtnId);
+            const status = document.getElementById(statusId);
+            const fileName = document.getElementById(`${fileInputId}-name`);
+            
+            // Handle drag and drop
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                uploadArea.addEventListener(eventName, preventDefaults, false);
+            });
+            
+            function preventDefaults(e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+            
+            ['dragenter', 'dragover'].forEach(eventName => {
+                uploadArea.addEventListener(eventName, highlight, false);
+            });
+            
+            ['dragleave', 'drop'].forEach(eventName => {
+                uploadArea.addEventListener(eventName, unhighlight, false);
+            });
+            
+            function highlight() {
+                uploadArea.style.borderColor = '#610000';
+                uploadArea.style.background = '#fff8f8';
+            }
+            
+            function unhighlight() {
+                uploadArea.style.borderColor = '#ccc';
+                uploadArea.style.background = 'white';
+            }
+            
+            // Handle dropped files
+            uploadArea.addEventListener('drop', handleDrop, false);
+            
+            function handleDrop(e) {
+                const dt = e.dataTransfer;
+                const files = dt.files;
+                handleFiles(files);
+            }
+            
+            // Handle file selection
+            fileInput.addEventListener('change', function() {
+                handleFiles(this.files);
+            });
+            
+            function handleFiles(files) {
+                if (files.length > 0) {
+                    const file = files[0];
+                    fileName.textContent = `Selected file: ${file.name}`;
+                    uploadBtn.disabled = false;
+                    
+                    // Read and preview the file
+                    const reader = new FileReader();
+                    
+                    reader.onload = function(e) {
+                        const data = new Uint8Array(e.target.result);
+                        const workbook = XLSX.read(data, { type: 'array' });
+                        
+                        // Get the first sheet
+                        const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                        
+                        // Convert to JSON
+                        const jsonData = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
+                        
+                        // Display preview
+                        displayPreview(jsonData, preview);
+                    };
+                    
+                    reader.readAsArrayBuffer(file);
+                }
+            }
+            
+            function displayPreview(data, container) {
+                if (data.length === 0) return;
+                
+                let html = '<h3>Preview (first 5 rows):</h3>';
+                html += '<table><thead><tr>';
+                
+                // Add headers
+                data[0].forEach(header => {
+                    html += `<th>${header || ''}</th>`;
+                });
+                html += '</tr></thead><tbody>';
+                
+                // Add data rows (max 5)
+                const rowCount = Math.min(5, data.length - 1);
+                for (let i = 1; i <= rowCount; i++) {
+                    if (!data[i]) continue;
+                    html += '<tr>';
+                    data[i].forEach(cell => {
+                        html += `<td>${cell || ''}</td>`;
+                    });
+                    html += '</tr>';
+                }
+                
+                html += '</tbody></table>';
+                container.innerHTML = html;
+            }
+            
+            // Handle upload
+            uploadBtn.addEventListener('click', async () => {
+                if (!fileInput.files.length) return;
+                
+                const file = fileInput.files[0];
+                const formData = new FormData();
+                formData.append('file', file);
+                
+                try {
+                    // Replace with your actual upload endpoint
+                    const response = await fetch('/api/upload', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (response.ok) {
+                        showStatus(status, `Successfully uploaded ${result.processed} records`, 'success');
+                    } else {
+                        throw new Error(result.message || 'Upload failed');
+                    }
+                } catch (error) {
+                    showStatus(status, `Error: ${error.message}`, 'error');
+                }
+            });
+            
+            function showStatus(element, message, type) {
+                element.textContent = message;
+                element.className = 'status ' + type;
+                element.style.display = 'block';
+                
+                // Hide status after 5 seconds
+                setTimeout(() => {
+                    element.style.display = 'none';
+                }, 5000);
+            }
+        }
+        
+        // Initialize file upload for both tabs
+        document.addEventListener('DOMContentLoaded', () => {
+            setupFileUpload(
+                'instructors-upload-area',
+                'instructors-file',
+                'instructors-preview',
+                'upload-instructors',
+                'instructors-status'
+            );
+            
+            setupFileUpload(
+                'rooms-upload-area',
+                'rooms-file',
+                'rooms-preview',
+                'upload-rooms',
+                'rooms-status'
+            );
+        });
+    </script>
+</body>
+</html>
