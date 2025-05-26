@@ -3,6 +3,7 @@
 <head>
   <title>DHVSU Scheduling System</title>
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
   <style>
     body {
       background-image: linear-gradient(rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.9)), 
@@ -233,6 +234,29 @@
       text-align: center;
     }
 
+    .btn {
+      padding: 10px 20px;
+      background-color: var(--secondary-color);
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+      transition: background-color 0.3s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .btn:disabled {
+      background-color: #cccccc;
+      cursor: not-allowed;
+    }
+    
+    .btn i {
+      font-size: 14px;
+    }
+
     @media (max-width: 768px) {
       .filters {
         flex-direction: column;
@@ -268,7 +292,7 @@
     
     <!-- Your HTML content here -->
     <div class="filters">
-      <select id="courseSelect">
+      <select id="courseSelect" onchange="updateYearOptions(); updateStudentCapacity(); renderSchedule();">
         <option value="">Select Course</option>
         <option value="BSA">BSA</option>
         <option value="BSAIS">BSAIS</option>
@@ -277,17 +301,21 @@
         <option value="BSPublicAdministration">BS Public Administration</option>
       </select>
       
-      <select id="yearSelect" disabled>
+      <select id="yearSelect" disabled onchange="updateSectionOptions(); updateStudentCapacity(); renderSchedule();">
         <option value="">Select Year</option>
       </select>
       
-      <select id="sectionSelect" disabled>
+      <select id="sectionSelect" disabled onchange="updateStudentCapacity(); renderSchedule();">
         <option value="">Select Section</option>
       </select>
       
       <div id="studentCapacity" class="student-capacity">
         Student Capacity: -
       </div>
+      
+      <button id="printButton" class="btn" onclick="printSchedule()" disabled>
+        <i class="fas fa-print"></i> Print Schedule
+      </button>
     </div>
     
     <div class="schedule-container">
@@ -770,7 +798,73 @@
       
       // Initial log
       logCurrentState();
+      
+      // Update print button state based on selections
+      [courseSelect, yearSelect, sectionSelect].forEach(select => {
+        if (select) {
+          select.addEventListener('change', () => {
+            const printBtn = document.getElementById('printButton');
+            if (printBtn) {
+              printBtn.disabled = !(courseSelect.value && yearSelect.value && sectionSelect.value);
+            }
+          });
+        }
+      });
     });
+    
+    // Function to print the schedule
+    function printSchedule() {
+      const course = courseSelect.value;
+      const year = yearSelect.value;
+      const section = sectionSelect.value;
+      
+      if (!course || !year || !section) {
+        alert('Please select course, year, and section before printing.');
+        return;
+      }
+      
+      // Create a print-friendly version of the schedule
+      const printWindow = window.open('', '_blank');
+      const printContent = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>Schedule - ${course} ${year}-${section}</title>
+          <style>
+            body { font-family: Arial, sans-serif; }
+            h1 { text-align: center; margin-bottom: 20px; }
+            table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+            th, td { border: 1px solid #ddd; padding: 8px; text-align: center; }
+            th { background-color: #f2f2f2; font-weight: bold; }
+            .schedule-entry { margin: 5px; padding: 5px; border-radius: 4px; }
+            @media print {
+              @page { size: landscape; margin: 0.5cm; }
+              button { display: none; }
+            }
+          </style>
+        </head>
+        <body>
+          <h1>${course} ${year}-${section} - Class Schedule</h1>
+          ${document.getElementById('scheduleTable').outerHTML}
+          <div style="text-align: center; margin-top: 20px;">
+            <button onclick="window.print()">Print Schedule</button>
+            <button onclick="window.close()">Close</button>
+          </div>
+        </body>
+        </html>
+      `;
+      
+      printWindow.document.open();
+      printWindow.document.write(printContent);
+      printWindow.document.close();
+      
+      // Auto-print after a short delay to ensure content is loaded
+      printWindow.onload = function() {
+        setTimeout(() => {
+          printWindow.print();
+        }, 500);
+      };
+    }
     
     // Function to determine if text should be light or dark based on background color
     function getContrastYIQ(hexcolor) {
