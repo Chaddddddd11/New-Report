@@ -1,17 +1,28 @@
-// Import helper functions and modules
+// Import Firebase services and helper functions
+import { auth, db, getDashboardUrl } from './config.js';
 import { 
     showLoading, 
     showAlert, 
-    formatTimeAgo, 
-    generatePassword, 
-    setUserRole, 
-    getDashboardUrl 
+    generatePassword 
 } from './admin-helpers.js';
 
-// Initialize Firebase with config from config.js
-// Note: Make sure config.js is included before admin.js in your HTML
-const auth = firebase.auth();
-const db = firebase.firestore();
+// Import user management functions
+import { 
+    loadUsers, 
+    renderUsers, 
+    updateStats, 
+    addUserActionListeners 
+} from './admin-users.js';
+
+// Import CRUD operations
+import { 
+    viewUser, 
+    editUser, 
+    handleAddUser, 
+    handleUpdateUser, 
+    confirmDeleteUser, 
+    handleDeleteUser 
+} from './admin-crud.js';
 
 // DOM Elements
 const usersTableBody = document.getElementById('usersTableBody');
@@ -26,125 +37,141 @@ const deleteUserBtn = document.getElementById('deleteUserBtn');
 const editUserFromViewBtn = document.getElementById('editUserFromViewBtn');
 const userSearch = document.getElementById('userSearch');
 
-// State
+// Global state
 let currentUser = null;
 let users = [];
 let currentEditUserId = null;
 
+// Make functions available globally for HTML event handlers
+window.viewUser = viewUser;
+window.editUser = editUser;
+window.confirmDeleteUser = confirmDeleteUser;
+window.handleDeleteUser = handleDeleteUser;
+window.handleLogout = handleLogout;
+
 // Initialize the application
 document.addEventListener('DOMContentLoaded', () => {
-    initAuthState();
-    setupEventListeners();
-});
-
-// Check authentication state
-function initAuthState() {
-    auth.onAuthStateChanged(async (user) => {
-        if (user) {
-            currentUser = user;
-            const token = await user.getIdTokenResult(true); // Force token refresh
-            
-            // Check if user has admin role
-            if (token.claims.role !== 'admin') {
-                // Redirect non-admin users to their respective dashboards
-                window.location.href = getDashboardUrl(token.claims.role);
-                return;
+    // Check authentication state
+    const initAuthState = async () => {
+        try {
+            const user = auth.currentUser;
+            if (user) {
+                // Get the user's token to verify their role
+                const idTokenResult = await user.getIdTokenResult();
+                const userRole = idTokenResult.claims.role;
+                
+                // Only allow admin users to access the admin panel
+                if (userRole !== 'admin') {
+                    showAlert('You do not have permission to access this page.', 'danger');
+                    window.location.href = getDashboardUrl(userRole);
+                    return;
+                }
+                
+                currentUser = user;
+                await loadUsers();
+                setupEventListeners();
+            } else {
+                // Redirect to login page if not authenticated
+                window.location.href = 'login.html';
             }
-            
-            // Load users
-            loadUsers(auth, db, showLoading, showAlert, renderUsers, updateStats);
-            
-            // Update UI for admin
-            updateAdminUI();
-            
-        } else {
-            // Not logged in, redirect to login
+        } catch (error) {
+            console.error('Error checking user role:', error);
+            showAlert('An error occurred while verifying your permissions.', 'danger');
+            await auth.signOut();
             window.location.href = 'login.html';
         }
-    });
-}
-
-// Setup event listeners
-function setupEventListeners() {
-    // Logout button
-    if (logoutBtn) {
-        logoutBtn.addEventListener('click', handleLogout);
-    }
+    };
     
-    // Generate password button
-    if (generatePasswordBtn) {
-        generatePasswordBtn.addEventListener('click', () => {
-            const password = generatePassword();
-            if (passwordInput) {
-                passwordInput.value = password;
-                passwordInput.type = 'text';
-                
-                // Show copy to clipboard button
-                const copyBtn = document.createElement('button');
-                copyBtn.className = 'btn btn-sm btn-outline-secondary ms-2';
-                copyBtn.innerHTML = '<i class="far fa-copy"></i>';
-                copyBtn.title = 'Copy to clipboard';
-                copyBtn.onclick = (e) => {
-                    e.preventDefault();
-                    passwordInput.select();
-                    document.execCommand('copy');
-                    showAlert('Password copied to clipboard!', 'success');
-                    return false;
-                };
-                
-                const inputGroup = passwordInput.closest('.input-group');
-                if (inputGroup) {
-                    // Remove existing copy button if any
-                    const existingBtn = inputGroup.querySelector('.copy-password-btn');
-                    if (existingBtn) {
-                        existingBtn.remove();
-                    }
+    // Setup event listeners
+    const setupEventListeners = () => {
+        // Logout button
+        if (logoutBtn) {
+            logoutBtn.addEventListener('click', handleLogout);
+        }
+        
+        // Generate password button
+        if (generatePasswordBtn) {
+            generatePasswordBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                const password = generatePassword();
+                if (passwordInput) {
+                    passwordInput.value = password;
+                    passwordInput.type = 'text';
                     
-                    // Add new copy button
-                    const wrapper = document.createElement('div');
-                    wrapper.className = 'input-group-append copy-password-btn';
-                    wrapper.appendChild(copyBtn);
-                    inputGroup.appendChild(wrapper);
+                    // Show copy to clipboard button
+                    const copyBtn = document.createElement('button');
+                    copyBtn.type = 'button';
+                    copyBtn.className = 'btn btn-sm btn-outline-secondary ms-2';
+                    copyBtn.innerHTML = '<i class="far fa-copy"></i>';
+                    copyBtn.title = 'Copy to clipboard';
+                    copyBtn.onclick = (e) => {
+                        e.preventDefault();
+                        passwordInput.select();
+                        document.execCommand('copy');
+                        showAlert('Password copied to clipboard!', 'success');
+                        return false;
+                    };
+                    
+                    const inputGroup = passwordInput.closest('.input-group');
+                    if (inputGroup) {
+                        // Remove existing copy button if any
+                        const existingBtn = inputGroup.querySelector('.copy-password-btn');
+                        if (existingBtn) {
+                            existingBtn.remove();
+                        }
+                        
+                        // Add new copy button
+                        const wrapper = document.createElement('div');
+                        wrapper.className = 'input-group-append copy-password-btn';
+                        wrapper.appendChild(copyBtn);
+                        inputGroup.appendChild(wrapper);
+                    }
                 }
-            }
-        });
+            });
+        }
+
+        // Add user form submission
+        if (addUserForm) {
+            addUserForm.addEventListener('submit', handleAddUser);
+        }
+
+        // Edit user form submission
+        if (editUserForm) {
+            editUserForm.addEventListener('submit', handleUpdateUser);
+        }
+
+        // Delete user confirmation
+        if (deleteUserBtn) {
+            deleteUserBtn.addEventListener('click', handleDeleteUser);
+        }
+
+        // Edit user from view modal
+        if (editUserFromViewBtn) {
+            editUserFromViewBtn.addEventListener('click', () => {
+                const viewModal = bootstrap.Modal.getInstance(document.getElementById('viewUserModal'));
+                viewModal.hide();
+                
+                if (currentEditUserId) {
+                    editUser(currentEditUserId);
+                }
+            });
+        }
+
+
+
+        // Search input event
+        if (userSearch) {
+            userSearch.addEventListener('input', (e) => {
+                const searchTerm = e.target.value.toLowerCase();
+                const filteredUsers = users.filter(user => 
+                    (user.displayName && user.displayName.toLowerCase().includes(searchTerm)) ||
+                    (user.email && user.email.toLowerCase().includes(searchTerm))
+                );
+                renderUsers(filteredUsers);
+            });
+        }
     }
-    
-    // Save new user
-    if (addUserForm) {
-        addUserForm.addEventListener('submit', handleAddUser);
-    }
-    
-    // Update user
-    if (editUserForm) {
-        editUserForm.addEventListener('submit', handleUpdateUser);
-    }
-    
-    // Delete user confirmation
-    if (deleteUserBtn) {
-        deleteUserBtn.addEventListener('click', handleDeleteUser);
-    }
-    
-    // Edit user from view modal
-    if (editUserFromViewBtn) {
-        editUserFromViewBtn.addEventListener('click', () => {
-            const viewModal = bootstrap.Modal.getInstance(document.getElementById('viewUserModal'));
-            viewModal.hide();
-            
-            if (currentEditUserId) {
-                editUser(currentEditUserId);
-            }
-        });
-    }
-    
-    // User search
-    if (userSearch) {
-        userSearch.addEventListener('input', (e) => {
-            const searchTerm = e.target.value.toLowerCase();
-            filterUsers(searchTerm);
-        });
-    }
-    
+
     // Modal hidden events
     const modals = ['addUserModal', 'editUserModal', 'viewUserModal', 'deleteUserModal'];
     modals.forEach(modalId => {
@@ -178,20 +205,26 @@ function setupEventListeners() {
             });
         }
     });
-}
+});
 
 // Handle logout
 async function handleLogout(e) {
-    e.preventDefault();
+    if (e) e.preventDefault();
     
     try {
+        showLoading(true);
         await auth.signOut();
         window.location.href = 'login.html';
     } catch (error) {
         console.error('Error signing out:', error);
-        showAlert('Failed to sign out. Please try again.', 'danger');
+        showAlert('Error signing out. Please try again.', 'danger');
+    } finally {
+        showLoading(false);
     }
 }
+
+// Make handleLogout available globally
+window.handleLogout = handleLogout;
 
 // Filter users based on search input
 function filterUsers(searchTerm) {
