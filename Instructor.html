@@ -238,17 +238,17 @@
         <div class="form-container">
             <div class="form-group">
                 <label for="name">Instructor Name*</label>
-                <input type="text" id="name" required>
+                <input type="text" id="name" name="name" autocomplete="name" required>
             </div>
 
             <div class="form-group">
                 <label for="subject">Subject*</label>
-                <input type="text" id="subject" required>
+                <input type="text" id="subject" name="subject" autocomplete="organization-title" required>
             </div>
 
             <div class="form-group">
                 <label for="course">Course*</label>
-                <select id="course" required>
+                <select id="course" name="course" autocomplete="organization" required>
                     <option value="">Select Course</option>
                     <option value="BSA">BSA</option>
                     <option value="BSAIS">BSAIS</option>
@@ -260,7 +260,7 @@
 
             <div class="form-group">
                 <label for="year">Year*</label>
-                <select id="year" required>
+                <select id="year" name="year" autocomplete="bday-year" required>
                     <option value="">Select Year</option>
                     <option value="1">1</option>
                     <option value="2">2</option>
@@ -271,7 +271,7 @@
 
             <div class="form-group">
                 <label for="section">Section*</label>
-                <select id="section" required>
+                <select id="section" name="section" autocomplete="section" required>
                     <option value="">Select Section</option>
                     <option value="A">Section A</option>
                     <option value="B">Section B</option>
@@ -286,7 +286,7 @@
 
             <div class="form-group">
                 <label for="day">Day*</label>
-                <select id="day" required>
+                <select id="day" name="day" autocomplete="bday-day" required>
                     <option value="">Select Day</option>
                     <option value="Monday">Monday</option>
                     <option value="Tuesday">Tuesday</option>
@@ -299,7 +299,7 @@
 
             <div class="form-group">
                 <label for="classTime">Class Time*</label>
-                <select id="classTime" required>
+                <select id="classTime" name="classTime" autocomplete="off" required>
                     <option value="">Select Class Time</option>
                     <option value="07:00-08:00">07:00-08:00</option>
                     <option value="08:00-09:00">08:00-09:00</option>
@@ -316,7 +316,7 @@
 
             <div class="form-group">
                 <label for="room">Room*</label>
-                <select id="room" required>
+                <select id="room" name="room" autocomplete="off" required>
                     <option value="">Select course, year, section, day and time</option>
                 </select>
                 <div id="roomCapacity" class="room-capacity"></div>
@@ -766,11 +766,10 @@
                     
                     const roomInfo = {
                         id: doc.id,
-                        name: data.roomName,  // Using roomName as per the document structure
+                        name: data.roomName,
                         capacity: parseInt(data.capacity) || 0,
-                        isAvailable: true,
-                        conflictReason: '',
-                        // Store room's own schedule if available
+                        isAvailable: false, // Default to not available until we verify
+                        conflictReason: 'No matching schedule',
                         schedule: {
                             day: data.day || '',
                             time: data.time || '',
@@ -779,34 +778,42 @@
                         }
                     };
                     
-                    // Parse room's scheduled time if available
+                    // Check if room matches the selected day and time
                     if (data.day && data.time && typeof data.time === 'string') {
                         try {
                             const [roomTimeStartStr, roomTimeEndStr] = data.time.trim().split('-').map(t => t.trim());
-                            roomInfo.schedule.startMinutes = timeToMinutes(roomTimeStartStr);
-                            roomInfo.schedule.endMinutes = timeToMinutes(roomTimeEndStr);
-                            roomInfo.schedule.day = data.day.trim().toLowerCase();
+                            const roomStart = timeToMinutes(roomTimeStartStr);
+                            const roomEnd = timeToMinutes(roomTimeEndStr);
                             
-                            // Check if room is already booked at this time
-                            if (roomInfo.schedule.day === selectedDay.toLowerCase()) {
-                                const roomStart = roomInfo.schedule.startMinutes;
-                                const roomEnd = roomInfo.schedule.endMinutes;
-                                
-                                if (!(selectedEndMinutes <= roomStart || selectedStartMinutes >= roomEnd)) {
-                                    roomInfo.isAvailable = false;
-                                    roomInfo.conflictReason = `Room is already booked (${data.time})`;
-                                }
+                            roomInfo.schedule = {
+                                day: data.day.trim().toLowerCase(),
+                                time: data.time.trim(),
+                                startMinutes: roomStart,
+                                endMinutes: roomEnd
+                            };
+                            
+                            // Check if room matches the selected day and time
+                            const dayMatches = roomInfo.schedule.day === selectedDay.toLowerCase();
+                            const timeMatches = roomStart === selectedStartMinutes && 
+                                              roomEnd === selectedEndMinutes;
+                            
+                            if (dayMatches && timeMatches) {
+                                roomInfo.isAvailable = true;
+                                roomInfo.conflictReason = '';
+                            } else {
+                                roomInfo.conflictReason = `Not available at ${selectedDay} ${classTime}`;
                             }
                         } catch (e) {
-                            console.warn(`Error parsing room schedule for ${data.name}:`, e);
+                            console.warn(`Error parsing room schedule for ${data.roomName}:`, e);
+                            roomInfo.conflictReason = 'Invalid schedule format';
                         }
                     }
                     
                     allRooms.push(roomInfo);
-                    roomSchedules.set(data.roomName, roomInfo);  // Using roomName as the key
+                    roomSchedules.set(data.roomName, roomInfo);
                 });
                 
-                // Mark rooms as booked based on instructor schedules, using parsed times
+                // Mark rooms as booked based on instructor schedules
                 instructorsSnapshot.forEach(doc => {
                     const instructor = doc.data();
                     if (!instructor.roomName || !instructor.day || !instructor.time || 
