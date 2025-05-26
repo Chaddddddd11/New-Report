@@ -137,19 +137,19 @@
 
     #scheduleTable {
       width: 100%;
-      border-collapse: collapse;
+      border-collapse: separate;
+      border-spacing: 2px;
       margin-top: 15px;
-      box-shadow: 0 2px 3px rgba(0,0,0,0.1);
-      background-color: #fff;
+      background-color: #f5f5f5;
       table-layout: fixed;
     }
 
     #scheduleTable th, #scheduleTable td {
       border: 1px solid #ddd;
-      padding: 8px;
+      padding: 0;
       text-align: center;
       vertical-align: top;
-      height: 100%;
+      min-width: 150px;
     }
 
     #scheduleTable th {
@@ -176,14 +176,15 @@
 
     .schedule-entry {
       padding: 8px;
-      border-radius: 6px;
-      color: white;
+      border-radius: 4px;
+      color: #333;
       display: block;
       box-sizing: border-box;
       margin: 2px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      background-color: #fff;
+      min-height: 80px;
       transition: all 0.2s ease;
-      border: 1px solid rgba(0,0,0,0.1);
+      border: 1px solid #ddd;
     }
     
     .schedule-entry:hover {
@@ -670,35 +671,43 @@
           
           // If instructor found, fill the cell with their info
           if (instructor) {
-            console.log('Instructor data:', instructor); // Debug log
-            
-            // Use the instructor's scheduleColor from Firestore, default to a light gray if not set
-            const bgColor = instructor.scheduleColor || '#f0f0f0';
-            console.log('Using color:', bgColor, 'for instructor:', instructor.name); // Debug log
-            
-            // Determine text color based on background brightness for better readability
-            const textColor = getContrastYIQ(bgColor);
-            
-            // Create schedule entry with inline styles and hover effect
+            try {
+              console.log('Instructor data:', instructor);
+              
+              // Use the instructor's scheduleColor from Firestore, default to a light gray if not set
+              const bgColor = instructor.scheduleColor || '#f0f0f0';
+              console.log('Using color:', bgColor, 'for instructor:', instructor.name);
+              
+              // Determine text color based on background brightness for better readability
+              const textColor = getContrastYIQ(bgColor);
+              
+              // Create schedule entry with inline styles and hover effect
+              cell.style.padding = '4px';
+              cell.style.backgroundColor = bgColor;
+              
+              const entryHTML = `
+                <div class="schedule-entry" 
+                     style="background-color: ${bgColor}; 
+                            color: ${textColor};
+                            border: 1px solid ${adjustColor(bgColor, -20)};
+                            border-radius: 6px;
+                            padding: 8px;
+                            height: 100%;
+                            box-sizing: border-box;">
+                  <div class="subject">${instructor.subject || 'N/A'}</div>
+                  <div class="instructor">${instructor.name || 'N/A'}</div>
+                  <div class="room">${instructor.roomName || 'TBA'}</div>
+                </div>`;
+              
+              cell.innerHTML = entryHTML;
+            } catch (error) {
+              console.error('Error rendering instructor:', error);
+              cell.textContent = 'Error loading data';
+            }
+          } else {
+            // Add an empty cell if no instructor
             cell.style.padding = '4px';
-            cell.style.backgroundColor = bgColor; // Set cell background color
-            
-            const entryHTML = `
-              <div class="schedule-entry" 
-                   style="background-color: ${bgColor}; 
-                          color: ${textColor};
-                          border-color: ${adjustColor(bgColor, -20)};
-                          height: 100%;
-                          display: flex;
-                          flex-direction: column;
-                          justify-content: center;">
-                <div class="subject">${instructor.subject || 'N/A'}</div>
-                <div class="instructor">${instructor.name || 'N/A'}</div>
-                <div class="room">${instructor.roomName || 'TBA'}</div>
-              </div>`;
-            
-            console.log('Generated HTML:', entryHTML); // Debug log
-            cell.innerHTML = entryHTML;
+            cell.innerHTML = '<div class="schedule-entry" style="height: 80px;"></div>';
           }
           
           row.appendChild(cell);
