@@ -377,6 +377,7 @@
             
             instructors.forEach(instructor => {
                 const row = document.createElement('tr');
+                row.setAttribute('data-instructor-id', instructor.id); // Add instructor ID to the row
                 
                 // Format the display values
                 const yearDisplay = instructor.year ? 
