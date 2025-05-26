@@ -176,20 +176,19 @@
 
     .schedule-entry {
       padding: 8px;
-      border-radius: 4px;
+      border-radius: 6px;
       color: white;
       display: block;
-      min-height: 80px; /* Fixed height for consistency */
       box-sizing: border-box;
-      /* Make the entry fill the cell */
-      position: relative;
-      z-index: 1;
-      height: 100%;
+      margin: 2px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      transition: all 0.2s ease;
+      border: 1px solid rgba(0,0,0,0.1);
     }
     
-    #scheduleTable td {
-      position: relative;
-      background-clip: padding-box;
+    .schedule-entry:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.15);
     }
 
     .schedule-entry .subject {
@@ -675,16 +674,17 @@
             // Determine text color based on background brightness for better readability
             const textColor = getContrastYIQ(bgColor);
             
-            // Create schedule entry with inline styles
+            // Create schedule entry with inline styles and hover effect
+            cell.style.padding = '4px';
             cell.innerHTML = `
-              <div class="schedule-entry" style="background-color: ${bgColor}; color: ${textColor};">
+              <div class="schedule-entry" 
+                   style="background-color: ${bgColor}; 
+                          color: ${textColor};
+                          border-color: ${adjustColor(bgColor, -20)};">
                 <div class="subject">${instructor.subject || 'N/A'}</div>
                 <div class="instructor">${instructor.name || 'N/A'}</div>
                 <div class="room">${instructor.roomName || 'TBA'}</div>
               </div>`;
-              
-            // Also set the cell's background color as a fallback
-            cell.style.backgroundColor = bgColor;
           }
           
           row.appendChild(cell);
@@ -739,23 +739,6 @@
       // Initial log
       logCurrentState();
     });
-    
-    // Function to determine if text should be light or dark based on background color
-    function getContrastYIQ(hexcolor) {
-      // Remove the hash if it exists
-      hexcolor = hexcolor.replace('#', '');
-      
-      // Convert hex to RGB
-      const r = parseInt(hexcolor.substr(0, 2), 16);
-      const g = parseInt(hexcolor.substr(2, 2), 16);
-      const b = parseInt(hexcolor.substr(4, 2), 16);
-      
-      // Calculate YIQ (brightness) value
-      const yiq = ((r * 299) + (g * 587) + (b * 114)) / 1000;
-      
-      // Return black for light colors, white for dark colors
-      return (yiq >= 128) ? '#000000' : '#ffffff';
-    }
   </script>
 </body>
 </html>
