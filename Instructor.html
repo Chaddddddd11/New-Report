@@ -609,37 +609,45 @@
         // Flag to track if form was submitted by user
         let formSubmittedByUser = false;
         
-        // Debug function to log redirects
-        const originalLocationHref = Object.getOwnPropertyDescriptor(window, 'location').get;
-        Object.defineProperty(window, 'location', {
-            get: function() {
-                console.trace('Location accessed:');
-                return originalLocationHref.apply(this);
-            },
+        // Debug logging for redirects
+        console.log('=== PAGE LOADED ===');
+        
+        // Store original functions
+        const originalLocationHref = window.location.href;
+        const originalAssign = window.location.assign;
+        const originalReplace = window.location.replace;
+        
+        // Override location.href
+        Object.defineProperty(window.location, 'href', {
             set: function(value) {
-                console.log('Attempting to set location to:', value);
-                console.trace('Location set from:');
-                return originalLocationHref.apply(this, arguments);
+                console.log('Attempting to set location.href to:', value);
+                console.trace('location.href set from:');
+                return originalLocationHref.set.call(this, value);
+            },
+            get: function() {
+                console.trace('location.href accessed from:');
+                return originalLocationHref.get.call(this);
             }
         });
         
-        // Log when the page is about to redirect
-        const originalAssign = window.location.assign;
+        // Override location.assign
         window.location.assign = function() {
-            console.log('Redirecting to:', arguments[0]);
-            console.trace('Redirect called from:');
+            console.log('location.assign called with:', arguments[0]);
+            console.trace('location.assign called from:');
             return originalAssign.apply(this, arguments);
         };
         
-        // Log when the page is about to redirect using href
-        const originalHref = Object.getOwnPropertyDescriptor(Location.prototype, 'href');
-        Object.defineProperty(Location.prototype, 'href', {
-            set: function(value) {
-                console.log('Setting location.href to:', value);
-                console.trace('location.href set from:');
-                return originalHref.set.call(this, value);
-            },
-            get: originalHref.get
+        // Override location.replace
+        window.location.replace = function() {
+            console.log('location.replace called with:', arguments[0]);
+            console.trace('location.replace called from:');
+            return originalReplace.apply(this, arguments);
+        };
+        
+        // Log all navigation events
+        window.addEventListener('beforeunload', function() {
+            console.log('Page is about to unload - navigation detected');
+            console.trace('Navigation initiated from:');
         });
         
         document.addEventListener('DOMContentLoaded', async () => {
