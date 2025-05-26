@@ -724,15 +724,20 @@
         // Function to update available rooms based on current selections
         async function updateAvailableRooms() {
             console.log('=== UPDATING AVAILABLE ROOMS ===');
+            
             const selectedDay = daySelect.value;
             const classTime = timeSelect.value;
             const course = courseSelect.value;
             const year = yearSelect.value;
             const section = sectionSelect.value;
             
-            if (!selectedDay || !classTime) {
-                console.log('Please select day and time first.');
-                updateRoomDropdown([], 0);
+            // Check if all required fields are selected
+            const requiredFields = [selectedDay, classTime, course, year, section];
+            const allFieldsSelected = requiredFields.every(field => field && field.trim() !== '');
+            
+            if (!allFieldsSelected) {
+                console.log('Please select all fields first.');
+                updateRoomDropdown([], 0, 'Please select all fields to see available rooms');
                 return;
             }
             
@@ -871,7 +876,7 @@
         }
         
         // Helper function to update room dropdown
-        function updateRoomDropdown(availableRooms, studentCapacity) {
+        function updateRoomDropdown(availableRooms, studentCapacity, customMessage = '') {
             // Clear existing options except the first one
             while (roomInput.options.length > 1) {
                 roomInput.remove(1);
@@ -882,13 +887,22 @@
             
             if (availableRooms.length === 0) {
                 roomInput.disabled = true;
-                roomInput.innerHTML = '<option value="">No available rooms for the selected criteria</option>';
-                roomCapacityDisplay.textContent = 'No available rooms';
-                roomCapacityDisplay.style.color = 'red';
+                roomInput.innerHTML = customMessage 
+                    ? `<option value="">${customMessage}</option>`
+                    : '<option value="">No available rooms for the selected criteria</option>';
+                
+                roomCapacityDisplay.textContent = customMessage || 'No available rooms';
+                roomCapacityDisplay.style.color = customMessage ? 'black' : 'red';
                 return;
             }
             
             roomInput.disabled = false;
+            
+            // Add default option
+            const defaultOption = document.createElement('option');
+            defaultOption.value = '';
+            defaultOption.textContent = 'Select a room';
+            roomInput.appendChild(defaultOption);
             
             // Add available rooms to dropdown
             availableRooms.forEach(room => {
@@ -901,10 +915,15 @@
             
             // Update capacity display
             if (studentCapacity > 0) {
-                roomCapacityDisplay.textContent = `Room capacity: ${availableRooms[0]?.capacity || 0} (${studentCapacity} required)`;
+                const capacityText = availableRooms.length > 0
+                    ? `Room capacity: ${availableRooms[0]?.capacity || 0} (${studentCapacity} required)`
+                    : 'Select a room to see capacity';
+                roomCapacityDisplay.textContent = capacityText;
                 roomCapacityDisplay.style.color = availableRooms[0]?.capacity >= studentCapacity ? 'green' : 'red';
             } else {
-                roomCapacityDisplay.textContent = `Room capacity: ${availableRooms[0]?.capacity || 0}`;
+                roomCapacityDisplay.textContent = availableRooms.length > 0
+                    ? `Room capacity: ${availableRooms[0]?.capacity || 0}`
+                    : 'Select a room to see capacity';
                 roomCapacityDisplay.style.color = 'black';
             }
             
