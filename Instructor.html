@@ -280,8 +280,8 @@
                 </select>
             </div>
 
-            <div class="form-group" id="studentCapacityContainer" style="display: none; padding: 10px; background-color: #f8f9fa; border-radius: 4px; margin-bottom: 15px;">
-                <strong>Student Capacity: </strong><span id="studentCapacity">-</span>
+            <div class="form-group" id="studentCapacityDisplay" style="display: none; padding: 10px; background-color: #f8f9fa; border-radius: 4px; margin-bottom: 15px;">
+                <strong>Expected Class Size: </strong><span id="studentCapacity">-</span>
             </div>
 
             <div class="form-group">
@@ -323,7 +323,7 @@
             </div>
             
             <div id="studentCapacityContainer" class="capacity-container" style="display: none; padding: 10px; background-color: #f8f9fa; border-radius: 4px; margin-bottom: 15px;">
-                <strong>Student Capacity: </strong><span id="studentCapacity">-</span>
+                <strong>Expected Class Size: </strong><span id="studentCapacity">-</span>
             </div>
 
             <div class="form-group">
@@ -1005,15 +1005,46 @@
             roomInput.value = '';
         }
 
+        // Function to validate form data
+        function validateFormData(formData) {
+            if (!formData.name.trim()) {
+                return { valid: false, message: 'Instructor name is required' };
+            }
+            if (!formData.subject.trim()) {
+                return { valid: false, message: 'Subject is required' };
+            }
+            if (!formData.course) {
+                return { valid: false, message: 'Course is required' };
+            }
+            if (!formData.year) {
+                return { valid: false, message: 'Year is required' };
+            }
+            if (!formData.section) {
+                return { valid: false, message: 'Section is required' };
+            }
+            if (!formData.day) {
+                return { valid: false, message: 'Day is required' };
+            }
+            if (!formData.time) {
+                return { valid: false, message: 'Class time is required' };
+            }
+            if (!formData.room) {
+                return { valid: false, message: 'Room is required' };
+            }
+            return { valid: true };
+        }
+
         async function registerInstructor() {
             clearError(); 
+            const submitBtn = document.getElementById('submitBtn');
+            const originalBtnText = submitBtn ? submitBtn.innerHTML : 'Submit';
 
             try {
                 // Show loading state
-                const submitBtn = document.getElementById('submitBtn');
-                const originalBtnText = submitBtn.innerHTML;
-                submitBtn.disabled = true;
-                submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Processing...';
+                if (submitBtn) {
+                    submitBtn.disabled = true;
+                    submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Processing...';
+                }
                 
                 // Get form values
                 const formData = {
@@ -1034,8 +1065,10 @@
                 const validation = validateFormData(formData);
                 if (!validation.valid) {
                     showError(validation.message);
-                    submitBtn.disabled = false;
-                    submitBtn.innerHTML = originalBtnText;
+                    if (submitBtn) {
+                        submitBtn.disabled = false;
+                        submitBtn.innerHTML = originalBtnText;
+                    }
                     return;
                 }
 
