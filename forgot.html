@@ -354,24 +354,32 @@
                         usernameInput.value = '';
                         
                     } catch (error) {
-                        console.error('Error processing password reset:', error);
+                        console.error('=== ERROR DETAILS ===');
+                        console.error('Error code:', error.code);
+                        console.error('Error message:', error.message);
+                        console.error('Full error object:', JSON.stringify(error, null, 2));
+                        console.error('===================');
                         
                         let errorMessageText = 'An error occurred while processing your request. Please try again.';
                         
                         // Handle specific Firebase errors
-                        switch (error.code) {
-                            case 'auth/user-not-found':
-                                errorMessageText = error.message || 'No account found with this email address. Please check the email or register for a new account.';
-                                break;
-                            case 'auth/invalid-email':
-                                errorMessageText = 'Please enter a valid email address.';
-                                break;
-                            case 'auth/too-many-requests':
-                                errorMessageText = 'Too many attempts. Please try again later.';
-                                break;
-                            case 'auth/operation-not-allowed':
-                                errorMessageText = 'Password reset is not enabled. Please contact support.';
-                                break;
+                        if (error.code) {
+                            switch (error.code) {
+                                case 'auth/user-not-found':
+                                    errorMessageText = error.message || 'No account found with this email address. Please check the email or register for a new account.';
+                                    break;
+                                case 'auth/invalid-email':
+                                    errorMessageText = 'Please enter a valid email address.';
+                                    break;
+                                case 'auth/too-many-requests':
+                                    errorMessageText = 'Too many attempts. Please try again later.';
+                                    break;
+                                case 'auth/operation-not-allowed':
+                                    errorMessageText = 'Password reset is not enabled. Please contact support.';
+                                    break;
+                                default:
+                                    errorMessageText = `Error: ${error.code} - ${error.message || 'Unknown error occurred'}`;
+                            }
                         }
                         
                         showMessage(errorMessage, errorMessageText);
