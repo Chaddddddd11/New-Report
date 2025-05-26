@@ -235,7 +235,7 @@
             </div>
         </div>
 
-        <div class="form-container">
+        <form id="instructorForm" class="form-container" onsubmit="event.preventDefault(); registerInstructor();">
             <div class="form-group">
                 <label for="name">Instructor Name*</label>
                 <input type="text" id="name" name="name" autocomplete="name" required>
@@ -340,9 +340,9 @@
 
             <div class="btn-container">
                 <a href="InstructorList.html" class="btn">View Instructor List</a>
-                <button type="button" id="submitBtn" class="btn">Register Instructor</button>
+                <button type="submit" id="submitBtn" class="btn">Register Instructor</button>
             </div>
-        </div>
+        </form>
     </div>
 
     <!-- Firebase SDKs -->
@@ -1048,6 +1048,7 @@
         async function registerInstructor() {
             clearError(); 
             const submitBtn = document.getElementById('submitBtn');
+            const form = document.getElementById('instructorForm');
             const originalBtnText = submitBtn ? submitBtn.innerHTML : 'Submit';
 
             try {
@@ -1055,6 +1056,15 @@
                 if (submitBtn) {
                     submitBtn.disabled = true;
                     submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Processing...';
+                }
+                
+                // Validate required fields
+                const requiredFields = ['name', 'subject', 'course', 'year', 'section', 'day', 'time', 'room'];
+                for (const field of requiredFields) {
+                    const element = document.getElementById(field);
+                    if (element && !element.value.trim()) {
+                        throw new Error(`${field.charAt(0).toUpperCase() + field.slice(1)} is required`);
+                    }
                 }
                 
                 // Get form values
@@ -1083,16 +1093,33 @@
                     return;
                 }
 
-                const [timeStart, timeEnd] = formData.time.split('-'); // HH:MM format
-                const startHour = parseInt(timeStart.split(':')[0], 10);
-                const endHour = parseInt(timeEnd.split(':')[0], 10);
+                // Parse time
+                let timeStart, timeEnd, startHour, endHour;
+                try {
+                    [timeStart, timeEnd] = formData.time.split('-').map(t => t.trim());
+                    startHour = parseInt(timeStart.split(':')[0], 10);
+                    endHour = parseInt(timeEnd.split(':')[0], 10);
+                    
+                    if (isNaN(startHour) || isNaN(endHour)) {
+                        throw new Error('Invalid time format');
+                    }
+                } catch (error) {
+                    throw new Error('Please select a valid time slot');
+                }
 
                 try {
-                    // Conflict Validation 1: Instructor's own schedule conflict
-                    const instructorTimeConflictQuery = query(instructorsCollectionRef, 
-                        where("name", "==", formData.name), 
-                        where("day", "==", formData.day)
+                    // Conflict Validation: Check for instructor schedule conflict
+                    const instructorTimeConflictQuery = query(
+                        collection(db, 'Instructors'),
+                        where("name", "==", formData.name.trim()),
+                        where("day", "==", formData.day),
+                        where("time", "==", formData.time)
                     );
+                    
+                    const conflictSnapshot = await getDocs(instructorTimeConflictQuery);
+                    if (!conflictSnapshot.empty) {
+                        throw new Error('This instructor already has a class scheduled at this time');
+                    }
                     const instructorTimeConflictSnapshot = await getDocs(instructorTimeConflictQuery);
                     let hasInstructorConflict = false;
                     instructorTimeConflictSnapshot.forEach(docInstance => {
@@ -1169,43 +1196,40 @@
                     // Combine timeStart and timeEnd into a single time string
                     const time = `${timeStart}-${timeEnd}`;
                     
+                    // Prepare instructor data
                     const instructorData = {
-                        name: formData.name,
-                        subject: formData.subject,
+                        name: formData.name.trim(),
+                        subject: formData.subject.trim(),
                         course: formData.course,
                         year: formData.year,
                         section: formData.section,
                         day: formData.day,
                         time, // Store as 'HH:00-HH:00'
-                        room: formData.room,
+                        roomName: formData.room,
                         scheduleColor: formData.scheduleColor,
                         timestamp: new Date() // For ordering or tracking
                     };
 
-                    if (isUpdateMode && currentInstructorId) {
-                        const instructorDocRef = doc(db, "Instructors", currentInstructorId);
-                        await updateDoc(instructorDocRef, instructorData);
-                        showSuccess(`Instructor ${formData.name} updated successfully!`);
-                    } else {
-                        await addDoc(instructorsCollectionRef, instructorData);
-                        showSuccess(`Instructor ${formData.name} registered successfully!`);
+                    // Save to Firestore
+                    try {
+                        await addDoc(collection(db, 'Instructors'), instructorData);
+                        showSuccess('Instructor registered successfully!');
+                        form.reset();
+                        
+                        // Redirect back to instructor list after a short delay
+                        setTimeout(() => {
+                            try {
+                                window.location.href = 'InstructorList.html';
+                            } catch (e) {
+                                console.error('Error redirecting:', e);
+                                // Fallback to index.html if InstructorList.html fails to load
+                                window.location.href = 'index.html';
+                            }
+                        }, 1500);
+                    } catch (error) {
+                        console.error('Error saving to Firestore:', error);
+                        throw new Error('Failed to save instructor data. Please try again.');
                     }
-
-                    clearForm();
-                    if(submitBtn) {
-                        submitBtn.textContent = isUpdateMode ? 'Update Instructor' : 'Register Instructor';
-                    }
-                    
-                    // Redirect back to instructor list after a short delay to allow message visibility
-                    setTimeout(() => {
-                        try {
-                            window.location.href = 'InstructorList.html';
-                        } catch (e) {
-                            console.error('Error during redirection:', e);
-                            // Fallback to index.html if InstructorList.html fails to load
-                            window.location.href = 'index.html';
-                        }
-                    }, 1500);
                 } catch (error) {
                     console.error(`Error ${isUpdateMode ? 'updating' : 'saving'} instructor: `, error);
                     showError(`Failed to ${isUpdateMode ? 'update' : 'register'} instructor. Please try again. ${error.message}`);
