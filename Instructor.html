@@ -613,6 +613,9 @@
             try {
                 console.log('Handling room selection for room ID:', data.roomId);
                 
+                // Store the original room ID
+                originalRoomId = data.roomId;
+                
                 // First, ensure we have the room data
                 let roomData = null;
                 try {
@@ -625,38 +628,24 @@
                     console.warn('Could not fetch room data, will use basic info:', error);
                 }
                 
-                // Load rooms with the current room ID to ensure it's selected
-                const rooms = await loadRooms(data.roomId);
-                console.log('Loaded rooms:', rooms);
+                // Update the room select with available rooms
+                await updateAvailableRooms();
                 
-                // Check if the room is already in the dropdown
+                // Check if the room is in the dropdown and select it
                 let roomFound = false;
                 for (let i = 0; i < roomSelect.options.length; i++) {
                     if (roomSelect.options[i].value === data.roomId) {
-                        roomFound = true;
                         roomSelect.selectedIndex = i;
-                        console.log('Room found in dropdown, selected index:', i);
+                        roomFound = true;
+                        console.log('Room found and selected in dropdown');
                         break;
                     }
                 }
                 
                 // If room not found in dropdown, add it as a special option
                 if (!roomFound) {
-                    const roomName = roomData?.name || data.roomName || `Room ${data.roomId}`;
-                    console.log('Adding room to dropdown:', roomName);
-                    
-                    const option = new Option(
-                        `${roomName} (Currently assigned)`,
-                        data.roomId
-                    );
-                    option.dataset.original = 'true';
-                    option.style.fontWeight = 'bold';
-                    
-                    // Add the option and select it
-                    roomSelect.add(option);
-                    roomSelect.value = data.roomId;
-                    
-                    console.log('Added and selected room:', roomName);
+                    console.log('Room not found in dropdown, adding as special option');
+                    await ensureOriginalRoomInList(roomSelect, data.roomId);
                 }
                 
                 // Ensure the room is visible in the UI
@@ -1024,29 +1013,31 @@
                 const allRooms = [];
                 const bookedRoomIds = new Set();
                 
-                // Process all rooms
+                // Process all rooms - ensure we have proper room names
                 roomsSnapshot.forEach(doc => {
+                    const roomData = doc.data();
                     allRooms.push({
                         id: doc.id,
-                        ...doc.data(),
-                        name: doc.data().name || `Room ${doc.id}`
+                        name: roomData.name || `Room ${doc.id}`,
+                        capacity: roomData.capacity || 0,
+                        availableDays: roomData.availableDays || [],
+                        availableTimes: roomData.availableTimes || []
                     });
                 });
                 
-                console.log(`Found ${allRooms.length} total rooms`);
+                console.log(`Found ${allRooms.length} total rooms:`, allRooms);
                 
                 // Track which rooms are already booked
                 bookingsSnapshot.forEach(doc => {
                     const booking = doc.data();
                     // Skip current instructor's booking in edit mode
-                    if (!isUpdateMode || doc.id !== currentInstructorId) {
-                        if (booking.roomId) {
-                            bookedRoomIds.add(booking.roomId);
-                        }
+                    if (booking.roomId && (!isUpdateMode || doc.id !== currentInstructorId)) {
+                        console.log(`Room ${booking.roomId} is booked by ${doc.id}`);
+                        bookedRoomIds.add(booking.roomId);
                     }
                 });
                 
-                console.log(`Found ${bookedRoomIds.size} booked rooms for ${daySelected} at ${timeSelected}`);
+                console.log(`Found ${bookedRoomIds.size} booked rooms for ${daySelected} at ${timeSelected}:`, Array.from(bookedRoomIds));
                 
                 // Filter available rooms
                 const availableRooms = allRooms.filter(room => {
@@ -1057,20 +1048,30 @@
                     const hasCapacity = room.capacity >= (currentEnrollment + 1);
                     
                     // Check room availability for day/time if specified
-                    const isAvailableOnDay = !room.availableDays || room.availableDays.includes(daySelected);
-                    const isAvailableAtTime = !room.availableTimes || room.availableTimes.includes(timeSelected);
+                    const isAvailableOnDay = room.availableDays.length === 0 || room.availableDays.includes(daySelected);
+                    const isAvailableAtTime = room.availableTimes.length === 0 || room.availableTimes.includes(timeSelected);
+                    
+                    // Debug logging
+                    console.log(`Room ${room.id} (${room.name}):`, {
+                        isBooked, hasCapacity, isAvailableOnDay, isAvailableAtTime,
+                        availableDays: room.availableDays,
+                        availableTimes: room.availableTimes
+                    });
                     
                     // Room is available if:
                     // 1. Not already booked, OR it's the original room in edit mode
                     // 2. Has enough capacity
                     // 3. Available on selected day/time (if restrictions exist)
-                    return ((!isBooked || (isUpdateMode && room.id === originalRoomId)) && 
-                            hasCapacity && 
-                            isAvailableOnDay && 
-                            isAvailableAtTime);
+                    const isAvailable = ((!isBooked || (isUpdateMode && room.id === originalRoomId)) && 
+                                       hasCapacity && 
+                                       isAvailableOnDay && 
+                                       isAvailableAtTime);
+                    
+                    console.log(`Room ${room.id} (${room.name}) is ${isAvailable ? 'available' : 'not available'}`);
+                    return isAvailable;
                 });
                 
-                console.log(`Found ${availableRooms.length} available rooms after filtering`);
+                console.log(`Found ${availableRooms.length} available rooms after filtering:`, availableRooms);
                 
                 // Clear existing options
                 roomSelect.innerHTML = '';
@@ -1155,58 +1156,81 @@
                     return;
                 }
                 
+                // Get current form values for conflict checking
+                const day = daySelect?.value;
+                const time = timeSelect?.value;
+                
                 // Try to get the room details
                 const roomDoc = await getDoc(doc(db, "Rooms", roomId));
-                if (!roomDoc.exists()) {
-                    console.warn('Original room not found in database:', roomId);
-                    // Add it anyway with basic info
-                    const option = new Option(
-                        `Room ${roomId} (Currently assigned, not available for new bookings)`,
-                        roomId
-                    );
-                    option.dataset.original = 'true';
-                    option.style.fontWeight = 'bold';
-                    option.selected = true;
-                    option.disabled = true; // Make it non-selectable if needed
-                    roomSelect.add(option);
-                    return;
-                }
+                let roomName = `Room ${roomId}`;
+                let roomCapacity = 'N/A';
                 
-                const roomData = roomDoc.data();
-                const roomName = roomData.name || `Room ${roomId}`;
+                if (roomDoc.exists()) {
+                    const roomData = roomDoc.data();
+                    roomName = roomData.name || roomName;
+                    roomCapacity = roomData.capacity || roomCapacity;
+                } else {
+                    console.warn('Original room not found in database:', roomId);
+                }
                 
                 // Check if the room is already booked at this time
                 let isBooked = false;
-                try {
-                    const bookingsQuery = query(
-                        instructorsCollectionRef,
-                        where("day", "==", daySelect?.value),
-                        where("time", "==", timeSelect?.value),
-                        where("roomId", "==", roomId)
-                    );
-                    
-                    const querySnapshot = await getDocs(bookingsQuery);
-                    isBooked = !querySnapshot.empty;
-                    console.log(`Room ${roomId} is ${isBooked ? 'already booked' : 'available'}`);
-                } catch (error) {
-                    console.error('Error checking room booking status:', error);
+                let conflictDetails = [];
+                
+                if (day && time) {
+                    try {
+                        const bookingsQuery = query(
+                            instructorsCollectionRef,
+                            where("day", "==", day),
+                            where("time", "==", time),
+                            where("roomId", "==", roomId)
+                        );
+                        
+                        const querySnapshot = await getDocs(bookingsQuery);
+                        isBooked = !querySnapshot.empty;
+                        
+                        // Get details about the conflict
+                        querySnapshot.forEach(doc => {
+                            const booking = doc.data();
+                            if (doc.id !== currentInstructorId) { // Skip current instructor's booking
+                                conflictDetails.push({
+                                    instructor: booking.name || 'Unknown Instructor',
+                                    course: booking.course || 'Unknown Course',
+                                    year: booking.year || '',
+                                    section: booking.section || ''
+                                });
+                            }
+                        });
+                        
+                        console.log(`Room ${roomId} is ${isBooked ? 'already booked' : 'available'}`);
+                    } catch (error) {
+                        console.error('Error checking room booking status:', error);
+                    }
                 }
                 
-                // Add the room as a special option
-                const option = new Option(
-                    isBooked ? 
-                        `${roomName} (Currently assigned - Conflict with existing booking)` :
-                        `${roomName} (Currently assigned - Capacity: ${roomData.capacity || 'N/A'})`,
-                    roomId
-                );
+                // Create the option text
+                let optionText = `${roomName} (Currently assigned)`;
                 
+                if (isBooked && conflictDetails.length > 0) {
+                    const conflict = conflictDetails[0];
+                    optionText = `${roomName} (Conflict: Booked by ${conflict.instructor} - ${conflict.course} ${conflict.year}${conflict.section})`;
+                } else if (roomCapacity !== 'N/A') {
+                    optionText += ` - Capacity: ${roomCapacity}`;
+                }
+                
+                // Create and configure the option
+                const option = new Option(optionText, roomId);
                 option.dataset.original = 'true';
                 option.style.fontWeight = 'bold';
                 option.selected = true;
                 
                 if (isBooked) {
                     option.style.color = 'red';
-                    option.title = 'This room has a scheduling conflict with the selected time slot.';
+                    option.title = conflictDetails.length > 0 ? 
+                        `This room is already booked by ${conflictDetails[0].instructor} for ${conflictDetails[0].course} ${conflictDetails[0].year}${conflictDetails[0].section}` :
+                        'This room has a scheduling conflict with the selected time slot.';
+                } else {
+                    option.title = 'This is the currently assigned room';
                 }
                 
                 // Add the option to the select
