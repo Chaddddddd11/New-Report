@@ -591,15 +591,50 @@
             roomSelect.innerHTML = '<option value="">Loading rooms...</option>';
             
             try {
-                // Load rooms
+                // Store room info for later use
+                const roomId = data.roomId;
+                const roomName = data.roomName || `Room ${data.roomId}`;
+                
+                // Load rooms and wait for them to be populated
                 await loadRooms();
                 
-                // After rooms are loaded, select the original room
-                if (data.roomId) {
-                    // Small delay to ensure DOM is updated
-                    setTimeout(() => {
-                        selectRoom(data.roomId, data.roomName);
+                // After rooms are loaded, ensure the original room is in the list
+                if (roomId) {
+                    // Small delay to ensure DOM is fully updated
+                    setTimeout(async () => {
+                        try {
+                            // First try to select the room normally
+                            let roomFound = false;
+                            for (let i = 0; i < roomSelect.options.length; i++) {
+                                if (roomSelect.options[i].value === roomId) {
+                                    roomSelect.value = roomId;
+                                    roomFound = true;
+                                    break;
+                                }
+                            }
+                            
+                            // If room not found, add it as a special option
+                            if (!roomFound) {
+                                const option = new Option(
+                                    `${roomName} (Currently assigned)`,
+                                    roomId
+                                );
+                                option.dataset.original = 'true';
+                                option.style.fontWeight = 'bold';
+                                roomSelect.add(option);
+                                roomSelect.value = roomId;
+                            }
+                            
+                            // Enable the room select
+                            roomSelect.disabled = false;
+                        } catch (error) {
+                            console.error('Error selecting room:', error);
+                            roomSelect.innerHTML = originalRoomText;
+                            showError('Failed to set room selection');
+                        }
                     }, 100);
+                } else {
+                    roomSelect.disabled = false;
                 }
             } catch (error) {
                 console.error('Error handling room selection:', error);
@@ -608,7 +643,7 @@
             }
         }
 
-        // Helper function to select a room
+        // Helper function to select a room (kept for backward compatibility)
         function selectRoom(roomId, roomName) {
             if (!roomSelect) return;
             
@@ -616,20 +651,26 @@
             for (let i = 0; i < roomSelect.options.length; i++) {
                 if (roomSelect.options[i].value === roomId) {
                     roomSelect.selectedIndex = i;
-                    return;
+                    roomSelect.disabled = false;
+                    return true;
                 }
             }
             
             // If room not found, add it
             if (roomId) {
                 const option = new Option(
-                    `${roomName || roomId} (Current Assignment)`, 
+                    `${roomName || roomId} (Currently assigned)`,
                     roomId
                 );
                 option.dataset.original = 'true';
+                option.style.fontWeight = 'bold';
                 roomSelect.add(option);
                 roomSelect.value = roomId;
+                roomSelect.disabled = false;
+                return true;
             }
+            
+            return false;
         }
 
         // Set up event listeners
