@@ -222,7 +222,7 @@
 </head>
 <body>
     <div class="container">
-        <a href="ListInstructor.html" class="back-btn">← Back to List</a>
+        <a href="InstructorList.html" class="back-btn">← Back to List</a>
         <div class="header-container">
             <div class="logo-container left">
                 <img src="https://media.assettype.com/sunstar/2025-02-04/7x1wu7dq/DHVSU.jpg?w=1200&h=675&auto=format%2Ccompress&fit=max&enlarge=true" alt="DHVSU Logo" class="logo">
@@ -629,7 +629,7 @@
                 
                 // If no ID is provided, redirect to list
                 if (!instructorId) {
-                    window.location.href = 'ListInstructor.html';
+                    window.location.href = 'InstructorList.html';
                     return;
                 }
                 
@@ -641,7 +641,7 @@
                             try {
                                 await deleteDoc(doc(db, 'Instructors', instructorId));
                                 alert('Instructor deleted successfully');
-                                window.location.href = 'ListInstructor.html';
+                                window.location.href = 'InstructorList.html';
                             } catch (error) {
                                 console.error('Error deleting instructor:', error);
                                 alert('Failed to delete instructor. Please try again.');
