@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>DHVSU Instructor Registration</title>
+    <title>DHVSU Edit Instructor</title>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
     <style>
         body {
@@ -222,7 +222,7 @@
 </head>
 <body>
     <div class="container">
-        <a href="index.html" class="back-btn">← Back to Schedule</a>
+        <a href="InstructorList.html" class="back-btn">← Back to List</a>
         <div class="header-container">
             <div class="logo-container left">
                 <img src="https://media.assettype.com/sunstar/2025-02-04/7x1wu7dq/DHVSU.jpg?w=1200&h=675&auto=format%2Ccompress&fit=max&enlarge=true" alt="DHVSU Logo" class="logo">
@@ -340,8 +340,8 @@
 
             <div class="btn-container">
                 <a href="InstructorList.html" class="btn">View Instructor List</a>
-                <button type="submit" id="submitBtn" class="btn">Register Instructor</button>
-                <button type="button" class="btn btn-danger" id="deleteBtn" style="background-color: #dc3545; margin-left: 10px; display: none;">Delete</button>
+                <button type="submit" class="btn" id="submitBtn">Update Instructor</button>
+                <button type="button" class="btn btn-danger" id="deleteBtn" style="background-color: #dc3545; margin-left: 10px;">Delete</button>
             </div>
         </form>
     </div>
@@ -545,64 +545,60 @@
             console.log('Populating form with instructor data:', instructor);
             if (!instructor) return;
             
-            try {
-                // Set basic fields
-                if (instructor.name) document.getElementById('name').value = instructor.name;
-                if (instructor.subject) document.getElementById('subject').value = instructor.subject;
-                if (instructor.course) document.getElementById('course').value = instructor.course;
-                
-                // Set year level if it exists
-                if (instructor.year) {
-                    const yearSelect = document.getElementById('year');
-                    if (yearSelect) {
-                        yearSelect.value = instructor.year;
-                    }
+            // Set basic fields
+            document.getElementById('name').value = instructor.name || '';
+            document.getElementById('subject').value = instructor.subject || '';
+            document.getElementById('course').value = instructor.course || '';
+            
+            // Set year level if it exists
+            if (instructor.year) {
+                const yearSelect = document.getElementById('year');
+                if (yearSelect) {
+                    yearSelect.value = instructor.year;
                 }
-                
-                // Set section if it exists
-                if (instructor.section) {
-                    const sectionSelect = document.getElementById('section');
-                    if (sectionSelect) {
-                        sectionSelect.value = instructor.section;
-                    }
+            }
+            
+            // Set section if it exists
+            if (instructor.section) {
+                const sectionSelect = document.getElementById('section');
+                if (sectionSelect) {
+                    sectionSelect.value = instructor.section;
                 }
-                
-                // Set day if it exists
-                if (instructor.day) {
-                    const daySelect = document.getElementById('day');
-                    if (daySelect) {
-                        daySelect.value = instructor.day;
-                    }
+            }
+            
+            // Set day if it exists
+            if (instructor.day) {
+                const daySelect = document.getElementById('day');
+                if (daySelect) {
+                    daySelect.value = instructor.day;
                 }
-                
-                // Set time if it exists
-                if (instructor.time) {
-                    const timeValue = instructor.time;
-                    let timeOptionExists = Array.from(timeSelect.options).some(opt => opt.value === timeValue);
-                    if(timeOptionExists) {
-                       timeSelect.value = timeValue;
-                    } else {
-                        console.warn(`Saved time slot ${timeValue} not found in dropdown.`);
-                    }
+            }
+            
+            // Set time if it exists
+            if (instructor.time) {
+                const timeValue = instructor.time;
+                let timeOptionExists = Array.from(timeSelect.options).some(opt => opt.value === timeValue);
+                if(timeOptionExists) {
+                   timeSelect.value = timeValue;
+                } else {
+                    console.warn(`Saved time slot ${timeValue} not found in dropdown. Clearing selection.`);
+                    timeSelect.value = ''; 
                 }
+            } else {
+                timeSelect.value = '';
+            }
 
-                // Set room if it exists (check both room and roomName for backward compatibility)
-                const roomValue = instructor.room || instructor.roomName;
-                if (roomValue && roomInput) {
-                    roomInput.value = roomValue;
-                }
+            // Set room if it exists
+            if (instructor.room) {
+                roomInput.value = instructor.room;
+            }
 
-                // Change the button text to indicate update mode
-                const registerBtn = document.getElementById('submitBtn');
-                if (registerBtn) {
-                    registerBtn.textContent = 'Update Instructor';
-                    registerBtn.dataset.mode = 'update';
-                    if (instructor.id) {
-                        registerBtn.dataset.instructorId = instructor.id;
-                    }
-                }
-            } catch (error) {
-                console.error('Error populating form data:', error);
+            // Change the button text to indicate update mode
+            const registerBtn = document.getElementById('submitBtn');
+            if (registerBtn) {
+                registerBtn.textContent = 'Update Instructor';
+                registerBtn.dataset.mode = 'update';
+                registerBtn.dataset.instructorId = instructor.id;
             }
             
             // Change the page title
@@ -612,87 +608,8 @@
             }
         }
 
-        // Flag to track if form was submitted by user
-        let formSubmittedByUser = false;
-        
-        // Track redirections
-        console.log('=== PAGE LOADED ===');
-        
-        // Store the original functions
-        const originalHref = window.location.href;
-        const originalAssign = window.location.assign;
-        const originalReplace = window.location.replace;
-        
-        // Log all navigation attempts
-        window.navigation.addEventListener('navigate', (event) => {
-            console.log('Navigation detected to:', event.destination.url);
-            console.trace('Navigation initiated from:');
-        });
-        
-        // Log beforeunload events
-        window.addEventListener('beforeunload', function(event) {
-            console.log('Page is about to unload - navigation detected');
-            console.trace('Navigation initiated from:');
-            
-            // This will show the full stack trace of what caused the navigation
-            const stack = new Error().stack;
-            console.log('Navigation stack trace:', stack);
-        });
-        
-        // Log any direct location changes
-        const originalLocation = window.location;
-        window.addEventListener('popstate', function(event) {
-            console.log('popstate event:', event);
-            console.log('New URL:', window.location.href);
-        });
-        
-        // Log form submissions
-        document.addEventListener('submit', function(event) {
-            console.log('Form submitted:', event.target);
-            console.trace('Form submission from:');
-        });
-        
-        // Function to delete an instructor
-        async function deleteInstructor() {
-            if (!currentInstructorId) {
-                console.error('No instructor ID available for deletion');
-                return;
-            }
-
-            if (!confirm('Are you sure you want to delete this instructor? This action cannot be undone.')) {
-                return;
-            }
-
-            const deleteBtn = document.getElementById('deleteBtn');
-            const originalBtnText = deleteBtn ? deleteBtn.innerHTML : 'Delete';
-            
-            try {
-                // Show loading state
-                if (deleteBtn) {
-                    deleteBtn.disabled = true;
-                    deleteBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Deleting...';
-                }
-
-                // Delete the instructor from Firestore
-                await deleteDoc(doc(db, 'Instructors', currentInstructorId));
-                
-                // Show success message
-                alert('Instructor deleted successfully!');
-                
-                // Redirect to instructor list
-                window.location.href = 'InstructorList.html';
-            } catch (error) {
-                console.error('Error deleting instructor:', error);
-                showError('Failed to delete instructor. Please try again.');
-                if (deleteBtn) {
-                    deleteBtn.disabled = false;
-                    deleteBtn.innerHTML = originalBtnText;
-                }
-            }
-        }
-
-        document.addEventListener('DOMContentLoaded', async () => {
-            console.log('DOMContentLoaded event fired');
+        // Function to initialize the page
+        async function initializePage() {
             try {
                 // Add color picker event listener
                 if (scheduleColorInput && colorPreview) {
@@ -705,104 +622,64 @@
                 const form = document.getElementById('instructorForm');
                 form.addEventListener('submit', (e) => {
                     e.preventDefault();
-                    formSubmittedByUser = true;
                     registerInstructor();
                 });
                 
-                // Also handle button click to ensure form submission is tracked
-                const submitBtn = document.getElementById('submitBtn');
-                if (submitBtn) {
-                    submitBtn.addEventListener('click', (e) => {
-                        e.preventDefault();
-                        formSubmittedByUser = true;
-                        registerInstructor();
-                    });
-                }
-                
-                // Add delete button event listener
-                const deleteBtn = document.getElementById('deleteBtn');
-                if (deleteBtn) {
-                    deleteBtn.addEventListener('click', (e) => {
-                        e.preventDefault();
-                        deleteInstructor();
-                    });
-                }
-                
                 console.log('=== PAGE INITIALIZATION STARTED ===');
                 
-                // Check if we're in edit mode
+                // Check if we're in edit mode (URL has an ID parameter)
                 const urlParams = new URLSearchParams(window.location.search);
                 const instructorId = urlParams.get('id');
                 
-                if (instructorId) {
-                    console.log('Edit mode - Loading instructor data for ID:', instructorId);
-                    currentInstructorId = instructorId;
-                    isUpdateMode = true;
-                    
-                    // Show delete button in edit mode
-                    const deleteBtn = document.getElementById('deleteBtn');
-                    if (deleteBtn) {
-                        deleteBtn.style.display = 'inline-block';
-                    }
-                    
-                    await loadInstructorData(instructorId);
-                    
-                    // Update the form title
-                    const header = document.querySelector('.header h1');
-                    if (header) {
-                        header.textContent = 'Edit Instructor';
-                    }
-                } else {
-                    // Only check URL params if not in edit mode
-                    const instructorData = getUrlParams();
-                    if (instructorData.id) {
-                        console.log('Populating form with URL parameters:', instructorData);
-                        await populateFormWithInstructorData(instructorData);
-                        
-                        // Update the form title if we're editing from URL params
-                        const header = document.querySelector('.header h1');
-                        if (header && instructorData.id) {
-                            header.textContent = 'Edit Instructor';
-                        }
-                    }
+                // If no ID is provided, redirect to list
+                if (!instructorId) {
+                    window.location.href = 'InstructorList.html';
+                    return;
                 }
-            } catch (error) {
-                console.error('Error initializing page:', error);
-                showError('An error occurred while initializing the page. Please refresh and try again.');
-            }
-            try {
+                
+                // Set up delete button
+                const deleteBtn = document.getElementById('deleteBtn');
+                if (deleteBtn) {
+                    deleteBtn.addEventListener('click', handleDeleteInstructor);
+                }
+                
+                // Initialize Firebase and load rooms first
                 console.log('1. Initializing Firebase...');
                 console.log('Firebase app initialized:', app.name);
                 
                 // Fetch rooms from Firestore using v9+ syntax
                 console.log('2. Fetching rooms from Firestore...');
-                try {
-                    const roomsSnapshot = await getDocs(collection(db, 'rooms'));
-                    allRooms = [];
+                const roomsSnapshot = await getDocs(collection(db, 'rooms'));
+                allRooms = [];
+                
+                roomsSnapshot.forEach(doc => {
+                    const data = doc.data();
+                    console.log('2.1 Processing room:', doc.id, data);
                     
-                    roomsSnapshot.forEach(doc => {
-                        const data = doc.data();
-                        console.log('2.1 Processing room:', doc.id, data);
-                        
-                        // Create room object with default values
-                        const room = {
-                            id: doc.id,
-                            name: data.roomName || `Room ${doc.id}`,
-                            capacity: parseInt(data.capacity) || 0,
-                            day: data.day || '',
-                            time: data.time || ''
-                        };
-                        
-                        allRooms.push(room);
-                    });
+                    // Create room object with default values
+                    const room = {
+                        id: doc.id,
+                        name: data.roomName || `Room ${doc.id}`,
+                        capacity: parseInt(data.capacity) || 0,
+                        day: data.day || '',
+                        time: data.time || ''
+                    };
                     
-                    console.log('2.2 Loaded rooms from Firestore:', allRooms);
-                    
-                    if (allRooms.length === 0) {
-                        console.warn('No rooms found in Firestore. Please check your database.');
-                    }
-                } catch (error) {
-                    console.error('Error loading rooms from Firestore:', error);
+                    allRooms.push(room);
+                });
+                
+                console.log('2.2 Loaded rooms from Firestore:', allRooms);
+                
+                // Check if no rooms were found
+                if (allRooms.length === 0) {
+                    console.warn('No rooms found in Firestore. Please check your database.');
+                }
+                
+                // Now load instructor data after rooms are loaded
+                if (instructorId) {
+                    currentInstructorId = instructorId;
+                    isUpdateMode = true;
+                    await loadInstructorData(instructorId);
                 }
                 
                 // Set up event listeners for fields that affect student capacity
@@ -828,13 +705,38 @@
                     }
                 });
                 
-                // Initial room population
                 console.log('5. Initializing room selection...');
                 console.log('=== PAGE INITIALIZATION COMPLETE ===');
+                
+                // Load instructor data from URL parameters if present (for backward compatibility)
+                const instructorData = getUrlParams();
+                if (instructorData.id && instructorData.id !== currentInstructorId) {
+                    console.log('Loading instructor data from URL parameters:', instructorData);
+                    await populateFormWithInstructorData(instructorData);
+                }
+                
             } catch (error) {
-                console.error('Error initializing page:', error);
+                console.error('Error during page initialization:', error);
+                showError('An error occurred while initializing the page. Please refresh and try again.');
             }
-        });
+        }
+        
+        // Handle delete instructor
+        async function handleDeleteInstructor() {
+            if (confirm('Are you sure you want to delete this instructor?')) {
+                try {
+                    await deleteDoc(doc(db, 'Instructors', currentInstructorId));
+                    alert('Instructor deleted successfully');
+                    window.location.href = 'InstructorList.html';
+                } catch (error) {
+                    console.error('Error deleting instructor:', error);
+                    alert('Failed to delete instructor. Please try again.');
+                }
+            }
+        }
+        
+        // Initialize the page when DOM is loaded
+        document.addEventListener('DOMContentLoaded', initializePage);
         
         // Function to fetch all instructors
         async function fetchAllInstructors() {
@@ -1237,21 +1139,24 @@
                 }
 
                 try {
-                    // Check for instructor schedule conflict
+                    // Conflict Validation: Check for instructor schedule conflict
                     const instructorTimeConflictQuery = query(
                         collection(db, 'Instructors'),
                         where("name", "==", formData.name.trim()),
-                        where("day", "==", formData.day)
+                        where("day", "==", formData.day),
+                        where("time", "==", formData.time)
                     );
                     
+                    const conflictSnapshot = await getDocs(instructorTimeConflictQuery);
+                    if (!conflictSnapshot.empty) {
+                        throw new Error('This instructor already has a class scheduled at this time');
+                    }
                     const instructorTimeConflictSnapshot = await getDocs(instructorTimeConflictQuery);
                     let hasInstructorConflict = false;
-                    
                     instructorTimeConflictSnapshot.forEach(docInstance => {
                         if (isUpdateMode && docInstance.id === currentInstructorId) {
-                            return; // Skip self in update mode
+                            return; // Skip self in update mode for this specific check
                         }
-                        
                         const booking = docInstance.data();
                         let existingStartHour, existingEndHour;
                         
@@ -1271,17 +1176,12 @@
                         if (existingStartHour !== undefined && existingEndHour !== undefined) {
                             if (startHour < existingEndHour && endHour > existingStartHour) {
                                 hasInstructorConflict = true;
-                                return; // Exit early if conflict found
                             }
                         }
                     });
 
                     if (hasInstructorConflict) {
                         showError(`Instructor ${formData.name} already has a conflicting schedule on ${formData.day} between ${timeStart} and ${timeEnd}.`);
-                        if (submitBtn) {
-                            submitBtn.disabled = false;
-                            submitBtn.innerHTML = originalBtnText;
-                        }
                         return;
                     }
 
@@ -1327,8 +1227,8 @@
                     // Combine timeStart and timeEnd into a single time string
                     const time = `${timeStart}-${timeEnd}`;
                     
-                    // Prepare instructor data
-                    const instructorData = {
+                    // Prepare base instructor data
+                    const baseInstructorData = {
                         name: formData.name.trim(),
                         subject: formData.subject.trim(),
                         course: formData.course,
@@ -1344,31 +1244,53 @@
                     // Save or update in Firestore
                     try {
                         if (isUpdateMode && currentInstructorId) {
-                            // Update existing instructor
+                            console.log('=== UPDATING INSTRUCTOR ===');
+                            console.log('Instructor ID:', currentInstructorId);
+                            
+                            // Create a new object for the update with updatedAt timestamp
+                            const updateData = Object.assign(
+                                {},
+                                baseInstructorData,
+                                { updatedAt: new Date() }
+                            );
+                            
+                            console.log('Update Data:', JSON.stringify(updateData, null, 2));
                             const instructorRef = doc(db, 'Instructors', currentInstructorId);
-                            await updateDoc(instructorRef, instructorData);
+                            console.log('Updating document at path:', `Instructors/${currentInstructorId}`);
+                            
+                            await updateDoc(instructorRef, updateData);
+                            console.log('Update successful');
                             showSuccess('Instructor updated successfully!');
                         } else {
-                            // Add new instructor
-                            await addDoc(collection(db, 'Instructors'), instructorData);
+                            console.log('=== CREATING NEW INSTRUCTOR ===');
+                            
+                            // Create a new object with timestamps for new entries
+                            const newInstructorData = Object.assign(
+                                {},
+                                baseInstructorData,
+                                { 
+                                    createdAt: new Date(),
+                                    updatedAt: new Date() 
+                                }
+                            );
+                            
+                            console.log('New Instructor Data:', JSON.stringify(newInstructorData, null, 2));
+                            const docRef = await addDoc(collection(db, 'Instructors'), newInstructorData);
+                            console.log('New instructor created with ID:', docRef.id);
                             showSuccess('Instructor registered successfully!');
                             form.reset();
                         }
                         
-                        // Only redirect if form was submitted by user
-                        if (formSubmittedByUser) {
-                            console.log('Form submitted successfully, preparing to redirect...');
-                            setTimeout(() => {
-                                try {
-                                    console.log('Redirecting to InstructorList.html...');
-                                    window.location.href = 'InstructorList.html';
-                                } catch (e) {
-                                    console.error('Error redirecting to InstructorList.html:', e);
-                                    console.log('Falling back to index.html...');
-                                    window.location.href = 'index.html';
-                                }
-                            }, 1500);
-                        }
+                        // Redirect back to instructor list after a short delay
+                        setTimeout(() => {
+                            try {
+                                window.location.href = 'InstructorList.html';
+                            } catch (e) {
+                                console.error('Error redirecting:', e);
+                                // Fallback to index.html if InstructorList.html fails to load
+                                window.location.href = 'index.html';
+                            }
+                        }, 1500);
                     } catch (error) {
                         console.error('Error saving to Firestore:', error);
                         throw new Error('Failed to save instructor data. Please try again.');
