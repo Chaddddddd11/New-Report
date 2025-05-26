@@ -985,8 +985,19 @@
         }
 
         function showError(message) {
-            errorMessageDiv.textContent = message;
-            errorMessageDiv.style.display = 'block';
+            const errorMessageDiv = document.getElementById('errorMessage');
+            if (errorMessageDiv) {
+                errorMessageDiv.textContent = message;
+                errorMessageDiv.style.display = 'block';
+            } else {
+                console.error('Error message div not found');
+            }
+        }
+        
+        function showSuccess(message) {
+            alert(message); // Simple alert for success, you can replace with a more elegant solution
+            // Optionally clear the form
+            document.getElementById('instructorForm').reset();
         }
 
         function clearError() {
@@ -1201,12 +1212,11 @@
                 }
             } catch (error) {
                 console.error('Error registering instructor:', error);
-                showError('An error occurred while registering the instructor. Please try again.');
-            } finally {
-                submitBtn.disabled = false;
-                submitBtn.innerHTML = originalBtnText;
-                console.error(`Error ${isUpdateMode ? 'updating' : 'saving'} instructor: `, error);
-                showError(`Failed to ${isUpdateMode ? 'update' : 'register'} instructor. Please try again. ${error.message}`);
+                showError(`Failed to register instructor. Please try again. ${error.message}`);
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = originalBtnText;
+                }
             }
         }
 
