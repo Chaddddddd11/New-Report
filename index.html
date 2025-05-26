@@ -179,10 +179,17 @@
       border-radius: 4px;
       color: white;
       display: block;
-      min-height: 100%;
+      min-height: 80px; /* Fixed height for consistency */
       box-sizing: border-box;
-      /* Ensure the background covers the entire cell */
-      background-color: inherit !important;
+      /* Make the entry fill the cell */
+      position: relative;
+      z-index: 1;
+      height: 100%;
+    }
+    
+    #scheduleTable td {
+      position: relative;
+      background-clip: padding-box;
     }
 
     .schedule-entry .subject {
@@ -668,15 +675,16 @@
             // Determine text color based on background brightness for better readability
             const textColor = getContrastYIQ(bgColor);
             
-            // Set the background color on the cell itself
-            cell.style.backgroundColor = bgColor;
-            
+            // Create schedule entry with inline styles
             cell.innerHTML = `
-              <div class="schedule-entry" style="color: ${textColor};">
+              <div class="schedule-entry" style="background-color: ${bgColor}; color: ${textColor};">
                 <div class="subject">${instructor.subject || 'N/A'}</div>
                 <div class="instructor">${instructor.name || 'N/A'}</div>
                 <div class="room">${instructor.roomName || 'TBA'}</div>
               </div>`;
+              
+            // Also set the cell's background color as a fallback
+            cell.style.backgroundColor = bgColor;
           }
           
           row.appendChild(cell);
