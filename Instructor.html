@@ -609,7 +609,41 @@
         // Flag to track if form was submitted by user
         let formSubmittedByUser = false;
         
+        // Debug function to log redirects
+        const originalLocationHref = Object.getOwnPropertyDescriptor(window, 'location').get;
+        Object.defineProperty(window, 'location', {
+            get: function() {
+                console.trace('Location accessed:');
+                return originalLocationHref.apply(this);
+            },
+            set: function(value) {
+                console.log('Attempting to set location to:', value);
+                console.trace('Location set from:');
+                return originalLocationHref.apply(this, arguments);
+            }
+        });
+        
+        // Log when the page is about to redirect
+        const originalAssign = window.location.assign;
+        window.location.assign = function() {
+            console.log('Redirecting to:', arguments[0]);
+            console.trace('Redirect called from:');
+            return originalAssign.apply(this, arguments);
+        };
+        
+        // Log when the page is about to redirect using href
+        const originalHref = Object.getOwnPropertyDescriptor(Location.prototype, 'href');
+        Object.defineProperty(Location.prototype, 'href', {
+            set: function(value) {
+                console.log('Setting location.href to:', value);
+                console.trace('location.href set from:');
+                return originalHref.set.call(this, value);
+            },
+            get: originalHref.get
+        });
+        
         document.addEventListener('DOMContentLoaded', async () => {
+            console.log('DOMContentLoaded event fired');
             try {
                 // Add color picker event listener
                 if (scheduleColorInput && colorPreview) {
@@ -1237,13 +1271,14 @@
                         
                         // Only redirect if form was submitted by user
                         if (formSubmittedByUser) {
-                            // Redirect back to instructor list after a short delay
+                            console.log('Form submitted successfully, preparing to redirect...');
                             setTimeout(() => {
                                 try {
+                                    console.log('Redirecting to InstructorList.html...');
                                     window.location.href = 'InstructorList.html';
                                 } catch (e) {
-                                    console.error('Error redirecting:', e);
-                                    // Fallback to index.html if InstructorList.html fails to load
+                                    console.error('Error redirecting to InstructorList.html:', e);
+                                    console.log('Falling back to index.html...');
                                     window.location.href = 'index.html';
                                 }
                             }, 1500);
