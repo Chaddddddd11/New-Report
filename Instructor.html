@@ -298,18 +298,18 @@
 
         <div class="form-container">
             <div class="form-group">
-                <label for="name">Instructor Name*</label>
-                <input type="text" id="name" required>
+                <label for="name">Instructor Name:</label>
+                <input type="text" id="name" name="name" autocomplete="name" required>
             </div>
 
             <div class="form-group">
-                <label for="subject">Subject*</label>
-                <input type="text" id="subject" required>
+                <label for="subject">Subject:</label>
+                <input type="text" id="subject" name="subject" autocomplete="off" required>
             </div>
 
             <div class="form-group">
-                <label for="course">Course*</label>
-                <select id="course" required>
+                <label for="course">Course:</label>
+                <select id="course" name="course" autocomplete="organization" required>
                     <option value="">Select Course</option>
                     <option value="BSA">BSA</option>
                     <option value="BSAIS">BSAIS</option>
@@ -320,8 +320,8 @@
             </div>
 
             <div class="form-group">
-                <label for="year">Year*</label>
-                <select id="year" required>
+                <label for="year">Year Level:</label>
+                <select id="year" name="year" autocomplete="education-level" required>
                     <option value="">Select Year</option>
                     <option value="1">1</option>
                     <option value="2">2</option>
@@ -331,8 +331,8 @@
             </div>
 
             <div class="form-group">
-                <label for="section">Section*</label>
-                <select id="section" required>
+                <label for="section">Section:</label>
+                <select id="section" name="section" autocomplete="off" required>
                     <option value="">Select Section</option>
                     <option value="A">Section A</option>
                     <option value="B">Section B</option>
@@ -342,8 +342,8 @@
             </div>
 
             <div class="form-group">
-                <label for="day">Day*</label>
-                <select id="day" required>
+                <label for="day">Day:</label>
+                <select id="day" name="day" autocomplete="off" required>
                     <option value="">Select Day</option>
                     <option value="Monday">Monday</option>
                     <option value="Tuesday">Tuesday</option>
@@ -355,9 +355,9 @@
             </div>
 
             <div class="form-group">
-                <label for="time">Class Time*</label>
-                <select id="time" required>
-                    <option value="">Select Class Time</option>
+                <label for="time">Time:</label>
+                <select id="time" name="time" autocomplete="off" required>
+                    <option value="">Select Time</option>
                     <option value="07:00-08:00">07:00-08:00</option>
                     <option value="08:00-09:00">08:00-09:00</option>
                     <option value="09:00-10:00">09:00-10:00</option>
@@ -372,18 +372,16 @@
             </div>
 
             <div class="form-group">
-                <label for="room">Room*</label>
-                <select id="room" required>
+                <label for="room">Room:</label>
+                <select id="room" name="room" autocomplete="off" required disabled>
                     <option value="">Loading rooms...</option>
                 </select>
             </div>
 
             <div class="form-group">
-                <label for="scheduleColor">Schedule Color</label>
-                <div style="display: flex; align-items: center;">
-                    <input type="color" id="scheduleColor" value="#800000">
-                    <div id="colorPreview" class="color-preview"></div>
-                </div>
+                <label for="scheduleColor">Schedule Color:</label>
+                <input type="color" id="scheduleColor" name="scheduleColor" value="#800000" autocomplete="off">
+                <div id="colorPreview" class="color-preview"></div>
             </div>
         </div>
 
