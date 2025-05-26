@@ -466,7 +466,8 @@
                 time: normalizedTime,
                 course: data.course || '',
                 year: data.year || '',
-                section: data.section || ''
+                section: data.section || '',
+                scheduleColor: data.scheduleColor || '#f0f0f0' // Include scheduleColor with fallback
               };
               
               allInstructorsData.push(instructor);
@@ -669,22 +670,35 @@
           
           // If instructor found, fill the cell with their info
           if (instructor) {
+            console.log('Instructor data:', instructor); // Debug log
+            
             // Use the instructor's scheduleColor from Firestore, default to a light gray if not set
             const bgColor = instructor.scheduleColor || '#f0f0f0';
+            console.log('Using color:', bgColor, 'for instructor:', instructor.name); // Debug log
+            
             // Determine text color based on background brightness for better readability
             const textColor = getContrastYIQ(bgColor);
             
             // Create schedule entry with inline styles and hover effect
             cell.style.padding = '4px';
-            cell.innerHTML = `
+            cell.style.backgroundColor = bgColor; // Set cell background color
+            
+            const entryHTML = `
               <div class="schedule-entry" 
                    style="background-color: ${bgColor}; 
                           color: ${textColor};
-                          border-color: ${adjustColor(bgColor, -20)};">
+                          border-color: ${adjustColor(bgColor, -20)};
+                          height: 100%;
+                          display: flex;
+                          flex-direction: column;
+                          justify-content: center;">
                 <div class="subject">${instructor.subject || 'N/A'}</div>
                 <div class="instructor">${instructor.name || 'N/A'}</div>
                 <div class="room">${instructor.roomName || 'TBA'}</div>
               </div>`;
+            
+            console.log('Generated HTML:', entryHTML); // Debug log
+            cell.innerHTML = entryHTML;
           }
           
           row.appendChild(cell);
