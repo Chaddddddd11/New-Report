@@ -287,14 +287,26 @@
             <div id="errorMessage" class="alert alert-danger" role="alert"></div>
             <div id="successMessage" class="alert alert-success" role="alert"></div>
             
-            <div class="form-group mb-4">
-                <label for="username" class="form-label fw-medium">Full Name</label>
-                <input type="text" id="username" class="form-control form-control-lg" 
-                       placeholder="Enter your full name" 
-                       title="Your full name as it should appear in the system" 
-                       required
-                       autocomplete="name">
-                <small class="form-text text-muted">This name will be visible to other users</small>
+            <!-- Role Selection (Admin Only) -->
+            <div id="roleSelect" class="form-group" style="display: none;">
+                <label for="role">Account Type</label>
+                <select class="form-control" id="role" required>
+                    <option value="student">Student</option>
+                    <option value="instructor">Instructor</option>
+                    <option value="admin">Administrator</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="fullName">Full Name</label>
+                <input type="text" class="form-control" id="fullName" required>
+                <div class="invalid-feedback">Please enter your full name</div>
+            </div>
+            
+            <div class="form-group">
+                <label for="email">Email Address</label>
+                <input type="email" class="form-control" id="email" required>
+                <div class="invalid-feedback">Please enter a valid email address</div>
             </div>
             
             <div class="form-group mb-4">
@@ -377,18 +389,17 @@
         import { 
             getAuth, 
             createUserWithEmailAndPassword, 
-            sendEmailVerification, 
-            fetchSignInMethodsForEmail,
-            connectAuthEmulator,
-            updateProfile
+            updateProfile,
+            sendEmailVerification
         } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
         import { 
             getFirestore, 
             doc, 
             setDoc, 
-            serverTimestamp 
+            serverTimestamp,
+            getDoc
         } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-        
+
         // Your web app's Firebase configuration
         const firebaseConfig = {
             apiKey: "AIzaSyDBu7-vOFmS62IaGD8-8zb6TH0a1mHYNpI",
@@ -404,37 +415,8 @@
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
-        
-        // For development only - connect to emulator if on localhost
-        if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-            console.log('Connecting to Auth Emulator');
-            connectAuthEmulator(auth, 'http://localhost:9099');
-        }
-        
-        console.log('Firebase initialized successfully');
-        
-        // Make auth and db available globally
-        window.firebaseAuth = {
-            createUserWithEmailAndPassword: (auth, email, password) => 
-                createUserWithEmailAndPassword(auth, email, password),
-            sendEmailVerification: (user) => 
-                sendEmailVerification(user),
-            fetchSignInMethodsForEmail: (auth, email) => 
-                fetchSignInMethodsForEmail(auth, email),
-            updateProfile: (user, profile) => 
-                updateProfile(user, profile),
-            auth
-        };
-        window.firebaseFirestore = {
-            doc: (path, ...pathSegments) => 
-                doc(db, path, ...pathSegments),
-            setDoc: (docRef, data) => 
-                setDoc(docRef, data),
-            serverTimestamp: () => 
-                serverTimestamp(),
-            db
-        };
 
+        // Form elements
         // DOM Elements
         const createAccountForm = document.getElementById('createAccountForm');
         const usernameInput = document.getElementById('username');
@@ -512,128 +494,144 @@
         createAccountForm.addEventListener('submit', async function(e) {
             e.preventDefault();
             
-            const username = usernameInput.value.trim();
-            const email = emailInput.value.trim();
+            const fullName = fullNameInput.value.trim();
+            const email = emailInput.value.trim().toLowerCase();
             const password = passwordInput.value;
             const confirmPassword = confirmPasswordInput.value;
+            const role = roleSelect.value;
             
-            // Reset messages
-            if (errorMessage) errorMessage.style.display = 'none';
-            if (successMessage) successMessage.style.display = 'none';
+            // Reset error states
+            document.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+            errorMessage.style.display = 'none';
             
             // Validate inputs
-            if (username.length < 3) {
-                showMessage(errorMessage, 'Display name must be at least 3 characters long.');
-                return;
+            let isValid = true;
+            
+            if (!isValidName(fullName)) {
+                fullNameInput.classList.add('is-invalid');
+                showMessage(errorMessage, 'Please enter a valid full name (2-50 characters, letters and spaces only)');
+                isValid = false;
             }
             
-            if (username.length > 30) {
-                showMessage(errorMessage, 'Display name cannot exceed 30 characters.');
-                return;
+            if (!email) {
+                emailInput.classList.add('is-invalid');
+                showMessage(errorMessage, 'Email is required');
+                isValid = false;
+            } else if (!isValidEmail(email)) {
+                emailInput.classList.add('is-invalid');
+                showMessage(errorMessage, 'Please enter a valid email address');
+                isValid = false;
+            } else if (!email.endsWith('@dhvsu.edu.ph')) {
+                emailInput.classList.add('is-invalid');
+                showMessage(errorMessage, 'Please use your DHVSU email address (@dhvsu.edu.ph)');
+                isValid = false;
             }
             
-            if (!isValidUsername(username)) {
-                showMessage(errorMessage, 'Display name can only contain letters, numbers, spaces, hyphens, and apostrophes.');
-                return;
-            }
-            
-            if (!isValidEmail(email)) {
-                showMessage(errorMessage, 'Please enter a valid email address.');
-                return;
-            }
-            
-            if (password.length < 8) {
-                showMessage(errorMessage, 'Password must be at least 8 characters long. Please try again.');
-                return;
+            if (!password) {
+                passwordInput.classList.add('is-invalid');
+                showMessage(errorMessage, 'Password is required');
+                isValid = false;
+            } else if (password.length < 8) {
+                passwordInput.classList.add('is-invalid');
+                showMessage(errorMessage, 'Password must be at least 8 characters long');
+                isValid = false;
+            } else if (!/[A-Z]/.test(password) || !/[0-9]/.test(password) || !/[^A-Za-z0-9]/.test(password)) {
+                passwordInput.classList.add('is-invalid');
+                showMessage(errorMessage, 'Password must contain at least one uppercase letter, one number, and one special character');
+                isValid = false;
             }
             
             if (password !== confirmPassword) {
-                showMessage(errorMessage, 'Passwords do not match. Please try again.');
-                return;
+                confirmPasswordInput.classList.add('is-invalid');
+                showMessage(errorMessage, 'Passwords do not match');
+                isValid = false;
             }
             
-            // Show loading state
+            if (!isValid) return;
+            
+            // Disable form and show loading state
             createAccountBtn.disabled = true;
             createAccountBtn.innerHTML = '<span class="spinner"></span> Creating Account...';
             
             try {
-                const { auth, fetchSignInMethodsForEmail } = window.firebaseAuth;
-                const { doc, setDoc, serverTimestamp, db } = window.firebaseFirestore;
-                
-                // First check if email already exists
+                // Check if email already exists
                 const methods = await fetchSignInMethodsForEmail(auth, email);
                 if (methods && methods.length > 0) {
-                    throw { 
-                        code: 'auth/email-already-in-use', 
-                        message: 'This email is already registered. Please use a different email or try signing in.' 
-                    };
+                    throw new Error('auth/email-already-in-use');
                 }
                 
-                // Create user with email and password
-                const userCredential = await window.firebaseAuth.createUserWithEmailAndPassword(
-                    auth, 
-                    email, 
-                    password
-                );
-                
+                // Create user account
+                const userCredential = await createUserWithEmailAndPassword(auth, email, password);
                 const user = userCredential.user;
                 
                 // Update user profile with display name
-                await window.firebaseAuth.updateProfile(user, {
-                    displayName: username
+                await updateProfile(user, {
+                    displayName: fullName
                 });
                 
-                // Send email verification
-                await window.firebaseAuth.sendEmailVerification(user);
+                // Create user document in Firestore
+                const userData = {
+                    uid: user.uid,
+                    email: email,
+                    displayName: fullName,
+                    emailVerified: false,
+                    role: role,
+                    createdAt: serverTimestamp(),
+                    lastLogin: serverTimestamp(),
+                    status: 'active'
+                };
+
+                // Add additional fields for instructors and admins
+                if (role === 'instructor' || role === 'admin') {
+                    userData.department = '';
+                    userData.phone = '';
+                    userData.office = '';
+                }
+
+                const userDocRef = doc(db, 'users', user.uid);
+                await setDoc(userDocRef, userData);
                 
-                // Save additional user data to Firestore
-                await window.firebaseFirestore.setDoc(
-                    window.firebaseFirestore.doc('users', user.uid),
-                    {
-                        displayName: username,
-                        email: email,
-                        createdAt: window.firebaseFirestore.serverTimestamp(),
-                        lastLogin: window.firebaseFirestore.serverTimestamp(),
-                        emailVerified: false,
-                        role: 'user' // Default role
-                    }
-                );
+                // Send email verification (only for self-signup)
+                await sendEmailVerification(user);
+                showMessage(successMessage, 'Account created successfully! Please check your email to verify your account.', false);
                 
-                // Show success message
-                showMessage(
-                    successMessage, 
-                    'Account created successfully! Please check your email to verify your account.',
-                    false
-                );
-                
-                // Reset form
-                createAccountForm.reset();
-                
-                // Redirect to login page after 5 seconds
+                // Redirect to login after delay
                 setTimeout(() => {
-                    window.location.href = 'login.html';
-                }, 5000);
+                    window.location.href = 'login.html?signup=success';
+                }, 3000);
                 
             } catch (error) {
                 console.error('Account creation error:', error);
                 let errorMessageText = 'Error creating account. Please try again.';
                 
                 // Handle specific Firebase errors
-                if (error.code === 'auth/email-already-in-use') {
-                    errorMessageText = 'This email is already registered. Please use a different email or try signing in.';
-                } else if (error.code === 'auth/weak-password') {
-                    errorMessageText = 'Password should be at least 6 characters';
-                } else if (error.code === 'auth/invalid-email') {
-                    errorMessageText = 'Invalid email address format';
-                } else if (error.code === 'auth/operation-not-allowed') {
-                    errorMessageText = 'Email/password accounts are not enabled';
-                } else if (error.message) {
-                    errorMessageText = error.message;
+                switch(error.code || error.message) {
+                    case 'auth/email-already-in-use':
+                        errorMessageText = 'An account with this email already exists.';
+                        emailInput.classList.add('is-invalid');
+                        break;
+                    case 'auth/invalid-email':
+                        errorMessageText = 'Please enter a valid email address.';
+                        emailInput.classList.add('is-invalid');
+                        break;
+                    case 'auth/weak-password':
+                        errorMessageText = 'Password is too weak. Please choose a stronger password.';
+                        passwordInput.classList.add('is-invalid');
+                        break;
+                    case 'auth/operation-not-allowed':
+                        errorMessageText = 'Email/password accounts are not enabled.';
+                        break;
+                    case 'auth/network-request-failed':
+                        errorMessageText = 'Network error. Please check your internet connection.';
+                        break;
+                    case 'permission-denied':
+                        errorMessageText = 'You do not have permission to create this type of account.';
+                        break;
                 }
                 
                 showMessage(errorMessage, errorMessageText);
             } finally {
-                // Reset button state
+                // Re-enable form
                 createAccountBtn.disabled = false;
                 createAccountBtn.innerHTML = 'Create Account';
             }
