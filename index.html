@@ -313,7 +313,7 @@
         Student Capacity: -
       </div>
       
-      <button id="printButton" class="btn" disabled>
+      <button id="printButton" class="btn" onclick="printSchedule()" disabled>
         <i class="fas fa-print"></i> Print Schedule
       </button>
     </div>
@@ -352,6 +352,70 @@
       limit,
       orderBy
     } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+    // Global print function
+    function printSchedule() {
+      const courseSelect = document.getElementById('courseSelect');
+      const yearSelect = document.getElementById('yearSelect');
+      const sectionSelect = document.getElementById('sectionSelect');
+      
+      const course = courseSelect ? courseSelect.value : '';
+      const year = yearSelect ? yearSelect.value : '';
+      const section = sectionSelect ? sectionSelect.value : '';
+      
+      if (!course || !year || !section) {
+        alert('Please select course, year, and section before printing.');
+        return;
+      }
+      
+      const scheduleTable = document.getElementById('scheduleTable');
+      if (!scheduleTable) {
+        alert('Schedule table not found. Please try again.');
+        return;
+      }
+      
+      // Create a print-friendly version of the schedule
+      const printWindow = window.open('', '_blank');
+      const printContent = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>Schedule - ${course} ${year}-${section}</title>
+          <style>
+            body { font-family: Arial, sans-serif; }
+            h1 { text-align: center; margin-bottom: 20px; }
+            table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+            th, td { border: 1px solid #ddd; padding: 8px; text-align: center; }
+            th { background-color: #f2f2f2; font-weight: bold; }
+            .schedule-entry { margin: 5px; padding: 5px; border-radius: 4px; }
+            @media print {
+              @page { size: landscape; margin: 0.5cm; }
+              button { display: none; }
+            }
+          </style>
+        </head>
+        <body>
+          <h1>${course} ${year}-${section} - Class Schedule</h1>
+          ${scheduleTable.outerHTML}
+          <div style="text-align: center; margin-top: 20px;">
+            <button onclick="window.print()">Print Schedule</button>
+            <button onclick="window.close()">Close</button>
+          </div>
+        </body>
+        </html>
+      `;
+      
+      printWindow.document.open();
+      printWindow.document.write(printContent);
+      printWindow.document.close();
+      
+      // Auto-print after a short delay to ensure content is loaded
+      printWindow.onload = function() {
+        setTimeout(() => {
+          printWindow.print();
+        }, 500);
+      };
+    }
 
     // Your web app's Firebase configuration
     const firebaseConfig = {
@@ -770,69 +834,7 @@
       console.log('===============================');
     }
 
-    // Function to print the schedule
-    function printSchedule() {
-      const courseSelect = document.getElementById('courseSelect');
-      const yearSelect = document.getElementById('yearSelect');
-      const sectionSelect = document.getElementById('sectionSelect');
-      
-      const course = courseSelect ? courseSelect.value : '';
-      const year = yearSelect ? yearSelect.value : '';
-      const section = sectionSelect ? sectionSelect.value : '';
-      
-      if (!course || !year || !section) {
-        alert('Please select course, year, and section before printing.');
-        return;
-      }
-      
-      const scheduleTable = document.getElementById('scheduleTable');
-      if (!scheduleTable) {
-        alert('Schedule table not found. Please try again.');
-        return;
-      }
-      
-      // Create a print-friendly version of the schedule
-      const printWindow = window.open('', '_blank');
-      const printContent = `
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <title>Schedule - ${course} ${year}-${section}</title>
-          <style>
-            body { font-family: Arial, sans-serif; }
-            h1 { text-align: center; margin-bottom: 20px; }
-            table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-            th, td { border: 1px solid #ddd; padding: 8px; text-align: center; }
-            th { background-color: #f2f2f2; font-weight: bold; }
-            .schedule-entry { margin: 5px; padding: 5px; border-radius: 4px; }
-            @media print {
-              @page { size: landscape; margin: 0.5cm; }
-              button { display: none; }
-            }
-          </style>
-        </head>
-        <body>
-          <h1>${course} ${year}-${section} - Class Schedule</h1>
-          ${scheduleTable.outerHTML}
-          <div style="text-align: center; margin-top: 20px;">
-            <button onclick="window.print()">Print Schedule</button>
-            <button onclick="window.close()">Close</button>
-          </div>
-        </body>
-        </html>
-      `;
-      
-      printWindow.document.open();
-      printWindow.document.write(printContent);
-      printWindow.document.close();
-      
-      // Auto-print after a short delay to ensure content is loaded
-      printWindow.onload = function() {
-        setTimeout(() => {
-          printWindow.print();
-        }, 500);
-      };
-    }
+    // Print function is now defined at the top of the script
 
     // Initialize the page
     document.addEventListener('DOMContentLoaded', () => {
