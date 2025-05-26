@@ -145,8 +145,9 @@
 
     #scheduleTable th, #scheduleTable td {
       border: 1px solid #ddd;
-      padding: 12px;
+      padding: 0; /* Remove padding from cells since we're adding it to schedule-entry */
       text-align: center;
+      vertical-align: top; /* Align content to the top of the cell */
     }
 
     #scheduleTable th {
@@ -166,8 +167,11 @@
     .schedule-entry {
       padding: 8px;
       border-radius: 4px;
-      background-color: var(--secondary-color);
+      /* Remove default background color to allow inline styles to work */
       color: white;
+      /* Ensure the background covers the entire cell */
+      height: 100%;
+      box-sizing: border-box;
     }
 
     .schedule-entry .subject {
