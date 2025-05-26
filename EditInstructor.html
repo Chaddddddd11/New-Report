@@ -235,7 +235,7 @@
             </div>
         </div>
 
-        <form id="instructorForm" class="form-container" onsubmit="event.preventDefault(); registerInstructor(true);">
+        <form id="instructorForm" class="form-container" onsubmit="event.preventDefault();">
             <div class="form-group">
                 <label for="name">Instructor Name*</label>
                 <input type="text" id="name" name="name" autocomplete="name" required>
@@ -617,9 +617,9 @@
                     });
                 }
                 
-                // Add click handler for register/update button
-                const registerBtn = document.getElementById('submitBtn');
-                registerBtn.addEventListener('click', registerInstructor);
+                // Handle form submission
+                const form = document.getElementById('instructorForm');
+                form.addEventListener('submit', () => registerInstructor(true));
                 
                 console.log('=== PAGE INITIALIZATION STARTED ===');
                 
