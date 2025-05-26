@@ -322,23 +322,31 @@
                     resetBtn.innerHTML = '<span class="spinner"></span> Sending reset link...';
                     
                     try {
-                        console.log('Attempting to send password reset email to:', email);
+                        console.log('=== Starting Password Reset Process ===');
+                        console.log('Email being processed (with quotes):', `"${email}"`);
+                        console.log('Email length:', email.length);
+                        console.log('Auth object exists:', !!auth);
                         
-                        // First, check if email exists
-                        console.log('Checking if email exists:', email);
-                        const methods = await fetchSignInMethodsForEmail(auth, email);
-                        console.log('Sign-in methods for email:', methods);
-                        
-                        if (!methods || methods.length === 0) {
-                            console.log('No user found with this email address');
-                            throw { 
-                                code: 'auth/user-not-found',
-                                message: 'No account found with this email address. Please check the email or register for a new account.'
-                            };
+                        // Debug: List all users (this is just for debugging, not for production)
+                        try {
+                            const allUsers = await auth.listUsers();
+                            console.log('Total users in auth:', allUsers.users.length);
+                            const userExists = allUsers.users.some(user => 
+                                user.email && user.email.toLowerCase() === email.toLowerCase()
+                            );
+                            console.log('User exists (case-insensitive check):', userExists);
+                            if (userExists) {
+                                const actualEmail = allUsers.users.find(u => 
+                                    u.email && u.email.toLowerCase() === email.toLowerCase()
+                                )?.email;
+                                console.log('Actual email in system:', actualEmail);
+                            }
+                        } catch (listError) {
+                            console.warn('Could not list users (this is normal in client-side code):', listError);
                         }
                         
-                        // Send password reset email
-                        console.log('Sending password reset email to:', email);
+                        // Try to send the password reset email directly
+                        console.log('Attempting to send password reset email to:', email);
                         await sendPasswordResetEmail(auth, email);
                         
                         console.log('Password reset email sent successfully');
@@ -346,7 +354,7 @@
                         // Show success message
                         showMessage(
                             successMessage, 
-                            'Password reset link has been sent to your email. Please check your inbox and spam folder. If you don\'t see it, please try again in a few minutes.',
+                            'If an account exists with this email, a password reset link has been sent. Please check your inbox and spam folder.',
                             false
                         );
                         
