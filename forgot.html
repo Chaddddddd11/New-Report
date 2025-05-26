@@ -332,19 +332,35 @@
                 try {
                     console.log('Attempting to send password reset email to:', email);
                     
+                    // First, check if email exists
+                    console.log('Checking if email exists:', email);
+                    const methods = await auth.fetchSignInMethodsForEmail(email);
+                    console.log('Sign-in methods for email:', methods);
+                    
+                    if (!methods || methods.length === 0) {
+                        throw { code: 'auth/user-not-found' };
+                    }
+                    
                     // Send password reset email
-                    await auth.sendPasswordResetEmail(email);
-                    console.log('Password reset email sent successfully');
-                    
-                    // Show success message
-                    showMessage(
-                        successMessage, 
-                        'Password reset link has been sent to your email. Please check your inbox and follow the instructions to reset your password.',
-                        false
-                    );
-                    
-                    // Clear the email field
-                    usernameInput.value = '';
+                    console.log('Sending password reset email to:', email);
+                    await auth.sendPasswordResetEmail(email)
+                        .then(() => {
+                            console.log('Password reset email sent successfully');
+                            
+                            // Show success message
+                            showMessage(
+                                successMessage, 
+                                'Password reset link has been sent to your email. Please check your inbox and spam folder. If you don\'t see it, please try again in a few minutes.',
+                                false
+                            );
+                            
+                            // Clear the email field
+                            usernameInput.value = '';
+                        })
+                        .catch(error => {
+                            console.error('Error sending password reset email:', error);
+                            throw error; // Re-throw to be caught by the outer catch
+                        });
                     
                 } catch (error) {
                     console.error('Error processing password reset:', error);
