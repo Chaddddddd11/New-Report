@@ -1137,6 +1137,17 @@
         }
         
         /**
+         * Converts a time string (HH:MM) to total minutes since midnight
+         * @param {string} timeStr - Time string in format "HH:MM"
+         * @returns {number} Total minutes since midnight
+         */
+        function timeToMinutes(timeStr) {
+            if (!timeStr) return 0;
+            const [hours, minutes] = timeStr.split(':').map(Number);
+            return hours * 60 + (minutes || 0);
+        }
+
+        /**
          * Ensures the original room is in the room select dropdown
          * @param {HTMLSelectElement} roomSelect - The room select element
          * @param {string} roomId - The original room ID
@@ -1162,45 +1173,73 @@
                 
                 // Try to get the room details
                 const roomDoc = await getDoc(doc(db, "Rooms", roomId));
-                let roomName = `Room ${roomId}`;
-                let roomCapacity = 0;
-                let roomTime = '';
-                
-                if (roomDoc.exists()) {
-                    const roomData = roomDoc.data();
-                    roomName = roomData.name || roomName;
-                    roomCapacity = parseInt(roomData.capacity) || 0;
-                    roomTime = roomData.time || '';
-                } else {
+                if (!roomDoc.exists()) {
                     console.warn('Original room not found in database:', roomId);
+                    return;
+                }
+
+                const roomData = roomDoc.data();
+                const roomName = roomData.name || `Room ${roomId}`;
+                const roomCapacity = parseInt(roomData.capacity) || 0;
+                const roomTime = roomData.time || '';
+                
+                // Parse room time into minutes
+                let startMinutes = 0;
+                let endMinutes = 0;
+                if (roomTime) {
+                    try {
+                        const [startStr, endStr] = roomTime.split('-').map(s => s.trim());
+                        startMinutes = timeToMinutes(startStr);
+                        endMinutes = timeToMinutes(endStr);
+                    } catch (e) {
+                        console.warn('Error parsing room time:', roomTime, e);
+                    }
                 }
                 
-                // Check if the room is already booked at this time
+                // Check for conflicts
                 let isBooked = false;
                 let conflictDetails = [];
                 
                 if (day && time) {
                     try {
+                        // Get all instructors with the same room, day, and time
                         const bookingsQuery = query(
                             instructorsCollectionRef,
                             where("day", "==", day),
-                            where("time", "==", time),
                             where("roomId", "==", roomId)
                         );
                         
                         const querySnapshot = await getDocs(bookingsQuery);
-                        isBooked = !querySnapshot.empty;
                         
-                        // Get details about the conflict
+                        // Parse the selected time
+                        const [selectedStartStr, selectedEndStr] = time.split('-').map(s => s.trim());
+                        const selectedStartMinutes = timeToMinutes(selectedStartStr);
+                        const selectedEndMinutes = timeToMinutes(selectedEndStr);
+                        
+                        // Check each booking for time conflicts
                         querySnapshot.forEach(doc => {
+                            if (doc.id === currentInstructorId) return; // Skip current instructor
+                            
                             const booking = doc.data();
-                            if (doc.id !== currentInstructorId) { // Skip current instructor's booking
-                                conflictDetails.push({
-                                    instructor: booking.name || 'Unknown Instructor',
-                                    course: booking.course || 'Unknown Course',
-                                    year: booking.year || '',
-                                    section: booking.section || ''
-                                });
+                            if (!booking.time) return;
+                            
+                            try {
+                                const [bookingStartStr, bookingEndStr] = booking.time.split('-').map(s => s.trim());
+                                const bookingStart = timeToMinutes(bookingStartStr);
+                                const bookingEnd = timeToMinutes(bookingEndStr);
+                                
+                                // Check for time overlap
+                                if (selectedStartMinutes < bookingEnd && selectedEndMinutes > bookingStart) {
+                                    isBooked = true;
+                                    conflictDetails.push({
+                                        instructor: booking.name || 'Unknown Instructor',
+                                        course: booking.course || 'Unknown Course',
+                                        year: booking.year || '',
+                                        section: booking.section || ''
+                                    });
+                                }
+                            } catch (e) {
+                                console.warn('Error parsing booking time:', booking.time, e);
                             }
                         });
                         
@@ -1217,7 +1256,7 @@
                 }
                 optionText += ')';
                 
-                // If there's a conflict, add conflict info
+                // Add conflict info if needed
                 if (isBooked && conflictDetails.length > 0) {
                     const conflict = conflictDetails[0];
                     optionText += ` [Conflict: ${conflict.instructor} - ${conflict.course} ${conflict.year}${conflict.section}]`;
