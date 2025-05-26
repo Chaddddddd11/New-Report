@@ -606,6 +606,9 @@
             }
         }
 
+        // Flag to track if form was submitted by user
+        let formSubmittedByUser = false;
+        
         document.addEventListener('DOMContentLoaded', async () => {
             try {
                 // Add color picker event listener
@@ -617,7 +620,21 @@
                 
                 // Handle form submission
                 const form = document.getElementById('instructorForm');
-                form.addEventListener('submit', registerInstructor);
+                form.addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    formSubmittedByUser = true;
+                    registerInstructor();
+                });
+                
+                // Also handle button click to ensure form submission is tracked
+                const submitBtn = document.getElementById('submitBtn');
+                if (submitBtn) {
+                    submitBtn.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        formSubmittedByUser = true;
+                        registerInstructor();
+                    });
+                }
                 
                 console.log('=== PAGE INITIALIZATION STARTED ===');
                 
@@ -1218,16 +1235,19 @@
                         showSuccess('Instructor registered successfully!');
                         form.reset();
                         
-                        // Redirect back to instructor list after a short delay
-                        setTimeout(() => {
-                            try {
-                                window.location.href = 'InstructorList.html';
-                            } catch (e) {
-                                console.error('Error redirecting:', e);
-                                // Fallback to index.html if InstructorList.html fails to load
-                                window.location.href = 'index.html';
-                            }
-                        }, 1500);
+                        // Only redirect if form was submitted by user
+                        if (formSubmittedByUser) {
+                            // Redirect back to instructor list after a short delay
+                            setTimeout(() => {
+                                try {
+                                    window.location.href = 'InstructorList.html';
+                                } catch (e) {
+                                    console.error('Error redirecting:', e);
+                                    // Fallback to index.html if InstructorList.html fails to load
+                                    window.location.href = 'index.html';
+                                }
+                            }, 1500);
+                        }
                     } catch (error) {
                         console.error('Error saving to Firestore:', error);
                         throw new Error('Failed to save instructor data. Please try again.');
