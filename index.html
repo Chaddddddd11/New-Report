@@ -389,9 +389,28 @@
             th { background-color: #f2f2f2; font-weight: bold; }
             .schedule-entry { margin: 5px; padding: 5px; border-radius: 4px; }
             @media print {
-              @page { size: landscape; margin: 0.5cm; }
-              button { display: none; }
-            }
+              @page { 
+                size: landscape; 
+                margin: 0.5cm;
+              }
+              body {
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+                color-adjust: exact !important;
+              }
+              button { 
+                display: none; 
+              }
+              #scheduleTable th:first-child,
+              #scheduleTable td:first-child {
+                background-color: #610000 !important;
+                color: white !important;
+              }
+              .schedule-entry {
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+                color-adjust: exact !important;
+              }
           </style>
         </head>
         <body>
