@@ -595,81 +595,114 @@
         });
         
         function downloadTemplate(format, type = 'instructors') {
-            let sampleData;
-            
-            if (type === 'instructors') {
-                // Sample data for Instructors collection
-                sampleData = [
-                    {
-                        course: 'BSA',
-                        day: 'Monday',
-                        name: 'Prof. Garcia',
-                        roomId: 'CBS BLG 5 222',
-                        roomName: 'CBS BLG 5 222',
-                        scheduleColor: '#000000',
-                        section: 'A',
-                        subject: 'Math',
-                        time: '07:00-08:00',
-                        year: '1'
-                    },
-                    {
-                        course: 'BSIT',
-                        day: 'Tuesday',
-                        name: 'Prof. Reyes',
-                        roomId: 'CCS BLG 3 101',
-                        roomName: 'CCS BLG 3 101',
-                        scheduleColor: '#1e88e5',
-                        section: 'B',
-                        subject: 'Programming',
-                        time: '09:00-10:30',
-                        year: '2'
-                    }
-                ];
-            } else {
-                // Sample data for Rooms collection
-                sampleData = [
-                    {
-                        capacity: 35,
-                        day: 'Wednesday',
-                        roomName: 'CBS BLDG 1 102',
-                        time: '9:00-10:00'
-                    },
-                    {
-                        capacity: 40,
-                        day: 'Thursday',
-                        roomName: 'CCS BLDG 2 201',
-                        time: '10:00-11:30'
-                    }
-                ];
-            }
-            
-            if (format === 'json') {
-                downloadJSON(sampleData);
-            } else {
-                // Convert to worksheet
-                const ws = XLSX.utils.json_to_sheet(sampleData);
+            try {
+                console.log('Downloading template:', format, 'for type:', type);
                 
-                // Create workbook
-                const wb = XLSX.utils.book_new();
-                XLSX.utils.book_append_sheet(wb, ws, 'Template');
+                let sampleData;
                 
-                // Generate and trigger download
-                const fileName = `bulk_upload_template.${format}`;
-                XLSX.writeFile(wb, fileName, { bookType: format });
+                if (type === 'instructors') {
+                    // Sample data for Instructors collection
+                    sampleData = [
+                        {
+                            course: 'BSA',
+                            day: 'Monday',
+                            name: 'Prof. Garcia',
+                            roomId: 'CBS BLG 5 222',
+                            roomName: 'CBS BLG 5 222',
+                            scheduleColor: '#000000',
+                            section: 'A',
+                            subject: 'Math',
+                            time: '07:00-08:00',
+                            year: '1'
+                        },
+                        {
+                            course: 'BSIT',
+                            day: 'Tuesday',
+                            name: 'Prof. Reyes',
+                            roomId: 'CCS BLG 3 101',
+                            roomName: 'CCS BLG 3 101',
+                            scheduleColor: '#1e88e5',
+                            section: 'B',
+                            subject: 'Programming',
+                            time: '09:00-10:30',
+                            year: '2'
+                        }
+                    ];
+                } else {
+                    // Sample data for Rooms collection
+                    sampleData = [
+                        {
+                            capacity: 35,
+                            day: 'Wednesday',
+                            roomName: 'CBS BLDG 1 102',
+                            time: '9:00-10:00'
+                        },
+                        {
+                            capacity: 40,
+                            day: 'Thursday',
+                            roomName: 'CCS BLDG 2 201',
+                            time: '10:00-11:30'
+                        }
+                    ];
+                }
+                
+                console.log('Sample data prepared:', sampleData);
+                
+                if (format === 'json') {
+                    console.log('Downloading as JSON');
+                    downloadJSON(sampleData);
+                } else {
+                    console.log('Preparing Excel/CSV download');
+                    // Convert to worksheet
+                    const ws = XLSX.utils.json_to_sheet(sampleData);
+                    
+                    // Create workbook
+                    const wb = XLSX.utils.book_new();
+                    XLSX.utils.book_append_sheet(wb, ws, 'Template');
+                    
+                    // Generate and trigger download
+                    const fileName = `${type}_template.${format}`;
+                    console.log('Attempting to write file:', fileName);
+                    XLSX.writeFile(wb, fileName, { bookType: format });
+                    console.log('File write should be complete');
+                }
+            } catch (error) {
+                console.error('Error in downloadTemplate:', error);
+                alert('Error generating template. Please check the console for details.');
             }
         }
         
         function downloadJSON(data) {
-            const jsonString = JSON.stringify(data, null, 2);
-            const blob = new Blob([jsonString], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'bulk_upload_template.json';
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
+            try {
+                console.log('Preparing JSON download');
+                const jsonString = JSON.stringify(data, null, 2);
+                const blob = new Blob([jsonString], { type: 'application/json;charset=utf-8;' });
+                
+                // For IE/Edge
+                if (window.navigator && window.navigator.msSaveOrOpenBlob) {
+                    window.navigator.msSaveOrOpenBlob(blob, 'template.json');
+                    return;
+                }
+                
+                // For other browsers
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'template.json';
+                document.body.appendChild(a);
+                a.click();
+                
+                // Cleanup
+                setTimeout(() => {
+                    document.body.removeChild(a);
+                    window.URL.revokeObjectURL(url);
+                }, 0);
+                
+                console.log('JSON download initiated');
+            } catch (error) {
+                console.error('Error in downloadJSON:', error);
+                throw error; // Rethrow to be caught by the caller
+            }
         }
     </script>
 </body>
