@@ -756,6 +756,7 @@
                 const roomSchedules = new Map();
                 const allRooms = [];
                 
+                // First pass: Initialize room information and check room schedules
                 roomsSnapshot.forEach(doc => {
                     const data = doc.data();
                     if (!data.roomName) {
@@ -765,14 +766,44 @@
                     
                     const roomInfo = {
                         id: doc.id,
-                        name: data.roomName,
+                        name: data.roomName,  // Using roomName as per the document structure
                         capacity: parseInt(data.capacity) || 0,
                         isAvailable: true,
-                        conflictReason: ''
+                        conflictReason: '',
+                        // Store room's own schedule if available
+                        schedule: {
+                            day: data.day || '',
+                            time: data.time || '',
+                            startMinutes: 0,
+                            endMinutes: 0
+                        }
                     };
                     
+                    // Parse room's scheduled time if available
+                    if (data.day && data.time && typeof data.time === 'string') {
+                        try {
+                            const [roomTimeStartStr, roomTimeEndStr] = data.time.trim().split('-').map(t => t.trim());
+                            roomInfo.schedule.startMinutes = timeToMinutes(roomTimeStartStr);
+                            roomInfo.schedule.endMinutes = timeToMinutes(roomTimeEndStr);
+                            roomInfo.schedule.day = data.day.trim().toLowerCase();
+                            
+                            // Check if room is already booked at this time
+                            if (roomInfo.schedule.day === selectedDay.toLowerCase()) {
+                                const roomStart = roomInfo.schedule.startMinutes;
+                                const roomEnd = roomInfo.schedule.endMinutes;
+                                
+                                if (!(selectedEndMinutes <= roomStart || selectedStartMinutes >= roomEnd)) {
+                                    roomInfo.isAvailable = false;
+                                    roomInfo.conflictReason = `Room is already booked (${data.time})`;
+                                }
+                            }
+                        } catch (e) {
+                            console.warn(`Error parsing room schedule for ${data.name}:`, e);
+                        }
+                    }
+                    
                     allRooms.push(roomInfo);
-                    roomSchedules.set(data.roomName, roomInfo);
+                    roomSchedules.set(data.roomName, roomInfo);  // Using roomName as the key
                 });
                 
                 // Mark rooms as booked based on instructor schedules, using parsed times
