@@ -661,9 +661,10 @@
                     XLSX.utils.book_append_sheet(wb, ws, 'Template');
                     
                     // Generate and trigger download
-                    const fileName = `${type}_template.${format}`;
+                    const fileExt = format === 'csv' ? 'csv' : 'xlsx';
+                    const fileName = `${type}_template.${fileExt}`;
                     console.log('Attempting to write file:', fileName);
-                    XLSX.writeFile(wb, fileName, { bookType: format });
+                    XLSX.writeFile(wb, fileName, { bookType: fileExt });
                     console.log('File write should be complete');
                 }
             } catch (error) {
