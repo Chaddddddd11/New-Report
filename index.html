@@ -770,56 +770,24 @@
       console.log('===============================');
     }
 
-    // Initialize the page
-    document.addEventListener('DOMContentLoaded', () => {
-      console.log('DOM fully loaded, initializing application...');
-      
-      // Add event listeners for the dropdowns
-      courseSelect.addEventListener('change', () => {
-        console.log('Course changed to:', courseSelect.value);
-        updateYearOptions();
-        updateStudentCapacity();
-        logCurrentState();
-      });
-      
-      yearSelect.addEventListener('change', () => {
-        console.log('Year changed to:', yearSelect.value);
-        updateSectionOptions();
-        updateStudentCapacity();
-        logCurrentState();
-      });
-      
-      sectionSelect.addEventListener('change', () => {
-        console.log('Section changed to:', sectionSelect.value);
-        updateStudentCapacity();
-        renderSchedule();
-        logCurrentState();
-      });
-      
-      // Initial log
-      logCurrentState();
-      
-      // Update print button state based on selections
-      [courseSelect, yearSelect, sectionSelect].forEach(select => {
-        if (select) {
-          select.addEventListener('change', () => {
-            const printBtn = document.getElementById('printButton');
-            if (printBtn) {
-              printBtn.disabled = !(courseSelect.value && yearSelect.value && sectionSelect.value);
-            }
-          });
-        }
-      });
-    });
-    
     // Function to print the schedule
     function printSchedule() {
-      const course = courseSelect.value;
-      const year = yearSelect.value;
-      const section = sectionSelect.value;
+      const courseSelect = document.getElementById('courseSelect');
+      const yearSelect = document.getElementById('yearSelect');
+      const sectionSelect = document.getElementById('sectionSelect');
+      
+      const course = courseSelect ? courseSelect.value : '';
+      const year = yearSelect ? yearSelect.value : '';
+      const section = sectionSelect ? sectionSelect.value : '';
       
       if (!course || !year || !section) {
         alert('Please select course, year, and section before printing.');
+        return;
+      }
+      
+      const scheduleTable = document.getElementById('scheduleTable');
+      if (!scheduleTable) {
+        alert('Schedule table not found. Please try again.');
         return;
       }
       
@@ -845,7 +813,7 @@
         </head>
         <body>
           <h1>${course} ${year}-${section} - Class Schedule</h1>
-          ${document.getElementById('scheduleTable').outerHTML}
+          ${scheduleTable.outerHTML}
           <div style="text-align: center; margin-top: 20px;">
             <button onclick="window.print()">Print Schedule</button>
             <button onclick="window.close()">Close</button>
@@ -865,6 +833,58 @@
         }, 500);
       };
     }
+
+    // Initialize the page
+    document.addEventListener('DOMContentLoaded', () => {
+      console.log('DOM fully loaded, initializing application...');
+      
+      // Add event listeners for the dropdowns
+      const courseSelect = document.getElementById('courseSelect');
+      const yearSelect = document.getElementById('yearSelect');
+      const sectionSelect = document.getElementById('sectionSelect');
+      
+      if (courseSelect) {
+        courseSelect.addEventListener('change', () => {
+          console.log('Course changed to:', courseSelect.value);
+          updateYearOptions();
+          updateStudentCapacity();
+          logCurrentState();
+        });
+      }
+      
+      if (yearSelect) {
+        yearSelect.addEventListener('change', () => {
+          console.log('Year changed to:', yearSelect.value);
+          updateSectionOptions();
+          updateStudentCapacity();
+          logCurrentState();
+        });
+      }
+      
+      if (sectionSelect) {
+        sectionSelect.addEventListener('change', () => {
+          console.log('Section changed to:', sectionSelect.value);
+          updateStudentCapacity();
+          renderSchedule();
+          logCurrentState();
+        });
+      }
+      
+      // Update print button state based on selections
+      [courseSelect, yearSelect, sectionSelect].forEach(select => {
+        if (select) {
+          select.addEventListener('change', () => {
+            const printBtn = document.getElementById('printButton');
+            if (printBtn) {
+              printBtn.disabled = !(courseSelect.value && yearSelect.value && sectionSelect.value);
+            }
+          });
+        }
+      });
+      
+      // Initial log
+      logCurrentState();
+    });
     
     // Function to determine if text should be light or dark based on background color
     function getContrastYIQ(hexcolor) {
