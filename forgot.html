@@ -8,7 +8,14 @@
     <script type="module">
         // Import the functions you need from the SDKs you need
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-        import { getAuth, sendPasswordResetEmail, fetchSignInMethodsForEmail } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+        import { 
+            getAuth, 
+            sendPasswordResetEmail, 
+            fetchSignInMethodsForEmail,
+            connectAuthEmulator,
+            inMemoryPersistence,
+            setPersistence
+        } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
         
         // Your web app's Firebase configuration
         const firebaseConfig = {
@@ -25,10 +32,29 @@
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         
+        // For development only - connect to emulator if on localhost
+        if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+            console.log('Connecting to Auth Emulator');
+            connectAuthEmulator(auth, 'http://localhost:9099');
+        }
+        
+        // Set persistence
+        setPersistence(auth, inMemoryPersistence)
+            .then(() => {
+                console.log('Auth persistence set to in-memory');
+            })
+            .catch((error) => {
+                console.error('Error setting auth persistence:', error);
+            });
+        
         // Make auth available globally
         window.auth = auth;
-        window.sendPasswordResetEmail = sendPasswordResetEmail;
-        window.fetchSignInMethodsForEmail = fetchSignInMethodsForEmail;
+        window.firebaseAuth = {
+            sendPasswordResetEmail: (email) => sendPasswordResetEmail(auth, email),
+            fetchSignInMethodsForEmail: (email) => fetchSignInMethodsForEmail(auth, email)
+        };
+        
+        console.log('Firebase initialized successfully');
     </script>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
@@ -326,12 +352,46 @@
                         console.log('Email being processed (with quotes):', `"${email}"`);
                         console.log('Email length:', email.length);
                         console.log('Auth object exists:', !!auth);
+                        console.log('Auth app name:', auth?.app?.name);
+                        console.log('Auth config:', auth?.config);
                         
-                        // Directly attempt to send password reset email
+                        // Try to send password reset email with timeout
                         console.log('Attempting to send password reset email to:', email);
-                        await sendPasswordResetEmail(auth, email);
                         
-                        console.log('Password reset email sent successfully');
+                        try {
+                            // First check if email exists
+                            const methods = await window.firebaseAuth.fetchSignInMethodsForEmail(email);
+                            console.log('Sign-in methods for email:', methods);
+                            
+                            if (!methods || methods.length === 0) {
+                                throw { 
+                                    code: 'auth/user-not-found',
+                                    message: 'No account found with this email address.'
+                                };
+                            }
+                            
+                            // If email exists, send reset email
+                            console.log('Sending password reset email...');
+                            try {
+                                await window.firebaseAuth.sendPasswordResetEmail(email, {
+                                    url: window.location.origin + '/login.html', // Where to redirect after password reset
+                                    handleCodeInApp: false
+                                });
+                                console.log('Password reset email sent successfully');
+                                console.log('Email sent from: noreply@dhvsu-faculty-scheduling.firebaseapp.com');
+                                console.log('Reset link will redirect to:', window.location.origin + '/login.html');
+                            } catch (emailError) {
+                                console.error('Failed to send password reset email:', emailError);
+                                if (emailError.code === 'auth/unauthorized-domain') {
+                                    console.error('Current domain is not authorized. Please add it to Firebase Authorized Domains.');
+                                }
+                                throw emailError;
+                            }
+                            
+                        } catch (error) {
+                            console.error('Error in password reset process:', error);
+                            throw error; // Re-throw to be caught by the outer catch
+                        }
                         
                         // Show success message
                         showMessage(
