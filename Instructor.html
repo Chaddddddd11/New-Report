@@ -611,24 +611,62 @@
             if (!roomSelect || !data.roomId) return;
             
             try {
-                // Load rooms and pass the roomId to ensure it's selected
-                const rooms = await loadRooms(data.roomId);
+                console.log('Handling room selection for room ID:', data.roomId);
                 
-                // If the room wasn't found in the regular list, add it as a special option
-                if (data.roomId && !rooms.some(room => room.id === data.roomId)) {
-                    const roomName = data.roomName || `Room ${data.roomId}`;
+                // First, ensure we have the room data
+                let roomData = null;
+                try {
+                    const roomDoc = await getDoc(doc(db, "Rooms", data.roomId));
+                    if (roomDoc.exists()) {
+                        roomData = { id: roomDoc.id, ...roomDoc.data() };
+                        console.log('Found room data:', roomData);
+                    }
+                } catch (error) {
+                    console.warn('Could not fetch room data, will use basic info:', error);
+                }
+                
+                // Load rooms with the current room ID to ensure it's selected
+                const rooms = await loadRooms(data.roomId);
+                console.log('Loaded rooms:', rooms);
+                
+                // Check if the room is already in the dropdown
+                let roomFound = false;
+                for (let i = 0; i < roomSelect.options.length; i++) {
+                    if (roomSelect.options[i].value === data.roomId) {
+                        roomFound = true;
+                        roomSelect.selectedIndex = i;
+                        console.log('Room found in dropdown, selected index:', i);
+                        break;
+                    }
+                }
+                
+                // If room not found in dropdown, add it as a special option
+                if (!roomFound) {
+                    const roomName = roomData?.name || data.roomName || `Room ${data.roomId}`;
+                    console.log('Adding room to dropdown:', roomName);
+                    
                     const option = new Option(
                         `${roomName} (Currently assigned)`,
                         data.roomId
                     );
                     option.dataset.original = 'true';
                     option.style.fontWeight = 'bold';
+                    
+                    // Add the option and select it
                     roomSelect.add(option);
                     roomSelect.value = data.roomId;
+                    
+                    console.log('Added and selected room:', roomName);
                 }
+                
+                // Ensure the room is visible in the UI
+                roomSelect.dispatchEvent(new Event('change'));
+                
             } catch (error) {
                 console.error('Error handling room selection:', error);
-                showError('Failed to load room information');
+                showError('Failed to load room information: ' + (error.message || 'Unknown error'));
+            } finally {
+                roomSelect.disabled = false;
             }
         }
 
@@ -766,48 +804,72 @@
             if (!roomSelect) return [];
             
             try {
+                console.log('Loading rooms, selectedRoomId:', selectedRoomId);
+                
+                // Show loading state
                 roomSelect.innerHTML = '<option value="">Loading rooms...</option>';
+                roomSelect.disabled = true;
+                
+                // Get all rooms
                 const querySnapshot = await getDocs(roomsCollectionRef);
                 const rooms = [];
                 
-                // Clear and prepare the dropdown
+                // Clear existing options
                 roomSelect.innerHTML = '';
-                const defaultOption = document.createElement('option');
-                defaultOption.value = '';
-                defaultOption.textContent = querySnapshot.empty ? 'No rooms available' : 'Select a room';
-                roomSelect.appendChild(defaultOption);
+                
+                // Add default option
+                const defaultOption = new Option(
+                    querySnapshot.empty ? 'No rooms available' : 'Select a room',
+                    ''
+                );
+                roomSelect.add(defaultOption);
                 
                 if (querySnapshot.empty) {
+                    console.log('No rooms found in the database');
                     return [];
                 }
                 
                 // Process and add rooms to the dropdown
                 querySnapshot.forEach((doc) => {
-                    const room = { id: doc.id, ...doc.data() };
+                    const room = { 
+                        id: doc.id, 
+                        ...doc.data(),
+                        name: doc.data().name || `Room ${doc.id}`
+                    };
                     rooms.push(room);
                     
-                    const option = document.createElement('option');
-                    option.value = doc.id;
-                    option.textContent = `${room.name || 'Room ' + doc.id} (Capacity: ${room.capacity || 'N/A'})`;
+                    const option = new Option(
+                        `${room.name} (Capacity: ${room.capacity || 'N/A'})`,
+                        room.id
+                    );
                     
                     // Mark if this is the selected room
                     if (selectedRoomId && doc.id === selectedRoomId) {
+                        console.log('Marking room as selected:', room.name);
                         option.selected = true;
                         option.dataset.original = 'true';
                         option.style.fontWeight = 'bold';
                     }
                     
-                    roomSelect.appendChild(option);
+                    roomSelect.add(option);
                 });
                 
+                console.log(`Loaded ${rooms.length} rooms`);
                 return rooms;
+                
             } catch (error) {
                 console.error('Error loading rooms:', error);
                 roomSelect.innerHTML = '<option value="">Error loading rooms</option>';
+                showError('Failed to load rooms. Please try again.');
                 return [];
             } finally {
-                // Always enable the select after loading
                 roomSelect.disabled = false;
+                
+                // If we have a selected room ID but it's not selected, ensure it's added
+                if (selectedRoomId && !roomSelect.value) {
+                    console.log('Selected room not found, ensuring it exists in the list');
+                    // This will be handled by handleRoomSelection
+                }
             }
         }
 
