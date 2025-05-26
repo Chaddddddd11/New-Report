@@ -1163,12 +1163,14 @@
                 // Try to get the room details
                 const roomDoc = await getDoc(doc(db, "Rooms", roomId));
                 let roomName = `Room ${roomId}`;
-                let roomCapacity = 'N/A';
+                let roomCapacity = 0;
+                let roomTime = '';
                 
                 if (roomDoc.exists()) {
                     const roomData = roomDoc.data();
                     roomName = roomData.name || roomName;
-                    roomCapacity = roomData.capacity || roomCapacity;
+                    roomCapacity = parseInt(roomData.capacity) || 0;
+                    roomTime = roomData.time || '';
                 } else {
                     console.warn('Original room not found in database:', roomId);
                 }
@@ -1208,14 +1210,17 @@
                     }
                 }
                 
-                // Create the option text
-                let optionText = `${roomName} (Currently assigned)`;
+                // Create the option text in the format: "Room Name (Capacity: X, Time: HH:MM-HH:MM)"
+                let optionText = `${roomName} (Capacity: ${roomCapacity}`;
+                if (roomTime) {
+                    optionText += `, Time: ${roomTime}`;
+                }
+                optionText += ')';
                 
+                // If there's a conflict, add conflict info
                 if (isBooked && conflictDetails.length > 0) {
                     const conflict = conflictDetails[0];
-                    optionText = `${roomName} (Conflict: Booked by ${conflict.instructor} - ${conflict.course} ${conflict.year}${conflict.section})`;
-                } else if (roomCapacity !== 'N/A') {
-                    optionText += ` - Capacity: ${roomCapacity}`;
+                    optionText += ` [Conflict: ${conflict.instructor} - ${conflict.course} ${conflict.year}${conflict.section}]`;
                 }
                 
                 // Create and configure the option
