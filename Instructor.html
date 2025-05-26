@@ -1147,142 +1147,243 @@
         function hasTimeOverlap(aStart, aEnd, bStart, bEnd) {
             return aStart < bEnd && aEnd > bStart;
         }
-
-        // Ensure the original room is in the room select dropdown
-        async function ensureOriginalRoomInList(roomSelect, roomId) {
-            if (!roomSelect || !roomId) return;
+        
+        // Debounce function to limit how often a function is called
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
+        
+        // Show loading state
+        function showLoading(show, message = 'Loading...') {
+            const loadingElement = document.getElementById('loading');
+            if (loadingElement) {
+                loadingElement.textContent = message;
+                loadingElement.style.display = show ? 'block' : 'none';
+            }
             
-            console.log('Checking room:', roomId);
-            
-            try {
-                // Check if room already in dropdown
-                const existingOption = Array.from(roomSelect.options).find(opt => opt.value === roomId);
-                if (existingOption) {
-                    existingOption.selected = true;
-                    return;
-                }
-                
-                // Get room details
-                const roomDoc = await getDoc(doc(db, "Rooms", roomId));
-                if (!roomDoc.exists()) {
-                    console.warn('Room not found:', roomId);
-                    return;
-                }
-                
-                const { name, capacity, time: roomTime } = roomDoc.data();
-                const roomName = name || `Room ${roomId}`;
-                const roomCapacity = parseInt(capacity) || 0;
-                
-                // Parse room time
-                let [roomStart, roomEnd] = [0, 0];
-                if (roomTime) {
-                    const [start, end] = roomTime.split('-').map(s => s.trim());
-                    roomStart = timeToMinutes(start);
-                    roomEnd = timeToMinutes(end);
-                }
-                
-                // Check for booking conflicts
-                let conflict = null;
-                const day = daySelect?.value;
-                const time = timeSelect?.value;
-                
-                if (day && time) {
-                    try {
-                        const querySnapshot = await getDocs(query(
-                            instructorsCollectionRef,
-                            where("day", "==", day),
-                            where("roomId", "==", roomId)
-                        ));
-                        
-                        const [selStart, selEnd] = time.split('-').map(s => timeToMinutes(s.trim()));
-                        
-                        for (const doc of querySnapshot.docs) {
-                            if (doc.id === currentInstructorId) continue;
-                            
-                            const booking = doc.data();
-                            if (!booking.time) continue;
-                            
-                            const [bookStart, bookEnd] = booking.time.split('-').map(s => timeToMinutes(s.trim()));
-                            
-                            if (hasTimeOverlap(selStart, selEnd, bookStart, bookEnd)) {
-                                conflict = {
-                                    instructor: booking.name || 'Unknown',
-                                    course: booking.course || 'Unknown',
-                                    year: booking.year || '',
-                                    section: booking.section || ''
-                                };
-                                break;
-                            }
-                        }
-                    } catch (error) {
-                        console.error('Error checking conflicts:', error);
-                    }
-                }
-                
-                // Create option text
-                const timeInfo = roomTime ? `, Time: ${roomTime}` : '';
-                let optionText = `${roomName} (Capacity: ${roomCapacity}${timeInfo})`;
-                
-                if (conflict) {
-                    optionText += ` [Conflict: ${conflict.instructor} - ${conflict.course} ${conflict.year}${conflict.section}]`;
-                }
-                
-                // Create and add option
-                const option = new Option(optionText, roomId);
-                option.dataset.original = 'true';
-                option.style.fontWeight = 'bold';
-                option.selected = true;
-                
-                if (conflict) {
-                    option.style.color = 'red';
-                    option.title = `Booked by ${conflict.instructor} for ${conflict.course} ${conflict.year}${conflict.section}`;
-                }
-                
-                roomSelect.add(option);
-                console.log(`${conflict ? '⚠️ ' : ''}Added room: ${roomName}`, conflict || '');
-                
-            } catch (error) {
-                console.error('Error ensuring original room is in list:', error);
-                // Add a generic option as fallback
-                const option = new Option(
-                    `Room ${roomId} (Currently assigned - Error loading details)`,
-                    roomId
-                );
-                option.style.color = 'orange';
-                roomSelect.add(option);
-                roomSelect.value = roomId;
+            const form = document.getElementById('instructorForm');
+            if (form) {
+                const inputs = form.querySelectorAll('input, select, button');
+                inputs.forEach(input => {
+                    input.disabled = show;
+                });
             }
         }
 
-        // Initialize event listeners
-        function initializeEventListeners() {
-            // Add event listeners for form controls that affect room availability
-            const formControls = [daySelect, timeSelect, courseSelect, yearSelect, sectionSelect];
+        // Show success message
+        function showSuccess(message) {
+            const messageElement = document.getElementById('message');
+            if (messageElement) {
+                messageElement.textContent = message;
+                messageElement.style.color = 'green';
+                messageElement.style.display = 'block';
+                setTimeout(() => {
+                    messageElement.style.display = 'none';
+                }, 3000);
+            }
+        }
+
+        // Show error message
+        function showError(message) {
+            const messageElement = document.getElementById('message') || document.getElementById('error-message');
+            if (messageElement) {
+                messageElement.textContent = message;
+                messageElement.style.color = 'red';
+                messageElement.style.display = 'block';
+            }
+        }
+
+        // Show warning message
+        function showWarning(message) {
+            const messageElement = document.getElementById('message') || document.getElementById('warning-message');
+            if (messageElement) {
+                messageElement.textContent = message;
+                messageElement.style.color = 'orange';
+                messageElement.style.display = 'block';
+            }
+        }
+
+        // Handle form submission
+        async function handleFormSubmit(e) {
+            e.preventDefault();
             
-            formControls.forEach(control => {
-                if (control) {
-                    // Remove any existing listeners to prevent duplicates
-                    control.removeEventListener('change', updateRoomSelectState);
-                    // Add new listener with debounce to prevent rapid firing
-                    control.addEventListener('change', () => {
-                        // Debounce the room update to prevent excessive queries
-                        clearTimeout(updateRoomSelectState.debounceTimer);
-                        updateRoomSelectState.debounceTimer = setTimeout(updateRoomSelectState, 300);
+            const formData = {
+                name: document.getElementById('name')?.value.trim(),
+                course: document.getElementById('course')?.value,
+                year: document.getElementById('year')?.value,
+                section: document.getElementById('section')?.value,
+                day: daySelect?.value,
+                time: timeSelect?.value,
+                roomId: document.getElementById('room')?.value
+            };
+            
+            // Basic validation
+            if (!formData.name || !formData.course || !formData.day || !formData.time || !formData.roomId) {
+                showError('Please fill in all required fields');
+                return;
+            }
+            
+            try {
+                showLoading(true, 'Saving instructor data...');
+                
+                if (currentInstructorId) {
+                    // Update existing instructor
+                    await updateDoc(doc(db, 'Instructors', currentInstructorId), formData);
+                    showSuccess('Instructor updated successfully!');
+                } else {
+                    // Add new instructor
+                    await addDoc(collection(db, 'Instructors'), {
+                        ...formData,
+                        createdAt: serverTimestamp(),
+                        updatedAt: serverTimestamp()
                     });
+                    showSuccess('Instructor added successfully!');
+                    // Reset form
+                    e.target.reset();
+                    document.getElementById('room').innerHTML = '<option value="">Select a room</option>';
                 }
-            });
+                
+                // Redirect or update UI as needed
+                setTimeout(() => {
+                    window.location.href = 'InstructorList.html';
+                }, 1500);
+                
+            } catch (error) {
+                console.error('Error saving instructor:', error);
+                showError('Failed to save instructor. Please try again.');
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        // Initialize form event listeners
+        function initializeFormListeners() {
+            // Debounced room update function
+            const debouncedUpdateRooms = debounce(updateAvailableRooms, 500);
             
-            // Add event listener for room select
-            if (roomSelect) {
-                roomSelect.removeEventListener('change', handleRoomChange);
-                roomSelect.addEventListener('change', handleRoomChange);
+            // Update rooms when day or time changes
+            if (daySelect) {
+                daySelect.addEventListener('change', debouncedUpdateRooms);
+            }
+            
+            if (timeSelect) {
+                timeSelect.addEventListener('change', debouncedUpdateRooms);
+            }
+            
+            // Handle form submission
+            const form = document.getElementById('instructorForm');
+            if (form) {
+                form.addEventListener('submit', handleFormSubmit);
             }
             
             // Initialize delete button if in edit mode
-            if (isUpdateMode) {
-                initializeDeleteButton();
+            if (currentInstructorId) {
+                const deleteBtn = document.getElementById('deleteBtn');
+                if (deleteBtn) {
+                    deleteBtn.style.display = 'inline-block';
+                    deleteBtn.addEventListener('click', async (e) => {
+                        e.preventDefault();
+                        if (confirm('Are you sure you want to delete this instructor?')) {
+                            try {
+                                showLoading(true, 'Deleting instructor...');
+                                await deleteDoc(doc(db, 'Instructors', currentInstructorId));
+                                showSuccess('Instructor deleted successfully!');
+                                setTimeout(() => {
+                                    window.location.href = 'InstructorList.html';
+                                }, 1500);
+                            } catch (error) {
+                                console.error('Error deleting instructor:', error);
+                                showError('Failed to delete instructor. Please try again.');
+                                showLoading(false);
+                            }
+                        }
+                    });
+                }
             }
         }
+        
+        // Load instructor data for editing
+        async function loadInstructorData(instructorId) {
+            if (!instructorId) return;
+            
+            try {
+                showLoading(true, 'Loading instructor data...');
+                const docRef = doc(db, 'Instructors', instructorId);
+                const docSnap = await getDoc(docRef);
+                
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    currentInstructor = { id: docSnap.id, ...data };
+                    
+                    // Set form values
+                    const form = document.getElementById('instructorForm');
+                    if (form) {
+                        Object.keys(data).forEach(key => {
+                            const input = form.querySelector(`[name="${key}"]`);
+                            if (input) {
+                                input.value = data[key] || '';
+                            }
+                        });
+                        
+                        // Set day and time first to trigger room loading
+                        if (data.day && daySelect) {
+                            daySelect.value = data.day;
+                        }
+                        if (data.time && timeSelect) {
+                            timeSelect.value = data.time;
+                        }
+                        
+                        // Update UI for edit mode
+                        document.title = 'Edit Instructor';
+                        const formTitle = document.querySelector('h1');
+                        if (formTitle) formTitle.textContent = 'Edit Instructor';
+                        
+                        // Show delete button
+                        const deleteBtn = document.getElementById('deleteBtn');
+                        if (deleteBtn) deleteBtn.style.display = 'inline-block';
+                        
+                        // Update room select after a short delay to ensure day/time are set
+                        setTimeout(updateAvailableRooms, 100);
+                    }
+                } else {
+                    showError('Instructor not found');
+                }
+            } catch (error) {
+                console.error('Error loading instructor:', error);
+                showError('Failed to load instructor data');
+            } finally {
+                showLoading(false);
+            }
+        }
+        
+        // Initialize the page
+        document.addEventListener('DOMContentLoaded', () => {
+            // Initialize form listeners
+            initializeFormListeners();
+            
+            // If in edit mode, load the instructor data
+            const urlParams = new URLSearchParams(window.location.search);
+            const instructorId = urlParams.get('id');
+            
+            if (instructorId) {
+                currentInstructorId = instructorId;
+                loadInstructorData(instructorId);
+            } else {
+                // Initialize room select as disabled until day and time are selected
+                const roomSelect = document.getElementById('room');
+                if (roomSelect) {
+                    roomSelect.disabled = true;
+                }
+            }
+        });
         
         // Handle room selection change
         function handleRoomChange() {
@@ -1295,47 +1396,31 @@
             }
         }
         
-        // Debounce timer for room selection updates
-        updateRoomSelectState.debounceTimer = null;
-        
-        // Initialize delete button event listener
-        function initializeDeleteButton() {
-            const deleteBtn = document.getElementById('deleteBtn');
-            if (!deleteBtn) return;
-            
-            // Remove any existing listeners
-            const newDeleteBtn = deleteBtn.cloneNode(true);
-            deleteBtn.parentNode.replaceChild(newDeleteBtn, deleteBtn);
-            
-            newDeleteBtn.addEventListener('click', async (e) => {
-                e.preventDefault();
-                if (confirm('Are you sure you want to delete this instructor? This action cannot be undone.')) {
-                    try {
-                        showLoading(true);
-                        // First, remove any room assignments
-                        const instructorRef = doc(db, "Instructors", currentInstructorId);
-                        await deleteDoc(instructorRef);
-                        
-                        showSuccess('Instructor deleted successfully!');
-                        setTimeout(() => {
-                            window.location.href = 'InstructorList.html';
-                        }, 1500);
-                    } catch (error) {
-                        console.error('Error deleting instructor:', error);
-                        showError('Failed to delete instructor. Please try again.');
-                        showLoading(false);
-                    } finally {
-                        showLoading(false);
-                    }
-                }
-            });
-        }
-        
-        // Initial state setup
+        // Initialize the page
         document.addEventListener('DOMContentLoaded', () => {
-            initializeEventListeners();
-            initializeDeleteButton();
-            updateRoomSelectState();
+            // Initialize form listeners are already set up in initializeFormListeners()
+            
+            // If in edit mode, load the instructor data
+            const urlParams = new URLSearchParams(window.location.search);
+            const instructorId = urlParams.get('id');
+            
+            if (instructorId) {
+                currentInstructorId = instructorId;
+                loadInstructorData(instructorId);
+            } else {
+                // Initialize room select as disabled until day and time are selected
+                const roomSelect = document.getElementById('room');
+                if (roomSelect) {
+                    roomSelect.disabled = true;
+                }
+            }
+            
+            // Remove duplicate event listeners
+            const form = document.getElementById('instructorForm');
+            if (form) {
+                form.onsubmit = null;
+                form.addEventListener('submit', handleFormSubmit);
+            }
         });
 
         async function registerInstructor() {
