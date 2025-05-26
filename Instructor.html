@@ -304,10 +304,55 @@
                 <div class="form-col">
                     <div class="form-group">
                         <label for="room">Room <span class="required">*</span></label>
-                        <select id="room" name="room" required>
-                            <option value="">Select Room</option>
-                            <!-- Will be populated dynamically -->
-                        </select>
+                        <input type="hidden" id="selectedRoom" name="room" required>
+                        <div class="room-selection">
+                            <div class="room-selection-header" aria-expanded="false">
+                                <h3>Select a Room</h3>
+                                <span class="toggle-icon">▼</span>
+                            </div>
+                            <div class="room-selection-content" aria-hidden="true">
+                                <div class="room-search">
+                                    <input type="text" placeholder="Search rooms..." aria-label="Search rooms">
+                                </div>
+                                <div class="room-filters">
+                                    <div class="filter-group">
+                                        <label for="building-filter">Building</label>
+                                        <select id="building-filter" name="building">
+                                            <option value="all">All Buildings</option>
+                                            <option value="Main">Main</option>
+                                            <option value="Annex">Annex</option>
+                                            <option value="Tech">Tech</option>
+                                        </select>
+                                    </div>
+                                    <div class="filter-group">
+                                        <label for="capacity-filter">Capacity</label>
+                                        <select id="capacity-filter" name="capacity">
+                                            <option value="all">Any Capacity</option>
+                                            <option value="0-20">Up to 20</option>
+                                            <option value="21-40">21-40</option>
+                                            <option value="41-60">41-60</option>
+                                            <option value="61">61+</option>
+                                        </select>
+                                    </div>
+                                    <div class="filter-group">
+                                        <label for="type-filter">Type</label>
+                                        <select id="type-filter" name="type">
+                                            <option value="all">All Types</option>
+                                            <option value="Lecture">Lecture</option>
+                                            <option value="Lab">Lab</option>
+                                            <option value="Conference">Conference</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="room-grid">
+                                    <!-- Room cards will be inserted here by JavaScript -->
+                                </div>
+                            </div>
+                        </div>
+                        <div id="selectedRoomDisplay" class="selected-room-display" style="margin-top: 10px; display: none;">
+                            <strong>Selected Room:</strong> <span id="selectedRoomName"></span>
+                            <button type="button" id="changeRoomBtn" class="btn-text" style="margin-left: 10px;">Change</button>
+                        </div>
                     </div>
                 </div>
                 <div class="form-col">
@@ -452,6 +497,7 @@
     <script type="module" src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js" defer></script>
     
     <!-- Application Scripts - Load with defer -->
+    <script type="module" src="public/js/room-selection.js" defer></script>
     <script type="module" src="public/js/instructor.js" defer></script>
     
     <!-- Load non-critical CSS asynchronously -->
@@ -485,6 +531,7 @@
         
         // Load non-critical CSS
         loadCSS('public/css/non-critical.css');
+        loadCSS('public/css/room-selection.css');
         
         // Remove loading class when page is fully loaded
         window.addEventListener('load', function() {
