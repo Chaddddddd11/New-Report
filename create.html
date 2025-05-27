@@ -3,19 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Student Registration - DHVSU Scheduling System</title>
-    
+    <title>Create Account - DHVSU Scheduling System</title>
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
-    
-    <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
-    
-    <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
     <style>
         :root {
             --primary-color: #610000;
@@ -47,32 +40,28 @@
             padding: 20px;
         }
 
-        .register-container {
+        .login-container {
             background: rgba(255, 255, 255, 0.95);
             border-radius: 16px;
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
             width: 100%;
-            max-width: 500px;
+            max-width: 420px;
             padding: 40px;
-            margin: 20px auto;
+            text-align: center;
+            border: 1px solid rgba(0, 0, 0, 0.05);
         }
 
         .logo {
             max-width: 120px;
-            margin-bottom: 20px;
+            margin: 0 auto 20px;
+            display: block;
         }
 
         h1 {
             color: var(--primary-color);
-            margin-bottom: 10px;
+            margin-bottom: 30px;
             font-size: 24px;
-        }
-
-        h2 {
-            color: var(--text-color);
-            margin-bottom: 25px;
-            font-size: 20px;
-            font-weight: 400;
+            font-weight: 700;
         }
 
         .form-group {
@@ -80,138 +69,125 @@
             text-align: left;
         }
 
-        label {
+        .form-group label {
             display: block;
             margin-bottom: 8px;
-            color: #555;
+            color: var(--text-color);
             font-weight: 500;
         }
 
-        input[type="text"],
-        input[type="email"],
-        input[type="password"] {
+        .form-control {
             width: 100%;
-            padding: 12px 15px;
-            border: 1px solid #ddd;
+            padding: 12px 16px;
+            border: 2px solid #e1e4e8;
             border-radius: 8px;
-            font-size: 16px;
-            transition: border-color 0.3s;
+            font-size: 15px;
+            transition: all 0.3s ease;
+            background-color: #f8f9fa;
         }
 
-        input:focus {
+        .form-control:focus {
             border-color: var(--primary-color);
-            outline: none;
+            background-color: white;
             box-shadow: 0 0 0 3px rgba(97, 0, 0, 0.1);
+            outline: none;
         }
 
         .btn {
             display: inline-block;
-            background: var(--primary-color);
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
             color: white;
             border: none;
-            padding: 14px 20px;
+            padding: 14px 24px;
             border-radius: 8px;
             font-size: 16px;
             font-weight: 500;
             cursor: pointer;
             width: 100%;
-            transition: all 0.3s;
-            margin-top: 10px;
+            transition: all 0.3s ease;
+            margin: 10px 0;
+            text-align: center;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
         }
 
         .btn:hover {
-            background: var(--secondary-color);
             transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 6px 16px rgba(97, 0, 0, 0.2);
+            background: linear-gradient(135deg, #4d0000, #6a0808);
         }
-
+        
         .btn-outline {
             background: transparent;
             border: 2px solid var(--primary-color);
             color: var(--primary-color);
+            transition: all 0.3s ease;
         }
-
+        
         .btn-outline:hover {
             background: var(--primary-color);
             color: white;
         }
-
-        .login-footer {
-            margin-top: 25px;
-            color: #666;
-            font-size: 14px;
+        
+        .forgot-password {
+            margin: 15px 0;
             text-align: center;
         }
-
-        .login-footer a {
+        
+        .forgot-password a {
             color: var(--primary-color);
             text-decoration: none;
-            font-weight: 500;
+            font-size: 14px;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            transition: color 0.2s ease;
         }
-
-        .login-footer a:hover {
+        
+        .forgot-password a:hover {
+            color: var(--secondary-color);
             text-decoration: underline;
         }
+        
+        .footer {
+            margin-top: 30px;
+            color: #6b7280;
+            font-size: 13px;
+            text-align: center;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+        }
+        
+        .divider {
+            display: flex;
+            align-items: center;
+            margin: 20px 0;
+            color: #6b7280;
+            font-size: 14px;
+        }
+        
+        .divider::before,
+        .divider::after {
+            content: "";
+            flex: 1;
+            height: 1px;
+            background-color: #e1e4e8;
+            margin: 0 10px;
+        }
 
-        .alert {
-            padding: 12px 15px;
+        .error-message {
+            color: var(--error-color);
+            background-color: #fef2f2;
+            border: 1px solid #fecaca;
+            padding: 12px 16px;
             border-radius: 8px;
             margin-bottom: 20px;
             display: none;
-        }
-
-        .alert-danger {
-            background-color: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
-        }
-
-        .alert-success {
-            background-color: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
-        }
-
-        .password-strength {
-            margin-top: 5px;
-            height: 5px;
-            background: #e9ecef;
-            border-radius: 3px;
-            overflow: hidden;
-        }
-
-        .password-strength-bar {
-            height: 100%;
-            width: 0%;
-            transition: width 0.3s, background-color 0.3s;
-        }
-
-        .form-text {
-            font-size: 12px;
-            color: #6c757d;
-            margin-top: 5px;
-        }
-
-        .invalid-feedback {
-            color: #dc3545;
-            font-size: 12px;
-            margin-top: 5px;
-            display: none;
-        }
-
-        .was-validated .form-control:invalid ~ .invalid-feedback,
-        .form-control.is-invalid ~ .invalid-feedback {
-            display: block;
-        }
-
-        .was-validated .form-control:invalid,
-        .form-control.is-invalid {
-            border-color: #dc3545;
-            padding-right: calc(1.5em + 0.75rem);
-            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' width='12' height='12' fill='none' stroke='%23dc3545'%3e%3ccircle cx='6' cy='6' r='4.5'/%3e%3cpath stroke-linejoin='round' d='M5.8 3.6h.4L6 6.5z'/%3e%3ccircle cx='6' cy='8.2' r='.6' fill='%23dc3545' stroke='none'/%3e%3c/svg%3e");
-            background-repeat: no-repeat;
-            background-position: right calc(0.375em + 0.1875rem) center;
-            background-size: calc(0.75em + 0.375rem) calc(0.75em + 0.375rem);
+            font-size: 14px;
+            text-align: left;
         }
 
         .spinner {
@@ -225,342 +201,297 @@
             margin-right: 8px;
             vertical-align: middle;
         }
-
+        
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
-
-        .form-loading {
-            position: relative;
-            pointer-events: none;
-            opacity: 0.7;
+        
+        .footer {
+            margin-top: 30px;
+            color: #6b7280;
+            font-size: 14px;
         }
 
-        .form-loading::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(255, 255, 255, 0.7);
-            z-index: 10;
-            border-radius: 16px;
+        @media (max-width: 480px) {
+            .login-container {
+                padding: 30px 20px;
+            }
+            
+            h1 {
+                font-size: 20px;
+                margin-bottom: 20px;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="register-container">
-        <div class="text-center mb-4">
-            <img src="https://media.assettype.com/sunstar/2025-02-04/7x1wu7dq/DHVSU.jpg" alt="DHVSU Logo" class="logo">
-            <h1>Student Registration</h1>
-            <h2>Create your DHVSU Scheduling System account</h2>
-        </div>
+    <div class="container">
+        <img src="https://media.assettype.com/sunstar/2025-02-04/7x1wu7dq/DHVSU.jpg" alt="DHVSU Logo" class="logo">
+        <h1>Create Account with Email</h1>
         
-        <form id="createAccountForm" novalidate>
-            <div id="errorMessage" class="alert"></div>
-            <div id="successMessage" class="alert"></div>
+        <form id="createAccountForm">
+            <div id="errorMessage" class="error-message"></div>
+            <div id="successMessage" class="success-message" style="display: none;"></div>
             
             <div class="form-group">
-                <label for="studentId">Student Number</label>
-                <input type="text" 
-                       class="form-control" 
-                       id="studentId" 
-                       placeholder="e.g., 202312345"
-                       pattern="\d{9}"
-                       inputmode="numeric"
-                       title="Please enter a 9-digit student number"
-                       required>
-                <div class="invalid-feedback">Please enter a valid 9-digit Student Number</div>
+                <label for="username">Username</label>
+                <input type="text" id="username" class="form-control" placeholder="Choose a username" required>
+                <div class="password-requirements">This will be your login (e.g., jdelacruz@gmail.com)</div>
             </div>
             
             <div class="form-group">
-                <label for="email">DHVSU Email</label>
-                <input type="email" 
-                       class="form-control" 
-                       id="email" 
-                       placeholder="name@dhvsu.edu.ph" 
-                       pattern="[^@\s]+@dhvsu\.edu\.ph"
-                       title="Please enter a valid DHVSU email address"
-                       required>
-                <div class="invalid-feedback">Please enter a valid DHVSU email address</div>
+                <label for="email">Email Address</label>
+                <input type="email" id="email" class="form-control" placeholder="Enter your email address" required>
+                <div class="password-requirements">For account verification and recovery</div>
             </div>
             
             <div class="form-group">
                 <label for="password">Password</label>
-                <input type="password" 
-                       class="form-control" 
-                       id="password" 
-                       placeholder="Create a password"
-                       required>
-                <div class="password-strength mt-2">
-                    <div id="passwordStrengthBar" class="password-strength-bar"></div>
-                </div>
+                <input type="password" id="password" class="form-control" placeholder="Enter your password" required>
             </div>
             
             <div class="form-group">
                 <label for="confirmPassword">Confirm Password</label>
-                <input type="password" 
-                       class="form-control" 
-                       id="confirmPassword" 
-                       placeholder="Re-enter your password"
-                       required>
-                <div class="invalid-feedback">Passwords do not match</div>
+                <input type="password" id="confirmPassword" class="form-control" placeholder="Confirm your password" required>
             </div>
             
-            <button type="submit" class="btn mt-3">
+            <button type="submit" class="btn" id="createAccountBtn">
                 <i class="fas fa-user-plus"></i> Create Account
             </button>
+            
+            <div class="divider">OR</div>
+            
+            <a href="login.html" class="btn btn-outline">
+                <i class="fas fa-sign-in-alt"></i> Sign In
+            </a>
         </form>
         
-        <div class="login-footer">
-            <p>Already have an account? <a href="login.html">Sign in here</a></p>
-            <p class="mt-2">
-                <a href="forgot.html" class="text-muted">
-                    <i class="fas fa-key"></i> Forgot Password?
-                </a>
-            </p>
+        <div class="footer">
+            DHVSU &copy; 2025 - All Rights Reserved
         </div>
     </div>
 
     <script>
-        // Firebase configuration - only initialize if not already done
-        if (!firebase.apps.length) {
-            const firebaseConfig = {
-                apiKey: "AIzaSyDBu7-vOFmS62IaGD8-8zb6TH0a1mHYNpI",
-                authDomain: "dhvsu-faculty-scheduling.firebaseapp.com",
-                projectId: "dhvsu-faculty-scheduling",
-                storageBucket: "dhvsu-faculty-scheduling.appspot.com",
-                messagingSenderId: "123456789012",
-                appId: "1:123456789012:web:abcdef123456"
-            };
+        // Firebase configuration and initialization
+        const firebaseConfig = {
+            apiKey: "AIzaSyDBu7-vOFmS62IaGD8-8zb6TH0a1mHYNpI",
+            authDomain: "dhvsu-faculty-scheduling.firebaseapp.com",
+            projectId: "dhvsu-faculty-scheduling",
+            storageBucket: "dhvsu-faculty-scheduling.appspot.com",
+            messagingSenderId: "1075180921702",
+            appId: "1:1075180921702:web:a0320fa286c684511cdea7",
+            measurementId: "G-EP4FZ04FQT"
+        };
 
-            // Initialize Firebase
+        // Initialize Firebase if not already initialized
+        if (!firebase.apps.length) {
             firebase.initializeApp(firebaseConfig);
-            
-            // Initialize Firebase services
-            const auth = firebase.auth();
-            const db = firebase.firestore();
-            
-            // Set custom claims for the user (requires Cloud Function)
-            async function setCustomUserClaims(uid, claims) {
-                try {
-                    const setClaims = firebase.functions().httpsCallable('setCustomClaims');
-                    await setClaims({ uid, ...claims });
-                } catch (error) {
-                    console.error('Error setting custom claims:', error);
-                    // Continue even if claims fail to set
-                }
-            }
         }
+        const auth = firebase.auth();
+        const db = firebase.firestore();
 
         // DOM Elements
         const createAccountForm = document.getElementById('createAccountForm');
-        const errorMessage = document.getElementById('errorMessage');
-        const successMessage = document.getElementById('successMessage');
+        const usernameInput = document.getElementById('username');
+        const emailInput = document.getElementById('email');
         const passwordInput = document.getElementById('password');
         const confirmPasswordInput = document.getElementById('confirmPassword');
-        const passwordStrengthBar = document.getElementById('passwordStrengthBar');
-        const emailInput = document.getElementById('email');
+        const createAccountBtn = document.getElementById('createAccountBtn');
+        const errorMessage = document.getElementById('errorMessage');
+        const successMessage = document.getElementById('successMessage');
 
-        // Show error message
-        function showError(message) {
-            errorMessage.textContent = message;
-            errorMessage.className = 'alert alert-danger';
-            errorMessage.style.display = 'block';
-            successMessage.style.display = 'none';
-            window.scrollTo({ top: 0, behavior: 'smooth' });
+        // Check if all required elements exist
+        const requiredElements = {
+            createAccountForm,
+            usernameInput,
+            emailInput,
+            passwordInput,
+            confirmPasswordInput,
+            createAccountBtn,
+            errorMessage,
+            successMessage
+        };
+        
+        const missingElements = Object.entries(requiredElements)
+            .filter(([_, element]) => !element)
+            .map(([name]) => name);
+            
+        if (missingElements.length > 0) {
+            console.error('Missing required elements:', missingElements.join(', '));
+            document.body.innerHTML = `
+                <div style="text-align: center; padding: 20px; font-family: Arial, sans-serif; color: #721c24; background-color: #f8d7da; border: 1px solid #f5c6cb; border-radius: 4px; margin: 20px;">
+                    <h2>Error: Missing Required Elements</h2>
+                    <p>The following required elements are missing from the page:</p>
+                    <ul style="text-align: left; display: inline-block;">
+                        ${missingElements.map(el => `<li>${el}</li>`).join('')}
+                    </ul>
+                    <p>Please check your HTML markup and ensure all required elements exist.</p>
+                </div>
+            `;
+            throw new Error(`Missing required elements: ${missingElements.join(', ')}`);
         }
 
-        // Show success message
-        function showSuccess(message) {
-            successMessage.textContent = message;
-            successMessage.className = 'alert alert-success';
-            successMessage.style.display = 'block';
-            errorMessage.style.display = 'none';
-            window.scrollTo({ top: 0, behavior: 'smooth' });
+        // Username validation
+        function isValidUsername(username) {
+            return /^[a-zA-Z0-9_]+$/.test(username);
         }
 
-        // Calculate password strength
-        function calculatePasswordStrength(password) {
-            let strength = 0;
-            
-            // Length check
-            if (password.length >= 8) strength += 1;
-            if (password.length >= 12) strength += 1;
-            
-            // Complexity checks
-            if (/[A-Z]/.test(password)) strength += 1;
-            if (/[0-9]/.test(password)) strength += 1;
-            if (/[^A-Za-z0-9]/.test(password)) strength += 1;
-            
-            return Math.min(strength, 5); // Max strength of 5
+        // Email validation
+        function isValidEmail(email) {
+            return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
         }
 
-        // Update password strength meter
-        function updateStrengthMeter(strength) {
-            const percentage = (strength / 5) * 100;
-            let color = '#dc3545'; // Red
+        // Show/hide message helper function
+        function showMessage(element, message, isError = true) {
+            if (!element) return;
             
-            if (strength >= 4) color = '#28a745'; // Green
-            else if (strength >= 3) color = '#17a2b8'; // Blue
-            else if (strength >= 2) color = '#ffc107'; // Yellow
+            element.textContent = message;
+            element.style.display = 'block';
             
-            passwordStrengthBar.style.width = percentage + '%';
-            passwordStrengthBar.style.backgroundColor = color;
-        }
-
-        // Validate password match
-        function validatePasswordMatch() {
-            if (passwordInput.value !== confirmPasswordInput.value) {
-                confirmPasswordInput.setCustomValidity("Passwords do not match");
-                confirmPasswordInput.classList.add('is-invalid');
-                return false;
+            if (isError) {
+                element.className = 'error-message';
+                // Auto-hide error after 5 seconds
+                setTimeout(() => {
+                    if (element) element.style.display = 'none';
+                }, 5000);
             } else {
-                confirmPasswordInput.setCustomValidity("");
-                confirmPasswordInput.classList.remove('is-invalid');
-                return true;
+                element.className = 'success-message';
             }
         }
 
-        // Form submission
+        // Handle form submission
         createAccountForm.addEventListener('submit', async function(e) {
             e.preventDefault();
             
-            // Hide messages
-            errorMessage.style.display = 'none';
-            successMessage.style.display = 'none';
-            
-            // Validate form
-            if (!createAccountForm.checkValidity()) {
-                e.stopPropagation();
-                createAccountForm.classList.add('was-validated');
-                return;
-            }
-            
-            // Validate password match
-            if (!validatePasswordMatch()) {
-                showError("Passwords do not match.");
-                return;
-            }
-            
+            const username = usernameInput.value.trim();
             const email = emailInput.value.trim();
-            const studentId = document.getElementById('studentId').value.trim();
             const password = passwordInput.value;
+            const confirmPassword = confirmPasswordInput.value;
             
-            // Get submit button and store its original state
-            const submitBtn = createAccountForm.querySelector('button[type="submit"]');
-            const originalBtnText = submitBtn.innerHTML;
+            // Reset messages
+            if (errorMessage) errorMessage.style.display = 'none';
+            if (successMessage) successMessage.style.display = 'none';
             
-            try {
-                // Show loading state
-                submitBtn.disabled = true;
-                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creating Account...';
-                createAccountForm.classList.add('form-loading');
-                
-                // Create user with email and password
-                const userCredential = await firebase.auth().createUserWithEmailAndPassword(email, password);
-                const user = userCredential.user;
-                
-                // Send email verification
-                await user.sendEmailVerification();
-                
-                // Save student data to Firestore with all required fields
-                const userData = {
-                    uid: user.uid,
-                    email: email,
-                    studentId: studentId,
-                    displayName: email.split('@')[0], // Default display name from email
-                    emailVerified: false,
-                    role: 'student',
-                    status: 'active',
-                    canManageSchedule: false,
-                    canManageSystem: false,
-                    canManageUsers: false,
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                    lastLogin: null,
-                    lastUpdates: firebase.firestore.FieldValue.serverTimestamp(),
-                    createdBy: 'self-registration'
-                };
-                
-                await db.collection('Students').doc(user.uid).set(userData);
-                
-                // Set custom claims for the new user
-                await setCustomUserClaims(user.uid, {
-                    role: 'student',
-                    canManageSchedule: false,
-                    canManageSystem: false,
-                    canManageUsers: false
+            // Validate inputs
+            if (!isValidUsername(username)) {
+                showMessage(errorMessage, 'Username can only contain letters, numbers, and underscores.');
+                return;
+            }
+            
+            if (!isValidEmail(email)) {
+                showMessage(errorMessage, 'Please enter a valid email address.');
+                return;
+            }
+            
+            if (password.length < 8) {
+                showMessage(errorMessage, 'Password must be at least 8 characters long. Please try again.');
+                return;
+            }
+            
+            if (password !== confirmPassword) {
+                showMessage(errorMessage, 'Passwords do not match. Please try again.');
+                return;
+            }
+            
+            // Show loading state
+            createAccountBtn.disabled = true;
+            createAccountBtn.innerHTML = '<span class="spinner">Creating account...</span>';
+            
+            // Create account with username as email
+            const authEmail = `${username}@gmail.com`;
+            auth.createUserWithEmailAndPassword(authEmail, password)
+                .then((userCredential) => {
+                    // Signed in successfully
+                    const user = userCredential.user;
+                    
+                    // Save additional user data to Firestore
+                    db.collection('users').doc(user.uid).set({
+                        username: username,
+                        email: email,
+                        authEmail: authEmail,
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                        lastLogin: firebase.firestore.FieldValue.serverTimestamp()
+                    })
+                    .then(() => {
+                        // Account created successfully
+                        successMessage.textContent = 'Account created successfully!';
+                        successMessage.style.display = 'block';
+                        
+                        // Reset button state
+                        createAccountBtn.disabled = false;
+                        createAccountBtn.textContent = 'Create Account';
+                        
+                        // Hide success message after 5 seconds
+                        setTimeout(() => {
+                            successMessage.style.display = 'none';
+                        }, 5000);
+                    })
+                    .catch((error) => {
+                        // Handle errors
+                        let errorMessageText = 'Error creating account. Please try again.';
+                        switch (error.code) {
+                            case 'auth/email-already-in-use':
+                                errorMessageText = 'This username is already taken. Please choose a different one.';
+                                break;
+                            case 'auth/invalid-email':
+                                errorMessageText = 'Invalid username format. Please use only letters, numbers, and underscores.';
+                                break;
+                        }
+                        
+                        showMessage(errorMessage, errorMessageText);
+                        
+                        // Reset button state
+                        createAccountBtn.disabled = false;
+                        createAccountBtn.textContent = 'Create Account';
+                    });
+                })
+                .catch((error) => {
+                    // Handle errors
+                    let errorMsg = 'Error creating account. Please try again.';
+                    if (error.code === 'auth/email-already-in-use') {
+                        errorMsg = 'This username is already taken. Please choose a different one.';
+                    } else if (error.code === 'auth/weak-password') {
+                        errorMsg = 'Password is too weak. Please use at least 6 characters.';
+                    } else if (error.code) {
+                        errorMsg = `Error: ${error.message}`;
+                    }
+                    
+                    showMessage(errorMessage, errorMsg);
+                    
+                    // Reset button state
+                    createAccountBtn.disabled = false;
+                    createAccountBtn.textContent = 'Create Account';
                 });
-                
-                // Sign out the user (they'll need to verify email before logging in)
-                await auth.signOut();
-                
-                // Show success message
-                showSuccess(`Account created successfully! Please check your email (${email}) to verify your account.`);
-                
-                // Reset form
-                createAccountForm.reset();
-                createAccountForm.classList.remove('was-validated');
-                passwordStrengthBar.style.width = '0%';
-                
-            } catch (error) {
-                console.error('Error creating account:', error);
-                
-                // User-friendly error messages
-                let errorMessage = 'An error occurred while creating your account. Please try again.';
-                
-                switch(error.code) {
-                    case 'auth/email-already-in-use':
-                        errorMessage = 'This email is already registered. Please use a different email or sign in.';
-                        break;
-                    case 'auth/invalid-email':
-                        errorMessage = 'Please enter a valid email address.';
-                        break;
-                    case 'auth/operation-not-allowed':
-                        errorMessage = 'Email/password accounts are not enabled. Please contact support.';
-                        break;
-                    case 'auth/weak-password':
-                        errorMessage = 'Password is too weak. Please choose a stronger password.';
-                        break;
-                    case 'auth/network-request-failed':
-                        errorMessage = 'Network error. Please check your internet connection and try again.';
-                        break;
-                }
-                
-                showError(errorMessage);
-                
-            } finally {
-                // Reset button state
-                if (submitBtn) {
-                    submitBtn.disabled = false;
-                    submitBtn.innerHTML = originalBtnText;
-                }
-                createAccountForm.classList.remove('form-loading');
-            }
         });
         
-        // Real-time password strength meter
-        passwordInput.addEventListener('input', function() {
-            const strength = calculatePasswordStrength(this.value);
-            updateStrengthMeter(strength);
-            
-            // Clear error message when user starts typing
-            if (errorMessage.textContent.includes('Password')) {
-                errorMessage.style.display = 'none';
-            }
-        });
+        // Auto-hide error message when user starts typing
+        if (emailInput) {
+            emailInput.addEventListener('input', function() {
+                if (errorMessage) errorMessage.style.display = 'none';
+            });
+        }
         
-        // Real-time password match validation
-        confirmPasswordInput.addEventListener('input', validatePasswordMatch);
+        if (passwordInput) {
+            passwordInput.addEventListener('input', function() {
+                if (errorMessage) errorMessage.style.display = 'none';
+            });
+        }
+        
+        if (confirmPasswordInput) {
+            confirmPasswordInput.addEventListener('input', function() {
+                if (errorMessage) errorMessage.style.display = 'none';
+            });
+        }
         
         // Check if user is already logged in
         auth.onAuthStateChanged((user) => {
             if (user) {
-                // If user is logged in, redirect to dashboard
-                window.location.href = 'student/dashboard.html';
+                // User is signed in, redirect to home
+                window.location.href = 'home.html';
             }
         });
+        
+        // Firestore is already initialized above
     </script>
 </body>
 </html>
