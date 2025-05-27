@@ -362,7 +362,14 @@
                                     }
                                     
                                     // Add to Firestore
-                                    await db.collection('Instructors').add(docData);
+                                    try {
+                                        console.log('Adding instructor document:', docData);
+                                        const docRef = await db.collection('Instructors').add(docData);
+                                        console.log('Document written with ID: ', docRef.id);
+                                    } catch (error) {
+                                        console.error('Error adding document: ', error);
+                                        throw error; // Re-throw to be caught by the outer catch
+                                    }
                                     
                                 } else if (uploadType === 'rooms') {
                                     // Process room data with flexible field names and defaults
@@ -405,7 +412,14 @@
                                     }
                                     
                                     // Add to Firestore
-                                    await db.collection('Rooms').add(docData);
+                                    try {
+                                        console.log('Adding room document:', docData);
+                                        const docRef = await db.collection('Rooms').add(docData);
+                                        console.log('Room document written with ID: ', docRef.id);
+                                    } catch (error) {
+                                        console.error('Error adding room document: ', error);
+                                        throw error; // Re-throw to be caught by the outer catch
+                                    }
                                 }
                                 
                                 successCount++;
