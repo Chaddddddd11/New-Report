@@ -594,7 +594,9 @@
                                     
                                     // Get Firestore instance and add document
                                     const db = window.firestore;
-                                    const docRef = await db.addDoc(db.collection('Rooms'), docData);
+                                    const roomsCollection = db.collection('Rooms');
+                                    const docRef = db.doc(); // Create a new document reference
+                                    await db.setDoc(docRef, docData);
                                     console.log('Document written with ID: ', docRef.id);
                                     successCount++;
                                 }
