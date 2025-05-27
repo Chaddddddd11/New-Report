@@ -1,11 +1,46 @@
 // Check if Firebase services are already initialized
 if (typeof auth === 'undefined' || typeof db === 'undefined') {
     try {
-        // Check if Firebase is available
-        if (typeof firebase === 'undefined' || !firebase.apps.length) {
-            throw new Error('Firebase not initialized');
+        // Initialize Firebase
+        const firebaseConfig = {
+            // Your Firebase config here
+        };
+
+        // Initialize Firebase
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+            
+            // Initialize Firestore with offline persistence
+            const db = firebase.firestore();
+            
+            // Disable network-dependent features if Firestore is not available
+            const firestoreAvailable = (() => {
+                try {
+                    return !!firebase.firestore;
+                } catch (e) {
+                    return false;
+                }
+            })();
+            
+            if (firestoreAvailable) {
+                db.enablePersistence({ experimentalForceOwningTab: true })
+                    .catch((err) => {
+                        console.warn('Failed to enable offline persistence:', err);
+                    });
+            } else {
+                console.warn('Firestore is not available. Running in offline mode.');
+            }
         }
-        
+
+        // Check if Firestore is available
+        const isFirestoreAvailable = () => {
+            try {
+                return !!firebase.firestore;
+            } catch (e) {
+                return false;
+            }
+        };
+
         // Initialize Firebase services if not already done
         window.auth = firebase.auth();
         window.db = firebase.firestore();
@@ -166,18 +201,24 @@ async function setCustomUserClaims(uid, role) {
     }
 }
 
-// Log security events to Firestore
+// Log security events to Firestore (fallback to console if Firestore is not available)
 async function logSecurityEvent(eventData) {
-    try {
-        const db = firebase.firestore();
-        await db.collection('security_logs').add({
-            ...eventData,
-            timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-            ip: await getClientIP(),
-            userAgent: navigator.userAgent
-        });
-    } catch (error) {
-        console.error('Error logging security event:', error);
+    // Always log to console for debugging
+    console.log('Security Event:', eventData);
+    
+    // Only try to log to Firestore if it's available
+    if (isFirestoreAvailable()) {
+        try {
+            const db = firebase.firestore();
+            await db.collection('security_logs').add({
+                ...eventData,
+                timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                ip: await getClientIP(),
+                userAgent: navigator.userAgent
+            });
+        } catch (error) {
+            console.warn('Could not log to Firestore (running in offline mode):', error.message);
+        }
     }
 }
 
@@ -230,14 +271,26 @@ async function handleSuccessfulLogin(user) {
             return;
         }
 
-        // Update user's last login time
-        const lastLogin = new Date().toISOString();
-        let collectionName = COLLECTIONS.STUDENTS;
-        if (role === ROLES.ADMIN) collectionName = COLLECTIONS.ADMIN;
-        else if (role === ROLES.INSTRUCTOR) collectionName = COLLECTIONS.INSTRUCTORS;
-        
         // Get user data from sessionStorage (set in getUserRoleAndData)
         const storedUserData = JSON.parse(sessionStorage.getItem('user') || '{}');
+        
+        // Update last login time if Firestore is available
+        if (isFirestoreAvailable()) {
+            try {
+                const lastLogin = new Date().toISOString();
+                let collectionName = COLLECTIONS.STUDENTS;
+                if (role === ROLES.ADMIN) collectionName = COLLECTIONS.ADMIN;
+                else if (role === ROLES.INSTRUCTOR) collectionName = COLLECTIONS.INSTRUCTORS;
+                
+                await db.collection(collectionName).doc(user.uid).update({
+                    lastLogin: lastLogin,
+                    emailVerified: user.emailVerified || true
+                });
+            } catch (error) {
+                console.warn('Could not update last login time:', error.message);
+                // Continue with the login process even if this fails
+            }
+        }
         
         // Initialize activity tracking
         initActivityTracking();
