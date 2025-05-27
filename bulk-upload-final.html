@@ -515,23 +515,36 @@
                                 let docData;
                                 
                                 if (uploadType === 'instructors') {
-                                    // Validate required fields for instructors
-                                    if (!row.name || !row.course || !row.subject) {
-                                        throw new Error(`Row ${i + 2}: Missing required fields (name, course, subject)`);
+                                    // Log the row data for debugging
+                                    console.log('Processing row:', row);
+                                    
+                                    // Make field names case-insensitive and trim whitespace
+                                    const normalizedRow = {};
+                                    Object.entries(row).forEach(([key, value]) => {
+                                        normalizedRow[key.trim().toLowerCase()] = value;
+                                    });
+                                    
+                                    // Check for required fields with case-insensitive matching
+                                    const name = normalizedRow['name'] || normalizedRow['instructor'] || '';
+                                    const course = normalizedRow['course'] || '';
+                                    const subject = normalizedRow['subject'] || '';
+                                    
+                                    if (!name || !course || !subject) {
+                                        throw new Error(`Row ${i + 2}: Missing required fields. Found: ${JSON.stringify(Object.keys(row))}`);
                                     }
                                     
-                                    // Prepare instructor document data
+                                    // Prepare instructor document data using normalized field names
                                     docData = {
-                                        course: String(row.course || ''),
-                                        day: String(row.day || ''),
-                                        name: String(row.name || ''),
-                                        room: String(row.room || row.roomName || ''),
-                                        roomName: String(row.roomName || row.room || ''),
-                                        scheduleColor: String(row.scheduleColor || '#88f1ab'),
-                                        section: String(row.section || '').toUpperCase(),
-                                        subject: String(row.subject || ''),
-                                        time: String(row.time || ''),
-                                        year: String(row.year || ''),
+                                        course: String(course || ''),
+                                        day: String(normalizedRow['day'] || ''),
+                                        name: String(name || ''),
+                                        room: String(normalizedRow['room'] || normalizedRow['roomname'] || ''),
+                                        roomName: String(normalizedRow['roomname'] || normalizedRow['room'] || ''),
+                                        scheduleColor: String(normalizedRow['schedulecolor'] || '#88f1ab'),
+                                        section: String(normalizedRow['section'] || '').toUpperCase(),
+                                        subject: String(subject || ''),
+                                        time: String(normalizedRow['time'] || ''),
+                                        year: String(normalizedRow['year'] || ''),
                                         timestamp: window.firestore.serverTimestamp(),
                                         updatedAt: window.firestore.serverTimestamp()
                                     };
@@ -542,16 +555,29 @@
                                     successCount++;
                                     
                                 } else if (uploadType === 'rooms') {
-                                    if (!row.roomName || row.capacity === undefined) {
-                                        throw new Error(`Row ${i + 2}: Missing required fields (roomName, capacity)`);
+                                    // Log the row data for debugging
+                                    console.log('Processing room row:', row);
+                                    
+                                    // Make field names case-insensitive and trim whitespace
+                                    const normalizedRow = {};
+                                    Object.entries(row).forEach(([key, value]) => {
+                                        normalizedRow[key.trim().toLowerCase()] = value;
+                                    });
+                                    
+                                    // Check for required fields with case-insensitive matching
+                                    const roomName = normalizedRow['roomname'] || normalizedRow['room'] || '';
+                                    const capacity = normalizedRow['capacity'];
+                                    
+                                    if (!roomName || capacity === undefined) {
+                                        throw new Error(`Row ${i + 2}: Missing required fields. Found: ${JSON.stringify(Object.keys(row))}`);
                                     }
                                     
-                                    // Prepare room document data
+                                    // Prepare room document data using normalized field names
                                     docData = {
-                                        capacity: Number(row.capacity) || 0,
-                                        day: String(row.day || ''),
-                                        roomName: String(row.roomName || '').trim(),
-                                        time: String(row.time || ''),
+                                        capacity: Number(capacity) || 0,
+                                        day: String(normalizedRow['day'] || ''),
+                                        roomName: String(roomName).trim(),
+                                        time: String(normalizedRow['time'] || ''),
                                         timestamp: window.firestore.serverTimestamp()
                                     };
                                     
