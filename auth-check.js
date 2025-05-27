@@ -425,6 +425,8 @@ async function handleFailedLogin(email) {
 // Initialize authentication state listener
 function initAuthStateListener() {
     firebase.auth().onAuthStateChanged(async (user) => {
+        console.log('Auth state changed. User:', user ? user.email : 'signed out');
+        
         if (user) {
             // User is signed in
             console.log('User is signed in:', user.email);
@@ -446,11 +448,17 @@ function initAuthStateListener() {
             
             // Get current path
             const currentPath = window.location.pathname.split('/').pop() || 'index.html';
-            const publicPaths = ['login.html', 'create.html', 'forgot-password.html', 'reset-password.html'];
+            const publicPaths = ['login.html', 'create.html', 'forgot.html', 'index.html', 'forgot-password.html', 'reset-password.html'];
+            
+            console.log('Current path:', currentPath);
+            console.log('Public paths:', publicPaths);
             
             // Redirect to login if not on a public page
-            if (!publicPaths.includes(currentPath) && currentPath !== 'index.html') {
+            if (!publicPaths.includes(currentPath) && currentPath !== 'home.html') {
+                console.log('Redirecting to login page');
                 window.location.href = `login.html?redirect=${encodeURIComponent(currentPath)}`;
+            } else {
+                console.log('Allowing access to:', currentPath);
             }
         }
     });
