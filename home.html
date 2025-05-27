@@ -335,7 +335,7 @@
         <span>Room List</span>
       </a>
       
-      <a href="bulk-upload-final.html" class="nav-button">
+      <a href="firestore-upload.html" class="nav-button">
         <i class="fas fa-file-upload"></i>
         <span>Bulk Upload</span>
       </a>
@@ -378,7 +378,8 @@
               return signOut(auth);
             })
             .then(() => {
-              // Redirect will be handled by auth state change in auth-check.js
+              // Force redirect to login page after successful logout
+              window.location.href = 'login.html';
             })
             .catch(error => {
               console.error('Logout failed:', error);
