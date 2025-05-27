@@ -266,10 +266,10 @@
                 <input type="text" 
                        class="form-control" 
                        id="studentId" 
-                       placeholder="Enter your student number"
-                       pattern="\d+"
+                       placeholder="e.g., 202312345"
+                       pattern="\d{9}"
                        inputmode="numeric"
-                       title="Please enter your student number (numbers only)"
+                       title="Please enter a 9-digit student number"
                        required>
                 <div class="invalid-feedback">Please enter a valid 9-digit Student Number</div>
             </div>
@@ -442,16 +442,18 @@
             const studentId = document.getElementById('studentId').value.trim();
             const password = passwordInput.value;
             
+            // Get submit button and store its original state
+            const submitBtn = createAccountForm.querySelector('button[type="submit"]');
+            const originalBtnText = submitBtn.innerHTML;
+            
             try {
                 // Show loading state
-                const submitBtn = createAccountForm.querySelector('button[type="submit"]');
-                const originalBtnText = submitBtn.innerHTML;
                 submitBtn.disabled = true;
-                submitBtn.innerHTML = '<span class="spinner"></span> Creating Account...';
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creating Account...';
                 createAccountForm.classList.add('form-loading');
                 
                 // Create user with email and password
-                const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+                const userCredential = await firebase.auth().createUserWithEmailAndPassword(email, password);
                 const user = userCredential.user;
                 
                 // Send email verification
@@ -506,9 +508,10 @@
                 
             } finally {
                 // Reset button state
-                const submitBtn = createAccountForm.querySelector('button[type="submit"]');
-                submitBtn.disabled = false;
-                submitBtn.innerHTML = originalBtnText;
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = originalBtnText;
+                }
                 createAccountForm.classList.remove('form-loading');
             }
         });
