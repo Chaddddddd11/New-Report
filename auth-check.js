@@ -1,6 +1,12 @@
 // Get Firebase auth and firestore instances
-const auth = firebase.auth();
-const db = firebase.firestore();
+// Get or initialize Firebase services
+const auth = firebase.auth ? firebase.auth() : null;
+const db = firebase.firestore ? firebase.firestore() : null;
+
+if (!auth || !db) {
+    console.error('Firebase services not properly initialized');
+    // You might want to show an error to the user here
+}
 
 // Collection names
 const COLLECTIONS = {
