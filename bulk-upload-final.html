@@ -319,27 +319,46 @@
                                 let docData;
                                 
                                 if (uploadType === 'instructors') {
-                                    // Process instructor data
+                                    // Process instructor data with defaults for missing fields
                                     docData = {
-                                        course: String(row['Course'] || '').trim(),
-                                        day: String(row['Day'] || '').trim(),
-                                        name: String(row['Name'] || '').trim(),
-                                        roomId: String(row['Room'] || '').trim(),
-                                        roomName: String(row['Room'] || '').trim(),
-                                        scheduleColor: String(row['ScheduleColor'] || '#000000'),
-                                        section: String(row['Section'] || '').trim(),
-                                        subject: String(row['Subject'] || '').trim(),
-                                        time: String(row['Time'] || '').trim(),
-                                        year: String(row['Year'] || '').trim(),
-                                        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                                        course: String(row['Course'] || row['course'] || 'N/A').trim(),
+                                        day: String(row['Day'] || row['day'] || 'Monday').trim(),
+                                        name: String(row['Name'] || row['name'] || 'Instructor').trim(),
+                                        roomId: String(row['Room'] || row['room'] || row['roomId'] || 'N/A').trim(),
+                                        roomName: String(row['Room'] || row['room'] || row['roomName'] || 'N/A').trim(),
+                                        scheduleColor: String(row['ScheduleColor'] || row['scheduleColor'] || '#000000').trim(),
+                                        section: String(row['Section'] || row['section'] || 'A').trim(),
+                                        subject: String(row['Subject'] || row['subject'] || 'N/A').trim(),
+                                        time: String(row['Time'] || row['time'] || '00:00-00:00').trim(),
+                                        year: String(row['Year'] || row['year'] || '1').trim(),
+                                        timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                                        // Add any additional fields from the row
+                                        ...Object.entries(row).reduce((acc, [key, value]) => {
+                                            if (!['Course', 'course', 'Day', 'day', 'Name', 'name', 'Room', 'room', 'roomId', 'roomName', 
+                                                  'ScheduleColor', 'scheduleColor', 'Section', 'section', 'Subject', 'subject', 
+                                                  'Time', 'time', 'Year', 'year'].includes(key)) {
+                                                acc[key] = value;
+                                            }
+                                            return acc;
+                                        }, {})
                                     };
                                     
-                                    // Validate required fields
-                                    const requiredFields = ['course', 'day', 'name', 'roomId', 'section', 'subject', 'time', 'year'];
-                                    const missingFields = requiredFields.filter(field => !docData[field]);
+                                    // Validate minimum required fields
+                                    const requiredFields = {
+                                        'name': 'Instructor Name',
+                                        'subject': 'Subject',
+                                        'time': 'Time'
+                                    };
+                                    
+                                    const missingFields = [];
+                                    for (const [field, displayName] of Object.entries(requiredFields)) {
+                                        if (!docData[field] || docData[field] === 'N/A') {
+                                            missingFields.push(displayName);
+                                        }
+                                    }
                                     
                                     if (missingFields.length > 0) {
-                                        throw new Error(`Missing required fields: ${missingFields.join(', ')}`);
+                                        throw new Error(`Missing required information: ${missingFields.join(', ')}`);
                                     }
                                     
                                     // Add to Firestore
