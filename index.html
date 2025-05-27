@@ -6,7 +6,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
   <style>
     body {
-      background-image: linear-gradient(rgba(250, 247, 247, 0.9), rgba(129, 127, 127, 0.9)), 
+      background-image: linear-gradient(rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.9)), 
                         url('https://the-post-assets.sgp1.digitaloceanspaces.com/2023/03/DHVSU_thumbnail.png');
       background-size: cover;
       background-position: center;
@@ -17,7 +17,7 @@
     }
     
     .container {
-      background: linear-gradient(to bottom, #610000, #ee8e10);
+      background-color: rgba(255, 255, 255, 0.95);
       border-radius: 8px;
       box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
       padding: 25px;
@@ -108,7 +108,7 @@
 
     h2 {
       background-color: var(--primary-color);
-      color: rgb(255, 255, 255);
+      color: white;
       text-align: center;
       padding: 15px;
       margin-bottom: 20px;
@@ -132,7 +132,7 @@
     }
 
     .disabled {
-      background-color: #870b0b;
+      background-color: #cccccc;
       cursor: not-allowed;
     }
 
@@ -141,12 +141,12 @@
       border-collapse: separate;
       border-spacing: 2px;
       margin-top: 15px;
-      background-color: #dedede74;
+      background-color: #f5f5f5;
       table-layout: fixed;
     }
 
     #scheduleTable th, #scheduleTable td {
-      border: 1px solid #181717;
+      border: 1px solid #ddd;
       padding: 0;
       text-align: center;
       vertical-align: top;
@@ -155,16 +155,16 @@
 
     #scheduleTable th {
       background-color: var(--primary-color);
-      color: rgb(254, 254, 255);
+      color: white;
       font-weight: bold;
     }
 
     #scheduleTable tr:nth-child(even) {
-      background-color: #9a9c9c;
+      background-color: #f9f9f9;
     }
 
     #scheduleTable tr:hover {
-      background-color: #dead0c;
+      background-color: #f1f1f1;
     }
     
     /* Style for time column */
@@ -172,7 +172,7 @@
     #scheduleTable td:first-child {
       width: 100px;
       background-color: var(--primary-color);
-      color: rgb(254, 254, 255);
+      color: white;
       font-weight: bold;
       padding: 8px;
     }
@@ -292,7 +292,7 @@
     
     <!-- Your HTML content here -->
     <div class="filters">
-      <select id="courseSelect">
+      <select id="courseSelect" onchange="updateYearOptions(); updateStudentCapacity(); renderSchedule();">
         <option value="">Select Course</option>
         <option value="BSA">BSA</option>
         <option value="BSAIS">BSAIS</option>
@@ -301,11 +301,11 @@
         <option value="BSPublicAdministration">BS Public Administration</option>
       </select>
       
-      <select id="yearSelect" disabled>
+      <select id="yearSelect" disabled onchange="updateSectionOptions(); updateStudentCapacity(); renderSchedule();">
         <option value="">Select Year</option>
       </select>
       
-      <select id="sectionSelect" disabled>
+      <select id="sectionSelect" disabled onchange="updateStudentCapacity(); renderSchedule();">
         <option value="">Select Section</option>
       </select>
       
@@ -641,7 +641,61 @@
       return `${h.padStart(2, '0')}:${m.padStart(2, '0')}`;
     }
 
+    // Function to update available years based on selected course
+    function updateYearOptions() {
+      const selectedCourse = courseSelect.value;
+      yearSelect.innerHTML = '<option value="">Select Year</option>';
+      yearSelect.disabled = !selectedCourse;
+      
+      if (!selectedCourse) {
+        sectionSelect.innerHTML = '<option value="">Select Section</option>';
+        sectionSelect.disabled = true;
+        return;
+      }
+      
+      // Add year options based on the selected course (up to 4th year)
+      // Using numbers to match the Firestore data format
+      const years = ['1', '2', '3', '4'];
+      years.forEach(year => {
+        const option = document.createElement('option');
+        option.value = year;
+        // Display as '1st Year', '2nd Year', etc.
+        const suffix = year === '1' ? 'st' : year === '2' ? 'nd' : year === '3' ? 'rd' : 'th';
+        option.textContent = `${year}${suffix} Year`;
+        yearSelect.appendChild(option);
+      });
+      
+      // Reset section select
+      sectionSelect.innerHTML = '<option value="">Select Section</option>';
+      sectionSelect.disabled = true;
+      
+      // Clear the schedule
+      scheduleBody.innerHTML = '';
+    }
 
+    // Function to update available sections based on selected year
+    function updateSectionOptions() {
+      const selectedCourse = courseSelect.value;
+      const selectedYear = yearSelect.value;
+      sectionSelect.innerHTML = '<option value="">Select Section</option>';
+      sectionSelect.disabled = !selectedYear;
+      
+      if (!selectedYear) {
+        return;
+      }
+      
+      // Add section options (A, B, C, etc.)
+      const sections = ['A', 'B', 'C', 'D'];
+      sections.forEach(section => {
+        const option = document.createElement('option');
+        option.value = section;
+        option.textContent = 'Section ' + section;
+        sectionSelect.appendChild(option);
+      });
+      
+      // Clear the schedule
+      scheduleBody.innerHTML = '';
+    }
 
     // Function to render the schedule based on selected filters
     function renderSchedule() {
@@ -747,22 +801,9 @@
               // Determine text color based on background brightness for better readability
               const textColor = getContrastYIQ(bgColor);
               
-              // Debug log to check instructor data
-              console.log('Instructor data:', {
-                name: instructor.name,
-                room: instructor.room,
-                roomName: instructor.roomName,
-                hasRoom: 'room' in instructor,
-                hasRoomName: 'roomName' in instructor,
-                allKeys: Object.keys(instructor)
-              });
-              
               // Create schedule entry with inline styles and hover effect
               cell.style.padding = '4px';
               cell.style.backgroundColor = bgColor;
-              
-              // Check all possible room fields
-              const roomDisplay = instructor.room || instructor.roomName || instructor.roomId || 'TBA';
               
               const entryHTML = `
                 <div class="schedule-entry" 
@@ -775,7 +816,7 @@
                             box-sizing: border-box;">
                   <div class="subject">${instructor.subject || 'N/A'}</div>
                   <div class="instructor">${instructor.name || 'N/A'}</div>
-                  <div class="room">${roomDisplay}</div>
+                  <div class="room">${instructor.roomName || 'TBA'}</div>
                 </div>`;
               
               cell.innerHTML = entryHTML;
@@ -796,23 +837,6 @@
       });
     }
 
-    // Helper function to get ordinal suffix (1st, 2nd, 3rd, 4th)
-    function getOrdinalSuffix(num) {
-      num = parseInt(num);
-      const j = num % 10;
-      const k = num % 100;
-      if (j === 1 && k !== 11) return 'st';
-      if (j === 2 && k !== 12) return 'nd';
-      if (j === 3 && k !== 13) return 'rd';
-      return 'th';
-    }
-    
-    // Function to update student capacity display (placeholder function)
-    function updateStudentCapacity() {
-      const capacityDisplay = document.getElementById('studentCapacity');
-      capacityDisplay.textContent = 'Student Capacity: -';
-    }
-    
     // Function to log current dropdown values and data for debugging
     function logCurrentState() {
       console.log('=== Current Application State ===');
@@ -835,29 +859,11 @@
     document.addEventListener('DOMContentLoaded', () => {
       console.log('DOM fully loaded, initializing application...');
       
-      // Get references to the dropdown elements
+      // Add event listeners for the dropdowns
       const courseSelect = document.getElementById('courseSelect');
       const yearSelect = document.getElementById('yearSelect');
       const sectionSelect = document.getElementById('sectionSelect');
-      const scheduleBody = document.getElementById('scheduleBody');
       
-      // Define the updateStudentCapacity function
-      function updateStudentCapacity() {
-        const capacityDisplay = document.getElementById('studentCapacity');
-        if (capacityDisplay) {
-          capacityDisplay.textContent = 'Student Capacity: -';
-        }
-      }
-      
-      // Define the logCurrentState function
-      function logCurrentState() {
-        console.log('=== Current Application State ===');
-        console.log('Selected Course:', courseSelect.value);
-        console.log('Selected Year:', yearSelect.value);
-        console.log('Selected Section:', sectionSelect.value);
-      }
-      
-      // Add event listeners for the dropdowns
       if (courseSelect) {
         courseSelect.addEventListener('change', () => {
           console.log('Course changed to:', courseSelect.value);
@@ -907,60 +913,6 @@
         
         // Initial state update
         updatePrintButtonState();
-      }
-      
-      // Function to update available years based on selected course
-      function updateYearOptions() {
-        const selectedCourse = courseSelect.value;
-        yearSelect.innerHTML = '<option value="">Select Year</option>';
-        yearSelect.disabled = !selectedCourse;
-        
-        if (!selectedCourse) {
-          sectionSelect.innerHTML = '<option value="">Select Section</option>';
-          sectionSelect.disabled = true;
-          return;
-        }
-        
-        // Add year options based on the selected course (up to 4th year)
-        const years = ['1', '2', '3', '4'];
-        years.forEach(year => {
-          const option = document.createElement('option');
-          option.value = year;
-          // Display as '1st Year', '2nd Year', etc.
-          const suffix = year === '1' ? 'st' : year === '2' ? 'nd' : year === '3' ? 'rd' : 'th';
-          option.textContent = `${year}${suffix} Year`;
-          yearSelect.appendChild(option);
-        });
-        
-        // Reset section select
-        sectionSelect.innerHTML = '<option value="">Select Section</option>';
-        sectionSelect.disabled = true;
-        
-        // Clear the schedule
-        scheduleBody.innerHTML = '';
-      }
-
-      // Function to update available sections based on selected year
-      function updateSectionOptions() {
-        const selectedYear = yearSelect.value;
-        sectionSelect.innerHTML = '<option value="">Select Section</option>';
-        sectionSelect.disabled = !selectedYear;
-        
-        if (!selectedYear) {
-          return;
-        }
-        
-        // Add section options (A, B, C, etc.)
-        const sections = ['A', 'B', 'C', 'D'];
-        sections.forEach(section => {
-          const option = document.createElement('option');
-          option.value = section;
-          option.textContent = 'Section ' + section;
-          sectionSelect.appendChild(option);
-        });
-        
-        // Clear the schedule
-        scheduleBody.innerHTML = '';
       }
       
       // Initial log
