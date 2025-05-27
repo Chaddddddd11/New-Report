@@ -805,6 +805,9 @@
               cell.style.padding = '4px';
               cell.style.backgroundColor = bgColor;
               
+              // Check all possible room fields (supporting both room and roomId)
+              const roomDisplay = instructor.room || instructor.roomId || 'TBA';
+              
               const entryHTML = `
                 <div class="schedule-entry" 
                      style="background-color: ${bgColor}; 
@@ -816,7 +819,7 @@
                             box-sizing: border-box;">
                   <div class="subject">${instructor.subject || 'N/A'}</div>
                   <div class="instructor">${instructor.name || 'N/A'}</div>
-                  <div class="room">${instructor.roomName || 'TBA'}</div>
+                  <div class="room">${roomDisplay}</div>
                 </div>`;
               
               cell.innerHTML = entryHTML;
