@@ -593,9 +593,9 @@
                                     
                                     console.log('Prepared document data:', docData);
                                     
-                                    // Add document with auto-generated ID
-                                    const roomsCollection = window.firestore.collection('Rooms');
-                                    const docRef = await window.firestore.addDoc(roomsCollection, docData);
+                                    // Add document with auto-generated ID using Firestore v9+ syntax
+                                    const db = window.firestore;
+                                    const docRef = await db.addDoc(db.collection(db.getFirestore(), 'Rooms'), docData);
                                     console.log('Document written with ID: ', docRef.id);
                                     successCount++;
                                 }
