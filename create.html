@@ -270,7 +270,22 @@
         </div>
     </div>
 
-    <script>
+    <!-- Firebase SDK v9+ -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+        import { 
+            getAuth, 
+            createUserWithEmailAndPassword,
+            updateProfile
+        } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+        import { 
+            getFirestore, 
+            doc, 
+            setDoc, 
+            serverTimestamp,
+            enableIndexedDbPersistence
+        } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+
         // Firebase configuration for room management system
         const firebaseConfig = {
             apiKey: "AIzaSyDeqxzp_-kKjM3hPr6CLGfTn38e4swSKbo",
@@ -281,12 +296,22 @@
             appId: "1:667821278853:web:a3a80c985073772670cbec"
         };
 
-        // Initialize Firebase if not already initialized
-        if (!firebase.apps.length) {
-            firebase.initializeApp(firebaseConfig);
-        }
-        const auth = firebase.auth();
-        const db = firebase.firestore();
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // Enable offline persistence
+        enableIndexedDbPersistence(db, { forceOwnership: true })
+            .catch((err) => {
+                if (err.code === 'failed-precondition') {
+                    console.warn('Offline persistence can only be enabled in one tab at a time.');
+                } else if (err.code === 'unimplemented') {
+                    console.warn('The current browser does not support offline persistence.');
+                } else {
+                    console.warn('Error enabling offline persistence:', err);
+                }
+            });
 
         // DOM Elements
         const createAccountForm = document.getElementById('createAccountForm');
