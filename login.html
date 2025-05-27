@@ -390,8 +390,11 @@
                 
                 // Check if email is verified
                 if (!user.emailVerified) {
-                    await firebase.auth().signOut();
-                    throw { code: 'auth/email-not-verified' };
+                    // Don't sign out, just show a message
+                    throw { 
+                        code: 'auth/email-not-verified',
+                        message: 'Please verify your email before logging in. Check your inbox for the verification link.'
+                    };
                 }
                 
                 // The auth state change listener in auth-check.js will handle the redirection
