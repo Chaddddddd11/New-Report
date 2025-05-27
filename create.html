@@ -383,114 +383,59 @@
         </div>
     </div>
 
-    <script type="module">
-        // Import the functions you need from the SDKs you need
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-        import { 
-            getAuth, 
-            createUserWithEmailAndPassword, 
-            updateProfile,
-            sendEmailVerification
-        } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-        import { 
-            getFirestore, 
-            doc, 
-            setDoc, 
-            serverTimestamp,
-            getDoc
-        } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-
-        // Your web app's Firebase configuration
+    <!-- Include Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+    
+    <!-- Include auth-check.js -->
+    <script src="auth-check.js"></script>
+    
+    <script>
+        // Firebase configuration - Should match your auth-check.js configuration
         const firebaseConfig = {
             apiKey: "AIzaSyDBu7-vOFmS62IaGD8-8zb6TH0a1mHYNpI",
             authDomain: "dhvsu-faculty-scheduling.firebaseapp.com",
             projectId: "dhvsu-faculty-scheduling",
             storageBucket: "dhvsu-faculty-scheduling.appspot.com",
-            messagingSenderId: "1075180921702",
-            appId: "1:1075180921702:web:a0320fa286c684511cdea7",
-            measurementId: "G-EP4FZ04FQT"
+            messagingSenderId: "123456789012",
+            appId: "1:123456789012:web:abcdef123456"
         };
 
         // Initialize Firebase
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
-
-        // Form elements
+        firebase.initializeApp(firebaseConfig);
+        
         // DOM Elements
         const createAccountForm = document.getElementById('createAccountForm');
-        const usernameInput = document.getElementById('username');
+        const fullNameInput = document.getElementById('fullName');
         const emailInput = document.getElementById('email');
         const passwordInput = document.getElementById('password');
         const confirmPasswordInput = document.getElementById('confirmPassword');
-        const createAccountBtn = document.getElementById('createAccountBtn');
+        const roleSelect = document.getElementById('role');
         const errorMessage = document.getElementById('errorMessage');
         const successMessage = document.getElementById('successMessage');
-        const strengthBar = document.getElementById('password-strength-bar');
-        const passwordMatchFeedback = document.getElementById('password-match-feedback');
+        const submitBtn = document.getElementById('submitBtn');
+        const loadingSpinner = document.getElementById('loadingSpinner');
+        const submitBtnText = document.getElementById('submitBtnText');
 
-        // Check if all required elements exist
-        const requiredElements = {
-            createAccountForm,
-            usernameInput,
-            emailInput,
-            passwordInput,
-            confirmPasswordInput,
-            createAccountBtn,
-            errorMessage,
-            successMessage
-        };
-        
-        const missingElements = Object.entries(requiredElements)
-            .filter(([_, element]) => !element)
-            .map(([name]) => name);
-            
-        if (missingElements.length > 0) {
-            console.error('Missing required elements:', missingElements.join(', '));
-            document.body.innerHTML = `
-                <div style="text-align: center; padding: 20px; font-family: Arial, sans-serif; color: #721c24; background-color: #f8d7da; border: 1px solid #f5c6cb; border-radius: 4px; margin: 20px;">
-                    <h2>Error: Missing Required Elements</h2>
-                    <p>The following required elements are missing from the page:</p>
-                    <ul style="text-align: left; display: inline-block;">
-                        ${missingElements.map(el => `<li>${el}</li>`).join('')}
-                    </ul>
-                    <p>Please check your HTML markup and ensure all required elements exist.</p>
-                </div>
-            `;
-            throw new Error(`Missing required elements: ${missingElements.join(', ')}`);
+        // Function to show error message
+        function showError(message) {
+            errorMessage.textContent = message;
+            errorMessage.style.display = 'block';
+            successMessage.style.display = 'none';
+            submitBtn.disabled = false;
+            submitBtnText.textContent = 'Create Account';
+            loadingSpinner.classList.add('d-none');
         }
 
-        // Display name validation
-        function isValidUsername(displayName) {
-            // Allow letters, numbers, spaces, and common punctuation
-            const displayNameRegex = /^[\p{L}\p{N}\s'.,-]+$/u;
-            return displayNameRegex.test(displayName);
+        // Function to show success message
+        function showSuccess(message) {
+            successMessage.textContent = message;
+            successMessage.style.display = 'block';
+            errorMessage.style.display = 'none';
         }
 
-        // Email validation
-        function isValidEmail(email) {
-            return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-        }
-
-        // Show/hide message helper function
-        function showMessage(element, message, isError = true) {
-            if (!element) return;
-            
-            element.textContent = message;
-            element.style.display = 'block';
-            
-            if (isError) {
-                element.className = 'error-message';
-                // Auto-hide error after 5 seconds
-                setTimeout(() => {
-                    if (element) element.style.display = 'none';
-                }, 5000);
-            } else {
-                element.className = 'success-message';
-            }
-        }
-
-        // Handle form submission
+        // Form submission
         createAccountForm.addEventListener('submit', async function(e) {
             e.preventDefault();
             
@@ -498,107 +443,67 @@
             const email = emailInput.value.trim().toLowerCase();
             const password = passwordInput.value;
             const confirmPassword = confirmPasswordInput.value;
-            const role = roleSelect.value;
-            
-            // Reset error states
-            document.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+            const role = roleSelect ? roleSelect.value : 'student';
+
+            // Reset messages
             errorMessage.style.display = 'none';
-            
-            // Validate inputs
-            let isValid = true;
-            
-            if (!isValidName(fullName)) {
-                fullNameInput.classList.add('is-invalid');
-                showMessage(errorMessage, 'Please enter a valid full name (2-50 characters, letters and spaces only)');
-                isValid = false;
+            successMessage.style.display = 'none';
+
+            // Validate form
+            if (!fullName || !email || !password || !confirmPassword) {
+                showError('Please fill in all fields');
+                return;
             }
-            
-            if (!email) {
-                emailInput.classList.add('is-invalid');
-                showMessage(errorMessage, 'Email is required');
-                isValid = false;
-            } else if (!isValidEmail(email)) {
-                emailInput.classList.add('is-invalid');
-                showMessage(errorMessage, 'Please enter a valid email address');
-                isValid = false;
-            } else if (!email.endsWith('@dhvsu.edu.ph')) {
-                emailInput.classList.add('is-invalid');
-                showMessage(errorMessage, 'Please use your DHVSU email address (@dhvsu.edu.ph)');
-                isValid = false;
-            }
-            
-            if (!password) {
-                passwordInput.classList.add('is-invalid');
-                showMessage(errorMessage, 'Password is required');
-                isValid = false;
-            } else if (password.length < 8) {
-                passwordInput.classList.add('is-invalid');
-                showMessage(errorMessage, 'Password must be at least 8 characters long');
-                isValid = false;
-            } else if (!/[A-Z]/.test(password) || !/[0-9]/.test(password) || !/[^A-Za-z0-9]/.test(password)) {
-                passwordInput.classList.add('is-invalid');
-                showMessage(errorMessage, 'Password must contain at least one uppercase letter, one number, and one special character');
-                isValid = false;
-            }
-            
+
             if (password !== confirmPassword) {
-                confirmPasswordInput.classList.add('is-invalid');
-                showMessage(errorMessage, 'Passwords do not match');
-                isValid = false;
+                showError('Passwords do not match');
+                return;
             }
-            
-            if (!isValid) return;
-            
-            // Disable form and show loading state
-            createAccountBtn.disabled = true;
-            createAccountBtn.innerHTML = '<span class="spinner"></span> Creating Account...';
-            
+
+            if (password.length < 6) {
+                showError('Password must be at least 6 characters long');
+                return;
+            }
+
+            // Check if email is valid
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(email)) {
+                showError('Please enter a valid email address');
+                return;
+            }
+
+            // Disable submit button and show loading state
+            submitBtn.disabled = true;
+            submitBtnText.textContent = 'Creating Account...';
+            loadingSpinner.classList.remove('d-none');
+
             try {
-                // Check if email already exists
-                const methods = await fetchSignInMethodsForEmail(auth, email);
-                if (methods && methods.length > 0) {
-                    throw new Error('auth/email-already-in-use');
-                }
-                
-                // Create user account
-                const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-                const user = userCredential.user;
-                
-                // Update user profile with display name
-                await updateProfile(user, {
-                    displayName: fullName
-                });
-                
-                // Create user document in Firestore
-                const userData = {
-                    uid: user.uid,
+                // Use the registerUser function from auth-check.js
+                const result = await registerUser({
                     email: email,
+                    password: password,
                     displayName: fullName,
-                    emailVerified: false,
-                    role: role,
-                    createdAt: serverTimestamp(),
-                    lastLogin: serverTimestamp(),
-                    status: 'active'
-                };
+                    role: role
+                });
 
-                // Add additional fields for instructors and admins
-                if (role === 'instructor' || role === 'admin') {
-                    userData.department = '';
-                    userData.phone = '';
-                    userData.office = '';
+                if (result.success) {
+                    // Show success message
+                    showSuccess('Account created successfully! You will be redirected to login page.');
+                    
+                    // Reset form
+                    createAccountForm.reset();
+                    
+                    // Redirect to login after 3 seconds
+                    setTimeout(() => {
+                        window.location.href = 'login.html?account_created=true';
+                    }, 3000);
+                } else {
+                    // Show error from registerUser function
+                    showError(result.error || 'Error creating account. Please try again.');
                 }
-
-                const userDocRef = doc(db, 'users', user.uid);
-                await setDoc(userDocRef, userData);
                 
-                // Send email verification (only for self-signup)
-                await sendEmailVerification(user);
-                showMessage(successMessage, 'Account created successfully! Please check your email to verify your account.', false);
-                
-                // Redirect to login after delay
-                setTimeout(() => {
-                    window.location.href = 'login.html?signup=success';
-                }, 3000);
+                // This code is now handled by the registerUser function in auth-check.js
+                // The success case is already handled above
                 
             } catch (error) {
                 console.error('Account creation error:', error);
