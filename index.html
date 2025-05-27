@@ -811,18 +811,28 @@
                 console.log('Available fields:', Object.keys(instructor));
               }
               
+              // Helper function to check if a room value is valid (not empty and not 'TBA')
+              const isValidRoom = (room) => {
+                return room && room.trim() && room.trim().toUpperCase() !== 'TBA';
+              };
+              
               // Check all possible room fields in order of preference
               const roomDisplay = 
-                (instructor.room && instructor.room.trim()) ||       // First priority: 'room' field
-                (instructor.roomId && instructor.roomId.trim()) ||   // Second priority: 'roomId' field
-                (instructor.roomName && instructor.roomName.trim()) || // Third priority: 'roomName' field
+                (isValidRoom(instructor.room) && instructor.room.trim()) ||       // First priority: 'room' field
+                (isValidRoom(instructor.roomId) && instructor.roomId.trim()) ||   // Second priority: 'roomId' field
+                (isValidRoom(instructor.roomName) && instructor.roomName.trim()) || // Third priority: 'roomName' field
                 (() => {                 // Debug log if no room found
-                  console.log('No room found for instructor:', {
+                  console.log('No valid room found for instructor:', {
                     name: instructor.name,
                     subject: instructor.subject,
                     day: instructor.day,
                     time: instructor.time,
-                    availableFields: Object.keys(instructor).filter(k => k.toLowerCase().includes('room'))
+                    roomValues: {
+                      room: instructor.room,
+                      roomId: instructor.roomId,
+                      roomName: instructor.roomName
+                    },
+                    allFields: Object.keys(instructor)
                   });
                   return 'TBA';
                 })();
