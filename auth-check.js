@@ -1,5 +1,25 @@
-// Firebase configuration for room-management-system
-const FIREBASE_CONFIG = {
+// Firebase v9+ modular imports
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+import { 
+    getAuth, 
+    onAuthStateChanged, 
+    signOut as firebaseSignOut,
+    signInWithEmailAndPassword,
+    createUserWithEmailAndPassword,
+    sendPasswordResetEmail
+} from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+import { 
+    getFirestore, 
+    doc, 
+    getDoc, 
+    setDoc, 
+    serverTimestamp,
+    enableIndexedDbPersistence,
+    CACHE_SIZE_UNLIMITED
+} from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+
+// Firebase configuration
+const firebaseConfig = {
     apiKey: "AIzaSyDeqxzp_-kKjM3hPr6CLGfTn38e4swSKbo",
     authDomain: "room-management-system-8e899.firebaseapp.com",
     projectId: "room-management-system-8e899",
@@ -8,79 +28,60 @@ const FIREBASE_CONFIG = {
     appId: "1:667821278853:web:a3a80c985073772670cbec"
 };
 
-// Global flag to track if Firestore is available
-let isFirestoreEnabled = false;
+// Initialize Firebase with error handling
+let app, auth, db, isFirestoreEnabled = false;
 
-// Mock Firestore functions for offline mode
-const mockFirestore = {
-    collection: () => ({
-        doc: () => ({
-            get: () => Promise.resolve({ exists: false, data: () => null }),
-            set: () => Promise.resolve(),
-            update: () => Promise.resolve(),
-            delete: () => Promise.resolve(),
-            collection: () => mockFirestore.collection(),
-            onSnapshot: () => () => {}
-        }),
-        where: () => ({
-            get: () => Promise.resolve({ empty: true, docs: [] }),
-            onSnapshot: () => () => {}
-        }),
-        get: () => Promise.resolve({ empty: true, docs: [] }),
-        onSnapshot: () => () => {}
-    })
-};
-
-// Initialize Firebase services if not already done
-if (typeof window !== 'undefined' && (typeof window.auth === 'undefined' || typeof window.db === 'undefined')) {
-    try {
-        // Initialize Firebase if not already initialized
-        if (!firebase.apps.length) {
-            firebase.initializeApp(FIREBASE_CONFIG);
-        }
-        
-        // Set up authentication
-        window.auth = firebase.auth();
-        
-        // Try to initialize Firestore if it's available
-        if (typeof firebase.firestore === 'function') {
-            try {
-                window.db = firebase.firestore();
-                isFirestoreEnabled = true;
-                
-                // Set Firestore settings
-                const settings = { cacheSizeBytes: firebase.firestore.CACHE_SIZE_UNLIMITED };
-                window.db.settings(settings);
-                
-                // Enable offline persistence (but don't wait for it)
-                window.db.enablePersistence({ experimentalForceOwningTab: true })
-                    .then(() => console.log('Firestore persistence enabled'))
-                    .catch(err => {
-                        if (err.code === 'failed-precondition') {
-                            console.warn('Offline persistence can only be enabled in one tab at a time.');
-                        } else if (err.code === 'unimplemented') {
-                            console.warn('The current browser does not support offline persistence.');
-                        } else {
-                            console.warn('Error enabling offline persistence:', err);
-                        }
-                        isFirestoreEnabled = false;
-                    });
-                    
-                console.log('Firestore initialized with offline persistence');
-            } catch (firestoreError) {
-                console.warn('Firestore initialization failed, running in offline mode:', firestoreError.message);
-                isFirestoreEnabled = false;
-                window.db = mockFirestore;
+try {
+    // Initialize Firebase app and auth
+    app = initializeApp(firebaseConfig);
+    auth = getAuth(app);
+    
+    // Initialize Firestore
+    db = getFirestore(app);
+    
+    // Enable offline persistence
+    enableIndexedDbPersistence(db, { forceOwnership: true })
+        .then(() => console.log('Firestore offline persistence enabled'))
+        .catch((err) => {
+            if (err.code === 'failed-precondition') {
+                console.warn('Offline persistence can only be enabled in one tab at a time.');
+            } else if (err.code === 'unimplemented') {
+                console.warn('The current browser does not support offline persistence.');
+            } else {
+                console.warn('Error enabling offline persistence:', err);
             }
-        } else {
-            console.warn('Firestore is not available, running in offline mode');
-            isFirestoreEnabled = false;
-            window.db = mockFirestore;
-        }
-    } catch (error) {
-        console.error('Firebase initialization error:', error);
+        });
+    
+    isFirestoreEnabled = true;
+    
+    // Initialize Firebase services if in browser
+    if (typeof window !== 'undefined') {
+        // Make auth and db available globally
+        window.auth = auth;
+        window.db = db;
         
-        // Provide mock auth and db objects for offline mode
+        console.log('Firebase initialized successfully');
+        console.log('Auth state:', auth.currentUser ? 'User signed in' : 'No user signed in');
+        
+        // Set up auth state change listener
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                console.log('User is signed in:', user.email);
+                handleAuthenticated(user);
+            } else {
+                console.log('User is signed out');
+                handleUnauthenticated();
+            }
+        });
+        
+        // Initialize activity tracking
+        initActivityTracking();
+    }
+} catch (error) {
+    console.error('Firebase initialization error:', error);
+    
+    // Provide mock auth and db objects for offline mode
+    if (typeof window !== 'undefined') {
         window.auth = window.auth || {
             currentUser: null,
             onAuthStateChanged: (callback) => {
@@ -93,14 +94,51 @@ if (typeof window !== 'undefined' && (typeof window.auth === 'undefined' || type
             }
         };
         
+        // Fallback to mock Firestore if initialization failed
         window.db = window.db || mockFirestore;
         
         // Show error to user if running in browser
         if (typeof document !== 'undefined') {
             const errorDiv = document.createElement('div');
-            errorDiv.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; background: #f8d7da; color: #721c24; padding: 15px; text-align: center; z-index: 9999;';
-            errorDiv.textContent = 'Error initializing the application. Some features may not be available.';
+            errorDiv.id = 'firebase-error';
+            errorDiv.style.cssText = [
+                'position: fixed;',
+                'top: 0;',
+                'left: 0;',
+                'right: 0;',
+                'background: #f8d7da;',
+                'color: #721c24;',
+                'padding: 15px;',
+                'text-align: center;',
+                'z-index: 9999;',
+                'font-family: Arial, sans-serif;',
+                'font-size: 14px;',
+                'border-bottom: 1px solid #f5c6cb;'
+            ].join('');
+            
+            errorDiv.innerHTML = `
+                <strong>Connection Issue:</strong> 
+                The application is running in offline mode. Some features may be limited.
+                <button id="dismiss-error" style="
+                    margin-left: 10px;
+                    background: #f1b0b7;
+                    border: 1px solid #f5c6cb;
+                    border-radius: 3px;
+                    padding: 2px 8px;
+                    cursor: pointer;
+                    font-size: 12px;
+                ">Dismiss</button>
+            `;
+            
             document.body.prepend(errorDiv);
+            
+            // Add click handler for dismiss button
+            const dismissBtn = document.getElementById('dismiss-error');
+            if (dismissBtn) {
+                dismissBtn.addEventListener('click', () => {
+                    errorDiv.style.display = 'none';
+                });
+            }
         }
     }
 }
@@ -774,19 +812,26 @@ function handleUnauthenticated() {
 // Get user role from Firestore
 async function getUserRole(uid) {
     try {
-        const userDoc = await db.collection('users').doc(uid).get();
-        if (userDoc.exists) {
+        if (!uid || !db) return 'student'; // Default to student if no UID or no Firestore
+        
+        const userDocRef = doc(db, 'users', uid);
+        const userDoc = await getDoc(userDocRef);
+        
+        if (userDoc.exists()) {
             return userDoc.data().role || 'student'; // Default to student if role not set
         }
+        
         // If user document doesn't exist, create one with default student role
-        await db.collection('users').doc(uid).set({
+        const userData = {
             role: 'student',
-            email: auth.currentUser.email,
-            displayName: auth.currentUser.displayName || '',
-            photoURL: auth.currentUser.photoURL || '',
-            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-            lastLogin: firebase.firestore.FieldValue.serverTimestamp()
-        });
+            email: auth.currentUser?.email || '',
+            displayName: auth.currentUser?.displayName || '',
+            photoURL: auth.currentUser?.photoURL || '',
+            createdAt: serverTimestamp(),
+            lastLogin: serverTimestamp()
+        };
+        
+        await setDoc(userDocRef, userData);
         return 'student';
     } catch (error) {
         console.error('Error getting user role:', error);
