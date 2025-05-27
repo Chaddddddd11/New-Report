@@ -184,7 +184,28 @@
     <form id="roomForm">
       <div class="form-group">
         <label>Room Name:</label>
-        <input type="text" id="roomName" required placeholder="Enter room name" />
+        <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+          <select id="building" class="room-part" required onchange="updateRoomName()">
+            <option value="">Select Building</option>
+            <option value="CBS BLG">CBS BLG</option>
+            <option value="CAS BLG">CAS BLG</option>
+            <option value="New CAS BLG">New CAS BLG</option>
+          </select>
+          <select id="floor" class="room-part" required onchange="updateRoomName()">
+            <option value="">Select Floor</option>
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4">4</option>
+            <option value="5">5</option>
+          </select>
+          <select id="roomNumber" class="room-part" required onchange="updateRoomName()">
+            <option value="">Select Room</option>
+            <!-- Options will be populated by JavaScript -->
+          </select>
+        </div>
+        <input type="text" id="roomName" required style="display: none;" />
+        <div id="roomNameDisplay" style="font-weight: bold; margin-top: 5px; min-height: 20px;"></div>
       </div>
 
       <div class="form-group">
@@ -234,6 +255,119 @@
   </div>
 
   <!-- ✅ JavaScript Moved to End for Proper DOM Access -->
+  <script>
+    // Function to update room name based on selections
+    function updateRoomName() {
+      const building = document.getElementById('building').value;
+      const floor = document.getElementById('floor').value;
+      const roomNumber = document.getElementById('roomNumber').value;
+      const roomNameInput = document.getElementById('roomName');
+      const roomNameDisplay = document.getElementById('roomNameDisplay');
+      
+      // Combine the values with spaces
+      const fullRoomName = `${building} ${floor} ${roomNumber}`.trim();
+      
+      // Update the hidden input value
+      roomNameInput.value = fullRoomName;
+      
+      // Update the display
+      roomNameDisplay.textContent = fullRoomName || 'No room selected';
+      
+      // Enable/disable room number dropdown based on floor selection
+      const roomNumberSelect = document.getElementById('roomNumber');
+      if (floor) {
+        roomNumberSelect.innerHTML = '<option value="">Select Room</option>';
+        const start = (parseInt(floor) - 1) * 5 + 101; // 101-105, 201-205, etc.
+        for (let i = 0; i < 5; i++) {
+          const roomNum = start + i;
+          const option = document.createElement('option');
+          option.value = roomNum.toString().substring(1); // Remove the first digit
+          option.textContent = roomNum.toString();
+          roomNumberSelect.appendChild(option);
+        }
+      } else {
+        roomNumberSelect.innerHTML = '<option value="">Select Room</option>';
+      }
+      roomNumberSelect.disabled = !floor;
+    }
+    
+    // Function to load edit data
+    function loadEditData() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const isEdit = urlParams.get('edit') === 'true';
+      const formTitle = document.getElementById('formTitle');
+      
+      if (isEdit) {
+        if (formTitle) formTitle.textContent = 'Edit Room';
+        
+        // Get the full room name from URL
+        const roomName = urlParams.get('roomName');
+        if (roomName) {
+          // Split the room name into parts
+          const parts = roomName.split(' ');
+          let building = '';
+          let floor = '';
+          let roomNum = '';
+          
+          // Handle different building name formats (CBS BLG, CAS BLG, New CAS BLG)
+          if (roomName.includes('New CAS BLG')) {
+            building = 'New CAS BLG';
+            if (parts.length >= 4) {
+              floor = parts[3];
+              if (parts.length >= 5) roomNum = parts[4];
+            }
+          } else if (roomName.includes('CAS BLG') || roomName.includes('CBS BLG')) {
+            building = parts[0] + ' ' + parts[1];
+            if (parts.length >= 3) {
+              floor = parts[2];
+              if (parts.length >= 4) roomNum = parts[3];
+            }
+          }
+          
+          // Set the values
+          const buildingSelect = document.getElementById('building');
+          const floorSelect = document.getElementById('floor');
+          
+          if (buildingSelect) buildingSelect.value = building;
+          if (floorSelect) floorSelect.value = floor;
+          
+          // Trigger change to update room numbers
+          if (floor) {
+            setTimeout(() => {
+              updateRoomName();
+              const roomNumberSelect = document.getElementById('roomNumber');
+              if (roomNumberSelect && roomNum) {
+                roomNumberSelect.value = roomNum;
+                updateRoomName();
+              }
+            }, 100);
+          }
+        }
+        
+        // Set other form values
+        const day = urlParams.get('day');
+        const time = urlParams.get('time');
+        const capacity = urlParams.get('capacity');
+        
+        const daySelect = document.getElementById('day');
+        const timeSelect = document.getElementById('time');
+        const capacityInput = document.getElementById('capacity');
+        
+        if (daySelect && day) daySelect.value = day;
+        if (timeSelect && time) timeSelect.value = time;
+        if (capacityInput && capacity) capacityInput.value = capacity;
+        
+        if (day) {
+          window.toggleTimeSlots(day);
+        } else {
+          window.toggleTimeSlots('');
+        }
+      } else {
+        if (formTitle) formTitle.textContent = 'Room Registration';
+        window.toggleTimeSlots('');
+      }
+    }
+  </script>
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
     import {
@@ -389,8 +523,11 @@
     }
 
     // Load edit data when the DOM is fully loaded
-    document.addEventListener('DOMContentLoaded', loadEditData);
-
+    document.addEventListener('DOMContentLoaded', function() {
+      loadEditData();
+      // Initialize room name display
+      updateRoomName();
+    });
   </script>
 </body>
 </html>
