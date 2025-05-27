@@ -102,81 +102,37 @@ function isPathAllowed(role, path) {
     return allowedPaths.some(allowedPath => path.endsWith(allowedPath));
 }
 
-// Get user's role and data from Firestore
+// Get user's role and data (simplified version without Firestore)
 async function getUserRoleAndData(user) {
     try {
-        // Try to get user data with error handling
-        const getUserData = async (collection, role) => {
-            try {
-                const doc = await db.collection(collection).doc(user.uid).get();
-                if (doc.exists) {
-                    return { role, collection, data: doc.data() };
-                }
-                return null;
-            } catch (error) {
-                console.error(`Error getting ${role} data:`, error);
-                return null;
-            }
+        // Default role is student, but make admin@example.com an admin
+        const isAdmin = user.email === 'admin@example.com';
+        const role = isAdmin ? ROLES.ADMIN : ROLES.STUDENT;
+        
+        // Create basic user data without Firestore
+        const userData = {
+            uid: user.uid,
+            email: user.email,
+            displayName: user.displayName || user.email.split('@')[0],
+            emailVerified: true,
+            role: role,
+            status: 'active',
+            lastLogin: new Date().toISOString(),
+            canManageSchedule: isAdmin,
+            canManageSystem: isAdmin,
+            canManageUsers: isAdmin
         };
 
-        // Try to get user data from all collections
-        const results = await Promise.all([
-            getUserData(COLLECTIONS.ADMIN, ROLES.ADMIN),
-            getUserData(COLLECTIONS.INSTRUCTORS, ROLES.INSTRUCTOR),
-            getUserData(COLLECTIONS.STUDENTS, ROLES.STUDENT)
-        ]);
-
-        // Find the first valid result
-        const userRoleData = results.find(r => r !== null) || {
-            role: ROLES.STUDENT,
-            collection: COLLECTIONS.STUDENTS,
-            data: null
-        };
-
-        let { role, collection: collectionName, data: userData } = userRoleData;
-
-        // If no user data found, create a new student record
-        if (!userData) {
-            userData = {
-                email: user.email,
-                displayName: user.displayName || user.email.split('@')[0],
-                emailVerified: user.emailVerified || true,
-                role: ROLES.STUDENT,
-                status: 'active',
-                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                lastLogin: firebase.firestore.FieldValue.serverTimestamp(),
-                lastUpdates: firebase.firestore.FieldValue.serverTimestamp(),
-                canManageSchedule: false,
-                canManageSystem: false,
-                canManageUsers: false,
-                createdBy: 'system'
-            };
-
-            try {
-                await db.collection(collectionName).doc(user.uid).set(userData);
-            } catch (error) {
-                console.error('Error creating user record:', error);
-                throw new Error('Failed to create user record');
-            }
-        }
-
-        // Update last login timestamp
-        try {
-            await db.collection(collectionName).doc(user.uid).update({
-                lastLogin: firebase.firestore.FieldValue.serverTimestamp(),
-                lastUpdates: firebase.firestore.FieldValue.serverTimestamp()
-            });
-        } catch (error) {
-            console.warn('Could not update last login timestamp:', error);
-        }
-
-        // Set custom claims if possible
+        // Store user data in session storage
+        sessionStorage.setItem('user', JSON.stringify(userData));
+        
+        // Set custom claims (non-blocking)
         try {
             await setCustomUserClaims(user.uid, {
                 role: role,
-                canManageSchedule: userData.canManageSchedule || false,
-                canManageSystem: userData.canManageSystem || false,
-                canManageUsers: userData.canManageUsers || false
+                canManageSchedule: isAdmin,
+                canManageSystem: isAdmin,
+                canManageUsers: isAdmin
             });
         } catch (error) {
             console.warn('Could not set custom claims:', error);
@@ -184,14 +140,7 @@ async function getUserRoleAndData(user) {
 
         return {
             role: role,
-            userData: {
-                ...userData,
-                uid: user.uid,
-                email: userData.email || user.email,
-                displayName: userData.displayName || user.displayName || user.email.split('@')[0],
-                emailVerified: userData.emailVerified !== undefined ? userData.emailVerified : true,
-                status: userData.status || 'active'
-            }
+            userData: userData
         };
     } catch (error) {
         console.error('Error getting user role and data:', error);
@@ -280,32 +229,9 @@ async function handleSuccessfulLogin(user) {
         if (role === ROLES.ADMIN) collectionName = COLLECTIONS.ADMIN;
         else if (role === ROLES.INSTRUCTOR) collectionName = COLLECTIONS.INSTRUCTORS;
         
-        await db.collection(collectionName).doc(user.uid).update({
-            lastLogin: lastLogin,
-            emailVerified: user.emailVerified
-        });
-
-        // Store minimal user data in sessionStorage
-        sessionStorage.setItem('user', JSON.stringify({
-            uid: user.uid,
-            email: user.email,
-            displayName: user.displayName || userData.displayName || '',
-            role: role,
-            emailVerified: user.emailVerified
-        }));
+        // Get user data from sessionStorage (set in getUserRoleAndData)
+        const storedUserData = JSON.parse(sessionStorage.getItem('user') || '{}');
         
-        // Log the successful login
-        await logSecurityEvent({
-            userId: user.uid,
-            eventType: 'login_success',
-            ipAddress: await getClientIP(),
-            userAgent: navigator.userAgent,
-            metadata: {
-                role: role,
-                email: user.email
-            }
-        });
-
         // Initialize activity tracking
         initActivityTracking();
         
@@ -318,7 +244,7 @@ async function handleSuccessfulLogin(user) {
         }
 
         // Otherwise, redirect based on role
-        const redirectPath = getRedirectPath(role);
+        const redirectPath = getRedirectPath(storedUserData.role || ROLES.STUDENT);
         if (window.location.pathname !== redirectPath) {
             window.location.href = redirectPath;
         }
