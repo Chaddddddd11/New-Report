@@ -559,63 +559,34 @@
                                     console.log('Processing room row:', row);
                                     console.log('Raw row keys:', Object.keys(row));
                                     
-                                    // Make field names case-insensitive and trim whitespace
-                                    const normalizedRow = {};
-                                    Object.entries(row).forEach(([key, value]) => {
-                                        const normalizedKey = key.toString().trim().toLowerCase().replace(/[^a-z0-9]/g, '');
-                                        console.log(`Processing key: '${key}' -> '${normalizedKey}'`);
-                                        normalizedRow[normalizedKey] = value;
-                                    });
+                                    // Map the Excel columns directly to our fields
+                                    const roomName = (row['Room'] || '').toString().trim();
+                                    const day = (row['Day'] || '').toString().trim();
+                                    const time = (row['Time'] || '').toString().trim();
+                                    let capacity = row['Capacity'];
                                     
-                                    console.log('Normalized row:', normalizedRow);
-                                    
-                                    // Check for required fields with case-insensitive matching
-                                    const roomName = (normalizedRow['roomname'] || normalizedRow['room'] || '').toString().trim();
-                                    let capacity = normalizedRow['capacity'];
-                                    
-                                    // Debug: Log all available keys for troubleshooting
-                                    const availableKeys = Object.keys(normalizedRow).join(', ');
-                                    console.log('Available normalized keys:', availableKeys);
-                                    
-                                    // Try to convert capacity to number, handle various formats
+                                    // Convert capacity to number, handle various formats
                                     capacity = capacity !== undefined && capacity !== '' ? 
                                         Number(capacity.toString().replace(/[^0-9.]/g, '')) : undefined;
                                     
-                                    console.log('Extracted values - roomName:', roomName, 'capacity:', capacity, 'type:', typeof capacity);
+                                    console.log('Extracted values:', { roomName, day, time, capacity });
                                     
-                                    // Check for room name in various possible fields
-                                    const possibleRoomNameFields = ['roomname', 'room', 'room_name', 'roomname'];
-                                    let foundRoomName = '';
-                                    
-                                    for (const field of possibleRoomNameFields) {
-                                        if (normalizedRow[field] !== undefined) {
-                                            foundRoomName = normalizedRow[field].toString().trim();
-                                            if (foundRoomName) break;
-                                        }
-                                    }
-                                    
-                                    if (!foundRoomName) {
-                                        throw new Error(`Row ${i + 2}: Missing required room name.\n` +
-                                            `Available fields: ${availableKeys}\n` +
-                                            `Tried fields: ${possibleRoomNameFields.join(', ')}`);
+                                    // Validate required fields
+                                    if (!roomName) {
+                                        throw new Error(`Row ${i + 2}: Missing required field 'Room'`);
                                     }
                                     
                                     if (capacity === undefined || isNaN(capacity)) {
-                                        throw new Error(`Row ${i + 2}: Invalid or missing 'capacity' value. Must be a number.\n` +
-                                            `Found: '${normalizedRow['capacity']}'\n` +
-                                            `Available fields: ${availableKeys}`);
+                                        throw new Error(`Row ${i + 2}: Invalid or missing 'Capacity' value. Must be a number.`);
                                     }
                                     
-                                    // If we get here, we have valid data
-                                    console.log('Successfully parsed row:', { roomName: foundRoomName, capacity });
-                                    
-                                    // Prepare room document data using normalized field names
+                                    // Prepare room document data
                                     docData = {
                                         capacity: Number(capacity) || 0,
-                                        day: String(normalizedRow['day'] || '').trim(),
-                                        roomName: foundRoomName,
-                                        room: foundRoomName, // Keep both for backward compatibility
-                                        time: String(normalizedRow['time'] || '').trim(),
+                                        day: day,
+                                        roomName: roomName,
+                                        room: roomName, // Keep both for backward compatibility
+                                        time: time,
                                         timestamp: window.firestore.serverTimestamp(),
                                         updatedAt: window.firestore.serverTimestamp()
                                     };
@@ -707,44 +678,44 @@
                     // Sample data for Instructors collection
                     sampleData = [
                         {
-                            course: 'BSA',
-                            day: 'Monday',
-                            name: 'Prof. Garcia',
-                            room: 'CBS BLDG 1 102',
-                            roomName: 'CBS BLDG 1 102',
-                            scheduleColor: '#88f1ab',
-                            section: 'A',
-                            subject: 'Law',
-                            time: '09:00-10:00',
-                            year: '1'
+                            'Course': 'BSA',
+                            'Day': 'Monday',
+                            'Name': 'Prof. Garcia',
+                            'Room': 'CBS BLDG 1 102',
+                            'RoomName': 'CBS BLDG 1 102',
+                            'ScheduleColor': '#88f1ab',
+                            'Section': 'A',
+                            'Subject': 'Law',
+                            'Time': '09:00-10:00',
+                            'Year': '1'
                         },
                         {
-                            course: 'BSIT',
-                            day: 'Tuesday',
-                            name: 'Prof. Reyes',
-                            room: 'CCS BLDG 2 201',
-                            roomName: 'CCS BLDG 2 201',
-                            scheduleColor: '#88f1ab',
-                            section: 'B',
-                            subject: 'Programming',
-                            time: '10:30-12:00',
-                            year: '2'
+                            'Course': 'BSIT',
+                            'Day': 'Tuesday',
+                            'Name': 'Prof. Reyes',
+                            'Room': 'CCS BLDG 2 201',
+                            'RoomName': 'CCS BLDG 2 201',
+                            'ScheduleColor': '#88f1ab',
+                            'Section': 'B',
+                            'Subject': 'Programming',
+                            'Time': '10:30-12:00',
+                            'Year': '2'
                         }
                     ];
                 } else {
-                    // Sample data for Rooms collection
+                    // Sample data for Rooms collection - matching the exact format from the screenshot
                     sampleData = [
                         {
-                            capacity: 35,
-                            day: 'Wednesday',
-                            roomName: 'CBS BLG 2F 201',
-                            time: '07:00-08:00'
+                            'Room': 'CBS BLG 2F 201',
+                            'Day': 'Wednesday',
+                            'Time': '07:00-08:00',
+                            'Capacity': 35
                         },
                         {
-                            capacity: 40,
-                            day: 'Thursday',
-                            roomName: 'CAS BLG 3F 301',
-                            time: '10:00-11:30'
+                            'Room': 'CAS BLG 3F 301',
+                            'Day': 'Thursday',
+                            'Time': '10:00-11:30',
+                            'Capacity': 40
                         }
                     ];
                 }
