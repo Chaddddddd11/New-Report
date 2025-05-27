@@ -11,8 +11,28 @@ const FIREBASE_CONFIG = {
 // Global flag to track if Firestore is available
 let isFirestoreEnabled = false;
 
+// Mock Firestore functions for offline mode
+const mockFirestore = {
+    collection: () => ({
+        doc: () => ({
+            get: () => Promise.resolve({ exists: false, data: () => null }),
+            set: () => Promise.resolve(),
+            update: () => Promise.resolve(),
+            delete: () => Promise.resolve(),
+            collection: () => mockFirestore.collection(),
+            onSnapshot: () => () => {}
+        }),
+        where: () => ({
+            get: () => Promise.resolve({ empty: true, docs: [] }),
+            onSnapshot: () => () => {}
+        }),
+        get: () => Promise.resolve({ empty: true, docs: [] }),
+        onSnapshot: () => () => {}
+    })
+};
+
 // Initialize Firebase services if not already done
-if (typeof window !== 'undefined' && (typeof auth === 'undefined' || typeof db === 'undefined')) {
+if (typeof window !== 'undefined' && (typeof window.auth === 'undefined' || typeof window.db === 'undefined')) {
     try {
         // Initialize Firebase if not already initialized
         if (!firebase.apps.length) {
@@ -22,43 +42,40 @@ if (typeof window !== 'undefined' && (typeof auth === 'undefined' || typeof db =
         // Set up authentication
         window.auth = firebase.auth();
         
-        // Try to initialize Firestore
-        try {
-            window.db = firebase.firestore();
-            isFirestoreEnabled = true;
-            
-            // Set Firestore settings
-            window.db.settings({
-                cacheSizeBytes: firebase.firestore.CACHE_SIZE_UNLIMITED
-            });
-            
-            // Enable offline persistence (but don't wait for it)
-            window.db.enablePersistence({ experimentalForceOwningTab: true })
-                .catch(err => {
-                    if (err.code === 'failed-precondition') {
-                        console.warn('Offline persistence can only be enabled in one tab at a time.');
-                    } else if (err.code === 'unimplemented') {
-                        console.warn('The current browser does not support offline persistence.');
-                    }
-                    isFirestoreEnabled = false;
-                });
+        // Try to initialize Firestore if it's available
+        if (typeof firebase.firestore === 'function') {
+            try {
+                window.db = firebase.firestore();
+                isFirestoreEnabled = true;
                 
-            console.log('Firestore initialized with offline persistence');
-        } catch (firestoreError) {
-            console.warn('Firestore initialization failed, running in offline mode:', firestoreError.message);
+                // Set Firestore settings
+                const settings = { cacheSizeBytes: firebase.firestore.CACHE_SIZE_UNLIMITED };
+                window.db.settings(settings);
+                
+                // Enable offline persistence (but don't wait for it)
+                window.db.enablePersistence({ experimentalForceOwningTab: true })
+                    .then(() => console.log('Firestore persistence enabled'))
+                    .catch(err => {
+                        if (err.code === 'failed-precondition') {
+                            console.warn('Offline persistence can only be enabled in one tab at a time.');
+                        } else if (err.code === 'unimplemented') {
+                            console.warn('The current browser does not support offline persistence.');
+                        } else {
+                            console.warn('Error enabling offline persistence:', err);
+                        }
+                        isFirestoreEnabled = false;
+                    });
+                    
+                console.log('Firestore initialized with offline persistence');
+            } catch (firestoreError) {
+                console.warn('Firestore initialization failed, running in offline mode:', firestoreError.message);
+                isFirestoreEnabled = false;
+                window.db = mockFirestore;
+            }
+        } else {
+            console.warn('Firestore is not available, running in offline mode');
             isFirestoreEnabled = false;
-            
-            // Provide a mock db object for offline mode
-            window.db = {
-                collection: () => ({
-                    doc: () => ({
-                        set: () => Promise.reject('Firestore not available'),
-                        get: () => Promise.reject('Firestore not available'),
-                        update: () => Promise.reject('Firestore not available'),
-                        delete: () => Promise.reject('Firestore not available')
-                    })
-                })
-            };
+            window.db = mockFirestore;
         }
     } catch (error) {
         console.error('Firebase initialization error:', error);
@@ -76,16 +93,7 @@ if (typeof window !== 'undefined' && (typeof auth === 'undefined' || typeof db =
             }
         };
         
-        window.db = window.db || {
-            collection: () => ({
-                doc: () => ({
-                    set: () => Promise.reject('Firestore not available'),
-                    get: () => Promise.reject('Firestore not available'),
-                    update: () => Promise.reject('Firestore not available'),
-                    delete: () => Promise.reject('Firestore not available')
-                })
-            })
-        };
+        window.db = window.db || mockFirestore;
         
         // Show error to user if running in browser
         if (typeof document !== 'undefined') {
