@@ -7,6 +7,7 @@
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
   
   <!-- Initialize Firebase -->
   <script>
@@ -22,9 +23,31 @@
 
     // Initialize Firebase
     if (!firebase.apps.length) {
-      firebase.initializeApp(firebaseConfig);
+      const app = firebase.initializeApp(firebaseConfig);
+      // Initialize Firestore with settings
+      const db = firebase.firestore();
+      db.settings({
+        cacheSizeBytes: firebase.firestore.CACHE_SIZE_UNLIMITED
+      });
+      
+      // Enable offline persistence
+      db.enablePersistence({ experimentalForceOwningTab: true })
+        .catch((err) => {
+          if (err.code === 'failed-precondition') {
+            console.warn('Offline persistence can only be enabled in one tab at a time.');
+          } else if (err.code === 'unimplemented') {
+            console.warn('The current browser does not support offline persistence.');
+          }
+        });
+      
+      // Make firebase available globally
+      window.firebase = firebase;
+      window.db = db;
+    } else {
+      // Use existing Firebase app
+      window.firebase = firebase;
+      window.db = firebase.firestore();
     }
-    window.firebase = firebase;
   </script>
   
   <!-- Shared Authentication -->
