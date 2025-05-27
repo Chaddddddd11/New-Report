@@ -562,7 +562,7 @@
                                     // Make field names case-insensitive and trim whitespace
                                     const normalizedRow = {};
                                     Object.entries(row).forEach(([key, value]) => {
-                                        const normalizedKey = key.trim().toLowerCase();
+                                        const normalizedKey = key.toString().trim().toLowerCase().replace(/[^a-z0-9]/g, '');
                                         console.log(`Processing key: '${key}' -> '${normalizedKey}'`);
                                         normalizedRow[normalizedKey] = value;
                                     });
@@ -573,30 +573,54 @@
                                     const roomName = (normalizedRow['roomname'] || normalizedRow['room'] || '').toString().trim();
                                     let capacity = normalizedRow['capacity'];
                                     
-                                    // Try to convert capacity to number, default to undefined if not a valid number
+                                    // Debug: Log all available keys for troubleshooting
+                                    const availableKeys = Object.keys(normalizedRow).join(', ');
+                                    console.log('Available normalized keys:', availableKeys);
+                                    
+                                    // Try to convert capacity to number, handle various formats
                                     capacity = capacity !== undefined && capacity !== '' ? 
-                                        Number(capacity) : undefined;
+                                        Number(capacity.toString().replace(/[^0-9.]/g, '')) : undefined;
                                     
                                     console.log('Extracted values - roomName:', roomName, 'capacity:', capacity, 'type:', typeof capacity);
                                     
-                                    if (!roomName) {
-                                        throw new Error(`Row ${i + 2}: Missing required field 'roomName' or 'room'\n` +
-                                            `Available fields: ${JSON.stringify(Object.keys(row))}`);
+                                    // Check for room name in various possible fields
+                                    const possibleRoomNameFields = ['roomname', 'room', 'room_name', 'roomname'];
+                                    let foundRoomName = '';
+                                    
+                                    for (const field of possibleRoomNameFields) {
+                                        if (normalizedRow[field] !== undefined) {
+                                            foundRoomName = normalizedRow[field].toString().trim();
+                                            if (foundRoomName) break;
+                                        }
+                                    }
+                                    
+                                    if (!foundRoomName) {
+                                        throw new Error(`Row ${i + 2}: Missing required room name.\n` +
+                                            `Available fields: ${availableKeys}\n` +
+                                            `Tried fields: ${possibleRoomNameFields.join(', ')}`);
                                     }
                                     
                                     if (capacity === undefined || isNaN(capacity)) {
                                         throw new Error(`Row ${i + 2}: Invalid or missing 'capacity' value. Must be a number.\n` +
-                                            `Found: '${normalizedRow['capacity']}'`);
+                                            `Found: '${normalizedRow['capacity']}'\n` +
+                                            `Available fields: ${availableKeys}`);
                                     }
+                                    
+                                    // If we get here, we have valid data
+                                    console.log('Successfully parsed row:', { roomName: foundRoomName, capacity });
                                     
                                     // Prepare room document data using normalized field names
                                     docData = {
                                         capacity: Number(capacity) || 0,
-                                        day: String(normalizedRow['day'] || ''),
-                                        roomName: String(roomName).trim(),
-                                        time: String(normalizedRow['time'] || ''),
-                                        timestamp: window.firestore.serverTimestamp()
+                                        day: String(normalizedRow['day'] || '').trim(),
+                                        roomName: foundRoomName,
+                                        room: foundRoomName, // Keep both for backward compatibility
+                                        time: String(normalizedRow['time'] || '').trim(),
+                                        timestamp: window.firestore.serverTimestamp(),
+                                        updatedAt: window.firestore.serverTimestamp()
                                     };
+                                    
+                                    console.log('Prepared document data:', docData);
                                     
                                     // Add document
                                     const newDocRef = window.firestore.doc(window.firestore.collection('Rooms'));
