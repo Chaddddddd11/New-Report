@@ -816,7 +816,7 @@
                             box-sizing: border-box;">
                   <div class="subject">${instructor.subject || 'N/A'}</div>
                   <div class="instructor">${instructor.name || 'N/A'}</div>
-                  <div class="room">${instructor.roomName || 'TBA'}</div>
+                  <div class="room">${instructor.roomName || instructor.room || 'TBA'}</div>
                 </div>`;
               
               cell.innerHTML = entryHTML;
