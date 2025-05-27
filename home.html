@@ -4,14 +4,15 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>DHVSU Instructor Scheduling System</title>
-  <!-- Firebase SDK -->
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
-  
-  <!-- Initialize Firebase -->
-  <script>
-    // Firebase configuration for room management system
+  <!-- Firebase SDK v9+ -->
+  <script type="module">
+    // Import the functions you need from the Firebase SDKs
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+    import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+    import { getFirestore, enableIndexedDbPersistence } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+    import { getAnalytics } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-analytics.js';
+
+    // Firebase configuration for room-management-system
     const firebaseConfig = {
       apiKey: "AIzaSyDeqxzp_-kKjM3hPr6CLGfTn38e4swSKbo",
       authDomain: "room-management-system-8e899.firebaseapp.com",
@@ -22,32 +23,30 @@
     };
 
     // Initialize Firebase
-    if (!firebase.apps.length) {
-      const app = firebase.initializeApp(firebaseConfig);
-      // Initialize Firestore with settings
-      const db = firebase.firestore();
-      db.settings({
-        cacheSizeBytes: firebase.firestore.CACHE_SIZE_UNLIMITED
-      });
-      
-      // Enable offline persistence
-      db.enablePersistence({ experimentalForceOwningTab: true })
-        .catch((err) => {
-          if (err.code === 'failed-precondition') {
-            console.warn('Offline persistence can only be enabled in one tab at a time.');
-          } else if (err.code === 'unimplemented') {
-            console.warn('The current browser does not support offline persistence.');
-          }
-        });
-      
-      // Make firebase available globally
-      window.firebase = firebase;
-      window.db = db;
-    } else {
-      // Use existing Firebase app
-      window.firebase = firebase;
-      window.db = firebase.firestore();
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+    
+    // Initialize Analytics if available
+    if (typeof getAnalytics === 'function') {
+      const analytics = getAnalytics(app);
     }
+    
+    // Enable offline persistence
+    enableIndexedDbPersistence(db, { forceOwnership: true })
+      .catch((err) => {
+        if (err.code === 'failed-precondition') {
+          console.warn('Offline persistence can only be enabled in one tab at a time.');
+        } else if (err.code === 'unimplemented') {
+          console.warn('The current browser does not support offline persistence.');
+        } else {
+          console.warn('Error enabling offline persistence:', err);
+        }
+      });
+    
+    // Make firebase available globally
+    window.firebase = app;
+    window.db = db;
   </script>
   
   <!-- Shared Authentication -->
