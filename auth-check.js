@@ -10,11 +10,11 @@ import {
 } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 import { 
     getFirestore, 
+    initializeFirestore,
     doc, 
     getDoc, 
     setDoc, 
     serverTimestamp,
-    enableIndexedDbPersistence,
     CACHE_SIZE_UNLIMITED
 } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
@@ -410,53 +410,7 @@ async function handleSuccessfulLogin(user) {
     }
 }
 
-// Handle failed login
-async function handleFailedLogin(email) {
-    try {
-        // Get current number of attempts
-        let attempts = parseInt(sessionStorage.getItem(SECURITY_CONFIG.LOGIN_ATTEMPTS_KEY) || '0');
-        attempts++;
-        
-        // Update attempts counter
-        sessionStorage.setItem(SECURITY_CONFIG.LOGIN_ATTEMPTS_KEY, attempts.toString());
-        
-        // Check if we should lock the account
-        if (attempts >= SECURITY_CONFIG.MAX_LOGIN_ATTEMPTS) {
-            const lockoutTime = Date.now() + SECURITY_CONFIG.LOCKOUT_DURATION;
-            sessionStorage.setItem(SECURITY_CONFIG.LOCKOUT_UNTIL_KEY, lockoutTime.toString());
-            
-            // Log the lockout event
-            await logSecurityEvent({
-                type: 'account_lockout',
-                email: email,
-                timestamp: new Date().toISOString(),
-                details: {
-                    attempts: attempts,
-                    lockoutDuration: SECURITY_CONFIG.LOCKOUT_DURATION
-                }
-            });
-            
-            throw new Error(`Too many failed attempts. Account locked for ${Math.ceil(SECURITY_CONFIG.LOCKOUT_DURATION / 60000)} minutes.`);
-        }
-        
-        // Log the failed attempt
-        await logSecurityEvent({
-            type: 'login_failed',
-            email: email,
-            timestamp: new Date().toISOString(),
-            details: {
-                attempts: attempts,
-                remainingAttempts: SECURITY_CONFIG.MAX_LOGIN_ATTEMPTS - attempts
-            }
-        });
-        
-        const remainingAttempts = SECURITY_CONFIG.MAX_LOGIN_ATTEMPTS - attempts;
-        throw new Error(`Invalid email or password. ${remainingAttempts} attempt${remainingAttempts !== 1 ? 's' : ''} remaining.`);
-    } catch (error) {
-        console.error('Error handling failed login:', error);
-        throw error; // Re-throw to be handled by the caller
-    }
-}
+// Handle failed login is now defined later in the file with enhanced security features
 
 // Initialize authentication state listener
 function initAuthStateListener() {
