@@ -478,67 +478,82 @@
         // Download template function
         function downloadTemplate(format, type = 'instructors') {
             try {
-                let sampleData;
+                // Create a new workbook
+                const wb = XLSX.utils.book_new();
                 
                 if (type === 'instructors') {
                     // Sample data for Instructors collection
-                    sampleData = [
-                        {
-                            'Course': 'BSA',
-                            'Day': 'Monday',
-                            'Name': 'Prof. Garcia',
-                            'Room': 'CBS BLDG 1 102',
-                            'ScheduleColor': '#88f1ab',
-                            'Section': 'A',
-                            'Subject': 'Law',
-                            'Time': '09:00-10:00',
-                            'Year': '1'
-                        },
-                        {
-                            'Course': 'BSIT',
-                            'Day': 'Tuesday',
-                            'Name': 'Prof. Reyes',
-                            'Room': 'CCS BLDG 2 201',
-                            'ScheduleColor': '#88f1ab',
-                            'Section': 'B',
-                            'Subject': 'Programming',
-                            'Time': '10:30-12:00',
-                            'Year': '2'
-                        }
-                    ];
-                } else {
+                    const instructorsData = [{
+                        'Name': 'John Doe',
+                        'name': 'John Doe',
+                        'Subject': 'Mathematics',
+                        'subject': 'Mathematics',
+                        'Time': '09:00-10:00',
+                        'time': '09:00-10:00',
+                        'Course': 'BSIT',
+                        'course': 'BSIT',
+                        'Day': 'Monday',
+                        'day': 'Monday',
+                        'Room': 'Room 101',
+                        'room': 'Room 101',
+                        'roomName': 'Room 101',
+                        'Section': 'A',
+                        'section': 'A',
+                        'Year': '1',
+                        'year': '1',
+                        'ScheduleColor': '#88f1ab',
+                        'scheduleColor': '#88f1ab',
+                        'notes': 'Additional information'
+                    }];
+                    
+                    const ws = XLSX.utils.json_to_sheet(instructorsData);
+                    XLSX.utils.book_append_sheet(wb, ws, 'Instructors');
+                    
+                } else if (type === 'rooms') {
                     // Sample data for Rooms collection
-                    sampleData = [
-                        {
-                            'Room': 'CBS BLG 2F 201',
-                            'Day': 'Wednesday',
-                            'Time': '07:00-08:00',
-                            'Capacity': 35
-                        },
-                        {
-                            'Room': 'CAS BLG 3F 301',
-                            'Day': 'Thursday',
-                            'Time': '10:00-11:30',
-                            'Capacity': 40
-                        }
-                    ];
+                    const roomsData = [{
+                        'Room': 'Room 101',
+                        'room': 'Room 101',
+                        'roomName': 'Room 101',
+                        'Time': '09:00-10:00',
+                        'time': '09:00-10:00',
+                        'Capacity': '30',
+                        'capacity': '30',
+                        'Day': 'Monday',
+                        'day': 'Monday',
+                        'building': 'Main Building',
+                        'floor': '1',
+                        'type': 'Lecture',
+                        'notes': 'Projector available'
+                    }];
+                    
+                    const ws = XLSX.utils.json_to_sheet(roomsData);
+                    XLSX.utils.book_append_sheet(wb, ws, 'Rooms');
                 }
                 
-                if (format === 'json') {
-                    downloadJSON(sampleData);
-                } else {
-                    // Convert to worksheet
-                    const ws = XLSX.utils.json_to_sheet(sampleData);
-                    
-                    // Create workbook
-                    const wb = XLSX.utils.book_new();
-                    XLSX.utils.book_append_sheet(wb, ws, 'Template');
-                    
-                    // Generate and trigger download
-                    const fileExt = format === 'csv' ? 'csv' : 'xlsx';
-                    const fileName = `${type}_template.${fileExt}`;
-                    XLSX.writeFile(wb, fileName, { bookType: fileExt });
-                }
+                // Add instructions sheet
+                const instructions = [
+                    ['INSTRUCTIONS'],
+                    ['For Instructors:'],
+                    ['- Required fields: name, subject, time'],
+                    ['- All other fields are optional'],
+                    [''],
+                    ['For Rooms:'],
+                    ['- Required fields: roomName (or Room), time'],
+                    ['- All other fields are optional'],
+                    [''],
+                    ['NOTE: You only need to provide one version of each field'],
+                    ['Example: Either "Name" or "name" is sufficient'],
+                    ['Delete any columns you don\'t need']
+                ];
+                
+                const instructionsWS = XLSX.utils.aoa_to_sheet(instructions);
+                XLSX.utils.book_append_sheet(wb, instructionsWS, 'INSTRUCTIONS');
+                
+                // Generate and download the file
+                const fileExt = format === 'csv' ? 'csv' : 'xlsx';
+                const fileName = `${type}_template.${fileExt}`;
+                XLSX.writeFile(wb, fileName, { bookType: fileExt });
             } catch (error) {
                 console.error('Error in downloadTemplate:', error);
                 alert('Error generating template. Please check the console for details.');
