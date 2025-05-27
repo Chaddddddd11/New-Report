@@ -830,7 +830,8 @@
                             
                             // Check if room matches the selected day and time
                             const dayMatches = roomInfo.schedule.day === selectedDay.toLowerCase();
-                            const timeMatches = hasTimeConflict(classTime, roomInfo.schedule.time);
+                            const timeMatches = roomStart === selectedStartMinutes && 
+                                              roomEnd === selectedEndMinutes;
                             
                             if (dayMatches && timeMatches) {
                                 roomInfo.isAvailable = true;
@@ -858,9 +859,18 @@
                     if (!roomInfo) return;
                     
                     try {
+                        const [instTimeStartStr, instTimeEndStr] = instructor.time.trim().split('-').map(t => t.trim());
+                        const instructorStartMinutes = timeToMinutes(instTimeStartStr);
+                        const instructorEndMinutes = timeToMinutes(instTimeEndStr);
+                        
+                        if (isNaN(instructorStartMinutes) || isNaN(instructorEndMinutes)) {
+                            console.warn(`Skipping booking check for instructor ${instructor.name} due to invalid time format: ${instructor.time}`);
+                            return;
+                        }
+                        
                         // Check for time conflict with selected time slot
                         if (instructor.day.trim().toLowerCase() === selectedDay.toLowerCase() &&
-                            hasTimeConflict(classTime, instructor.time)) {
+                            !(selectedEndMinutes <= instructorStartMinutes || selectedStartMinutes >= instructorEndMinutes)) {
                             console.log(`Room '${instructor.roomName}' has a scheduling conflict with instructor '${instructor.name}'`);
                             roomInfo.isAvailable = false;
                             roomInfo.conflictReason = `Booked by ${instructor.name} (${instructor.time})`;
@@ -1097,7 +1107,7 @@
                     section: sectionSelect ? sectionSelect.value : '',
                     day: daySelect ? daySelect.value : '',
                     time: timeSelect ? timeSelect.value : '',
-                    roomName: roomInput ? roomInput.value.trim() : '',
+                    room: roomInput ? roomInput.value.trim() : '',
                     scheduleColor: scheduleColorInput ? scheduleColorInput.value : '#800000'
                 };
                 
@@ -1135,47 +1145,108 @@
                         where("name", "==", formData.name.trim()),
                         where("day", "==", formData.day)
                     );
-
-                    const instructorTimeConflictSnapshot = await getDocs(instructorTimeConflictQuery);
-                    let hasConflict = false;
-                    let conflictDetails = null;
                     
-                    instructorTimeConflictSnapshot.forEach(doc => {
-                        // Skip current instructor when in update mode
-                        if (isUpdateMode && doc.id === currentInstructorId) return;
-                        
-                        const instructor = doc.data();
-                        if (hasTimeConflict(formData.time, instructor.time)) {
-                            hasConflict = true;
-                            conflictDetails = `${instructor.day} ${instructor.time} in ${instructor.roomName || 'a room'}`;
+                    const instructorTimeConflictSnapshot = await getDocs(instructorTimeConflictQuery);
+                    let hasInstructorConflict = false;
+                    let conflictDetails = [];
+                    
+                    instructorTimeConflictSnapshot.forEach(docInstance => {
+                        // Skip the current instructor when in update mode
+                        if (isUpdateMode && docInstance.id === currentInstructorId) {
                             return;
                         }
+                        
+                        const booking = docInstance.data();
+                        let existingStartHour, existingEndHour;
+                        let existingTime = '';
+                        
+                        // Handle both time formats
+                        if (booking.time) {
+                            // New format: "HH:MM-HH:MM"
+                            const [existingStart, existingEnd] = booking.time.split('-');
+                            existingStartHour = parseInt(existingStart.split(':')[0], 10);
+                            existingEndHour = parseInt(existingEnd.split(':')[0], 10);
+                            existingTime = booking.time;
+                        } else if (booking.timeStart && booking.timeEnd) {
+                            // Old format: separate timeStart and timeEnd
+                            existingStartHour = parseInt(booking.timeStart.split(':')[0], 10);
+                            existingEndHour = parseInt(booking.timeEnd.split(':')[0], 10);
+                            existingTime = `${booking.timeStart}-${booking.timeEnd}`;
+                        }
+                        
+                        // Check for time overlap if we have valid times
+                        if (existingStartHour !== undefined && existingEndHour !== undefined) {
+                            const timeOverlap = (startHour < existingEndHour) && (endHour > existingStartHour);
+                            
+                            if (timeOverlap) {
+                                hasInstructorConflict = true;
+                                conflictDetails.push({
+                                    room: booking.room || 'Unknown Room',
+                                    time: existingTime,
+                                    subject: booking.subject || 'No Subject'
+                                });
+                            }
+                        }
                     });
-                    
-                    if (hasConflict) {
-                        throw new Error(`This instructor already has a class scheduled on ${conflictDetails}. Please choose a different time.`);
+
+                    if (hasInstructorConflict) {
+                        let errorMessage = `Instructor ${formData.name} already has a class scheduled at this time. `;
+                        errorMessage += 'Conflicts with: ';
+                        errorMessage += conflictDetails.map(c => 
+                            `${c.subject} in ${c.room} at ${c.time}`
+                        ).join('; ');
+                        
+                        showError(errorMessage);
+                        return;
                     }
 
                     // Conflict Validation 2: Room already booked by anyone at that time
                     const roomConflictQuery = query(
-                        collection(db, 'Instructors'),
-                        where("roomName", "==", formData.roomName),
-                        where("day", "==", formData.day)
+                        collection(db, 'Instructors'), 
+                        where("day", "==", formData.day), 
+                        where("room", "==", formData.room)
                     );
-
+                    
                     const roomConflictSnapshot = await getDocs(roomConflictQuery);
                     let hasRoomConflict = false;
-                    let conflictingInstructor = null;
+                    let roomConflictDetails = [];
                     
-                    roomConflictSnapshot.forEach(doc => {
-                        // Skip current instructor when in update mode
-                        if (isUpdateMode && doc.id === currentInstructorId) return;
-                        
-                        const instructor = doc.data();
-                        if (hasTimeConflict(formData.time, instructor.time)) {
-                            hasRoomConflict = true;
-                            conflictingInstructor = instructor.name;
+                    roomConflictSnapshot.forEach(docInstance => {
+                        // Skip the current instructor when in update mode
+                        if (isUpdateMode && docInstance.id === currentInstructorId) {
                             return;
+                        }
+                        
+                        const booking = docInstance.data();
+                        let existingStartHour, existingEndHour;
+                        let existingTime = '';
+                        
+                        // Handle both time formats
+                        if (booking.time) {
+                            // New format: "HH:MM-HH:MM"
+                            const [existingStart, existingEnd] = booking.time.split('-');
+                            existingStartHour = parseInt(existingStart.split(':')[0], 10);
+                            existingEndHour = parseInt(existingEnd.split(':')[0], 10);
+                            existingTime = booking.time;
+                        } else if (booking.timeStart && booking.timeEnd) {
+                            // Old format: separate timeStart and timeEnd
+                            existingStartHour = parseInt(booking.timeStart.split(':')[0], 10);
+                            existingEndHour = parseInt(booking.timeEnd.split(':')[0], 10);
+                            existingTime = `${booking.timeStart}-${booking.timeEnd}`;
+                        }
+                        
+                        // Check for time overlap if we have valid times
+                        if (existingStartHour !== undefined && existingEndHour !== undefined) {
+                            const timeOverlap = (startHour < existingEndHour) && (endHour > existingStartHour);
+                            
+                            if (timeOverlap) {
+                                hasRoomConflict = true;
+                                roomConflictDetails.push({
+                                    instructor: booking.name || 'Unknown Instructor',
+                                    time: existingTime,
+                                    subject: booking.subject || 'No Subject'
+                                });
+                            }
                         }
                     });
 
