@@ -69,6 +69,28 @@
             transition: all 0.3s ease;
         }
 
+        .back-button {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: none;
+            border: none;
+            color: var(--primary-color);
+            font-size: 1.2rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            padding: 5px 10px;
+            border-radius: 5px;
+            transition: all 0.3s ease;
+        }
+
+        .back-button:hover {
+            background: rgba(139, 0, 0, 0.1);
+            transform: translateX(-3px);
+        }
+
         .logo {
             max-width: 120px;
             margin: 0 auto 20px;
@@ -244,6 +266,9 @@
 </head>
 <body>
     <div class="login-container">
+        <a href="Intro.html" class="back-button">
+            <i class="fas fa-arrow-left"></i> Back
+        </a>
         <img src="https://media.assettype.com/sunstar/2025-02-04/7x1wu7dq/DHVSU.jpg" alt="DHVSU Logo" class="logo">
         <h2>Sign in Faculty</h2>
         
