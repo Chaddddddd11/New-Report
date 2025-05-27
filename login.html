@@ -198,8 +198,31 @@
             border-radius: 50%;
             border-top-color: #fff;
             animation: spin 1s ease-in-out infinite;
-            margin-right: 8px;
+            margin-right: 10px;
             vertical-align: middle;
+        }
+        
+        /* Form loading state */
+        .form-loading {
+            position: relative;
+            opacity: 0.8;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+        
+        .form-loading::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 255, 255, 0.5);
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
         }
         
         @keyframes spin {
@@ -223,21 +246,10 @@
             }
         }
     </style>
-</head>
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - DHVSU Scheduling System</title>
-    <!-- Firebase SDK -->
-    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
-    <style>
+</head>
+<body>
         :root {
             --primary-color: #610000;
             --secondary-color: #800a0a;
@@ -430,83 +442,264 @@
             </a>
         </form>
         
-        <div class="footer">
-            DHVSU &copy; 2025 - All Rights Reserved
-        </div>
     </div>
 
+    <!-- Include auth-check.js -->
+    <script src="auth-check.js"></script>
+    
     <script>
-        // Firebase configuration
+        // Firebase configuration - Move this to a separate config.js file in production
         const firebaseConfig = {
             apiKey: "AIzaSyDBu7-vOFmS62IaGD8-8zb6TH0a1mHYNpI",
             authDomain: "dhvsu-faculty-scheduling.firebaseapp.com",
             projectId: "dhvsu-faculty-scheduling",
             storageBucket: "dhvsu-faculty-scheduling.appspot.com",
-            messagingSenderId: "1075180921702",
-            appId: "1:1075180921702:web:a0320fa286c684511cdea7",
-            measurementId: "G-EP4FZ04FQT"
+            messagingSenderId: "123456789012",
+            appId: "1:123456789012:web:abcdef123456"
         };
 
         // Initialize Firebase
         firebase.initializeApp(firebaseConfig);
-        const auth = firebase.auth();
-        const db = firebase.firestore();
 
-        // Handle form submission
-        document.getElementById('loginForm').addEventListener('submit', function(e) {
+        // Handle login form submission
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             
-            const username = document.getElementById('username').value.trim();
+            const email = document.getElementById('email').value.trim();
             const password = document.getElementById('password').value;
-            const errorMessage = document.getElementById('errorMessage');
             const loginBtn = document.getElementById('loginBtn');
+            const errorMessage = document.getElementById('error-message');
             
-            // Show loading state
-            loginBtn.disabled = true;
-            loginBtn.innerHTML = '<span class="spinner">Signing in...</span>';
+            // Reset error message and styles
+            errorMessage.style.display = 'none';
+            errorMessage.className = 'alert alert-danger';
+            errorMessage.innerHTML = '';
             
-            // Add domain to username for authentication
-            const email = `${username}@gmail.com`;
+            // Basic validation
+            if (!email && !password) {
+                errorMessage.textContent = 'Please enter your email and password.';
+                errorMessage.style.display = 'block';
+                document.getElementById('email').focus();
+                return;
+            }
             
-            auth.signInWithEmailAndPassword(email, password)
-                .then((userCredential) => {
-                    // Signed in successfully
-                    const redirectTo = sessionStorage.getItem('redirectAfterLogin') || 'home.html';
-                    sessionStorage.removeItem('redirectAfterLogin');
-                    window.location.href = redirectTo;
-                })
-                .catch((error) => {
-                    // Handle errors
-                    let errorMessageText = 'Invalid email or password. Please try again.';
-                    if (error.code === 'auth/user-not-found') {
-                        errorMessageText = 'No account found with this email address.';
-                    } else if (error.code === 'auth/wrong-password') {
-                        errorMessageText = 'Incorrect password. Please try again.';
-                    } else if (error.code === 'auth/too-many-requests') {
-                        errorMessageText = 'Too many failed attempts. Please try again later.';
-                    } else if (error.code === 'auth/invalid-email') {
-                        errorMessageText = 'Please enter a valid email address.';
+            if (!email) {
+                errorMessage.textContent = 'Please enter your email address.';
+                errorMessage.style.display = 'block';
+                document.getElementById('email').focus();
+                return;
+            }
+            
+            if (!password) {
+                errorMessage.textContent = 'Please enter your password.';
+                errorMessage.style.display = 'block';
+                document.getElementById('password').focus();
+                return;
+            }
+            
+            // Validate email format
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(email)) {
+                errorMessage.textContent = 'Please enter a valid email address.';
+                errorMessage.style.display = 'block';
+                document.getElementById('email').select();
+                return;
+            }
+            
+            try {
+                // Show loading state
+                loginBtn.disabled = true;
+                loginBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Signing in...';
+                
+                // Add loading class to form
+                document.getElementById('loginForm').classList.add('form-loading');
+                
+                // Sign in with email and password
+                const userCredential = await firebase.auth().signInWithEmailAndPassword(email, password);
+                const user = userCredential.user;
+                
+                // Check if email is verified
+                if (!user.emailVerified) {
+                    // Sign out and show verification message
+                    await firebase.auth().signOut();
+                    throw { code: 'auth/email-not-verified' };
+                }
+                
+            } catch (error) {
+                // Handle errors
+                console.error('Login error:', error);
+                
+                // User-friendly error messages
+                let errorMsg = 'An error occurred during login. Please try again.';
+                let errorType = 'error';
+                
+                switch(error.code) {
+                    case 'auth/wrong-password':
+                        errorMsg = 'Incorrect password. Please try again.';
+                        break;
+                    case 'auth/user-not-found':
+                        errorMsg = 'No account found with this email. Please check your email or sign up.';
+                        break;
+                    case 'auth/invalid-email':
+                        errorMsg = 'Please enter a valid email address.';
+                        break;
+                    case 'auth/too-many-requests':
+                        errorMsg = 'Too many failed login attempts. Please try again later or reset your password.';
+                        errorType = 'warning';
+                        break;
+                    case 'auth/account-suspended':
+                        errorMsg = 'This account has been temporarily suspended. Please contact support.';
+                        errorType = 'warning';
+                        break;
+                    case 'auth/email-not-verified':
+                        errorMsg = 'Please verify your email before logging in. Check your inbox for the verification email.';
+                        errorType = 'info';
+                        break;
+                    case 'auth/account-pending':
+                        errorMsg = 'Your account is pending approval. Please wait for an administrator to activate your account.';
+                        errorType = 'info';
+                        break;
+                    case 'auth/account-inactive':
+                        errorMsg = 'Your account is currently inactive. Please contact support for assistance.';
+                        errorType = 'warning';
+                        break;
+                    case 'auth/no-role':
+                        errorMsg = 'Your account is not properly configured. Please contact support.';
+                        errorType = 'error';
+                        break;
+                    default:
+                        errorMsg = error.message || 'An error occurred during login. Please try again.';
+                        if (error.code) {
+                            console.error('Login error code:', error.code);
+                        }
+                        break;
+                }
+                
+                // Set appropriate alert class based on error type
+                switch(errorType) {
+                    case 'warning':
+                        errorMessage.className = 'alert alert-warning';
+                        break;
+                    case 'info':
+                        errorMessage.className = 'alert alert-info';
+                        break;
+                    default:
+                        errorMessage.className = 'alert alert-danger';
+                }
+                
+                // Show error message with appropriate styling
+                errorMessage.innerHTML = ''; // Clear previous content
+                errorMessage.appendChild(document.createTextNode(errorMsg));
+                errorMessage.style.display = 'block';
+                
+                // Add a retry counter for failed attempts
+                if (error.code === 'auth/wrong-password' || 
+                    error.code === 'auth/user-not-found') {
+                    const retryCount = parseInt(sessionStorage.getItem('loginRetryCount') || '0') + 1;
+                    sessionStorage.setItem('loginRetryCount', retryCount);
+                    
+                    if (retryCount >= 3) {
+                        const remainingAttempts = 5 - retryCount;
+                        if (remainingAttempts > 0) {
+                            const attemptsMsg = document.createElement('div');
+                            attemptsMsg.textContent = `You have ${remainingAttempts} ${remainingAttempts === 1 ? 'attempt' : 'attempts'} left.`;
+                            attemptsMsg.style.marginTop = '8px';
+                            errorMessage.appendChild(attemptsMsg);
+                        }
                     }
+                } else {
+                    // Reset retry counter for other types of errors
+                    sessionStorage.removeItem('loginRetryCount');
+                }
+                
+                // Add a link to reset password if it's a password-related error
+                if (error.code === 'auth/wrong-password') {
+                    const resetLink = document.createElement('a');
+                    resetLink.href = 'forgot-password.html';
+                    resetLink.textContent = ' Forgot your password?';
+                    resetLink.style.marginLeft = '10px';
+                    resetLink.style.color = '#dc3545';
+                    resetLink.style.textDecoration = 'underline';
+                    resetLink.style.display = 'inline-block';
+                    resetLink.style.marginTop = '8px';
+                    errorMessage.appendChild(document.createElement('br'));
+                    errorMessage.appendChild(resetLink);
+                }
+                
+                // Reset button and form state
+                loginBtn.disabled = false;
+                loginBtn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Sign In';
+                document.getElementById('loginForm').classList.remove('form-loading');
+                
+                // Focus on the appropriate field based on error
+                if (error.code === 'auth/wrong-password') {
+                    document.getElementById('password').focus();
+                    document.getElementById('password').select();
+                } else if (error.code === 'auth/user-not-found' || 
+                          error.code === 'auth/invalid-email') {
+                    document.getElementById('email').focus();
+                    document.getElementById('email').select();
+                }
+                
+                // Add a retry counter for failed attempts
+                if (error.code === 'auth/wrong-password' || 
+                    error.code === 'auth/user-not-found') {
+                    const retryCount = parseInt(sessionStorage.getItem('loginRetryCount') || '0') + 1;
+                    sessionStorage.setItem('loginRetryCount', retryCount);
                     
-                    errorMessage.textContent = errorMessageText;
-                    errorMessage.style.display = 'block';
-                    
-                    // Reset button state
-                    loginBtn.disabled = false;
-                    loginBtn.textContent = 'Sign In';
-                    
-                    // Hide error message after 5 seconds
-                    setTimeout(() => {
-                        errorMessage.style.display = 'none';
-                    }, 5000);
-                });
+                    if (retryCount >= 3) {
+                        const remainingAttempts = 5 - retryCount;
+                        if (remainingAttempts > 0) {
+                            errorMessage.textContent += ` You have ${remainingAttempts} ${remainingAttempts === 1 ? 'attempt' : 'attempts'} left.`;
+                        }
+                    }
+                } else {
+                    // Reset retry counter for other types of errors
+                    sessionStorage.removeItem('loginRetryCount');
+                }
+                
+                // Hide error message after 8 seconds (longer for important messages)
+                const errorTimeout = setTimeout(() => {
+                    errorMessage.style.display = 'none';
+                }, 8000);
+                
+                // Clear timeout if user starts typing
+                const clearErrorOnInput = () => {
+                    clearTimeout(errorTimeout);
+                    document.getElementById('email').removeEventListener('input', clearErrorOnInput);
+                    document.getElementById('password').removeEventListener('input', clearErrorOnInput);
+                };
+                
+                document.getElementById('email').addEventListener('input', clearErrorOnInput);
+                document.getElementById('password').addEventListener('input', clearErrorOnInput);
+                
+                // Add a link to reset password if it's a password-related error
+                if (error.code === 'auth/wrong-password') {
+                    const resetLink = document.createElement('a');
+                    resetLink.href = 'forgot-password.html';
+                    resetLink.textContent = ' Forgot your password?';
+                    resetLink.style.marginLeft = '10px';
+                    resetLink.style.color = '#dc3545';
+                    resetLink.style.textDecoration = 'underline';
+                    errorMessage.appendChild(document.createElement('br'));
+                    errorMessage.appendChild(resetLink);
+                }
+            }
         });
         
         // Auto-hide error message when user starts typing
-        document.getElementById('username').addEventListener('input', function() {
+        document.getElementById('email').addEventListener('input', function() {
             document.getElementById('errorMessage').style.display = 'none';
         });
         
+        // Check if user is already logged in
+        firebase.auth().onAuthStateChanged((user) => {
+            if (user) {
+                // User is signed in, redirect based on role
+                // The actual redirect is handled in auth-check.js
+                console.log('User is already signed in:', user.email);
+            }
+        });
         document.getElementById('password').addEventListener('input', function() {
             document.getElementById('errorMessage').style.display = 'none';
         });
