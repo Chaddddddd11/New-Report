@@ -4,18 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - DHVSU Scheduling System</title>
-    
-    <!-- Firebase SDK -->
+    <!-- Firebase SDK - Auth only -->
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
-    
-    <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
-    
-    <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
     <style>
         :root {
             --primary-color: #610000;
@@ -59,21 +51,22 @@
         }
 
         .logo {
-            max-width: 120px;
+            width: 120px;
             margin-bottom: 20px;
+            border-radius: 8px;
         }
 
         h1 {
             color: var(--primary-color);
-            margin-bottom: 10px;
-            font-size: 24px;
+            margin-bottom: 5px;
+            font-size: 1.8rem;
         }
 
         h2 {
-            color: var(--text-color);
+            color: var(--secondary-color);
             margin-bottom: 25px;
-            font-size: 20px;
-            font-weight: 400;
+            font-size: 1.3rem;
+            font-weight: 500;
         }
 
         .form-group {
@@ -84,90 +77,86 @@
         label {
             display: block;
             margin-bottom: 8px;
-            color: #555;
+            color: var(--text-color);
             font-weight: 500;
         }
 
-        input[type="email"],
-        input[type="password"] {
+        input {
             width: 100%;
             padding: 12px 15px;
             border: 1px solid #ddd;
             border-radius: 8px;
-            font-size: 16px;
-            transition: border-color 0.3s;
+            font-size: 1rem;
+            transition: all 0.3s ease;
         }
 
-        input[type="email"]:focus,
-        input[type="password"]:focus {
+        input:focus {
             border-color: var(--primary-color);
-            outline: none;
             box-shadow: 0 0 0 3px rgba(97, 0, 0, 0.1);
+            outline: none;
         }
 
-        .btn {
-            display: inline-block;
-            background: var(--primary-color);
+        .forgot-password {
+            display: block;
+            text-align: right;
+            margin-bottom: 20px;
+            color: var(--primary-color);
+            text-decoration: none;
+            font-size: 0.9rem;
+        }
+
+        .forgot-password:hover {
+            text-decoration: underline;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            background-color: var(--primary-color);
             color: white;
             border: none;
-            padding: 12px 20px;
             border-radius: 8px;
-            font-size: 16px;
+            font-size: 1rem;
             font-weight: 500;
             cursor: pointer;
-            width: 100%;
-            transition: background-color 0.3s;
+            transition: background-color 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
         }
 
-        .btn:hover {
-            background: var(--secondary-color);
+        button:hover {
+            background-color: var(--secondary-color);
         }
 
-        .login-footer {
-            margin-top: 25px;
-            color: #666;
-            font-size: 14px;
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
         }
 
-        .login-footer a {
+        .error-message {
+            color: var(--error-color);
+            margin-top: 15px;
+            padding: 10px;
+            background-color: #f8d7da;
+            border-radius: 4px;
+            display: none;
+        }
+
+        .create-account {
+            margin-top: 20px;
+            color: var(--text-color);
+        }
+
+        .create-account a {
             color: var(--primary-color);
             text-decoration: none;
             font-weight: 500;
         }
 
-        .login-footer a:hover {
+        .create-account a:hover {
             text-decoration: underline;
-        }
-
-        .alert {
-            padding: 12px 15px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            display: none;
-        }
-
-        .alert-danger {
-            background-color: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
-        }
-
-        .alert-success {
-            background-color: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
-        }
-
-        .alert-warning {
-            background-color: #fff3cd;
-            color: #856404;
-            border: 1px solid #ffeeba;
-        }
-
-        .alert-info {
-            background-color: #d1ecf1;
-            color: #0c5460;
-            border: 1px solid #bee5eb;
         }
 
         .spinner {
@@ -178,72 +167,28 @@
             border-radius: 50%;
             border-top-color: #fff;
             animation: spin 1s ease-in-out infinite;
-            -webkit-animation: spin 1s ease-in-out infinite;
-            margin-right: 8px;
         }
 
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
-        @-webkit-keyframes spin {
-            to { -webkit-transform: rotate(360deg); }
-        }
 
-        .form-loading {
-            position: relative;
-            pointer-events: none;
-            opacity: 0.7;
-        }
-
-        .form-loading::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(255, 255, 255, 0.5);
-            z-index: 1000;
-        }
-
-        .forgot-password {
-            margin-top: 15px;
-            text-align: right;
-        }
-
-        .forgot-password a {
-            color: #666;
-            text-decoration: none;
-            font-size: 14px;
-        }
-
-        .forgot-password a:hover {
-            color: var(--primary-color);
-            text-decoration: underline;
-        }
-
-        .divider {
-            display: flex;
-            align-items: center;
-            text-align: center;
-            margin: 20px 0;
-        }
-
-        .divider::before,
-        .divider::after {
-            content: '';
-            flex: 1;
-            border-bottom: 1px solid #ddd;
-        }
-
-        .divider:not(:empty)::before {
-            margin-right: 1em;
-        }
-
-        .divider:not(:empty)::after {
-            margin-left: 1em;
+        @media (max-width: 480px) {
+            .login-container {
+                padding: 30px 20px;
+            }
+            
+            h1 {
+                font-size: 1.5rem;
+            }
+            
+            h2 {
+                font-size: 1.1rem;
+            }
         }
     </style>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
     <div class="login-container">
@@ -251,91 +196,62 @@
         <h1>DHVSU Scheduling System</h1>
         <h2>Sign In to Your Account</h2>
         
-        <!-- Error Message -->
-        <div id="errorMessage" class="alert"></div>
-        
-        <!-- Login Form -->
-        <form id="loginForm" class="login-form">
+        <form id="loginForm">
             <div class="form-group">
                 <label for="email">Email Address</label>
-                <input type="email" id="email" class="form-control" placeholder="Enter your email" required>
+                <input 
+                    type="email" 
+                    id="email" 
+                    name="email" 
+                    placeholder="Enter your email" 
+                    required
+                    autocomplete="username"
+                >
             </div>
+            
             <div class="form-group">
-                <label for="password">Password</label>
-                <input type="password" id="password" class="form-control" placeholder="Enter your password" required>
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <label for="password">Password</label>
+                    <a href="forgot-password.html" class="forgot-password">Forgot Password?</a>
+                </div>
+                <input 
+                    type="password" 
+                    id="password" 
+                    name="password" 
+                    placeholder="Enter your password" 
+                    required
+                    autocomplete="current-password"
+                >
             </div>
-            <button type="submit" class="btn">
-                <i class="fas fa-sign-in-alt"></i> Sign In
+            
+            <div id="errorMessage" class="error-message"></div>
+            
+            <button type="submit" id="loginButton">
+                <span id="buttonText">Sign In</span>
+                <div id="buttonSpinner" class="spinner" style="display: none;"></div>
             </button>
         </form>
         
-        <div class="login-footer">
-            <p>Don't have an account? <a href="create.html">Create Account</a></p>
-            <p><a href="forgot.html" id="forgotPasswordLink">
-                <i class="fas fa-key"></i> Forgot Password?
-            </a></p>
+        <div class="create-account">
+            Don't have an account? <a href="create.html">Create one</a>
         </div>
     </div>
 
+    <!-- Firebase Configuration -->
     <script>
-        // Firebase configuration
+        // Your web app's Firebase configuration
         const firebaseConfig = {
-            apiKey: "AIzaSyDBu7-vOFmS62IaGD8-8zb6TH0a1mHYNpI",
-            authDomain: "dhvsu-faculty-scheduling.firebaseapp.com",
-            projectId: "dhvsu-faculty-scheduling",
-            storageBucket: "dhvsu-faculty-scheduling.appspot.com",
-            messagingSenderId: "123456789012",
-            appId: "1:123456789012:web:abcdef123456"
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_AUTH_DOMAIN",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_STORAGE_BUCKET",
+            messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+            appId: "YOUR_APP_ID"
         };
-
-        // Initialize Firebase
-        firebase.initializeApp(firebaseConfig);
-        
-        // Initialize Firebase services
-        const auth = firebase.auth();
-        const db = firebase.firestore();
-        
-        // Set up auth state change listener
-        auth.onAuthStateChanged(async (user) => {
-            if (user) {
-                console.log('Auth state changed - user signed in:', user.email);
-                
-                // Check if email is verified
-                if (!user.emailVerified) {
-                    console.log('Email not verified, signing out...');
-                    await auth.signOut();
-                    return;
-                }
-                
-                // Get user role and redirect
-                try {
-                    const userDoc = await db.collection('Students').doc(user.uid).get();
-                    if (userDoc.exists) {
-                        const userData = userDoc.data();
-                        const role = userData.role || 'student';
-                        
-                        // Redirect based on role
-                        const routes = {
-                            'admin': 'admin-panel.html',
-                            'instructor': 'home.html',
-                            'student': 'home.html'
-                        };
-                        
-                        const redirectTo = routes[role] || 'home.html';
-                        console.log(`Redirecting ${role} to ${redirectTo}`);
-                        window.location.href = redirectTo;
-                    }
-                } catch (error) {
-                    console.error('Error getting user role:', error);
-                }
-            } else {
-                console.log('Auth state changed - no user signed in');
-            }
-        });
     </script>
     
-    <!-- Include auth-check.js after Firebase initialization -->
-    <script src="auth-check.js"></script>
+    <!-- Auth Check Script -->
+    <script src="auth-check-backup.js"></script>
     
     <script>
         // Handle login form submission
@@ -344,207 +260,102 @@
             
             const email = document.getElementById('email').value.trim();
             const password = document.getElementById('password').value;
-            const loginBtn = document.querySelector('#loginForm button[type="submit"]');
+            const loginButton = document.getElementById('loginButton');
+            const buttonText = document.getElementById('buttonText');
+            const buttonSpinner = document.getElementById('buttonSpinner');
             const errorMessage = document.getElementById('errorMessage');
             
-            // Reset error message and styles
+            // Show loading state
+            loginButton.disabled = true;
+            buttonText.textContent = 'Signing in...';
+            buttonSpinner.style.display = 'block';
             errorMessage.style.display = 'none';
-            errorMessage.className = 'alert alert-danger';
-            errorMessage.innerHTML = '';
-            
-            // Basic validation
-            if (!email) {
-                errorMessage.textContent = 'Please enter your email address.';
-                errorMessage.style.display = 'block';
-                document.getElementById('email').focus();
-                return;
-            }
-            
-            // Validate email format
-            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            if (!emailRegex.test(email)) {
-                errorMessage.textContent = 'Please enter a valid email address.';
-                errorMessage.style.display = 'block';
-                document.getElementById('email').select();
-                return;
-            }
-            
-            if (!password) {
-                errorMessage.textContent = 'Please enter your password.';
-                errorMessage.style.display = 'block';
-                document.getElementById('password').focus();
-                return;
-            }
             
             try {
-                // Show loading state
-                loginBtn.disabled = true;
-                loginBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Signing in...';
-                
-                // Add loading class to form
-                document.getElementById('loginForm').classList.add('form-loading');
-                
                 // Sign in with email and password
-                const userCredential = await firebase.auth().signInWithEmailAndPassword(email, password);
+                const userCredential = await window.auth.signInWithEmailAndPassword(email, password);
                 const user = userCredential.user;
                 
-                // Skip email verification check and log the user in directly
+                // Get user role and data
+                const { role, userData } = await getUserRoleAndData(user);
                 
-                // The auth state change listener in auth-check.js will handle the redirection
-                console.log('User signed in successfully, waiting for auth state change...');
+                // Store user data in session storage
+                sessionStorage.setItem('user', JSON.stringify({
+                    uid: user.uid,
+                    email: user.email,
+                    displayName: user.displayName || userData.displayName || '',
+                    role: role,
+                    emailVerified: user.emailVerified || true
+                }));
+                
+                // Redirect based on role
+                const redirectPath = getRedirectPath(role);
+                if (window.location.pathname !== redirectPath) {
+                    window.location.href = redirectPath;
+                }
                 
             } catch (error) {
-                // Reset button state
-                loginBtn.disabled = false;
-                loginBtn.innerHTML = 'Sign In';
-                document.getElementById('loginForm').classList.remove('form-loading');
-                
-                // Handle errors
                 console.error('Login error:', error);
                 
                 // User-friendly error messages
-                let errorMsg = 'An error occurred during login. Please try again.';
-                let errorType = 'error';
+                let errorMessageText = 'An error occurred during login. Please try again.';
                 
-                switch(error.code) {
-                    case 'auth/wrong-password':
-                        errorMsg = 'Incorrect password. Please try again.';
-                        break;
+                switch (error.code) {
                     case 'auth/user-not-found':
-                        errorMsg = 'No account found with this email. Please check your email or sign up.';
+                        errorMessageText = 'No account found with this email address.';
                         break;
-                    case 'auth/invalid-email':
-                        errorMsg = 'Please enter a valid email address.';
+                    case 'auth/wrong-password':
+                        errorMessageText = 'Incorrect password. Please try again.';
                         break;
                     case 'auth/too-many-requests':
-                        errorMsg = 'Too many failed login attempts. Please try again later or reset your password.';
-                        errorType = 'warning';
+                        errorMessageText = 'Too many failed login attempts. Please try again later or reset your password.';
                         break;
-                    case 'auth/account-suspended':
-                        errorMsg = 'This account has been temporarily suspended. Please contact support.';
-                        errorType = 'warning';
+                    case 'auth/user-disabled':
+                        errorMessageText = 'This account has been disabled. Please contact support.';
                         break;
-                    case 'auth/email-not-verified':
-                        errorMsg = 'Please verify your email before logging in. Check your inbox for the verification email.';
-                        errorType = 'info';
+                    case 'auth/invalid-email':
+                        errorMessageText = 'Please enter a valid email address.';
                         break;
-                    case 'auth/account-pending':
-                        errorMsg = 'Your account is pending approval. Please wait for an administrator to activate your account.';
-                        errorType = 'info';
-                        break;
-                    case 'auth/account-inactive':
-                        errorMsg = 'Your account is currently inactive. Please contact support for assistance.';
-                        errorType = 'warning';
-                        break;
-                    case 'auth/no-role':
-                        errorMsg = 'Your account is not properly configured. Please contact support.';
-                        errorType = 'error';
-                        break;
-                    default:
-                        errorMsg = error.message || 'An error occurred during login. Please try again.';
-                        if (error.code) {
-                            console.error('Login error code:', error.code);
-                        }
+                    case 'auth/network-request-failed':
+                        errorMessageText = 'Network error. Please check your internet connection.';
                         break;
                 }
                 
-                // Set appropriate alert class based on error type
-                switch(errorType) {
-                    case 'warning':
-                        errorMessage.className = 'alert alert-warning';
-                        break;
-                    case 'info':
-                        errorMessage.className = 'alert alert-info';
-                        break;
-                    default:
-                        errorMessage.className = 'alert alert-danger';
-                }
-                
-                // Show error message with appropriate styling
-                errorMessage.innerHTML = ''; // Clear previous content
-                errorMessage.appendChild(document.createTextNode(errorMsg));
+                // Show error message
+                errorMessage.textContent = errorMessageText;
                 errorMessage.style.display = 'block';
                 
-                // Add a retry counter for failed attempts
-                if (error.code === 'auth/wrong-password' || 
-                    error.code === 'auth/user-not-found') {
-                    const retryCount = parseInt(sessionStorage.getItem('loginRetryCount') || '0') + 1;
-                    sessionStorage.setItem('loginRetryCount', retryCount);
-                    
-                    if (retryCount >= 3) {
-                        const remainingAttempts = 5 - retryCount;
-                        if (remainingAttempts > 0) {
-                            const attemptsMsg = document.createElement('div');
-                            attemptsMsg.textContent = `You have ${remainingAttempts} ${remainingAttempts === 1 ? 'attempt' : 'attempts'} left.`;
-                            attemptsMsg.style.marginTop = '8px';
-                            errorMessage.appendChild(attemptsMsg);
-                        }
-                    }
-                } else {
-                    // Reset retry counter for other types of errors
-                    sessionStorage.removeItem('loginRetryCount');
-                }
+                // Reset button state
+                loginButton.disabled = false;
+                buttonText.textContent = 'Sign In';
+                buttonSpinner.style.display = 'none';
                 
-                // Add a link to reset password if it's a password-related error
-                if (error.code === 'auth/wrong-password') {
-                    const resetLink = document.createElement('a');
-                    resetLink.href = 'forgot-password.html';
-                    resetLink.textContent = ' Forgot your password?';
-                    resetLink.style.marginLeft = '10px';
-                    resetLink.style.color = '#dc3545';
-                    resetLink.style.textDecoration = 'underline';
-                    resetLink.style.display = 'inline-block';
-                    resetLink.style.marginTop = '8px';
-                    errorMessage.appendChild(document.createElement('br'));
-                    errorMessage.appendChild(resetLink);
-                }
-                
-                // Reset button and form state
-                loginBtn.disabled = false;
-                loginBtn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Sign In';
-                document.getElementById('loginForm').classList.remove('form-loading');
-                
-                // Focus on the appropriate field based on error
-                if (error.code === 'auth/wrong-password') {
-                    document.getElementById('password').focus();
-                    document.getElementById('password').select();
-                } else if (error.code === 'auth/user-not-found' || 
-                          error.code === 'auth/invalid-email') {
-                    document.getElementById('email').focus();
-                    document.getElementById('email').select();
-                }
-                
-                // Hide error message after 8 seconds (longer for important messages)
-                const errorTimeout = setTimeout(() => {
+                // Clear error after 5 seconds
+                setTimeout(() => {
                     errorMessage.style.display = 'none';
-                }, 8000);
-                
-                // Clear timeout if user starts typing
-                const clearErrorOnInput = () => {
-                    clearTimeout(errorTimeout);
-                    document.getElementById('email').removeEventListener('input', clearErrorOnInput);
-                    document.getElementById('password').removeEventListener('input', clearErrorOnInput);
-                };
-                
-                document.getElementById('email').addEventListener('input', clearErrorOnInput);
-                document.getElementById('password').addEventListener('input', clearErrorOnInput);
+                }, 5000);
             }
         });
         
-        // Initialize auth state listener
-        auth.onAuthStateChanged((user) => {
+        // Clear error when user starts typing
+        function clearErrorOnInput() {
+            const errorMessage = document.getElementById('errorMessage');
+            errorMessage.style.display = 'none';
+        }
+        
+        document.getElementById('email').addEventListener('input', clearErrorOnInput);
+        document.getElementById('password').addEventListener('input', clearErrorOnInput);
+        
+        // Check if user is already logged in
+        document.addEventListener('DOMContentLoaded', () => {
+            const user = getCurrentUser();
             if (user) {
-                // User is signed in, redirect to appropriate dashboard
-                user.getIdTokenResult().then((idTokenResult) => {
-                    const role = idTokenResult.claims.role;
-                    if (role === 'admin') {
-                        window.location.href = 'admin/dashboard.html';
-                    } else if (role === 'instructor') {
-                        window.location.href = 'instructor/dashboard.html';
-                    } else if (role === 'student') {
-                        window.location.href = 'student/dashboard.html';
-                    }
-                });
+                // User is already logged in, redirect to appropriate page
+                const role = getCurrentUserRole();
+                const redirectPath = getRedirectPath(role);
+                if (window.location.pathname !== redirectPath) {
+                    window.location.href = redirectPath;
+                }
             }
         });
     </script>
