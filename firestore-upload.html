@@ -365,20 +365,43 @@
                                     await db.collection('Instructors').add(docData);
                                     
                                 } else if (uploadType === 'rooms') {
-                                    // Process room data
+                                    // Process room data with flexible field names and defaults
                                     docData = {
-                                        capacity: Number(row['Capacity']) || 0,
-                                        day: String(row['Day'] || '').trim(),
-                                        roomName: String(row['Room'] || '').trim(),
-                                        time: String(row['Time'] || '').trim()
+                                        capacity: Number(row['Capacity'] || row['capacity'] || 0),
+                                        day: String(row['Day'] || row['day'] || 'Monday').trim(),
+                                        roomName: String(
+                                            row['Room'] || row['room'] || 
+                                            row['roomName'] || row['roomname'] || 'Room'
+                                        ).trim(),
+                                        time: String(row['Time'] || row['time'] || '00:00-00:00').trim(),
+                                        // Add any additional fields from the row
+                                        ...Object.entries(row).reduce((acc, [key, value]) => {
+                                            const lowerKey = key.toLowerCase();
+                                            if (!['capacity', 'day', 'room', 'roomname', 'time'].includes(lowerKey)) {
+                                                acc[key] = value;
+                                            }
+                                            return acc;
+                                        }, {})
                                     };
                                     
-                                    // Validate required fields
-                                    const requiredFields = ['capacity', 'day', 'roomName', 'time'];
-                                    const missingFields = requiredFields.filter(field => !docData[field] && docData[field] !== 0);
+                                    // Log the processed data for debugging
+                                    console.log('Processed room data:', docData);
+                                    
+                                    // Only require roomName and time
+                                    const requiredFields = {
+                                        'roomName': 'Room Name',
+                                        'time': 'Time'
+                                    };
+                                    
+                                    const missingFields = [];
+                                    for (const [field, displayName] of Object.entries(requiredFields)) {
+                                        if (!docData[field] || docData[field] === 'Room') {
+                                            missingFields.push(displayName);
+                                        }
+                                    }
                                     
                                     if (missingFields.length > 0) {
-                                        throw new Error(`Missing required fields: ${missingFields.join(', ')}`);
+                                        throw new Error(`Missing required information: ${missingFields.join(', ')}`);
                                     }
                                     
                                     // Add to Firestore
