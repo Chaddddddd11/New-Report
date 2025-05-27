@@ -557,19 +557,36 @@
                                 } else if (uploadType === 'rooms') {
                                     // Log the row data for debugging
                                     console.log('Processing room row:', row);
+                                    console.log('Raw row keys:', Object.keys(row));
                                     
                                     // Make field names case-insensitive and trim whitespace
                                     const normalizedRow = {};
                                     Object.entries(row).forEach(([key, value]) => {
-                                        normalizedRow[key.trim().toLowerCase()] = value;
+                                        const normalizedKey = key.trim().toLowerCase();
+                                        console.log(`Processing key: '${key}' -> '${normalizedKey}'`);
+                                        normalizedRow[normalizedKey] = value;
                                     });
                                     
-                                    // Check for required fields with case-insensitive matching
-                                    const roomName = normalizedRow['roomname'] || normalizedRow['room'] || '';
-                                    const capacity = normalizedRow['capacity'];
+                                    console.log('Normalized row:', normalizedRow);
                                     
-                                    if (!roomName || capacity === undefined) {
-                                        throw new Error(`Row ${i + 2}: Missing required fields. Found: ${JSON.stringify(Object.keys(row))}`);
+                                    // Check for required fields with case-insensitive matching
+                                    const roomName = (normalizedRow['roomname'] || normalizedRow['room'] || '').toString().trim();
+                                    let capacity = normalizedRow['capacity'];
+                                    
+                                    // Try to convert capacity to number, default to undefined if not a valid number
+                                    capacity = capacity !== undefined && capacity !== '' ? 
+                                        Number(capacity) : undefined;
+                                    
+                                    console.log('Extracted values - roomName:', roomName, 'capacity:', capacity, 'type:', typeof capacity);
+                                    
+                                    if (!roomName) {
+                                        throw new Error(`Row ${i + 2}: Missing required field 'roomName' or 'room'\n` +
+                                            `Available fields: ${JSON.stringify(Object.keys(row))}`);
+                                    }
+                                    
+                                    if (capacity === undefined || isNaN(capacity)) {
+                                        throw new Error(`Row ${i + 2}: Invalid or missing 'capacity' value. Must be a number.\n` +
+                                            `Found: '${normalizedRow['capacity']}'`);
                                     }
                                     
                                     // Prepare room document data using normalized field names
