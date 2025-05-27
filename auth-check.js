@@ -936,19 +936,27 @@ async function hasRole(requiredRoles) {
 
 // Function to log out
 async function logout() {
-    const user = auth.currentUser;
+    const user = auth?.currentUser;
     const userId = user?.uid;
     
     try {
-        // Log the logout event
+        // Log the logout event if user is logged in
         if (userId) {
-            await logSecurityEvent(userId, 'logout', {
-                ip: await getClientIP()
-            });
+            try {
+                await logSecurityEvent(userId, 'logout', {
+                    ip: await getClientIP()
+                });
+            } catch (logError) {
+                console.error('Error logging logout event:', logError);
+                // Continue with logout even if logging fails
+            }
         }
         
         // Sign out from Firebase
-        await auth.signOut();
+        if (auth) {
+            const { signOut } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js');
+            await signOut(auth);
+        }
         
         // Clear all session data
         sessionStorage.clear();
@@ -965,12 +973,16 @@ async function logout() {
     } catch (error) {
         console.error('Error during logout:', error);
         
-        // Log the error
+        // Log the error if we have a user ID
         if (userId) {
-            await logSecurityEvent(userId, 'logout_error', {
-                error: error.message,
-                ip: await getClientIP()
-            });
+            try {
+                await logSecurityEvent(userId, 'logout_error', {
+                    error: error.message,
+                    ip: await getClientIP()
+                });
+            } catch (logError) {
+                console.error('Error logging logout error:', logError);
+            }
         }
         
         // Even if there's an error, redirect to login page
