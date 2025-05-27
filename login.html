@@ -299,7 +299,35 @@
         auth.onAuthStateChanged(async (user) => {
             if (user) {
                 console.log('Auth state changed - user signed in:', user.email);
-                // The auth-check.js will handle the redirection based on user role
+                
+                // Check if email is verified
+                if (!user.emailVerified) {
+                    console.log('Email not verified, signing out...');
+                    await auth.signOut();
+                    return;
+                }
+                
+                // Get user role and redirect
+                try {
+                    const userDoc = await db.collection('Students').doc(user.uid).get();
+                    if (userDoc.exists) {
+                        const userData = userDoc.data();
+                        const role = userData.role || 'student';
+                        
+                        // Redirect based on role
+                        const routes = {
+                            'admin': 'admin-panel.html',
+                            'instructor': 'home.html',
+                            'student': 'home.html'
+                        };
+                        
+                        const redirectTo = routes[role] || 'home.html';
+                        console.log(`Redirecting ${role} to ${redirectTo}`);
+                        window.location.href = redirectTo;
+                    }
+                } catch (error) {
+                    console.error('Error getting user role:', error);
+                }
             } else {
                 console.log('Auth state changed - no user signed in');
             }
@@ -325,13 +353,6 @@
             errorMessage.innerHTML = '';
             
             // Basic validation
-            if (!email && !password) {
-                errorMessage.textContent = 'Please enter your email and password.';
-                errorMessage.style.display = 'block';
-                document.getElementById('email').focus();
-                return;
-            }
-            
             if (!email) {
                 errorMessage.textContent = 'Please enter your email address.';
                 errorMessage.style.display = 'block';
@@ -367,11 +388,21 @@
                 const userCredential = await firebase.auth().signInWithEmailAndPassword(email, password);
                 const user = userCredential.user;
                 
+                // Check if email is verified
+                if (!user.emailVerified) {
+                    await firebase.auth().signOut();
+                    throw { code: 'auth/email-not-verified' };
+                }
+                
                 // The auth state change listener in auth-check.js will handle the redirection
-                // based on the user's role
                 console.log('User signed in successfully, waiting for auth state change...');
                 
             } catch (error) {
+                // Reset button state
+                loginBtn.disabled = false;
+                loginBtn.innerHTML = originalBtnText;
+                document.getElementById('loginForm').classList.remove('form-loading');
+                
                 // Handle errors
                 console.error('Login error:', error);
                 
