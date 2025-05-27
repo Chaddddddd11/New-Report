@@ -580,22 +580,21 @@
                                         throw new Error(`Row ${i + 2}: Invalid or missing 'Capacity' value. Must be a number.`);
                                     }
                                     
-                                    // Prepare room document data
+                                    // Prepare room document data to match Firestore structure
                                     docData = {
                                         capacity: Number(capacity) || 0,
                                         day: day,
                                         roomName: roomName,
-                                        room: roomName, // Keep both for backward compatibility
                                         time: time,
-                                        timestamp: window.firestore.serverTimestamp(),
-                                        updatedAt: window.firestore.serverTimestamp()
+                                        // Remove any extra fields that aren't in the target collection
+                                        // timestamp and updatedAt will be added by Firestore server
                                     };
                                     
                                     console.log('Prepared document data:', docData);
                                     
-                                    // Add document with auto-generated ID using Firestore v9+ syntax
+                                    // Get Firestore instance and add document
                                     const db = window.firestore;
-                                    const docRef = await db.addDoc(db.collection(db.getFirestore(), 'Rooms'), docData);
+                                    const docRef = await db.addDoc(db.collection('Rooms'), docData);
                                     console.log('Document written with ID: ', docRef.id);
                                     successCount++;
                                 }
