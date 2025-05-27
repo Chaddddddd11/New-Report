@@ -254,63 +254,135 @@
       opacity: 0.7;
     }
 
-    #scheduleTable {
+    /* Schedule Table Styling */
+    .schedule-table {
       width: 100%;
       border-collapse: separate;
       border-spacing: 0;
-      margin: 1.5rem 0;
+      margin: 0;
       background-color: var(--white);
       border-radius: 12px;
       overflow: hidden;
-      box-shadow: var(--shadow);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
       table-layout: fixed;
+      font-size: 0.9rem;
     }
 
-    #scheduleTable th, #scheduleTable td {
-      border: 1px solid #f0f0f0;
-      padding: 1rem;
+    .schedule-table th, 
+    .schedule-table td {
+      border: 1px solid #f5f5f5;
+      padding: 0.75rem 0.5rem;
       text-align: center;
       vertical-align: middle;
-      min-width: 150px;
+      min-width: 140px;
       transition: var(--transition);
+      position: relative;
     }
 
-    #scheduleTable th {
+    .schedule-table th {
       background-color: var(--primary);
       color: white;
       font-weight: 600;
       text-transform: uppercase;
-      font-size: 0.85rem;
+      font-size: 0.8rem;
       letter-spacing: 0.5px;
-      padding: 1rem 0.5rem;
+      padding: 0.75rem 0.5rem;
+      position: sticky;
+      top: 0;
+      z-index: 10;
     }
 
-    #scheduleTable tr:nth-child(even) {
-      background-color: #fafafa;
+    .schedule-table tr:nth-child(even) {
+      background-color: #fcfcfc;
     }
 
-    #scheduleTable tr:hover {
+    .schedule-table tr:hover {
       background-color: rgba(97, 0, 0, 0.02);
     }
     
-    /* Style for time column */
-    #scheduleTable th:first-child,
-    #scheduleTable td:first-child {
-      width: 100px;
-      background-color: var(--primary);
-      color: white;
+    /* Time column styling */
+    .schedule-table th:first-child,
+    .schedule-table td:first-child {
+      background-color: #f8f9fa;
+      color: #555;
       font-weight: 600;
-      padding: 1rem 0.5rem;
+      min-width: 100px;
       position: sticky;
       left: 0;
-      z-index: 1;
+      z-index: 5;
+      border-right: 1px solid #e0e0e0;
     }
     
-    /* Ensure time cells have the same style as the time header */
-    #scheduleTable td:first-child {
-      background-color: var(--primary);
-      color: white;
+    /* Schedule entry styling */
+    .schedule-entry {
+      padding: 0.75rem 0.5rem;
+      border-radius: 6px;
+      color: #333;
+      font-size: 0.85rem;
+      line-height: 1.4;
+      margin: 0.15rem;
+      background-color: #f8f9fa;
+      border-left: 3px solid var(--primary);
+      transition: all 0.2s ease;
+      text-align: left;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+      min-height: 80px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+    
+    .schedule-entry .subject {
+      font-weight: 600;
+      color: #222;
+      margin-bottom: 0.25rem;
+    }
+    
+    .schedule-entry .instructor {
+      font-size: 0.8em;
+      color: #666;
+      margin-bottom: 0.25rem;
+    }
+    
+    .schedule-entry .room {
+      font-size: 0.8em;
+      color: var(--primary);
       font-weight: 500;
+    }
+    
+    .schedule-entry:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 3px 8px rgba(0,0,0,0.1);
+      z-index: 2;
+    }
+    
+    /* Responsive table container */
+    .table-responsive {
+      width: 100%;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      margin: 0;
+      padding: 0;
+    }
+    
+    /* Scrollbar styling */
+    ::-webkit-scrollbar {
+      height: 8px;
+      width: 8px;
+    }
+    
+    ::-webkit-scrollbar-track {
+      background: #f1f1f1;
+      border-radius: 4px;
+    }
+    
+    ::-webkit-scrollbar-thumb {
+      background: #c1c1c1;
+      border-radius: 4px;
+    }
+    
+    ::-webkit-scrollbar-thumb:hover {
+      background: #a8a8a8;
     }
 
     .schedule-entry {
@@ -402,28 +474,154 @@
         margin: 5px 0;
       }
     }
-    /* Form Group Styling */
+    /* Form Styling */
     .form-group {
-      margin-bottom: 1.5rem;
+      margin-bottom: 1.25rem;
+      position: relative;
     }
     
     .form-group label {
       display: block;
       margin-bottom: 0.5rem;
       font-weight: 500;
-      color: var(--text);
+      color: #444;
+      font-size: 0.9rem;
+      transition: all 0.2s ease;
     }
     
     .form-row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 1.5rem;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 1.25rem;
       margin-bottom: 1.5rem;
     }
     
     .form-col {
-      flex: 1;
-      min-width: 200px;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    /* Enhanced Select Styling */
+    select {
+      width: 100%;
+      padding: 0.75rem 1rem;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      background-color: #fff;
+      font-size: 0.95rem;
+      color: #333;
+      transition: all 0.2s ease;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%23610000' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14L2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 1rem center;
+      background-size: 12px 12px;
+      padding-right: 2.5rem;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    }
+    
+    select:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(97, 0, 0, 0.1);
+    }
+    
+    /* Enhanced Buttons */
+    .btn {
+      padding: 0.75rem 1.5rem;
+      border-radius: 8px;
+      font-weight: 500;
+      font-size: 0.95rem;
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      cursor: pointer;
+      border: none;
+      background-color: var(--primary);
+      color: white;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+      background-color: #500000;
+    }
+    
+    .btn:active {
+      transform: translateY(0);
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .btn i {
+      font-size: 1em;
+    }
+    
+    /* Secondary Button */
+    .btn-outline {
+      background: transparent;
+      border: 1px solid var(--primary);
+      color: var(--primary);
+    }
+    
+    .btn-outline:hover {
+      background: rgba(97, 0, 0, 0.05);
+    }
+    
+    /* Card Styling */
+    .card {
+      background: white;
+      border-radius: 12px;
+      padding: 1.5rem;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      margin-bottom: 1.5rem;
+    }
+    
+    .card-header {
+      padding-bottom: 1rem;
+      margin-bottom: 1.5rem;
+      border-bottom: 1px solid #f0f0f0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .card-title {
+      margin: 0;
+      color: #333;
+      font-size: 1.25rem;
+      font-weight: 600;
+    }
+    
+    /* Print styles */
+    @media print {
+      .header, .nav-button, .logout-btn, .card-header, .form-row {
+        display: none !important;
+      }
+      
+      .container {
+        padding: 0 !important;
+        margin: 0 !important;
+        width: 100% !important;
+      }
+      
+      .card {
+        box-shadow: none !important;
+        padding: 0 !important;
+        margin: 0 !important;
+      }
+      
+      .schedule-table {
+        font-size: 10px !important;
+      }
+      
+      .schedule-entry {
+        min-height: 60px !important;
+        padding: 0.25rem !important;
+        page-break-inside: avoid;
+      }
     }
     
     /* Loading State */
@@ -515,61 +713,98 @@
   </header>
   
   <div class="container fade-in">
-    <div class="header-container">
-      <div class="logo-container left">
-        <img src="https://media.assettype.com/sunstar/2025-02-04/7x1wu7dq/DHVSU.jpg?w=1200&h=675&auto=format%2Ccompress&fit=max&enlarge=true" alt="DHVSU Logo" class="logo">
+    <div class="card">
+      <div class="card-header">
+        <h1 class="card-title">Schedule Generator</h1>
+        <div class="student-capacity" id="studentCapacity">
+          <i class="fas fa-users"></i> Student Capacity: <strong>0</strong>
+        </div>
       </div>
-      <h2>DHVSU Instructor Scheduling System</h2>
-      <div class="logo-container right">
-        <img src="https://dhvsu.edu.ph/images/college-of-business-studies/01202025%20-%20College%20of%20Business%20Studies%20LOGO%20-%20Samantha%20F.%20Batalla.png" alt="DHVSU CBS Logo" class="logo">
+      
+      <div class="form-row">
+        <div class="form-col">
+          <div class="form-group">
+            <label for="courseSelect">Course</label>
+            <select id="courseSelect" class="form-control" onchange="updateYearOptions(); updateStudentCapacity(); renderSchedule();">
+              <option value="">Select Course</option>
+              <option value="BSA">BSA</option>
+              <option value="BSAIS">BSAIS</option>
+              <option value="MSMarketing">MS Marketing</option>
+              <option value="BSE">BSE</option>
+              <option value="BSPublicAdministration">BS Public Administration</option>
+            </select>
+          </div>
+        </div>
+        
+        <div class="form-col">
+          <div class="form-group">
+            <label for="yearSelect">Year Level</label>
+            <select id="yearSelect" class="form-control" disabled onchange="updateSectionOptions(); updateStudentCapacity(); renderSchedule();">
+              <option value="">Select Year</option>
+            </select>
+          </div>
+        </div>
+        
+        <div class="form-col">
+          <div class="form-group">
+            <label for="sectionSelect">Section</label>
+            <select id="sectionSelect" class="form-control" disabled onchange="updateStudentCapacity(); renderSchedule();">
+              <option value="">Select Section</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      
+      <div class="form-row">
+        <div class="form-col">
+          <div class="form-group">
+            <label for="semesterSelect">Semester</label>
+            <select id="semesterSelect" class="form-control">
+              <option value="1st">1st Semester</option>
+              <option value="2nd">2nd Semester</option>
+              <option value="summer">Summer</option>
+            </select>
+          </div>
+        </div>
+        
+        <div class="form-col">
+          <div class="form-group">
+            <label for="schoolYear">School Year</label>
+            <select id="schoolYear" class="form-control">
+              <option value="2023-2024">2023-2024</option>
+              <option value="2024-2025" selected>2024-2025</option>
+              <option value="2025-2026">2025-2026</option>
+            </select>
+          </div>
+        </div>
+        
+        <div class="form-col" style="display: flex; align-items: flex-end;">
+          <button class="btn" id="generateSchedule" onclick="printSchedule()">
+            <i class="fas fa-sync-alt"></i> Generate Schedule
+          </button>
+        </div>
       </div>
     </div>
-    
-    <!-- Your HTML content here -->
-    <div class="filters">
-      <select id="courseSelect" onchange="updateYearOptions(); updateStudentCapacity(); renderSchedule();">
-        <option value="">Select Course</option>
-        <option value="BSA">BSA</option>
-        <option value="BSAIS">BSAIS</option>
-        <option value="MSMarketing">MS Marketing</option>
-        <option value="BSE">BSE</option>
-        <option value="BSPublicAdministration">BS Public Administration</option>
-      </select>
-      
-      <select id="yearSelect" disabled onchange="updateSectionOptions(); updateStudentCapacity(); renderSchedule();">
-        <option value="">Select Year</option>
-      </select>
-      
-      <select id="sectionSelect" disabled onchange="updateStudentCapacity(); renderSchedule();">
-        <option value="">Select Section</option>
-      </select>
-      
-      <div id="studentCapacity" class="student-capacity">
-        Student Capacity: -
+
+    <div class="card">
+      <div class="table-responsive">
+        <table id="scheduleTable" class="schedule-table">
+          <thead>
+            <tr>
+              <th>Time</th>
+              <th>Monday</th>
+              <th>Tuesday</th>
+              <th>Wednesday</th>
+              <th>Thursday</th>
+              <th>Friday</th>
+              <th>Saturday</th>
+            </tr>
+          </thead>
+          <tbody id="scheduleBody">
+            <!-- Schedule will be populated by JavaScript -->
+          </tbody>
+        </table>
       </div>
-      
-      <button id="printButton" class="btn" onclick="printSchedule()" disabled>
-        <i class="fas fa-print"></i> Print Schedule
-      </button>
-    </div>
-    
-    <div class="schedule-container">
-      <table id="scheduleTable">
-        <thead>
-          <tr>
-            <th>Time</th>
-            <th>Monday</th>
-            <th>Tuesday</th>
-            <th>Wednesday</th>
-            <th>Thursday</th>
-            <th>Friday</th>
-            <th>Saturday</th>
-          </tr>
-        </thead>
-        <tbody id="scheduleBody">
-          <!-- Schedule will be populated here -->
-        </tbody>
-      </table>
     </div>
   </div>
 
