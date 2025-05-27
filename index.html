@@ -801,9 +801,22 @@
               // Determine text color based on background brightness for better readability
               const textColor = getContrastYIQ(bgColor);
               
+              // Debug log to check instructor data
+              console.log('Instructor data:', {
+                name: instructor.name,
+                room: instructor.room,
+                roomName: instructor.roomName,
+                hasRoom: 'room' in instructor,
+                hasRoomName: 'roomName' in instructor,
+                allKeys: Object.keys(instructor)
+              });
+              
               // Create schedule entry with inline styles and hover effect
               cell.style.padding = '4px';
               cell.style.backgroundColor = bgColor;
+              
+              // Use direct property access instead of logical OR to see actual values
+              const roomDisplay = instructor.room || instructor.roomName || 'TBA';
               
               const entryHTML = `
                 <div class="schedule-entry" 
@@ -816,7 +829,7 @@
                             box-sizing: border-box;">
                   <div class="subject">${instructor.subject || 'N/A'}</div>
                   <div class="instructor">${instructor.name || 'N/A'}</div>
-                  <div class="room">${instructor.roomName || instructor.room || 'TBA'}</div>
+                  <div class="room">${roomDisplay}</div>
                 </div>`;
               
               cell.innerHTML = entryHTML;
