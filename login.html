@@ -4,11 +4,18 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - DHVSU Scheduling System</title>
+    
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+    
+    <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
     <style>
         :root {
             --primary-color: #610000;
@@ -49,245 +56,6 @@
             padding: 40px;
             text-align: center;
             border: 1px solid rgba(0, 0, 0, 0.05);
-        }
-
-        .logo {
-            max-width: 120px;
-            margin: 0 auto 20px;
-            display: block;
-        }
-
-        h1 {
-            color: var(--primary-color);
-            margin-bottom: 30px;
-            font-size: 24px;
-            font-weight: 700;
-        }
-
-        .form-group {
-            margin-bottom: 20px;
-            text-align: left;
-        }
-
-        .form-group label {
-            display: block;
-            margin-bottom: 8px;
-            color: var(--text-color);
-            font-weight: 500;
-        }
-
-        .form-control {
-            width: 100%;
-            padding: 12px 16px;
-            border: 2px solid #e1e4e8;
-            border-radius: 8px;
-            font-size: 15px;
-            transition: all 0.3s ease;
-            background-color: #f8f9fa;
-        }
-
-        .form-control:focus {
-            border-color: var(--primary-color);
-            background-color: white;
-            box-shadow: 0 0 0 3px rgba(97, 0, 0, 0.1);
-            outline: none;
-        }
-
-        .btn {
-            display: inline-block;
-            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-            color: white;
-            border: none;
-            padding: 14px 24px;
-            border-radius: 8px;
-            font-size: 16px;
-            font-weight: 500;
-            cursor: pointer;
-            width: 100%;
-            transition: all 0.3s ease;
-            margin: 10px 0;
-            text-align: center;
-            text-decoration: none;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-        }
-
-        .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 16px rgba(97, 0, 0, 0.2);
-            background: linear-gradient(135deg, #4d0000, #6a0808);
-        }
-        
-        .btn-outline {
-            background: transparent;
-            border: 2px solid var(--primary-color);
-            color: var(--primary-color);
-            transition: all 0.3s ease;
-        }
-        
-        .btn-outline:hover {
-            background: var(--primary-color);
-            color: white;
-        }
-        
-        .forgot-password {
-            margin: 15px 0;
-            text-align: center;
-        }
-        
-        .forgot-password a {
-            color: var(--primary-color);
-            text-decoration: none;
-            font-size: 14px;
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
-            transition: color 0.2s ease;
-        }
-        
-        .forgot-password a:hover {
-            color: var(--secondary-color);
-            text-decoration: underline;
-        }
-        
-        .footer {
-            margin-top: 30px;
-            color: #6b7280;
-            font-size: 13px;
-            text-align: center;
-            padding-top: 20px;
-            border-top: 1px solid #eee;
-        }
-        
-        .divider {
-            display: flex;
-            align-items: center;
-            margin: 20px 0;
-            color: #6b7280;
-            font-size: 14px;
-        }
-        
-        .divider::before,
-        .divider::after {
-            content: "";
-            flex: 1;
-            height: 1px;
-            background-color: #e1e4e8;
-            margin: 0 10px;
-        }
-
-        .error-message {
-            color: var(--error-color);
-            background-color: #fef2f2;
-            border: 1px solid #fecaca;
-            padding: 12px 16px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            display: none;
-            font-size: 14px;
-            text-align: left;
-        }
-
-        .spinner {
-            display: inline-block;
-            width: 20px;
-            height: 20px;
-            border: 3px solid rgba(255, 255, 255, 0.3);
-            border-radius: 50%;
-            border-top-color: #fff;
-            animation: spin 1s ease-in-out infinite;
-            margin-right: 10px;
-            vertical-align: middle;
-        }
-        
-        /* Form loading state */
-        .form-loading {
-            position: relative;
-            opacity: 0.8;
-            pointer-events: none;
-            transition: opacity 0.3s ease;
-        }
-        
-        .form-loading::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(255, 255, 255, 0.5);
-            z-index: 10;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 8px;
-        }
-        
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-        
-        .footer {
-            margin-top: 30px;
-            color: #6b7280;
-            font-size: 14px;
-        }
-
-        @media (max-width: 480px) {
-            .login-container {
-                padding: 30px 20px;
-            }
-            
-            h1 {
-                font-size: 20px;
-                margin-bottom: 20px;
-            }
-        }
-    </style>
-    <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-</head>
-<body>
-        :root {
-            --primary-color: #610000;
-            --secondary-color: #800a0a;
-            --accent-color: #F7B32D;
-            --background-color: #f5f5f5;
-            --text-color: #333;
-            --error-color: #dc3545;
-            --success-color: #28a745;
-        }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Roboto', sans-serif;
-        }
-
-        body {
-            background: linear-gradient(rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.9)),
-                        url('https://the-post-assets.sgp1.digitaloceanspaces.com/2023/03/DHVSU_thumbnail.png');
-            background-size: cover;
-            background-position: center;
-            background-attachment: fixed;
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
-        }
-
-        .login-container {
-            background: rgba(255, 255, 255, 0.95);
-            border-radius: 16px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-            width: 100%;
-            max-width: 450px;
-            padding: 40px;
-            text-align: center;
         }
 
         .logo {
@@ -383,6 +151,98 @@
             color: #721c24;
             border: 1px solid #f5c6cb;
         }
+
+        .alert-success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .alert-warning {
+            background-color: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeeba;
+        }
+
+        .alert-info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+            -webkit-animation: spin 1s ease-in-out infinite;
+            margin-right: 8px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        @-webkit-keyframes spin {
+            to { -webkit-transform: rotate(360deg); }
+        }
+
+        .form-loading {
+            position: relative;
+            pointer-events: none;
+            opacity: 0.7;
+        }
+
+        .form-loading::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 255, 255, 0.5);
+            z-index: 1000;
+        }
+
+        .forgot-password {
+            margin-top: 15px;
+            text-align: right;
+        }
+
+        .forgot-password a {
+            color: #666;
+            text-decoration: none;
+            font-size: 14px;
+        }
+
+        .forgot-password a:hover {
+            color: var(--primary-color);
+            text-decoration: underline;
+        }
+
+        .divider {
+            display: flex;
+            align-items: center;
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .divider::before,
+        .divider::after {
+            content: '';
+            flex: 1;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .divider:not(:empty)::before {
+            margin-right: 1em;
+        }
+
+        .divider:not(:empty)::after {
+            margin-left: 1em;
+        }
     </style>
 </head>
 <body>
@@ -392,7 +252,7 @@
         <h2>Sign In to Your Account</h2>
         
         <!-- Error Message -->
-        <div id="errorMessage" class="alert alert-danger"></div>
+        <div id="errorMessage" class="alert"></div>
         
         <!-- Login Form -->
         <form id="loginForm" class="login-form">
@@ -413,29 +273,12 @@
             <p>Don't have an account? <a href="create.html">Create Account</a></p>
             <p><a href="forgot.html">Forgot Password?</a></p>
         </div>
-            
-            <div class="form-group">
-                <label for="password">Password</label>
-                <input type="password" id="password" class="form-control" placeholder="Enter your password" required>
-            </div>
-            
-            <button type="submit" class="btn" id="loginBtn">
-                <i class="fas fa-sign-in-alt"></i> Sign In
-            </button>
-            
-            <div class="forgot-password">
-                <a href="forgot.html">
-                    <i class="fas fa-question-circle"></i> Forgot Password?
-                </a>
-            </div>
-            
-            <div class="divider">OR</div>
-            
-            <a href="create.html" class="btn btn-outline">
-                <i class="fas fa-user-plus"></i> Create New Account
-            </a>
-        </form>
         
+        <div class="divider">OR</div>
+        
+        <a href="create.html" class="btn btn-outline">
+            <i class="fas fa-user-plus"></i> Create New Account
+        </a>
     </div>
 
     <script>
@@ -509,7 +352,7 @@
             try {
                 // Show loading state
                 loginBtn.disabled = true;
-                loginBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Signing in...';
+                loginBtn.innerHTML = '<span class="spinner"></span> Signing in...';
                 
                 // Add loading class to form
                 document.getElementById('loginForm').classList.add('form-loading');
@@ -523,6 +366,26 @@
                     // Sign out and show verification message
                     await auth.signOut();
                     throw { code: 'auth/email-not-verified' };
+                }
+                
+                // Get user role and redirect accordingly
+                const [adminDoc, studentDoc, instructorDoc] = await Promise.all([
+                    db.collection('admin').doc(user.uid).get(),
+                    db.collection('Students').doc(user.uid).get(),
+                    db.collection('Instructor').doc(user.uid).get()
+                ]);
+                
+                // Redirect based on role
+                if (adminDoc.exists) {
+                    window.location.href = 'admin/dashboard.html';
+                } else if (instructorDoc.exists) {
+                    window.location.href = 'instructor/dashboard.html';
+                } else if (studentDoc.exists) {
+                    window.location.href = 'student/dashboard.html';
+                } else {
+                    // If user doesn't have a role, sign them out and show error
+                    await auth.signOut();
+                    throw { code: 'auth/no-role' };
                 }
                 
             } catch (error) {
@@ -641,23 +504,6 @@
                     document.getElementById('email').select();
                 }
                 
-                // Add a retry counter for failed attempts
-                if (error.code === 'auth/wrong-password' || 
-                    error.code === 'auth/user-not-found') {
-                    const retryCount = parseInt(sessionStorage.getItem('loginRetryCount') || '0') + 1;
-                    sessionStorage.setItem('loginRetryCount', retryCount);
-                    
-                    if (retryCount >= 3) {
-                        const remainingAttempts = 5 - retryCount;
-                        if (remainingAttempts > 0) {
-                            errorMessage.textContent += ` You have ${remainingAttempts} ${remainingAttempts === 1 ? 'attempt' : 'attempts'} left.`;
-                        }
-                    }
-                } else {
-                    // Reset retry counter for other types of errors
-                    sessionStorage.removeItem('loginRetryCount');
-                }
-                
                 // Hide error message after 8 seconds (longer for important messages)
                 const errorTimeout = setTimeout(() => {
                     errorMessage.style.display = 'none';
@@ -672,58 +518,25 @@
                 
                 document.getElementById('email').addEventListener('input', clearErrorOnInput);
                 document.getElementById('password').addEventListener('input', clearErrorOnInput);
-                
-                // Add a link to reset password if it's a password-related error
-                if (error.code === 'auth/wrong-password') {
-                    const resetLink = document.createElement('a');
-                    resetLink.href = 'forgot-password.html';
-                    resetLink.textContent = ' Forgot your password?';
-                    resetLink.style.marginLeft = '10px';
-                    resetLink.style.color = '#dc3545';
-                    resetLink.style.textDecoration = 'underline';
-                    errorMessage.appendChild(document.createElement('br'));
-                    errorMessage.appendChild(resetLink);
-                }
             }
         });
         
-        // Auto-hide error message when user starts typing
-        document.getElementById('email').addEventListener('input', function() {
-            document.getElementById('errorMessage').style.display = 'none';
-        });
-        
-        // Check if user is already logged in
-        firebase.auth().onAuthStateChanged((user) => {
-            if (user) {
-                // User is signed in, redirect based on role
-                // The actual redirect is handled in auth-check.js
-                console.log('User is already signed in:', user.email);
-            }
-        });
-        document.getElementById('password').addEventListener('input', function() {
-            document.getElementById('errorMessage').style.display = 'none';
-        });
-        
-        // Check if user is already logged in
+        // Initialize auth state listener
         auth.onAuthStateChanged((user) => {
             if (user) {
-                // User is signed in, redirect to home or stored redirect URL
-                const redirectUrl = sessionStorage.getItem('redirectAfterLogin') || 'home.html';
-                sessionStorage.removeItem('redirectAfterLogin');
-                window.location.href = redirectUrl;
+                // User is signed in, redirect to appropriate dashboard
+                user.getIdTokenResult().then((idTokenResult) => {
+                    const role = idTokenResult.claims.role;
+                    if (role === 'admin') {
+                        window.location.href = 'admin/dashboard.html';
+                    } else if (role === 'instructor') {
+                        window.location.href = 'instructor/dashboard.html';
+                    } else if (role === 'student') {
+                        window.location.href = 'student/dashboard.html';
+                    }
+                });
             }
         });
-        
-        // Add this to handle the case when user is redirected from a protected page
-        const urlParams = new URLSearchParams(window.location.search);
-        if (urlParams.get('redirected') === 'true') {
-            const errorMessage = document.getElementById('errorMessage');
-            errorMessage.textContent = 'Please sign in to access this page';
-            errorMessage.style.display = 'block';
-        }
     </script>
-    
-    <!-- Add auth-check.js at the end of body -->
-    <script src="auth-check.js"></script>
 </body>
 </html>
