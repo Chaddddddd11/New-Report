@@ -1276,17 +1276,20 @@
                 }
 
                 try {
-                    // Check for instructor schedule conflict
-                    const instructorTimeConflictQuery = query(
+                    // Check for schedule conflict for the same course, year, and section
+                    const scheduleConflictQuery = query(
                         collection(db, 'Instructors'),
-                        where("name", "==", formData.name.trim()),
+                        where("course", "==", formData.course),
+                        where("year", "==", formData.year),
+                        where("section", "==", formData.section),
                         where("day", "==", formData.day)
                     );
                     
-                    const instructorTimeConflictSnapshot = await getDocs(instructorTimeConflictQuery);
-                    let hasInstructorConflict = false;
+                    const scheduleConflictSnapshot = await getDocs(scheduleConflictQuery);
+                    let hasScheduleConflict = false;
+                    let conflictDetails = '';
                     
-                    instructorTimeConflictSnapshot.forEach(docInstance => {
+                    scheduleConflictSnapshot.forEach(docInstance => {
                         if (isUpdateMode && docInstance.id === currentInstructorId) {
                             return; // Skip self in update mode
                         }
@@ -1306,60 +1309,22 @@
                             existingEndHour = parseInt(booking.timeEnd.split(':')[0], 10);
                         }
                         
-                        // Check for overlap if we have valid times
+                        // Check for time overlap if we have valid times
                         if (existingStartHour !== undefined && existingEndHour !== undefined) {
                             if (startHour < existingEndHour && endHour > existingStartHour) {
-                                hasInstructorConflict = true;
+                                hasScheduleConflict = true;
+                                conflictDetails = `Conflict found for ${formData.course} ${formData.year} Year Section ${formData.section} on ${formData.day} at ${booking.time || booking.timeStart + '-' + booking.timeEnd}`;
                                 return; // Exit early if conflict found
                             }
                         }
                     });
 
-                    if (hasInstructorConflict) {
-                        showError(`Instructor ${formData.name} already has a conflicting schedule on ${formData.day} between ${timeStart} and ${timeEnd}.`);
+                    if (hasScheduleConflict) {
+                        showError(`Schedule conflict: ${conflictDetails}`);
                         if (submitBtn) {
                             submitBtn.disabled = false;
                             submitBtn.innerHTML = originalBtnText;
                         }
-                        return;
-                    }
-
-                    // Conflict Validation 2: Room already booked by anyone at that time
-                    const roomConflictQuery = query(instructorsCollectionRef, 
-                        where("day", "==", formData.day), 
-                        where("room", "==", formData.room)
-                    );
-                    const roomConflictSnapshot = await getDocs(roomConflictQuery);
-                    let hasRoomConflict = false;
-                    roomConflictSnapshot.forEach(docInstance => {
-                        if (isUpdateMode && docInstance.id === currentInstructorId) {
-                            return; // Skip self in update mode for this specific check (e.g. if only subject changes for same slot)
-                        }
-                        const booking = docInstance.data();
-                        let existingStartHour, existingEndHour;
-                        
-                        // Handle both formats: the new single time field or the old timeStart/timeEnd
-                        if (booking.time) {
-                            // New format: "HH:MM-HH:MM"
-                            const [existingStart, existingEnd] = booking.time.split('-');
-                            existingStartHour = parseInt(existingStart.split(':')[0], 10);
-                            existingEndHour = parseInt(existingEnd.split(':')[0], 10);
-                        } else if (booking.timeStart && booking.timeEnd) {
-                            // Old format: separate timeStart and timeEnd
-                            existingStartHour = parseInt(booking.timeStart.split(':')[0], 10);
-                            existingEndHour = parseInt(booking.timeEnd.split(':')[0], 10);
-                        }
-                        
-                        // Check for overlap if we have valid times
-                        if (existingStartHour !== undefined && existingEndHour !== undefined) {
-                            if (startHour < existingEndHour && endHour > existingStartHour) {
-                                hasRoomConflict = true;
-                            }
-                        }
-                    });
-
-                    if (hasRoomConflict) {
-                        showError(`Room ${formData.room} is already booked on ${formData.day} between ${timeStart} and ${timeEnd}.`);
                         return;
                     }
                     
