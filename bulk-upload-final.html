@@ -3,56 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bulk Upload - DHVSU Scheduling System</title>
+    <title>Firestore Bulk Upload</title>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <!-- Firebase SDK (ESM) -->
-    <script type="module">
-        // Import the functions you need from the SDKs you need
-        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-        import { 
-            getFirestore, 
-            collection, 
-            doc, 
-            setDoc, 
-            getDocs,
-            serverTimestamp,
-            writeBatch
-        } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
-
-        // Your web app's Firebase configuration
-        const firebaseConfig = {
-            apiKey: "AIzaSyDBu7-vOFmS62IaGD8-8zb6TH0a1mHYNpI",
-            authDomain: "dhvsu-faculty-scheduling.firebaseapp.com",
-            projectId: "dhvsu-faculty-scheduling",
-            storageBucket: "dhvsu-faculty-scheduling.appspot.com",
-            messagingSenderId: "1075180921702",
-            appId: "1:1075180921702:web:a0320fa286c684511cdea7",
-            measurementId: "G-EP4FZ04FQT"
-        };
-
-        // Initialize Firebase
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-
-        // Make them globally available
-        window.firebaseApp = app;
-        window.db = db;
-        window.firestore = { 
-            collection: (path) => collection(db, path),
-            doc: (path) => doc(db, path),
-            setDoc: (docRef, data) => setDoc(docRef, data),
-            getDocs: (query) => getDocs(query),
-            serverTimestamp: () => serverTimestamp(),
-            writeBatch: () => writeBatch(db)
-        };
-    </script>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
     <style>
         :root {
             --primary-color: #610000;
             --secondary-color: #570404;
             --accent-color: #F7B32D;
+            --light-gray: #f5f5f5;
+            --dark-gray: #333;
+            --border-color: #ddd;
         }
         
         * {
@@ -63,7 +28,9 @@
         }
         
         body {
-            background-color: #f5f5f5;
+            background-color: #f9f9f9;
+            color: #333;
+            line-height: 1.6;
             padding: 20px;
         }
         
@@ -72,60 +39,36 @@
             margin: 0 auto;
             background: white;
             padding: 30px;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-        
-        .upload-guide {
-            background-color: #f8f9fa;
-            border-left: 4px solid var(--primary-color);
-            padding: 15px 20px;
-            margin-bottom: 30px;
-            border-radius: 4px;
-        }
-        
-        .upload-guide h3 {
-            color: var(--primary-color);
-            margin-bottom: 10px;
-        }
-        
-        .upload-guide ul {
-            padding-left: 20px;
-            margin: 10px 0;
-        }
-        
-        .file-format {
-            background-color: #fff8e1;
-            padding: 15px;
-            border-radius: 6px;
-            margin: 15px 0;
-        }
-        
-        .file-format h4 {
-            color: var(--primary-color);
-            margin-bottom: 8px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
         }
         
         h1 {
             color: var(--primary-color);
             text-align: center;
-            margin-bottom: 20px;
+            margin-bottom: 30px;
         }
         
         .tabs {
             display: flex;
             margin-bottom: 20px;
-            border-bottom: 1px solid #ddd;
+            border-bottom: 1px solid var(--border-color);
         }
         
         .tab {
             padding: 10px 20px;
             cursor: pointer;
-            border-bottom: 3px solid transparent;
+            background: var(--light-gray);
+            border: 1px solid var(--border-color);
+            border-bottom: none;
+            border-radius: 5px 5px 0 0;
+            margin-right: 5px;
         }
         
         .tab.active {
-            border-bottom: 3px solid var(--primary-color);
+            background: white;
+            border-bottom: 1px solid white;
+            margin-bottom: -1px;
             font-weight: 500;
         }
         
@@ -139,238 +82,167 @@
         }
         
         .upload-area {
-            border: 2px dashed #ccc;
+            border: 2px dashed var(--border-color);
+            border-radius: 5px;
             padding: 30px;
             text-align: center;
-            margin: 20px 0;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.3s ease;
+            margin-bottom: 20px;
+            background: var(--light-gray);
+            transition: all 0.3s;
         }
         
         .upload-area:hover {
-            border-color: var(--primary-color);
-            background: #fff8f8;
+            border-color: var(--accent-color);
         }
         
-        .upload-icon {
+        .upload-area i {
             font-size: 48px;
             color: var(--primary-color);
             margin-bottom: 15px;
         }
         
-        .file-input {
-            display: none;
-        }
-        
         .btn {
-            background: var(--primary-color);
+            background-color: var(--primary-color);
             color: white;
             border: none;
             padding: 10px 20px;
-            border-radius: 4px;
+            border-radius: 5px;
             cursor: pointer;
             font-size: 16px;
-            margin-top: 15px;
+            margin: 10px 5px;
+            transition: background-color 0.3s;
         }
         
         .btn:hover {
-            background: var(--secondary-color);
+            background-color: var(--secondary-color);
         }
         
-        .btn:disabled {
-            background: #ccc;
-            cursor: not-allowed;
+        .btn-secondary {
+            background-color: #6c757d;
         }
         
-        .preview {
-            margin-top: 20px;
-            overflow-x: auto;
-        }
-        
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 10px;
-        }
-        
-        th, td {
-            border: 1px solid #ddd;
-            padding: 8px;
-            text-align: left;
-        }
-        
-        th {
-            background-color: #f2f2f2;
+        .btn-secondary:hover {
+            background-color: #5a6268;
         }
         
         .status {
-            margin-top: 20px;
-            padding: 15px;
-            border-radius: 4px;
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 5px;
             display: none;
         }
         
         .success {
-            background-color: #dff0d8;
-            color: #3c763d;
-            border: 1px solid #d6e9c6;
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
         }
         
         .error {
-            background-color: #f2dede;
-            color: #a94442;
-            border: 1px solid #ebccd1;
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .template-section {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid var(--border-color);
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="upload-guide">
-            <h3>Bulk Upload Guide</h3>
-            <p>You can upload the following file types for bulk operations:</p>
-            
-            <div class="file-format">
-                <h4>📊 Excel (.xlsx, .xls)</h4>
-                <p>Recommended format for bulk uploads. The first row should contain column headers.</p>
-            </div>
-            
-            <div class="file-format">
-                <h4>📄 CSV (.csv)</h4>
-                <p>Comma-separated values file. Ensure the first row contains column headers.</p>
-            </div>
-            
-            <div class="file-format">
-                <h4>🔷 JSON (.json)</h4>
-                <p>Structured data in JSON format. Should be an array of objects with consistent properties.</p>
-            </div>
-            
-            <p><strong>Note:</strong> For best results, download and use our template files:</p>
-            
-            <div class="template-buttons" style="margin-top: 15px; display: flex; gap: 10px; flex-wrap: wrap;">
-                <button onclick="downloadTemplate('excel', 'instructors')" class="download-btn" style="background-color: #217346;">
-                    <i class="fas fa-file-excel"></i> Download Instructors Template (Excel)
-                </button>
-                <button onclick="downloadTemplate('csv', 'instructors')" class="download-btn" style="background-color: #1e6b57;">
-                    <i class="fas fa-file-csv"></i> Download Instructors Template (CSV)
-                </button>
-                <button onclick="downloadTemplate('json', 'instructors')" class="download-btn" style="background-color: #f5b041;">
-                    <i class="fas fa-file-code"></i> Download Instructors Template (JSON)
-                </button>
-            </div>
-            
-            <div class="template-buttons" style="margin-top: 10px; display: flex; gap: 10px; flex-wrap: wrap;">
-                <button onclick="downloadTemplate('excel', 'rooms')" class="download-btn" style="background-color: #3f51b5;">
-                    <i class="fas fa-file-excel"></i> Download Rooms Template (Excel)
-                </button>
-                <button onclick="downloadTemplate('csv', 'rooms')" class="download-btn" style="background-color: #3949ab;">
-                    <i class="fas fa-file-csv"></i> Download Rooms Template (CSV)
-                </button>
-                <button onclick="downloadTemplate('json', 'rooms')" class="download-btn" style="background-color: #5c6bc0;">
-                    <i class="fas fa-file-code"></i> Download Rooms Template (JSON)
-                </button>
-            </div>
-        </div>
-        
-        <style>
-            .download-btn {
-                display: inline-flex;
-                align-items: center;
-                gap: 8px;
-                padding: 8px 15px;
-                color: white;
-                border: none;
-                border-radius: 4px;
-                cursor: pointer;
-                font-size: 14px;
-                transition: all 0.2s ease;
-            }
-            
-            .download-btn:hover {
-                opacity: 0.9;
-                transform: translateY(-1px);
-            }
-            
-            .download-btn i {
-                font-size: 16px;
-            }
-        </style>
-        
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-            <a href="home.html" class="btn" style="background-color: #6c757d; text-decoration: none;">
-                <i class="fas fa-arrow-left"></i> Back to Home
-            </a>
-            <h1 style="margin: 0; flex-grow: 1; text-align: center;">Bulk Upload</h1>
-            <div style="width: 120px;"></div> <!-- Spacer to balance the flex layout -->
-        </div>
+        <h1>Firestore Bulk Upload</h1>
         
         <div class="tabs">
             <div class="tab active" data-tab="instructors">Instructors</div>
             <div class="tab" data-tab="rooms">Rooms</div>
         </div>
         
-        <!-- Instructors Tab Content -->
+        <!-- Instructors Tab -->
         <div id="instructors-tab" class="tab-content active">
             <div class="upload-area" id="instructors-upload-area">
-                <div class="upload-icon">
-                    <i class="fas fa-file-upload"></i>
-                </div>
-                <h3>Upload Instructors File</h3>
-                <p>Drag & drop your file here or click to browse</p>
-                <input type="file" id="instructors-file" class="file-input" accept=".xlsx, .xls, .csv">
-                <label for="instructors-file" class="btn">Choose File</label>
-                <div id="instructors-file-name" class="file-name"></div>
+                <i class="fas fa-file-upload"></i>
+                <h3>Upload Instructors Data</h3>
+                <p>Drag & drop your Excel/CSV file here or click to browse</p>
+                <input type="file" id="instructors-file" accept=".xlsx, .xls, .csv" style="display: none;">
+                <button class="btn" id="instructors-upload-btn">Select File</button>
+                <div id="instructors-status" class="status"></div>
             </div>
             
-            <div class="preview" id="instructors-preview"></div>
-            
-            <button id="upload-instructors" class="btn" disabled>Upload Instructors</button>
-            <div id="instructors-status" class="status"></div>
+            <div class="template-section">
+                <h3>Download Templates</h3>
+                <p>Download a template to ensure your file has the correct format:</p>
+                <button class="btn btn-secondary" onclick="downloadTemplate('xlsx', 'instructors')">
+                    <i class="fas fa-file-excel"></i> Download Excel Template
+                </button>
+                <button class="btn btn-secondary" onclick="downloadTemplate('csv', 'instructors')">
+                    <i class="fas fa-file-csv"></i> Download CSV Template
+                </button>
+            </div>
         </div>
         
-        <!-- Rooms Tab Content -->
+        <!-- Rooms Tab -->
         <div id="rooms-tab" class="tab-content">
             <div class="upload-area" id="rooms-upload-area">
-                <div class="upload-icon">
-                    <i class="fas fa-file-upload"></i>
-                </div>
-                <h3>Upload Rooms File</h3>
-                <p>Drag & drop your file here or click to browse</p>
-                <input type="file" id="rooms-file" class="file-input" accept=".xlsx, .xls, .csv">
-                <label for="rooms-file" class="btn">Choose File</label>
-                <div id="rooms-file-name" class="file-name"></div>
+                <i class="fas fa-file-upload"></i>
+                <h3>Upload Rooms Data</h3>
+                <p>Drag & drop your Excel/CSV file here or click to browse</p>
+                <input type="file" id="rooms-file" accept=".xlsx, .xls, .csv" style="display: none;">
+                <button class="btn" id="rooms-upload-btn">Select File</button>
+                <div id="rooms-status" class="status"></div>
             </div>
             
-            <div class="preview" id="rooms-preview"></div>
-            
-            <button id="upload-rooms" class="btn" disabled>Upload Rooms</button>
-            <div id="rooms-status" class="status"></div>
+            <div class="template-section">
+                <h3>Download Templates</h3>
+                <p>Download a template to ensure your file has the correct format:</p>
+                <button class="btn btn-secondary" onclick="downloadTemplate('xlsx', 'rooms')">
+                    <i class="fas fa-file-excel"></i> Download Excel Template
+                </button>
+                <button class="btn btn-secondary" onclick="downloadTemplate('csv', 'rooms')">
+                    <i class="fas fa-file-csv"></i> Download CSV Template
+                </button>
+            </div>
         </div>
     </div>
 
     <script>
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyDBu7-vOFmS62IaGD8-8zb6TH0a1mHYNpI",
+            authDomain: "dhvsu-faculty-scheduling.firebaseapp.com",
+            projectId: "dhvsu-faculty-scheduling",
+            storageBucket: "dhvsu-faculty-scheduling.appspot.com",
+            messagingSenderId: "1075180921702",
+            appId: "1:1075180921702:web:a0320fa286c684511cdea7",
+            measurementId: "G-EP4FZ04FQT"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
         // Tab switching
         document.querySelectorAll('.tab').forEach(tab => {
             tab.addEventListener('click', () => {
-                // Remove active class from all tabs and contents
+                // Remove active class from all tabs and content
                 document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
                 document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
                 
                 // Add active class to clicked tab and corresponding content
                 tab.classList.add('active');
-                const tabId = tab.getAttribute('data-tab') + '-tab';
-                document.getElementById(tabId).classList.add('active');
+                const tabId = tab.getAttribute('data-tab');
+                document.getElementById(`${tabId}-tab`).classList.add('active');
             });
         });
 
-        // File upload handling
-        function setupFileUpload(uploadAreaId, fileInputId, previewId, uploadBtnId, statusId, uploadType) {
+        // Initialize file upload for both tabs
+        function setupFileUpload(uploadAreaId, fileInputId, uploadBtnId, statusId, uploadType) {
             const uploadArea = document.getElementById(uploadAreaId);
             const fileInput = document.getElementById(fileInputId);
-            const preview = document.getElementById(previewId);
             const uploadBtn = document.getElementById(uploadBtnId);
             const status = document.getElementById(statusId);
-            const fileName = document.getElementById(`${fileInputId}-name`);
             
             // Handle drag and drop
             ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
@@ -391,16 +263,16 @@
             });
             
             function highlight() {
-                uploadArea.style.borderColor = '#610000';
-                uploadArea.style.background = '#fff8f8';
+                uploadArea.style.borderColor = '#4CAF50';
+                uploadArea.style.backgroundColor = '#e8f5e9';
             }
             
             function unhighlight() {
-                uploadArea.style.borderColor = '#ccc';
-                uploadArea.style.background = 'white';
+                uploadArea.style.borderColor = '';
+                uploadArea.style.backgroundColor = '';
             }
             
-            // Handle dropped files
+            // Handle file drop
             uploadArea.addEventListener('drop', handleDrop, false);
             
             function handleDrop(e) {
@@ -410,104 +282,36 @@
             }
             
             // Handle file selection
+            uploadBtn.addEventListener('click', () => fileInput.click());
+            
             fileInput.addEventListener('change', function() {
-                handleFiles(this.files);
+                if (this.files.length) {
+                    handleFiles(this.files);
+                }
             });
             
-            function handleFiles(files) {
-                if (files.length > 0) {
-                    const file = files[0];
-                    fileName.textContent = `Selected file: ${file.name}`;
-                    uploadBtn.disabled = false;
-                    
-                    // Read and preview the file
-                    const reader = new FileReader();
-                    
-                    reader.onload = function(e) {
-                        const data = new Uint8Array(e.target.result);
-                        const workbook = XLSX.read(data, { type: 'array' });
-                        
-                        // Get the first sheet
-                        const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-                        
-                        // Convert to JSON
-                        const jsonData = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
-                        
-                        // Display preview
-                        displayPreview(jsonData, preview);
-                    };
-                    
-                    reader.readAsArrayBuffer(file);
-                }
-            }
-            
-            function displayPreview(data, container) {
-                if (data.length === 0) return;
-                
-                let html = '<h3>Preview (first 5 rows):</h3>';
-                html += '<table><thead><tr>';
-                
-                // Add headers
-                data[0].forEach(header => {
-                    html += `<th>${header || ''}</th>`;
-                });
-                html += '</tr></thead><tbody>';
-                
-                // Add data rows (max 5)
-                const rowCount = Math.min(5, data.length - 1);
-                for (let i = 1; i <= rowCount; i++) {
-                    if (!data[i]) continue;
-                    html += '<tr>';
-                    data[i].forEach(cell => {
-                        html += `<td>${cell || ''}</td>`;
-                    });
-                    html += '</tr>';
-                }
-                
-                html += '</tbody></table>';
-                container.innerHTML = html;
-            }
-            
-            // Handle upload
-            uploadBtn.addEventListener('click', async () => {
-                if (!fileInput.files.length) return;
-                
-                const file = fileInput.files[0];
+            async function handleFiles(files) {
+                const file = files[0];
                 const reader = new FileReader();
                 
                 reader.onload = async function(e) {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                    const jsonData = XLSX.utils.sheet_to_json(firstSheet);
+                    
+                    if (jsonData.length === 0) {
+                        showStatus(status, 'Error: No data found in the file', 'error');
+                        return;
+                    }
+                    
+                    uploadBtn.disabled = true;
+                    uploadBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Uploading...';
+                    
+                    let successCount = 0;
+                    const errors = [];
+                    
                     try {
-                        uploadBtn.disabled = true;
-                        uploadBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Uploading...';
-                        
-                        const data = new Uint8Array(e.target.result);
-                        const workbook = XLSX.read(data, { type: 'array' });
-                        const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-                        const jsonData = XLSX.utils.sheet_to_json(firstSheet);
-                        
-                        // Process each row
-                        let successCount = 0;
-                        const errors = [];
-                        
-                        // Get Firestore instance
-                        if (!window.firestore) {
-                            throw new Error('Firebase is not initialized. Please refresh the page and try again.');
-                        }
-                        
-                        const collectionName = uploadType === 'instructors' ? 'Instructors' : 'Rooms';
-                        const collectionRef = window.firestore.collection(collectionName);
-                        
-                        // Clear existing data if needed
-                        const clearExistingCheckbox = document.getElementById('clear-existing');
-                        if (clearExistingCheckbox && clearExistingCheckbox.checked) {
-                            const snapshot = await window.firestore.getDocs(collectionRef);
-                            const batch = window.firestore.writeBatch();
-                            snapshot.forEach(doc => {
-                                batch.delete(doc.ref);
-                            });
-                            await batch.commit();
-                        }
-                        
                         for (let i = 0; i < jsonData.length; i++) {
                             const row = jsonData[i];
                             
@@ -515,93 +319,55 @@
                                 let docData;
                                 
                                 if (uploadType === 'instructors') {
-                                    // Log the row data for debugging
-                                    console.log('Processing row:', row);
-                                    
-                                    // Make field names case-insensitive and trim whitespace
-                                    const normalizedRow = {};
-                                    Object.entries(row).forEach(([key, value]) => {
-                                        normalizedRow[key.trim().toLowerCase()] = value;
-                                    });
-                                    
-                                    // Check for required fields with case-insensitive matching
-                                    const name = normalizedRow['name'] || normalizedRow['instructor'] || '';
-                                    const course = normalizedRow['course'] || '';
-                                    const subject = normalizedRow['subject'] || '';
-                                    
-                                    if (!name || !course || !subject) {
-                                        throw new Error(`Row ${i + 2}: Missing required fields. Found: ${JSON.stringify(Object.keys(row))}`);
-                                    }
-                                    
-                                    // Prepare instructor document data using normalized field names
+                                    // Process instructor data
                                     docData = {
-                                        course: String(course || ''),
-                                        day: String(normalizedRow['day'] || ''),
-                                        name: String(name || ''),
-                                        room: String(normalizedRow['room'] || normalizedRow['roomname'] || ''),
-                                        roomName: String(normalizedRow['roomname'] || normalizedRow['room'] || ''),
-                                        scheduleColor: String(normalizedRow['schedulecolor'] || '#88f1ab'),
-                                        section: String(normalizedRow['section'] || '').toUpperCase(),
-                                        subject: String(subject || ''),
-                                        time: String(normalizedRow['time'] || ''),
-                                        year: String(normalizedRow['year'] || ''),
-                                        timestamp: window.firestore.serverTimestamp(),
-                                        updatedAt: window.firestore.serverTimestamp()
+                                        course: String(row['Course'] || '').trim(),
+                                        day: String(row['Day'] || '').trim(),
+                                        name: String(row['Name'] || '').trim(),
+                                        roomId: String(row['Room'] || '').trim(),
+                                        roomName: String(row['Room'] || '').trim(),
+                                        scheduleColor: String(row['ScheduleColor'] || '#000000'),
+                                        section: String(row['Section'] || '').trim(),
+                                        subject: String(row['Subject'] || '').trim(),
+                                        time: String(row['Time'] || '').trim(),
+                                        year: String(row['Year'] || '').trim(),
+                                        timestamp: firebase.firestore.FieldValue.serverTimestamp()
                                     };
-                                    
-                                    // Add document
-                                    const newDocRef = window.firestore.doc(window.firestore.collection('Instructors'));
-                                    await window.firestore.setDoc(newDocRef, docData);
-                                    successCount++;
-                                    
-                                } else if (uploadType === 'rooms') {
-                                    // Log the row data for debugging
-                                    console.log('Processing room row:', row);
-                                    console.log('Raw row keys:', Object.keys(row));
-                                    
-                                    // Map the Excel columns directly to our fields
-                                    const roomName = (row['Room'] || '').toString().trim();
-                                    const day = (row['Day'] || '').toString().trim();
-                                    const time = (row['Time'] || '').toString().trim();
-                                    let capacity = row['Capacity'];
-                                    
-                                    // Convert capacity to number, handle various formats
-                                    capacity = capacity !== undefined && capacity !== '' ? 
-                                        Number(capacity.toString().replace(/[^0-9.]/g, '')) : undefined;
-                                    
-                                    console.log('Extracted values:', { roomName, day, time, capacity });
                                     
                                     // Validate required fields
-                                    if (!roomName) {
-                                        throw new Error(`Row ${i + 2}: Missing required field 'Room'`);
+                                    const requiredFields = ['course', 'day', 'name', 'roomId', 'section', 'subject', 'time', 'year'];
+                                    const missingFields = requiredFields.filter(field => !docData[field]);
+                                    
+                                    if (missingFields.length > 0) {
+                                        throw new Error(`Missing required fields: ${missingFields.join(', ')}`);
                                     }
                                     
-                                    if (capacity === undefined || isNaN(capacity)) {
-                                        throw new Error(`Row ${i + 2}: Invalid or missing 'Capacity' value. Must be a number.`);
-                                    }
+                                    // Add to Firestore
+                                    await db.collection('Instructors').add(docData);
                                     
-                                    // Prepare room document data to match Firestore structure
+                                } else if (uploadType === 'rooms') {
+                                    // Process room data
                                     docData = {
-                                        capacity: Number(capacity) || 0,
-                                        day: day,
-                                        roomName: roomName,
-                                        time: time,
-                                        // Remove any extra fields that aren't in the target collection
-                                        // timestamp and updatedAt will be added by Firestore server
+                                        capacity: Number(row['Capacity']) || 0,
+                                        day: String(row['Day'] || '').trim(),
+                                        roomName: String(row['Room'] || '').trim(),
+                                        time: String(row['Time'] || '').trim()
                                     };
                                     
-                                    console.log('Prepared document data:', docData);
+                                    // Validate required fields
+                                    const requiredFields = ['capacity', 'day', 'roomName', 'time'];
+                                    const missingFields = requiredFields.filter(field => !docData[field] && docData[field] !== 0);
                                     
-                                    // Get Firestore instance and add document
-                                    const db = window.firestore;
-                                    const roomsCollection = db.collection('Rooms');
-                                    const docRef = db.doc(); // Create a new document reference
-                                    await db.setDoc(docRef, docData);
-                                    console.log('Document written with ID: ', docRef.id);
-                                    successCount++;
+                                    if (missingFields.length > 0) {
+                                        throw new Error(`Missing required fields: ${missingFields.join(', ')}`);
+                                    }
+                                    
+                                    // Add to Firestore
+                                    await db.collection('Rooms').add(docData);
                                 }
                                 
-                                // No need to commit batch as we're using individual writes
+                                successCount++;
+                                
                             } catch (error) {
                                 console.error(`Error processing row ${i + 2}:`, error);
                                 errors.push(`Row ${i + 2}: ${error.message}`);
@@ -609,43 +375,42 @@
                         }
                         
                         // Show results
-                        let message = `Successfully uploaded ${successCount} ${uploadType}.`;
+                        let message = `Successfully uploaded ${successCount} ${uploadType} record(s).`;
                         if (errors.length > 0) {
-                            message += `\n${errors.length} records had errors.`;
+                            message += `\n${errors.length} record(s) had errors.`;
                             console.error('Upload errors:', errors);
                         }
                         
-                        showStatus(status, message, 'success');
+                        showStatus(status, message, errors.length > 0 ? 'error' : 'success');
                         
                     } catch (error) {
                         console.error('Upload error:', error);
                         showStatus(status, `Error: ${error.message}`, 'error');
                     } finally {
                         uploadBtn.disabled = false;
-                        uploadBtn.innerHTML = 'Upload File';
+                        uploadBtn.innerHTML = 'Select File';
+                        fileInput.value = '';
                     }
                 };
                 
-                reader.onerror = (error) => {
-                    console.error('File reading error:', error);
+                reader.onerror = () => {
                     showStatus(status, 'Error reading file', 'error');
                     uploadBtn.disabled = false;
-                    uploadBtn.innerHTML = 'Upload File';
+                    uploadBtn.innerHTML = 'Select File';
                 };
                 
-                // Start reading the file
                 reader.readAsArrayBuffer(file);
-            });
+            }
             
             function showStatus(element, message, type) {
                 element.textContent = message;
-                element.className = 'status ' + type;
+                element.className = `status ${type}`;
                 element.style.display = 'block';
                 
-                // Hide status after 5 seconds
+                // Hide status after 10 seconds
                 setTimeout(() => {
                     element.style.display = 'none';
-                }, 5000);
+                }, 10000);
             }
         }
         
@@ -654,8 +419,7 @@
             setupFileUpload(
                 'instructors-upload-area',
                 'instructors-file',
-                'instructors-preview',
-                'upload-instructors',
+                'instructors-upload-btn',
                 'instructors-status',
                 'instructors'
             );
@@ -663,17 +427,15 @@
             setupFileUpload(
                 'rooms-upload-area',
                 'rooms-file',
-                'rooms-preview',
-                'upload-rooms',
+                'rooms-upload-btn',
                 'rooms-status',
                 'rooms'
             );
         });
         
+        // Download template function
         function downloadTemplate(format, type = 'instructors') {
             try {
-                console.log('Downloading template:', format, 'for type:', type);
-                
                 let sampleData;
                 
                 if (type === 'instructors') {
@@ -684,7 +446,6 @@
                             'Day': 'Monday',
                             'Name': 'Prof. Garcia',
                             'Room': 'CBS BLDG 1 102',
-                            'RoomName': 'CBS BLDG 1 102',
                             'ScheduleColor': '#88f1ab',
                             'Section': 'A',
                             'Subject': 'Law',
@@ -696,7 +457,6 @@
                             'Day': 'Tuesday',
                             'Name': 'Prof. Reyes',
                             'Room': 'CCS BLDG 2 201',
-                            'RoomName': 'CCS BLDG 2 201',
                             'ScheduleColor': '#88f1ab',
                             'Section': 'B',
                             'Subject': 'Programming',
@@ -705,7 +465,7 @@
                         }
                     ];
                 } else {
-                    // Sample data for Rooms collection - matching the exact format from the screenshot
+                    // Sample data for Rooms collection
                     sampleData = [
                         {
                             'Room': 'CBS BLG 2F 201',
@@ -722,13 +482,9 @@
                     ];
                 }
                 
-                console.log('Sample data prepared:', sampleData);
-                
                 if (format === 'json') {
-                    console.log('Downloading as JSON');
                     downloadJSON(sampleData);
                 } else {
-                    console.log('Preparing Excel/CSV download');
                     // Convert to worksheet
                     const ws = XLSX.utils.json_to_sheet(sampleData);
                     
@@ -739,9 +495,7 @@
                     // Generate and trigger download
                     const fileExt = format === 'csv' ? 'csv' : 'xlsx';
                     const fileName = `${type}_template.${fileExt}`;
-                    console.log('Attempting to write file:', fileName);
                     XLSX.writeFile(wb, fileName, { bookType: fileExt });
-                    console.log('File write should be complete');
                 }
             } catch (error) {
                 console.error('Error in downloadTemplate:', error);
@@ -750,36 +504,16 @@
         }
         
         function downloadJSON(data) {
-            try {
-                console.log('Preparing JSON download');
-                const jsonString = JSON.stringify(data, null, 2);
-                const blob = new Blob([jsonString], { type: 'application/json;charset=utf-8;' });
-                
-                // For IE/Edge
-                if (window.navigator && window.navigator.msSaveOrOpenBlob) {
-                    window.navigator.msSaveOrOpenBlob(blob, 'template.json');
-                    return;
-                }
-                
-                // For other browsers
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = 'template.json';
-                document.body.appendChild(a);
-                a.click();
-                
-                // Cleanup
-                setTimeout(() => {
-                    document.body.removeChild(a);
-                    window.URL.revokeObjectURL(url);
-                }, 0);
-                
-                console.log('JSON download initiated');
-            } catch (error) {
-                console.error('Error in downloadJSON:', error);
-                throw error; // Rethrow to be caught by the caller
-            }
+            const jsonString = JSON.stringify(data, null, 2);
+            const blob = new Blob([jsonString], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'template.json';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
         }
     </script>
 </body>
