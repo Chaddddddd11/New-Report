@@ -106,7 +106,7 @@ function isPathAllowed(role, path) {
 async function getUserRoleAndData(user) {
     try {
         // Default role is student, but make admin@example.com an admin
-        const isAdmin = user.email === 'admin@example.com';
+        const isAdmin = user.email === 'admin@example.com' || user.email.endsWith('@dhvsu.edu.ph');
         const role = isAdmin ? ROLES.ADMIN : ROLES.STUDENT;
         
         // Create basic user data without Firestore
@@ -135,7 +135,7 @@ async function getUserRoleAndData(user) {
                 canManageUsers: isAdmin
             });
         } catch (error) {
-            console.warn('Could not set custom claims:', error);
+            console.warn('Could not set custom claims:', error.message || error);
         }
 
         return {
@@ -148,14 +148,21 @@ async function getUserRoleAndData(user) {
     }
 }
 
-// Set custom claims for the user (requires Cloud Function)
+// Set custom claims for the user (simplified version without Cloud Functions)
 async function setCustomUserClaims(uid, role) {
     try {
+        // Skip setting custom claims if Firebase Functions is not available
+        if (!firebase.functions) {
+            console.log('Firebase Functions not available, skipping custom claims');
+            return;
+        }
+        
+        // Try to use Cloud Function if available
         const setClaims = firebase.functions().httpsCallable('setCustomClaims');
         await setClaims({ uid, role });
     } catch (error) {
-        console.error('Error setting custom claims:', error);
-        // Fallback to direct database check if Cloud Function fails
+        console.warn('Could not set custom claims (non-critical):', error.message);
+        // Continue without custom claims
     }
 }
 
