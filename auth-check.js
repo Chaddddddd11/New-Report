@@ -36,22 +36,12 @@ try {
     app = initializeApp(firebaseConfig);
     auth = getAuth(app);
     
-    // Initialize Firestore
-    db = getFirestore(app);
+    // Initialize Firestore with persistence settings
+    db = initializeFirestore(app, {
+        cacheSizeBytes: CACHE_SIZE_UNLIMITED
+    });
     
-    // Enable offline persistence
-    enableIndexedDbPersistence(db, { forceOwnership: true })
-        .then(() => console.log('Firestore offline persistence enabled'))
-        .catch((err) => {
-            if (err.code === 'failed-precondition') {
-                console.warn('Offline persistence can only be enabled in one tab at a time.');
-            } else if (err.code === 'unimplemented') {
-                console.warn('The current browser does not support offline persistence.');
-            } else {
-                console.warn('Error enabling offline persistence:', err);
-            }
-        });
-    
+    // Set the persistence enabled flag
     isFirestoreEnabled = true;
     
     // Initialize Firebase services if in browser
@@ -720,9 +710,6 @@ async function handleAuthenticated(user) {
             error: error.message,
             ip: await getClientIP()
         });
-        
-        // On error, redirect to login with generic error
-        window.location.href = 'login.html?error=auth_error';
     }
 }
 
