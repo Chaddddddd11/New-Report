@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Firestore Bulk Upload</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <style>
+        :root {
+            --primary-color: #610000;
+            --secondary-color: #570404;
+            --accent-color: #F7B32D;
+            --light-gray: #f5f5f5;
+            --dark-gray: #333;
+            --border-color: #ddd;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Roboto', sans-serif;
+        }
+        
+        body {
+            background-color: #f9f9f9;
+            color: #333;
+            line-height: 1.6;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        h1 {
+            color: var(--primary-color);
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .tabs {
+            display: flex;
+            margin-bottom: 20px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            background: var(--light-gray);
+            border: 1px solid var(--border-color);
+            border-bottom: none;
+            border-radius: 5px 5px 0 0;
+            margin-right: 5px;
+        }
+        
+        .tab.active {
+            background: white;
+            border-bottom: 1px solid white;
+            margin-bottom: -1px;
+            font-weight: 500;
+        }
+        
+        .tab-content {
+            display: none;
+            padding: 20px 0;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .upload-area {
+            border: 2px dashed var(--border-color);
+            border-radius: 5px;
+            padding: 30px;
+            text-align: center;
+            margin-bottom: 20px;
+            background: var(--light-gray);
+            transition: all 0.3s;
+        }
+        
+        .upload-area:hover {
+            border-color: var(--accent-color);
+        }
+        
+        .upload-area i {
+            font-size: 48px;
+            color: var(--primary-color);
+            margin-bottom: 15px;
+        }
+        
+        .btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 5px;
+            transition: background-color 0.3s;
+        }
+        
+        .btn:hover {
+            background-color: var(--secondary-color);
+        }
+        
+        .btn-secondary {
+            background-color: #6c757d;
+        }
+        
+        .btn-secondary:hover {
+            background-color: #5a6268;
+        }
+        
+        .status {
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 5px;
+            display: none;
+        }
+        
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .template-section {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid var(--border-color);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Firestore Bulk Upload</h1>
+        
+        <div class="tabs">
+            <div class="tab active" data-tab="instructors">Instructors</div>
+            <div class="tab" data-tab="rooms">Rooms</div>
+        </div>
+        
+        <!-- Instructors Tab -->
+        <div id="instructors-tab" class="tab-content active">
+            <div class="upload-area" id="instructors-upload-area">
+                <i class="fas fa-file-upload"></i>
+                <h3>Upload Instructors Data</h3>
+                <p>Drag & drop your Excel/CSV file here or click to browse</p>
+                <input type="file" id="instructors-file" accept=".xlsx, .xls, .csv" style="display: none;">
+                <button class="btn" id="instructors-upload-btn">Select File</button>
+                <div id="instructors-status" class="status"></div>
+            </div>
+            
+            <div class="template-section">
+                <h3>Download Templates</h3>
+                <p>Download a template to ensure your file has the correct format:</p>
+                <button class="btn btn-secondary" onclick="downloadTemplate('xlsx', 'instructors')">
+                    <i class="fas fa-file-excel"></i> Download Excel Template
+                </button>
+                <button class="btn btn-secondary" onclick="downloadTemplate('csv', 'instructors')">
+                    <i class="fas fa-file-csv"></i> Download CSV Template
+                </button>
+            </div>
+        </div>
+        
+        <!-- Rooms Tab -->
+        <div id="rooms-tab" class="tab-content">
+            <div class="upload-area" id="rooms-upload-area">
+                <i class="fas fa-file-upload"></i>
+                <h3>Upload Rooms Data</h3>
+                <p>Drag & drop your Excel/CSV file here or click to browse</p>
+                <input type="file" id="rooms-file" accept=".xlsx, .xls, .csv" style="display: none;">
+                <button class="btn" id="rooms-upload-btn">Select File</button>
+                <div id="rooms-status" class="status"></div>
+            </div>
+            
+            <div class="template-section">
+                <h3>Download Templates</h3>
+                <p>Download a template to ensure your file has the correct format:</p>
+                <button class="btn btn-secondary" onclick="downloadTemplate('xlsx', 'rooms')">
+                    <i class="fas fa-file-excel"></i> Download Excel Template
+                </button>
+                <button class="btn btn-secondary" onclick="downloadTemplate('csv', 'rooms')">
+                    <i class="fas fa-file-csv"></i> Download CSV Template
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyDBu7-vOFmS62IaGD8-8zb6TH0a1mHYNpI",
+            authDomain: "dhvsu-faculty-scheduling.firebaseapp.com",
+            projectId: "dhvsu-faculty-scheduling",
+            storageBucket: "dhvsu-faculty-scheduling.appspot.com",
+            messagingSenderId: "1075180921702",
+            appId: "1:1075180921702:web:a0320fa286c684511cdea7",
+            measurementId: "G-EP4FZ04FQT"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        // Tab switching
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                // Remove active class from all tabs and content
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                
+                // Add active class to clicked tab and corresponding content
+                tab.classList.add('active');
+                const tabId = tab.getAttribute('data-tab');
+                document.getElementById(`${tabId}-tab`).classList.add('active');
+            });
+        });
+
+        // Initialize file upload for both tabs
+        function setupFileUpload(uploadAreaId, fileInputId, uploadBtnId, statusId, uploadType) {
+            const uploadArea = document.getElementById(uploadAreaId);
+            const fileInput = document.getElementById(fileInputId);
+            const uploadBtn = document.getElementById(uploadBtnId);
+            const status = document.getElementById(statusId);
+            
+            // Handle drag and drop
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                uploadArea.addEventListener(eventName, preventDefaults, false);
+            });
+            
+            function preventDefaults(e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+            
+            ['dragenter', 'dragover'].forEach(eventName => {
+                uploadArea.addEventListener(eventName, highlight, false);
+            });
+            
+            ['dragleave', 'drop'].forEach(eventName => {
+                uploadArea.addEventListener(eventName, unhighlight, false);
+            });
+            
+            function highlight() {
+                uploadArea.style.borderColor = '#4CAF50';
+                uploadArea.style.backgroundColor = '#e8f5e9';
+            }
+            
+            function unhighlight() {
+                uploadArea.style.borderColor = '';
+                uploadArea.style.backgroundColor = '';
+            }
+            
+            // Handle file drop
+            uploadArea.addEventListener('drop', handleDrop, false);
+            
+            function handleDrop(e) {
+                const dt = e.dataTransfer;
+                const files = dt.files;
+                handleFiles(files);
+            }
+            
+            // Handle file selection
+            uploadBtn.addEventListener('click', () => fileInput.click());
+            
+            fileInput.addEventListener('change', function() {
+                if (this.files.length) {
+                    handleFiles(this.files);
+                }
+            });
+            
+            async function handleFiles(files) {
+                const file = files[0];
+                const reader = new FileReader();
+                
+                reader.onload = async function(e) {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                    const jsonData = XLSX.utils.sheet_to_json(firstSheet);
+                    
+                    if (jsonData.length === 0) {
+                        showStatus(status, 'Error: No data found in the file', 'error');
+                        return;
+                    }
+                    
+                    uploadBtn.disabled = true;
+                    uploadBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Uploading...';
+                    
+                    let successCount = 0;
+                    const errors = [];
+                    
+                    try {
+                        for (let i = 0; i < jsonData.length; i++) {
+                            const row = jsonData[i];
+                            
+                            try {
+                                let docData;
+                                
+                                if (uploadType === 'instructors') {
+                                    // Process instructor data with defaults for missing fields
+                                    docData = {
+                                        course: String(row['Course'] || row['course'] || 'N/A').trim(),
+                                        day: String(row['Day'] || row['day'] || 'Monday').trim(),
+                                        name: String(row['Name'] || row['name'] || 'Instructor').trim(),
+                                        roomId: String(row['Room'] || row['room'] || row['roomId'] || 'N/A').trim(),
+                                        roomName: String(row['Room'] || row['room'] || row['roomName'] || 'N/A').trim(),
+                                        scheduleColor: String(row['ScheduleColor'] || row['scheduleColor'] || '#000000').trim(),
+                                        section: String(row['Section'] || row['section'] || 'A').trim(),
+                                        subject: String(row['Subject'] || row['subject'] || 'N/A').trim(),
+                                        time: String(row['Time'] || row['time'] || '00:00-00:00').trim(),
+                                        year: String(row['Year'] || row['year'] || '1').trim(),
+                                        timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                                        // Add any additional fields from the row
+                                        ...Object.entries(row).reduce((acc, [key, value]) => {
+                                            if (!['Course', 'course', 'Day', 'day', 'Name', 'name', 'Room', 'room', 'roomId', 'roomName', 
+                                                  'ScheduleColor', 'scheduleColor', 'Section', 'section', 'Subject', 'subject', 
+                                                  'Time', 'time', 'Year', 'year'].includes(key)) {
+                                                acc[key] = value;
+                                            }
+                                            return acc;
+                                        }, {})
+                                    };
+                                    
+                                    // Validate minimum required fields
+                                    const requiredFields = {
+                                        'name': 'Instructor Name',
+                                        'subject': 'Subject',
+                                        'time': 'Time'
+                                    };
+                                    
+                                    const missingFields = [];
+                                    for (const [field, displayName] of Object.entries(requiredFields)) {
+                                        if (!docData[field] || docData[field] === 'N/A') {
+                                            missingFields.push(displayName);
+                                        }
+                                    }
+                                    
+                                    if (missingFields.length > 0) {
+                                        throw new Error(`Missing required information: ${missingFields.join(', ')}`);
+                                    }
+                                    
+                                    // Add to Firestore
+                                    await db.collection('Instructors').add(docData);
+                                    
+                                } else if (uploadType === 'rooms') {
+                                    // Process room data
+                                    docData = {
+                                        capacity: Number(row['Capacity']) || 0,
+                                        day: String(row['Day'] || '').trim(),
+                                        roomName: String(row['Room'] || '').trim(),
+                                        time: String(row['Time'] || '').trim()
+                                    };
+                                    
+                                    // Validate required fields
+                                    const requiredFields = ['capacity', 'day', 'roomName', 'time'];
+                                    const missingFields = requiredFields.filter(field => !docData[field] && docData[field] !== 0);
+                                    
+                                    if (missingFields.length > 0) {
+                                        throw new Error(`Missing required fields: ${missingFields.join(', ')}`);
+                                    }
+                                    
+                                    // Add to Firestore
+                                    await db.collection('Rooms').add(docData);
+                                }
+                                
+                                successCount++;
+                                
+                            } catch (error) {
+                                console.error(`Error processing row ${i + 2}:`, error);
+                                errors.push(`Row ${i + 2}: ${error.message}`);
+                            }
+                        }
+                        
+                        // Show results
+                        let message = `Successfully uploaded ${successCount} ${uploadType} record(s).`;
+                        if (errors.length > 0) {
+                            message += `\n${errors.length} record(s) had errors.`;
+                            console.error('Upload errors:', errors);
+                        }
+                        
+                        showStatus(status, message, errors.length > 0 ? 'error' : 'success');
+                        
+                    } catch (error) {
+                        console.error('Upload error:', error);
+                        showStatus(status, `Error: ${error.message}`, 'error');
+                    } finally {
+                        uploadBtn.disabled = false;
+                        uploadBtn.innerHTML = 'Select File';
+                        fileInput.value = '';
+                    }
+                };
+                
+                reader.onerror = () => {
+                    showStatus(status, 'Error reading file', 'error');
+                    uploadBtn.disabled = false;
+                    uploadBtn.innerHTML = 'Select File';
+                };
+                
+                reader.readAsArrayBuffer(file);
+            }
+            
+            function showStatus(element, message, type) {
+                element.textContent = message;
+                element.className = `status ${type}`;
+                element.style.display = 'block';
+                
+                // Hide status after 10 seconds
+                setTimeout(() => {
+                    element.style.display = 'none';
+                }, 10000);
+            }
+        }
+        
+        // Initialize file upload for both tabs
+        document.addEventListener('DOMContentLoaded', () => {
+            setupFileUpload(
+                'instructors-upload-area',
+                'instructors-file',
+                'instructors-upload-btn',
+                'instructors-status',
+                'instructors'
+            );
+            
+            setupFileUpload(
+                'rooms-upload-area',
+                'rooms-file',
+                'rooms-upload-btn',
+                'rooms-status',
+                'rooms'
+            );
+        });
+        
+        // Download template function
+        function downloadTemplate(format, type = 'instructors') {
+            try {
+                let sampleData;
+                
+                if (type === 'instructors') {
+                    // Sample data for Instructors collection
+                    sampleData = [
+                        {
+                            'Course': 'BSA',
+                            'Day': 'Monday',
+                            'Name': 'Prof. Garcia',
+                            'Room': 'CBS BLDG 1 102',
+                            'ScheduleColor': '#88f1ab',
+                            'Section': 'A',
+                            'Subject': 'Law',
+                            'Time': '09:00-10:00',
+                            'Year': '1'
+                        },
+                        {
+                            'Course': 'BSIT',
+                            'Day': 'Tuesday',
+                            'Name': 'Prof. Reyes',
+                            'Room': 'CCS BLDG 2 201',
+                            'ScheduleColor': '#88f1ab',
+                            'Section': 'B',
+                            'Subject': 'Programming',
+                            'Time': '10:30-12:00',
+                            'Year': '2'
+                        }
+                    ];
+                } else {
+                    // Sample data for Rooms collection
+                    sampleData = [
+                        {
+                            'Room': 'CBS BLG 2F 201',
+                            'Day': 'Wednesday',
+                            'Time': '07:00-08:00',
+                            'Capacity': 35
+                        },
+                        {
+                            'Room': 'CAS BLG 3F 301',
+                            'Day': 'Thursday',
+                            'Time': '10:00-11:30',
+                            'Capacity': 40
+                        }
+                    ];
+                }
+                
+                if (format === 'json') {
+                    downloadJSON(sampleData);
+                } else {
+                    // Convert to worksheet
+                    const ws = XLSX.utils.json_to_sheet(sampleData);
+                    
+                    // Create workbook
+                    const wb = XLSX.utils.book_new();
+                    XLSX.utils.book_append_sheet(wb, ws, 'Template');
+                    
+                    // Generate and trigger download
+                    const fileExt = format === 'csv' ? 'csv' : 'xlsx';
+                    const fileName = `${type}_template.${fileExt}`;
+                    XLSX.writeFile(wb, fileName, { bookType: fileExt });
+                }
+            } catch (error) {
+                console.error('Error in downloadTemplate:', error);
+                alert('Error generating template. Please check the console for details.');
+            }
+        }
+        
+        function downloadJSON(data) {
+            const jsonString = JSON.stringify(data, null, 2);
+            const blob = new Blob([jsonString], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'template.json';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+    </script>
+</body>
+</html>
