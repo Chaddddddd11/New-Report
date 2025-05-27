@@ -815,8 +815,8 @@
               cell.style.padding = '4px';
               cell.style.backgroundColor = bgColor;
               
-              // Use direct property access instead of logical OR to see actual values
-              const roomDisplay = instructor.room || instructor.roomName || 'TBA';
+              // Check all possible room fields
+              const roomDisplay = instructor.room || instructor.roomName || instructor.roomId || 'TBA';
               
               const entryHTML = `
                 <div class="schedule-entry" 
@@ -850,6 +850,73 @@
       });
     }
 
+    // Function to update year options based on selected course
+    function updateYearOptions() {
+      const courseSelect = document.getElementById('courseSelect');
+      const yearSelect = document.getElementById('yearSelect');
+      
+      // Clear existing options except the first one
+      yearSelect.innerHTML = '<option value="">Select Year</option>';
+      yearSelect.disabled = !courseSelect.value;
+      
+      if (!courseSelect.value) {
+        // If no course is selected, disable and reset section select
+        const sectionSelect = document.getElementById('sectionSelect');
+        sectionSelect.innerHTML = '<option value="">Select Section</option>';
+        sectionSelect.disabled = true;
+        return;
+      }
+      
+      // Add year options (1st to 4th year)
+      const years = ['1', '2', '3', '4'];
+      years.forEach(year => {
+        const option = document.createElement('option');
+        option.value = year;
+        option.textContent = `${year}${getOrdinalSuffix(year)} Year`;
+        yearSelect.appendChild(option);
+      });
+      
+      // Reset section select
+      updateSectionOptions();
+    }
+    
+    // Function to update section options based on selected year
+    function updateSectionOptions() {
+      const yearSelect = document.getElementById('yearSelect');
+      const sectionSelect = document.getElementById('sectionSelect');
+      
+      // Clear existing options except the first one
+      sectionSelect.innerHTML = '<option value="">Select Section</option>';
+      sectionSelect.disabled = !yearSelect.value;
+      
+      if (!yearSelect.value) return;
+      
+      // Add section options (A to D)
+      const sections = ['A', 'B', 'C', 'D'];
+      sections.forEach(section => {
+        const option = document.createElement('option');
+        option.value = section;
+        option.textContent = `Section ${section}`;
+        sectionSelect.appendChild(option);
+      });
+    }
+    
+    // Helper function to get ordinal suffix (1st, 2nd, 3rd, 4th)
+    function getOrdinalSuffix(num) {
+      const j = num % 10;
+      const k = num % 100;
+      if (j === 1 && k !== 11) return 'st';
+      if (j === 2 && k !== 12) return 'nd';
+      if (j === 3 && k !== 13) return 'rd';
+      return 'th';
+    }
+    
+    // Function to update student capacity display (placeholder function)
+    function updateStudentCapacity() {
+      const capacityDisplay = document.getElementById('studentCapacity');
+      capacityDisplay.textContent = 'Student Capacity: -';
+    }
+    
     // Function to log current dropdown values and data for debugging
     function logCurrentState() {
       console.log('=== Current Application State ===');
