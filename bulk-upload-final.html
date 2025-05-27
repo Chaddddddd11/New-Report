@@ -7,24 +7,50 @@
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <!-- Firebase SDK -->
-    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+    <!-- Local storage for demo purposes -->
     <script>
-    // Your web app's Firebase configuration
-    const firebaseConfig = {
-        apiKey: "AIzaSyDBu7-vOFmS62IaGD8-8zb6TH0a1mHYNpI",
-        authDomain: "dhvsu-faculty-scheduling.firebaseapp.com",
-        projectId: "dhvsu-faculty-scheduling",
-        storageBucket: "dhvsu-faculty-scheduling.appspot.com",
-        messagingSenderId: "1075180921702",
-        appId: "1:1075180921702:web:a0320fa286c684511cdea7",
-        measurementId: "G-EP4FZ04FQT"
+    // Simple in-memory storage for demo
+    const localDB = {
+        instructors: [],
+        subjects: [],
+        rooms: [],
+        
+        async add(collection, data) {
+            if (!this[collection]) this[collection] = [];
+            const id = Date.now().toString();
+            const item = { id, ...data };
+            this[collection].push(item);
+            return Promise.resolve(id);
+        },
+        
+        async get(collection) {
+            return Promise.resolve(this[collection] || []);
+        },
+        
+        async clear(collection) {
+            this[collection] = [];
+            return Promise.resolve();
+        }
     };
-
-    // Initialize Firebase
-    const app = firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore();
+    
+    // Mock Firebase functions for compatibility
+    const db = {
+        collection: (name) => ({
+            add: (data) => localDB.add(name, data),
+            get: () => localDB.get(name).then(docs => ({
+                docs: docs.map(doc => ({
+                    id: doc.id,
+                    data: () => {
+                        const { id, ...data } = doc;
+                        return data;
+                    }
+                }))
+            })),
+            where: () => ({
+                get: () => Promise.resolve({ empty: true })
+            })
+        })
+    };
     </script>
     <style>
         :root {
@@ -510,30 +536,21 @@
                                         day: String(row.day || ''),
                                         roomName: String(row.roomName || ''),
                                         time: String(row.time || ''),
-                                        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                                        timestamp: new Date().toISOString()
                                     };
                                     
-                                    // Convert capacity to number if it's a string
-                                    if (typeof docData.capacity === 'string') {
-                                        docData.capacity = Number(docData.capacity) || 0;
-                                    }
+                                    // Add to local storage
+                                    await localDB.add(uploadType, docData);
+                                    successCount++;
                                 }
-                                
-                                // Add to batch
-                                const newDocRef = collectionRef.doc();
-                                batch.set(newDocRef, docData);
-                                successCount++;
-                                
                             } catch (error) {
+                                console.error(`Error processing row ${i + 2}:`, error);
                                 errors.push(`Row ${i + 2}: ${error.message}`);
                             }
                         }
                         
-                        // Commit the batch
-                        await batch.commit();
-                        
                         // Show results
-                        let message = `Successfully uploaded ${successCount} records.`;
+                        let message = `Successfully uploaded ${successCount} ${uploadType}.`;
                         if (errors.length > 0) {
                             message += `\n${errors.length} records had errors.`;
                             console.error('Upload errors:', errors);
