@@ -805,14 +805,23 @@
               cell.style.padding = '4px';
               cell.style.backgroundColor = bgColor;
               
+              // Debug log for Perez
+              if (instructor.name && instructor.name.includes('Perez')) {
+                console.log('Perez instructor object:', JSON.stringify(instructor, null, 2));
+                console.log('Available fields:', Object.keys(instructor));
+              }
+              
               // Check all possible room fields in order of preference
               const roomDisplay = 
-                instructor.room ||       // First priority: 'room' field
-                instructor.roomId ||     // Second priority: 'roomId' field
-                instructor.roomName ||   // Third priority: 'roomName' field
+                (instructor.room && instructor.room.trim()) ||       // First priority: 'room' field
+                (instructor.roomId && instructor.roomId.trim()) ||   // Second priority: 'roomId' field
+                (instructor.roomName && instructor.roomName.trim()) || // Third priority: 'roomName' field
                 (() => {                 // Debug log if no room found
                   console.log('No room found for instructor:', {
                     name: instructor.name,
+                    subject: instructor.subject,
+                    day: instructor.day,
+                    time: instructor.time,
                     availableFields: Object.keys(instructor).filter(k => k.toLowerCase().includes('room'))
                   });
                   return 'TBA';
