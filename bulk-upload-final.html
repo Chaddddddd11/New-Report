@@ -7,50 +7,24 @@
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <!-- Local storage for demo purposes -->
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
     <script>
-    // Simple in-memory storage for demo
-    const localDB = {
-        instructors: [],
-        subjects: [],
-        rooms: [],
-        
-        async add(collection, data) {
-            if (!this[collection]) this[collection] = [];
-            const id = Date.now().toString();
-            const item = { id, ...data };
-            this[collection].push(item);
-            return Promise.resolve(id);
-        },
-        
-        async get(collection) {
-            return Promise.resolve(this[collection] || []);
-        },
-        
-        async clear(collection) {
-            this[collection] = [];
-            return Promise.resolve();
-        }
+    // Your web app's Firebase configuration
+    const firebaseConfig = {
+        apiKey: "AIzaSyDBu7-vOFmS62IaGD8-8zb6TH0a1mHYNpI",
+        authDomain: "dhvsu-faculty-scheduling.firebaseapp.com",
+        projectId: "dhvsu-faculty-scheduling",
+        storageBucket: "dhvsu-faculty-scheduling.appspot.com",
+        messagingSenderId: "1075180921702",
+        appId: "1:1075180921702:web:a0320fa286c684511cdea7",
+        measurementId: "G-EP4FZ04FQT"
     };
-    
-    // Mock Firebase functions for compatibility
-    const db = {
-        collection: (name) => ({
-            add: (data) => localDB.add(name, data),
-            get: () => localDB.get(name).then(docs => ({
-                docs: docs.map(doc => ({
-                    id: doc.id,
-                    data: () => {
-                        const { id, ...data } = doc;
-                        return data;
-                    }
-                }))
-            })),
-            where: () => ({
-                get: () => Promise.resolve({ empty: true })
-            })
-        })
-    };
+
+    // Initialize Firebase
+    const app = firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
     </script>
     <style>
         :root {
@@ -489,14 +463,22 @@
                         const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
                         const jsonData = XLSX.utils.sheet_to_json(firstSheet);
                         
-                        // Get Firestore instance
-                        const db = firebase.firestore();
-                        const batch = db.batch();
-                        const collectionRef = db.collection(uploadType === 'instructors' ? 'Instructors' : 'Rooms');
-                        
                         // Process each row
                         let successCount = 0;
                         const errors = [];
+                        
+                        // Get Firestore instance
+                        const batch = db.batch();
+                        const collectionRef = db.collection(uploadType === 'instructors' ? 'Instructors' : 'Rooms');
+                        
+                        // Clear existing data if needed
+                        if (document.getElementById('clear-existing').checked) {
+                            const snapshot = await collectionRef.get();
+                            snapshot.forEach(doc => {
+                                batch.delete(doc.ref);
+                            });
+                            await batch.commit();
+                        }
                         
                         for (let i = 0; i < jsonData.length; i++) {
                             const row = jsonData[i];
@@ -515,18 +497,24 @@
                                         course: String(row.course || ''),
                                         day: String(row.day || ''),
                                         name: String(row.name || ''),
-                                        roomId: String(row.roomId || ''),
-                                        roomName: String(row.roomName || row.roomId || ''),
-                                        scheduleColor: String(row.scheduleColor || '#000000'),
-                                        section: String(row.section || ''),
+                                        room: String(row.room || row.roomName || ''),
+                                        roomName: String(row.roomName || row.room || ''),
+                                        scheduleColor: String(row.scheduleColor || '#88f1ab'),
+                                        section: String(row.section || '').toUpperCase(),
                                         subject: String(row.subject || ''),
                                         time: String(row.time || ''),
                                         year: String(row.year || ''),
-                                        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                                        timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                                        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
                                     };
-                                } else {
-                                    // Validate required fields for rooms
-                                    if (!row.roomName || row.capacity === undefined || row.capacity === '') {
+                                    
+                                    // Add to batch
+                                    const newDocRef = collectionRef.doc();
+                                    batch.set(newDocRef, docData);
+                                    successCount++;
+                                    
+                                } else if (uploadType === 'rooms') {
+                                    if (!row.roomName || row.capacity === undefined) {
                                         throw new Error(`Row ${i + 2}: Missing required fields (roomName, capacity)`);
                                     }
                                     
@@ -534,15 +522,19 @@
                                     docData = {
                                         capacity: Number(row.capacity) || 0,
                                         day: String(row.day || ''),
-                                        roomName: String(row.roomName || ''),
+                                        roomName: String(row.roomName || '').trim(),
                                         time: String(row.time || ''),
-                                        timestamp: new Date().toISOString()
+                                        timestamp: firebase.firestore.FieldValue.serverTimestamp()
                                     };
                                     
-                                    // Add to local storage
-                                    await localDB.add(uploadType, docData);
+                                    // Add to batch
+                                    const newDocRef = collectionRef.doc();
+                                    batch.set(newDocRef, docData);
                                     successCount++;
                                 }
+                                
+                                // Commit the batch
+                                await batch.commit();
                             } catch (error) {
                                 console.error(`Error processing row ${i + 2}:`, error);
                                 errors.push(`Row ${i + 2}: ${error.message}`);
@@ -624,24 +616,24 @@
                             course: 'BSA',
                             day: 'Monday',
                             name: 'Prof. Garcia',
-                            roomId: 'CBS BLG 5 222',
-                            roomName: 'CBS BLG 5 222',
-                            scheduleColor: '#000000',
+                            room: 'CBS BLDG 1 102',
+                            roomName: 'CBS BLDG 1 102',
+                            scheduleColor: '#88f1ab',
                             section: 'A',
-                            subject: 'Math',
-                            time: '07:00-08:00',
+                            subject: 'Law',
+                            time: '09:00-10:00',
                             year: '1'
                         },
                         {
                             course: 'BSIT',
                             day: 'Tuesday',
                             name: 'Prof. Reyes',
-                            roomId: 'CCS BLG 3 101',
-                            roomName: 'CCS BLG 3 101',
-                            scheduleColor: '#1e88e5',
+                            room: 'CCS BLDG 2 201',
+                            roomName: 'CCS BLDG 2 201',
+                            scheduleColor: '#88f1ab',
                             section: 'B',
                             subject: 'Programming',
-                            time: '09:00-10:30',
+                            time: '10:30-12:00',
                             year: '2'
                         }
                     ];
@@ -651,13 +643,13 @@
                         {
                             capacity: 35,
                             day: 'Wednesday',
-                            roomName: 'CBS BLDG 1 102',
-                            time: '9:00-10:00'
+                            roomName: 'CBS BLG 2F 201',
+                            time: '07:00-08:00'
                         },
                         {
                             capacity: 40,
                             day: 'Thursday',
-                            roomName: 'CCS BLDG 2 201',
+                            roomName: 'CAS BLG 3F 301',
                             time: '10:00-11:30'
                         }
                     ];
