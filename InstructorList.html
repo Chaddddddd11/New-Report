@@ -410,7 +410,8 @@
                 timeCell.textContent = instructor.time || 'N/A';
                 
                 const roomCell = document.createElement('td');
-                roomCell.textContent = instructor.roomName || 'N/A';
+                // Check both roomName and room fields, with roomName taking precedence
+                roomCell.textContent = instructor.roomName || instructor.room || 'N/A';
                 
                 const colorCell = document.createElement('td');
                 const colorDiv = document.createElement('div');
