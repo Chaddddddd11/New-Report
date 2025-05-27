@@ -7,24 +7,46 @@
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <!-- Firebase SDK -->
-    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
-    <script>
-    // Your web app's Firebase configuration
-    const firebaseConfig = {
-        apiKey: "AIzaSyDBu7-vOFmS62IaGD8-8zb6TH0a1mHYNpI",
-        authDomain: "dhvsu-faculty-scheduling.firebaseapp.com",
-        projectId: "dhvsu-faculty-scheduling",
-        storageBucket: "dhvsu-faculty-scheduling.appspot.com",
-        messagingSenderId: "1075180921702",
-        appId: "1:1075180921702:web:a0320fa286c684511cdea7",
-        measurementId: "G-EP4FZ04FQT"
-    };
+    <!-- Firebase SDK (ESM) -->
+    <script type="module">
+        // Import the functions you need from the SDKs you need
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+        import { 
+            getFirestore, 
+            collection, 
+            doc, 
+            setDoc, 
+            getDocs,
+            serverTimestamp,
+            writeBatch
+        } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
-    // Initialize Firebase
-    const app = firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore();
+        // Your web app's Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyDBu7-vOFmS62IaGD8-8zb6TH0a1mHYNpI",
+            authDomain: "dhvsu-faculty-scheduling.firebaseapp.com",
+            projectId: "dhvsu-faculty-scheduling",
+            storageBucket: "dhvsu-faculty-scheduling.appspot.com",
+            messagingSenderId: "1075180921702",
+            appId: "1:1075180921702:web:a0320fa286c684511cdea7",
+            measurementId: "G-EP4FZ04FQT"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // Make them globally available
+        window.firebaseApp = app;
+        window.db = db;
+        window.firestore = { 
+            collection: (path) => collection(db, path),
+            doc: (path) => doc(db, path),
+            setDoc: (docRef, data) => setDoc(docRef, data),
+            getDocs: (query) => getDocs(query),
+            serverTimestamp: () => serverTimestamp(),
+            writeBatch: () => writeBatch(db)
+        };
     </script>
     <style>
         :root {
@@ -468,12 +490,18 @@
                         const errors = [];
                         
                         // Get Firestore instance
-                        const batch = db.batch();
-                        const collectionRef = db.collection(uploadType === 'instructors' ? 'Instructors' : 'Rooms');
+                        if (!window.firestore) {
+                            throw new Error('Firebase is not initialized. Please refresh the page and try again.');
+                        }
+                        
+                        const collectionName = uploadType === 'instructors' ? 'Instructors' : 'Rooms';
+                        const collectionRef = window.firestore.collection(collectionName);
                         
                         // Clear existing data if needed
-                        if (document.getElementById('clear-existing').checked) {
-                            const snapshot = await collectionRef.get();
+                        const clearExistingCheckbox = document.getElementById('clear-existing');
+                        if (clearExistingCheckbox && clearExistingCheckbox.checked) {
+                            const snapshot = await window.firestore.getDocs(collectionRef);
+                            const batch = window.firestore.writeBatch();
                             snapshot.forEach(doc => {
                                 batch.delete(doc.ref);
                             });
@@ -504,13 +532,13 @@
                                         subject: String(row.subject || ''),
                                         time: String(row.time || ''),
                                         year: String(row.year || ''),
-                                        timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-                                        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                                        timestamp: window.firestore.serverTimestamp(),
+                                        updatedAt: window.firestore.serverTimestamp()
                                     };
                                     
-                                    // Add to batch
-                                    const newDocRef = collectionRef.doc();
-                                    batch.set(newDocRef, docData);
+                                    // Add document
+                                    const newDocRef = window.firestore.doc(window.firestore.collection('Instructors'));
+                                    await window.firestore.setDoc(newDocRef, docData);
                                     successCount++;
                                     
                                 } else if (uploadType === 'rooms') {
@@ -524,17 +552,16 @@
                                         day: String(row.day || ''),
                                         roomName: String(row.roomName || '').trim(),
                                         time: String(row.time || ''),
-                                        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                                        timestamp: window.firestore.serverTimestamp()
                                     };
                                     
-                                    // Add to batch
-                                    const newDocRef = collectionRef.doc();
-                                    batch.set(newDocRef, docData);
+                                    // Add document
+                                    const newDocRef = window.firestore.doc(window.firestore.collection('Rooms'));
+                                    await window.firestore.setDoc(newDocRef, docData);
                                     successCount++;
                                 }
                                 
-                                // Commit the batch
-                                await batch.commit();
+                                // No need to commit batch as we're using individual writes
                             } catch (error) {
                                 console.error(`Error processing row ${i + 2}:`, error);
                                 errors.push(`Row ${i + 2}: ${error.message}`);
