@@ -337,15 +337,21 @@
 
             // Initialize Firebase
             firebase.initializeApp(firebaseConfig);
-        }
-        
-        // Get auth and db instances if they don't exist
-        if (typeof auth === 'undefined') {
-            window.auth = firebase.auth();
-        }
-        
-        if (typeof db === 'undefined') {
-            window.db = firebase.firestore();
+            
+            // Initialize Firebase services
+            const auth = firebase.auth();
+            const db = firebase.firestore();
+            
+            // Set custom claims for the user (requires Cloud Function)
+            async function setCustomUserClaims(uid, claims) {
+                try {
+                    const setClaims = firebase.functions().httpsCallable('setCustomClaims');
+                    await setClaims({ uid, ...claims });
+                } catch (error) {
+                    console.error('Error setting custom claims:', error);
+                    // Continue even if claims fail to set
+                }
+            }
         }
 
         // DOM Elements
@@ -459,14 +465,32 @@
                 // Send email verification
                 await user.sendEmailVerification();
                 
-                // Save student data to Firestore
-                await db.collection('Students').doc(user.uid).set({
+                // Save student data to Firestore with all required fields
+                const userData = {
                     uid: user.uid,
                     email: email,
                     studentId: studentId,
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    displayName: email.split('@')[0], // Default display name from email
+                    emailVerified: false,
+                    role: 'student',
                     status: 'active',
-                    lastLogin: null
+                    canManageSchedule: false,
+                    canManageSystem: false,
+                    canManageUsers: false,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    lastLogin: null,
+                    lastUpdates: firebase.firestore.FieldValue.serverTimestamp(),
+                    createdBy: 'self-registration'
+                };
+                
+                await db.collection('Students').doc(user.uid).set(userData);
+                
+                // Set custom claims for the new user
+                await setCustomUserClaims(user.uid, {
+                    role: 'student',
+                    canManageSchedule: false,
+                    canManageSystem: false,
+                    canManageUsers: false
                 });
                 
                 // Sign out the user (they'll need to verify email before logging in)
