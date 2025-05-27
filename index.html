@@ -582,7 +582,11 @@
                 id: doc.id,
                 name: data.name || 'N/A',
                 subject: data.subject || 'N/A',
-                roomName: data.roomName || 'TBA',
+                // Include all possible room fields from Firestore
+                room: data.room,
+                roomId: data.roomId,
+                roomName: data.roomName,
+                // End room fields
                 day: data.day ? data.day.trim() : '',
                 time: normalizedTime,
                 course: data.course || '',
@@ -805,37 +809,38 @@
               cell.style.padding = '4px';
               cell.style.backgroundColor = bgColor;
               
-              // Debug log for Perez
+              // Debug: Log all room-related fields for Perez
               if (instructor.name && instructor.name.includes('Perez')) {
-                console.log('Perez instructor object:', JSON.stringify(instructor, null, 2));
-                console.log('Available fields:', Object.keys(instructor));
+                console.log('Perez room data:', {
+                  room: instructor.room,
+                  roomId: instructor.roomId,
+                  roomName: instructor.roomName,
+                  allFields: Object.keys(instructor)
+                });
               }
               
-              // Helper function to check if a room value is valid (not empty and not 'TBA')
-              const isValidRoom = (room) => {
-                return room && room.trim() && room.trim().toUpperCase() !== 'TBA';
-              };
+              // Get room value from any possible field
+              let roomValue = 'TBA';
               
               // Check all possible room fields in order of preference
-              const roomDisplay = 
-                (isValidRoom(instructor.room) && instructor.room.trim()) ||       // First priority: 'room' field
-                (isValidRoom(instructor.roomId) && instructor.roomId.trim()) ||   // Second priority: 'roomId' field
-                (isValidRoom(instructor.roomName) && instructor.roomName.trim()) || // Third priority: 'roomName' field
-                (() => {                 // Debug log if no room found
-                  console.log('No valid room found for instructor:', {
-                    name: instructor.name,
-                    subject: instructor.subject,
-                    day: instructor.day,
-                    time: instructor.time,
-                    roomValues: {
-                      room: instructor.room,
-                      roomId: instructor.roomId,
-                      roomName: instructor.roomName
-                    },
-                    allFields: Object.keys(instructor)
-                  });
-                  return 'TBA';
-                })();
+              if (instructor.room && instructor.room.trim() && instructor.room.trim().toUpperCase() !== 'TBA') {
+                roomValue = instructor.room.trim();
+              } else if (instructor.roomId && instructor.roomId.trim() && instructor.roomId.trim().toUpperCase() !== 'TBA') {
+                roomValue = instructor.roomId.trim();
+              } else if (instructor.roomName && instructor.roomName.trim() && instructor.roomName.trim().toUpperCase() !== 'TBA') {
+                roomValue = instructor.roomName.trim();
+              }
+              
+              // If we still have TBA, log debug info
+              if (roomValue.toUpperCase() === 'TBA') {
+                console.log('Using TBA for instructor:', {
+                  name: instructor.name,
+                  subject: instructor.subject,
+                  room: instructor.room,
+                  roomId: instructor.roomId,
+                  roomName: instructor.roomName
+                });
+              }
               
               const entryHTML = `
                 <div class="schedule-entry" 
@@ -848,7 +853,7 @@
                             box-sizing: border-box;">
                   <div class="subject">${instructor.subject || 'N/A'}</div>
                   <div class="instructor">${instructor.name || 'N/A'}</div>
-                  <div class="room">${roomDisplay}</div>
+                  <div class="room">${roomValue}</div>
                 </div>`;
               
               cell.innerHTML = entryHTML;
