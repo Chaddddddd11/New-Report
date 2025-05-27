@@ -105,75 +105,91 @@ function isPathAllowed(role, path) {
 // Get user's role and data from Firestore
 async function getUserRoleAndData(user) {
     try {
-        // First check if user exists in any role collection
-        const [adminDoc, studentDoc, instructorDoc] = await Promise.all([
-            db.collection(COLLECTIONS.ADMIN).doc(user.uid).get(),
-            db.collection(COLLECTIONS.STUDENTS).doc(user.uid).get(),
-            db.collection(COLLECTIONS.INSTRUCTORS).doc(user.uid).get()
+        // Try to get user data with error handling
+        const getUserData = async (collection, role) => {
+            try {
+                const doc = await db.collection(collection).doc(user.uid).get();
+                if (doc.exists) {
+                    return { role, collection, data: doc.data() };
+                }
+                return null;
+            } catch (error) {
+                console.error(`Error getting ${role} data:`, error);
+                return null;
+            }
+        };
+
+        // Try to get user data from all collections
+        const results = await Promise.all([
+            getUserData(COLLECTIONS.ADMIN, ROLES.ADMIN),
+            getUserData(COLLECTIONS.INSTRUCTORS, ROLES.INSTRUCTOR),
+            getUserData(COLLECTIONS.STUDENTS, ROLES.STUDENT)
         ]);
 
-        let userData = null;
-        let role = ROLES.STUDENT; // Default role
-        let collectionName = COLLECTIONS.STUDENTS;
+        // Find the first valid result
+        const userRoleData = results.find(r => r !== null) || {
+            role: ROLES.STUDENT,
+            collection: COLLECTIONS.STUDENTS,
+            data: null
+        };
 
-        // Determine role based on which collection the user exists in
-        if (adminDoc.exists) {
-            role = ROLES.ADMIN;
-            collectionName = COLLECTIONS.ADMIN;
-            userData = adminDoc.data();
-        } else if (instructorDoc.exists) {
-            role = ROLES.INSTRUCTOR;
-            collectionName = COLLECTIONS.INSTRUCTORS;
-            userData = instructorDoc.data();
-        } else if (studentDoc.exists) {
-            role = ROLES.STUDENT;
-            collectionName = COLLECTIONS.STUDENTS;
-            userData = studentDoc.data();
-        } else {
-            // If user doesn't exist in any collection, create a student record
-            const newUserData = {
+        let { role, collection: collectionName, data: userData } = userRoleData;
+
+        // If no user data found, create a new student record
+        if (!userData) {
+            userData = {
                 email: user.email,
                 displayName: user.displayName || user.email.split('@')[0],
-                emailVerified: user.emailVerified || false,
+                emailVerified: user.emailVerified || true,
                 role: ROLES.STUDENT,
                 status: 'active',
                 createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                lastLogin: null,
+                lastLogin: firebase.firestore.FieldValue.serverTimestamp(),
                 lastUpdates: firebase.firestore.FieldValue.serverTimestamp(),
-                // Default permissions for new users
                 canManageSchedule: false,
                 canManageSystem: false,
                 canManageUsers: false,
                 createdBy: 'system'
             };
-            
-            await db.collection(COLLECTIONS.STUDENTS).doc(user.uid).set(newUserData);
-            userData = newUserData;
-            role = ROLES.STUDENT;
+
+            try {
+                await db.collection(collectionName).doc(user.uid).set(userData);
+            } catch (error) {
+                console.error('Error creating user record:', error);
+                throw new Error('Failed to create user record');
+            }
         }
 
         // Update last login timestamp
-        await db.collection(collectionName).doc(user.uid).update({
-            lastLogin: firebase.firestore.FieldValue.serverTimestamp(),
-            lastUpdates: firebase.firestore.FieldValue.serverTimestamp()
-        });
+        try {
+            await db.collection(collectionName).doc(user.uid).update({
+                lastLogin: firebase.firestore.FieldValue.serverTimestamp(),
+                lastUpdates: firebase.firestore.FieldValue.serverTimestamp()
+            });
+        } catch (error) {
+            console.warn('Could not update last login timestamp:', error);
+        }
 
-        // Set custom claims for role-based access control
-        await setCustomUserClaims(user.uid, {
-            role: role,
-            canManageSchedule: userData.canManageSchedule || false,
-            canManageSystem: userData.canManageSystem || false,
-            canManageUsers: userData.canManageUsers || false
-        });
+        // Set custom claims if possible
+        try {
+            await setCustomUserClaims(user.uid, {
+                role: role,
+                canManageSchedule: userData.canManageSchedule || false,
+                canManageSystem: userData.canManageSystem || false,
+                canManageUsers: userData.canManageUsers || false
+            });
+        } catch (error) {
+            console.warn('Could not set custom claims:', error);
+        }
 
         return {
-            role: userData.role || role,
+            role: role,
             userData: {
                 ...userData,
                 uid: user.uid,
                 email: userData.email || user.email,
                 displayName: userData.displayName || user.displayName || user.email.split('@')[0],
-                emailVerified: userData.emailVerified || user.emailVerified || false,
+                emailVerified: userData.emailVerified !== undefined ? userData.emailVerified : true,
                 status: userData.status || 'active'
             }
         };
