@@ -114,42 +114,67 @@ async function getUserRoleAndData(user) {
 
         let userData = null;
         let role = ROLES.STUDENT; // Default role
+        let collectionName = COLLECTIONS.STUDENTS;
 
         // Determine role based on which collection the user exists in
         if (adminDoc.exists) {
             role = ROLES.ADMIN;
+            collectionName = COLLECTIONS.ADMIN;
             userData = adminDoc.data();
         } else if (instructorDoc.exists) {
             role = ROLES.INSTRUCTOR;
+            collectionName = COLLECTIONS.INSTRUCTORS;
             userData = instructorDoc.data();
         } else if (studentDoc.exists) {
             role = ROLES.STUDENT;
+            collectionName = COLLECTIONS.STUDENTS;
             userData = studentDoc.data();
         } else {
             // If user doesn't exist in any collection, create a student record
-            await db.collection(COLLECTIONS.STUDENTS).doc(user.uid).set({
+            const newUserData = {
                 email: user.email,
-                displayName: user.displayName || '',
+                displayName: user.displayName || user.email.split('@')[0],
+                emailVerified: user.emailVerified || false,
+                role: ROLES.STUDENT,
+                status: 'active',
                 createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                status: 'active'
-            });
+                lastLogin: null,
+                lastUpdates: firebase.firestore.FieldValue.serverTimestamp(),
+                // Default permissions for new users
+                canManageSchedule: false,
+                canManageSystem: false,
+                canManageUsers: false,
+                createdBy: 'system'
+            };
+            
+            await db.collection(COLLECTIONS.STUDENTS).doc(user.uid).set(newUserData);
+            userData = newUserData;
             role = ROLES.STUDENT;
         }
 
-        // Update user profile with role
-        await user.updateProfile({
-            displayName: user.displayName || userData?.displayName || ''
+        // Update last login timestamp
+        await db.collection(collectionName).doc(user.uid).update({
+            lastLogin: firebase.firestore.FieldValue.serverTimestamp(),
+            lastUpdates: firebase.firestore.FieldValue.serverTimestamp()
         });
 
-        // Set custom claim for faster role checking
-        await setCustomUserClaims(user.uid, role);
+        // Set custom claims for role-based access control
+        await setCustomUserClaims(user.uid, {
+            role: role,
+            canManageSchedule: userData.canManageSchedule || false,
+            canManageSystem: userData.canManageSystem || false,
+            canManageUsers: userData.canManageUsers || false
+        });
 
         return {
-            role,
-            userData: userData || {
-                email: user.email,
-                displayName: user.displayName || '',
-                uid: user.uid
+            role: userData.role || role,
+            userData: {
+                ...userData,
+                uid: user.uid,
+                email: userData.email || user.email,
+                displayName: userData.displayName || user.displayName || user.email.split('@')[0],
+                emailVerified: userData.emailVerified || user.emailVerified || false,
+                status: userData.status || 'active'
             }
         };
     } catch (error) {
