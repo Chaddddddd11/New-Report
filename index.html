@@ -805,8 +805,18 @@
               cell.style.padding = '4px';
               cell.style.backgroundColor = bgColor;
               
-              // Check all possible room fields (supporting both room and roomId)
-              const roomDisplay = instructor.room || instructor.roomId || 'TBA';
+              // Check all possible room fields in order of preference
+              const roomDisplay = 
+                instructor.room ||       // First priority: 'room' field
+                instructor.roomId ||     // Second priority: 'roomId' field
+                instructor.roomName ||   // Third priority: 'roomName' field
+                (() => {                 // Debug log if no room found
+                  console.log('No room found for instructor:', {
+                    name: instructor.name,
+                    availableFields: Object.keys(instructor).filter(k => k.toLowerCase().includes('room'))
+                  });
+                  return 'TBA';
+                })();
               
               const entryHTML = `
                 <div class="schedule-entry" 
