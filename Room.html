@@ -184,28 +184,34 @@
     <form id="roomForm">
       <div class="form-group">
         <label>Room Name:</label>
-        <div style="display: flex; gap: 10px; margin-bottom: 10px;">
-          <select id="building" class="room-part" required onchange="updateRoomName()">
-            <option value="">Select Building</option>
-            <option value="CBS BLG">CBS BLG</option>
-            <option value="CAS BLG">CAS BLG</option>
-            <option value="New CAS BLG">New CAS BLG</option>
-          </select>
-          <select id="floor" class="room-part" required onchange="updateRoomName()">
-            <option value="">Select Floor</option>
-            <option value="1">1</option>
-            <option value="2">2</option>
-            <option value="3">3</option>
-            <option value="4">4</option>
-            <option value="5">5</option>
-          </select>
-          <select id="roomNumber" class="room-part" required onchange="updateRoomName()">
-            <option value="">Select Room</option>
-            <!-- Options will be populated by JavaScript -->
-          </select>
+        <div style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 10px;">
+          <div>
+            <select id="building" class="form-control" required onchange="updateRoomName()">
+              <option value="">Select name</option>
+              <option value="CBS BLG">CBS BLG</option>
+              <option value="CAS BLG">CAS BLG</option>
+              <option value="New CAS BLG">New CAS BLG</option>
+            </select>
+          </div>
+          <div>
+            <select id="floor" class="form-control" required onchange="updateRoomNumbers()">
+              <option value="">Select Building</option>
+              <option value="1">1st Floor</option>
+              <option value="2">2nd Floor</option>
+              <option value="3">3rd Floor</option>
+              <option value="4">4th Floor</option>
+              <option value="5">5th Floor</option>
+            </select>
+          </div>
+          <div>
+            <select id="roomNumber" class="form-control" required onchange="updateRoomName()">
+              <option value="">Select Room</option>
+              <!-- Room numbers will be populated by JavaScript -->
+            </select>
+          </div>
         </div>
         <input type="text" id="roomName" required style="display: none;" />
-        <div id="roomNameDisplay" style="font-weight: bold; margin-top: 5px; min-height: 20px;"></div>
+        <div id="roomNameDisplay" style="font-weight: bold; margin-top: 10px; padding: 10px; background: #f8f9fa; border-radius: 4px; min-height: 20px;"></div>
       </div>
 
       <div class="form-group">
@@ -256,6 +262,32 @@
 
   <!-- ✅ JavaScript Moved to End for Proper DOM Access -->
   <script>
+    // Function to update room numbers based on selected floor
+    function updateRoomNumbers() {
+      const floor = document.getElementById('floor').value;
+      const roomNumberSelect = document.getElementById('roomNumber');
+      
+      // Clear existing options
+      roomNumberSelect.innerHTML = '<option value="">Select Room Number</option>';
+      
+      if (floor) {
+        // Generate room numbers for the selected floor (101-105, 201-205, etc.)
+        const startNum = parseInt(floor) * 100 + 1;
+        for (let i = 0; i < 5; i++) {
+          const roomNum = startNum + i;
+          const option = document.createElement('option');
+          option.value = roomNum;
+          option.textContent = roomNum;
+          roomNumberSelect.appendChild(option);
+        }
+        roomNumberSelect.disabled = false;
+      } else {
+        roomNumberSelect.disabled = true;
+      }
+      
+      updateRoomName();
+    }
+    
     // Function to update room name based on selections
     function updateRoomName() {
       const building = document.getElementById('building').value;
@@ -264,31 +296,17 @@
       const roomNameInput = document.getElementById('roomName');
       const roomNameDisplay = document.getElementById('roomNameDisplay');
       
-      // Combine the values with spaces
-      const fullRoomName = `${building} ${floor} ${roomNumber}`.trim();
+      // Combine the values with proper formatting
+      let fullRoomName = '';
+      if (building) fullRoomName += building;
+      if (floor) fullRoomName += (fullRoomName ? ' ' : '') + floor + 'F';
+      if (roomNumber) fullRoomName += (fullRoomName ? ' ' : '') + roomNumber;
       
       // Update the hidden input value
       roomNameInput.value = fullRoomName;
       
       // Update the display
       roomNameDisplay.textContent = fullRoomName || 'No room selected';
-      
-      // Enable/disable room number dropdown based on floor selection
-      const roomNumberSelect = document.getElementById('roomNumber');
-      if (floor) {
-        roomNumberSelect.innerHTML = '<option value="">Select Room</option>';
-        const start = (parseInt(floor) - 1) * 5 + 101; // 101-105, 201-205, etc.
-        for (let i = 0; i < 5; i++) {
-          const roomNum = start + i;
-          const option = document.createElement('option');
-          option.value = roomNum.toString().substring(1); // Remove the first digit
-          option.textContent = roomNum.toString();
-          roomNumberSelect.appendChild(option);
-        }
-      } else {
-        roomNumberSelect.innerHTML = '<option value="">Select Room</option>';
-      }
-      roomNumberSelect.disabled = !floor;
     }
     
     // Function to load edit data
