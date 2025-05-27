@@ -1,24 +1,20 @@
-// Hardcoded admin accounts (for development only)
-const HARDCODED_ADMINS = [
-    {
-        email: 'budzchard17@gmail.com',
-        password: 'admin123', // In a real app, use strong, unique passwords
-        role: 'admin',
-        displayName: 'Admin User 1',
-        uid: 'hardcoded-admin-1'
-    },
-    {
-        email: '2022315194@dhvsu.edu.ph',
-        password: 'dhvsu123', // In a real app, use strong, unique passwords
-        role: 'admin',
-        displayName: 'Admin User 2',
-        uid: 'hardcoded-admin-2'
-    }
-];
-
 // Get Firebase auth and firestore instances
 const auth = firebase.auth();
 const db = firebase.firestore();
+
+// Collection names
+const COLLECTIONS = {
+    ADMIN: 'admin',
+    STUDENTS: 'Students',
+    INSTRUCTORS: 'Instructor'
+};
+
+// Role types
+const ROLES = {
+    ADMIN: 'admin',
+    INSTRUCTOR: 'instructor',
+    STUDENT: 'student'
+};
 
 // Security configuration
 const SECURITY_CONFIG = {
@@ -87,21 +83,70 @@ function isPathAllowed(role, path) {
     return allowedPaths.some(allowedPath => path.endsWith(allowedPath));
 }
 
-// Get user's role from hardcoded accounts or Firebase Auth
-async function getUserRole(user) {
+// Get user's role and data from Firestore
+async function getUserRoleAndData(user) {
     try {
-        // Check if user is a hardcoded admin
-        const hardcodedAdmin = HARDCODED_ADMINS.find(admin => admin.email === user.email);
-        if (hardcodedAdmin) {
-            return hardcodedAdmin.role;
+        // First check if user exists in any role collection
+        const [adminDoc, studentDoc, instructorDoc] = await Promise.all([
+            db.collection(COLLECTIONS.ADMIN).doc(user.uid).get(),
+            db.collection(COLLECTIONS.STUDENTS).doc(user.uid).get(),
+            db.collection(COLLECTIONS.INSTRUCTORS).doc(user.uid).get()
+        ]);
+
+        let userData = null;
+        let role = ROLES.STUDENT; // Default role
+
+        // Determine role based on which collection the user exists in
+        if (adminDoc.exists) {
+            role = ROLES.ADMIN;
+            userData = adminDoc.data();
+        } else if (instructorDoc.exists) {
+            role = ROLES.INSTRUCTOR;
+            userData = instructorDoc.data();
+        } else if (studentDoc.exists) {
+            role = ROLES.STUDENT;
+            userData = studentDoc.data();
+        } else {
+            // If user doesn't exist in any collection, create a student record
+            await db.collection(COLLECTIONS.STUDENTS).doc(user.uid).set({
+                email: user.email,
+                displayName: user.displayName || '',
+                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                status: 'active'
+            });
+            role = ROLES.STUDENT;
         }
-        
-        // For non-hardcoded users, check Firebase Auth custom claims
-        const idTokenResult = await user.getIdTokenResult();
-        return idTokenResult.claims.role || 'student';
+
+        // Update user profile with role
+        await user.updateProfile({
+            displayName: user.displayName || userData?.displayName || ''
+        });
+
+        // Set custom claim for faster role checking
+        await setCustomUserClaims(user.uid, role);
+
+        return {
+            role,
+            userData: userData || {
+                email: user.email,
+                displayName: user.displayName || '',
+                uid: user.uid
+            }
+        };
     } catch (error) {
-        console.error('Error getting user role:', error);
-        return 'student';
+        console.error('Error getting user role and data:', error);
+        throw error;
+    }
+}
+
+// Set custom claims for the user (requires Cloud Function)
+async function setCustomUserClaims(uid, role) {
+    try {
+        const setClaims = firebase.functions().httpsCallable('setCustomClaims');
+        await setClaims({ uid, role });
+    } catch (error) {
+        console.error('Error setting custom claims:', error);
+        // Fallback to direct database check if Cloud Function fails
     }
 }
 
@@ -135,48 +180,110 @@ async function getClientIP() {
 // Handle successful login
 async function handleSuccessfulLogin(user) {
     try {
-        // Check if user is a hardcoded admin
-        const hardcodedAdmin = HARDCODED_ADMINS.find(admin => admin.email === user.email);
-        
-        if (hardcodedAdmin) {
-            // Set user data for hardcoded admin
-            await user.updateProfile({
-                displayName: hardcodedAdmin.displayName
-            });
-            
-            // Set custom claims (if needed)
-            await user.getIdToken(true); // Refresh token with latest claims
-        }
-        
-        // Proceed with normal login flow
-        const role = await getUserRole(user);
-        const defaultRoute = getDefaultRoute(role);
-        
-        // Log successful login
-        await logSecurityEvent({
-            type: 'login_success',
-            userId: user.uid,
-            email: user.email,
-            timestamp: new Date().toISOString(),
-            role: role
-        });
-        
         // Reset login attempts on successful login
         sessionStorage.removeItem(SECURITY_CONFIG.LOGIN_ATTEMPTS_KEY);
         sessionStorage.removeItem(SECURITY_CONFIG.LOCKOUT_UNTIL_KEY);
+
+        // Get user's role and data
+        const { role, userData } = await getUserRoleAndData(user);
         
+        if (!role) {
+            console.error('No role found for user:', user.uid);
+            await auth.signOut();
+            window.location.href = 'login.html?error=no_role';
+            return;
+        }
+
+        // Check if user is active
+        if (userData.status && userData.status !== 'active') {
+            await auth.signOut();
+            if (userData.status === 'pending') {
+                window.location.href = 'login.html?error=account_pending';
+            } else if (userData.status === 'suspended') {
+                window.location.href = 'login.html?error=account_suspended';
+            } else {
+                window.location.href = 'login.html?error=account_inactive';
+            }
+            return;
+        }
+
+        // Check if email is verified (except for admins who might be verified by default)
+        if (!user.emailVerified && role !== ROLES.ADMIN) {
+            await auth.signOut();
+            window.location.href = 'login.html?error=email_not_verified';
+            return;
+        }
+
+        // Update user's last login time
+        const lastLogin = new Date().toISOString();
+        let collectionName = COLLECTIONS.STUDENTS;
+        if (role === ROLES.ADMIN) collectionName = COLLECTIONS.ADMIN;
+        else if (role === ROLES.INSTRUCTOR) collectionName = COLLECTIONS.INSTRUCTORS;
+        
+        await db.collection(collectionName).doc(user.uid).update({
+            lastLogin: lastLogin,
+            emailVerified: user.emailVerified
+        });
+
+        // Store minimal user data in sessionStorage
+        sessionStorage.setItem('user', JSON.stringify({
+            uid: user.uid,
+            email: user.email,
+            displayName: user.displayName || userData.displayName || '',
+            role: role,
+            emailVerified: user.emailVerified
+        }));
+        
+        // Log the successful login
+        await logSecurityEvent({
+            userId: user.uid,
+            eventType: 'login_success',
+            ipAddress: await getClientIP(),
+            userAgent: navigator.userAgent,
+            metadata: {
+                role: role,
+                email: user.email
+            }
+        });
+
         // Initialize activity tracking
         initActivityTracking();
         
-        // Redirect if on login/signup page
-        if (currentPath === 'login.html' || currentPath === 'create.html') {
-            window.location.href = SECURITY_CONFIG.DEFAULT_ROUTES[role] || 'home.html';
-        } else if (!isPathAllowed(role, currentPath)) {
-            // Redirect to default route if current path is not allowed
-            window.location.href = SECURITY_CONFIG.DEFAULT_ROUTES[role] || 'home.html';
+        // Check if we have a redirect URL in session storage (from protected route)
+        const redirectUrl = sessionStorage.getItem('redirectAfterLogin');
+        if (redirectUrl) {
+            sessionStorage.removeItem('redirectAfterLogin');
+            window.location.href = redirectUrl;
+            return;
+        }
+
+        // Otherwise, redirect based on role
+        const redirectPath = getRedirectPath(role);
+        if (window.location.pathname !== redirectPath) {
+            window.location.href = redirectPath;
         }
     } catch (error) {
-        console.error('Error handling successful login:', error);
+        console.error('Error in handleSuccessfulLogin:', error);
+        
+        // Log the error
+        await logSecurityEvent({
+            userId: user?.uid || 'unknown',
+            eventType: 'login_error',
+            ipAddress: await getClientIP(),
+            userAgent: navigator.userAgent,
+            metadata: {
+                error: error.message,
+                code: error.code
+            }
+        });
+        
+        // If there's an error, log out and redirect to login with error
+        try {
+            await auth.signOut();
+        } catch (signOutError) {
+            console.error('Error during sign out:', signOutError);
+        }
+        window.location.href = `login.html?error=login_failed&message=${encodeURIComponent(error.message)}`;
     }
 }
 
@@ -293,6 +400,107 @@ function initApp() {
                 window.location.href = 'login.html?error=logout_failed';
             }
         });
+    }
+}
+
+// Register new user
+async function registerUser(userData) {
+    try {
+        // 1. Create auth user
+        const { user } = await auth.createUserWithEmailAndPassword(
+            userData.email, 
+            userData.password
+        );
+
+        // 2. Send email verification
+        await user.sendEmailVerification({
+            url: window.location.origin + '/login?verified=true'
+        });
+
+        // 3. Update user profile with display name
+        if (userData.displayName) {
+            await user.updateProfile({
+                displayName: userData.displayName
+            });
+        }
+
+
+        // 4. Determine collection based on role (default to student)
+        const role = userData.role || ROLES.STUDENT;
+        const userDoc = {
+            uid: user.uid,
+            email: userData.email,
+            displayName: userData.displayName || userData.email.split('@')[0],
+            emailVerified: false,
+            role: role,
+            status: 'pending', // Requires email verification
+            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+            lastLogin: null,
+            // Include any additional user data
+            ...(role === ROLES.INSTRUCTOR && { 
+                department: userData.department || '',
+                title: userData.title || ''
+            }),
+            ...(role === ROLES.STUDENT && {
+                idNumber: userData.idNumber || '',
+                course: userData.course || '',
+                yearLevel: userData.yearLevel || '',
+                section: userData.section || ''
+            })
+        };
+
+        // 5. Add to appropriate collection
+        let collectionName;
+        switch(role) {
+            case ROLES.ADMIN:
+                collectionName = COLLECTIONS.ADMIN;
+                userDoc.status = 'active'; // Admins are active immediately
+                break;
+            case ROLES.INSTRUCTOR:
+                collectionName = COLLECTIONS.INSTRUCTORS;
+                userDoc.status = 'pending'; // Instructors need approval
+                break;
+            default:
+                collectionName = COLLECTIONS.STUDENTS;
+                userDoc.status = 'active'; // Students are active immediately
+        }
+
+        // 6. Save user data to Firestore
+        await db.collection(collectionName).doc(user.uid).set(userDoc);
+
+        // 7. Set custom claims for role-based access
+        await setCustomUserClaims(user.uid, role);
+
+        // 8. Log the registration event
+        await logSecurityEvent({
+            userId: user.uid,
+            eventType: 'user_registered',
+            ipAddress: await getClientIP(),
+            userAgent: navigator.userAgent,
+            metadata: {
+                role: role,
+                email: userData.email
+            }
+        });
+
+        return { 
+            success: true, 
+            user: {
+                uid: user.uid,
+                email: user.email,
+                emailVerified: user.emailVerified,
+                displayName: user.displayName || '',
+                role: role
+            },
+            requiresVerification: true
+        };
+    } catch (error) {
+        console.error('Registration error:', error);
+        return { 
+            success: false, 
+            error: error.message,
+            code: error.code
+        };
     }
 }
 
@@ -486,11 +694,30 @@ async function getUserRole(uid) {
 // Get default route based on user role
 function getDefaultRoute(role) {
     const routes = {
-        'admin': 'admin-dashboard.html',
+        'admin': 'admin-panel.html',  // Redirect admins to admin-panel.html
         'instructor': 'Instructor.html',  // Redirect instructors to Instructor.html
         'student': 'home.html'  // Redirect students to home.html
     };
     return routes[role] || 'login.html';
+}
+
+// Get redirect path based on user role and current path
+function getRedirectPath(role) {
+    // If user is trying to access login/register but already authenticated
+    const currentPath = window.location.pathname;
+    const authPages = ['/login.html', '/register.html', '/index.html'];
+    
+    if (authPages.some(page => currentPath.endsWith(page))) {
+        return getDefaultRoute(role);
+    }
+    
+    // Check if current path is allowed for user role
+    if (!isPathAllowed(role, currentPath)) {
+        return getDefaultRoute(role);
+    }
+    
+    // Stay on current page if allowed
+    return currentPath;
 }
 
 // Check authentication state with enhanced security
