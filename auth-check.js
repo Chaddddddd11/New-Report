@@ -1,11 +1,24 @@
-// Get Firebase auth and firestore instances
-// Get or initialize Firebase services
-const auth = firebase.auth ? firebase.auth() : null;
-const db = firebase.firestore ? firebase.firestore() : null;
-
-if (!auth || !db) {
-    console.error('Firebase services not properly initialized');
-    // You might want to show an error to the user here
+// Check if Firebase services are already initialized
+if (typeof auth === 'undefined' || typeof db === 'undefined') {
+    try {
+        // Check if Firebase is available
+        if (typeof firebase === 'undefined' || !firebase.apps.length) {
+            throw new Error('Firebase not initialized');
+        }
+        
+        // Initialize Firebase services if not already done
+        window.auth = firebase.auth();
+        window.db = firebase.firestore();
+    } catch (error) {
+        console.error('Firebase initialization error:', error);
+        // Show error to user if running in browser
+        if (typeof document !== 'undefined') {
+            const errorDiv = document.createElement('div');
+            errorDiv.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; background: #f8d7da; color: #721c24; padding: 15px; text-align: center; z-index: 9999;';
+            errorDiv.textContent = 'Error initializing the application. Please refresh the page or try again later.';
+            document.body.prepend(errorDiv);
+        }
+    }
 }
 
 // Collection names
@@ -38,15 +51,15 @@ const SECURITY_CONFIG = {
     LOCKOUT_UNTIL_KEY: 'lockoutUntil',
     // Allowed paths for each role
     ALLOWED_PATHS: {
-        'student': ['home.html', 'index.html', 'profile.html'],
-        'instructor': ['home.html', 'index.html', 'instructor-dashboard.html', 'manage-courses.html'],
-        'admin': ['home.html', 'index.html', 'admin-dashboard.html', 'manage-users.html', 'system-settings.html']
+        'student': ['home.html', 'index.html'],
+        'instructor': ['home.html', 'index.html', 'Room.html', 'Instructors.html', 'bulk-upload-final.html'],
+        'admin': ['home.html', 'index.html', 'admin-panel.html', '*.html']  // Admin can access all pages
     },
-    // Default route for each role
+    // Default route for each role after login
     DEFAULT_ROUTES: {
         'student': 'home.html',
-        'instructor': 'instructor-dashboard.html',
-        'admin': 'admin-dashboard.html'
+        'instructor': 'home.html',
+        'admin': 'admin-panel.html'
     }
 };
 
