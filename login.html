@@ -388,14 +388,7 @@
                 const userCredential = await firebase.auth().signInWithEmailAndPassword(email, password);
                 const user = userCredential.user;
                 
-                // Check if email is verified
-                if (!user.emailVerified) {
-                    // Don't sign out, just show a message
-                    throw { 
-                        code: 'auth/email-not-verified',
-                        message: 'Please verify your email before logging in. Check your inbox for the verification link.'
-                    };
-                }
+                // Skip email verification check and log the user in directly
                 
                 // The auth state change listener in auth-check.js will handle the redirection
                 console.log('User signed in successfully, waiting for auth state change...');
