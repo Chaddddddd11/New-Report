@@ -263,13 +263,15 @@
             
             <div class="form-group">
                 <label for="studentId">Student Number</label>
-                <input type="text" 
+                <input type="number" 
                        class="form-control" 
                        id="studentId" 
-                       placeholder="e.g., 2023-12345"
-                       pattern="\d{4}-\d{5}"
+                       placeholder="e.g., 202312345"
+                       pattern="\d{9}"
+                       min="100000000"
+                       max="999999999"
                        required>
-                <div class="invalid-feedback">Please enter a valid Student Number (e.g., 2023-12345)</div>
+                <div class="invalid-feedback">Please enter a valid 9-digit Student Number</div>
             </div>
             
             <div class="form-group">
