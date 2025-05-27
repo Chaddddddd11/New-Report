@@ -5,24 +5,45 @@
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
   <style>
+    /* Modern Header Styles */
+    :root {
+      --primary: #610000;
+      --secondary: #d28d03;
+      --accent: #fccb08;
+      --background: #f5f5f5;
+      --white: #ffffff;
+      --text: #333333;
+      --shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      --transition: all 0.3s ease;
+    }
+    
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
     body {
-      background-image: linear-gradient(rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.9)), 
-                        url('https://the-post-assets.sgp1.digitaloceanspaces.com/2023/03/DHVSU_thumbnail.png');
-      background-size: cover;
-      background-position: center;
-      background-attachment: fixed;
+      font-family: 'Roboto', Arial, sans-serif;
+      background-color: var(--background);
+      color: var(--text);
+      line-height: 1.6;
       min-height: 100vh;
       margin: 0;
-      padding: 20px 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
     }
     
     .container {
-      background-color: rgba(255, 255, 255, 0.95);
-      border-radius: 8px;
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-      padding: 25px;
-      margin: 20px auto;
+      background-color: var(--white);
+      border-radius: 12px;
+      box-shadow: var(--shadow);
+      padding: 2rem;
+      margin: 2rem auto;
       max-width: 1200px;
+      width: 95%;
+      flex: 1;
     }
     
     :root {
@@ -41,13 +62,99 @@
       background-color: var(--background-color);
     }
 
+    /* Header Styles */
+    .header {
+      background-color: var(--white);
+      box-shadow: var(--shadow);
+      padding: 0.8rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+    }
+    
+    .logo-container {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+    
+    .logo {
+      height: 50px;
+      width: auto;
+    }
+    
+    .logo-text {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--primary);
+    }
+    
+    .main-nav {
+      display: flex;
+      gap: 1rem;
+      align-items: center;
+    }
+    
+    .nav-button {
+      padding: 0.6rem 1.2rem;
+      background-color: transparent;
+      color: var(--text);
+      text-decoration: none;
+      border-radius: 50px;
+      font-weight: 500;
+      transition: var(--transition);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.95rem;
+      border: 2px solid transparent;
+    }
+    
+    .nav-button:hover {
+      background-color: rgba(97, 0, 0, 0.05);
+      color: var(--primary);
+    }
+    
+    .nav-button i {
+      font-size: 1rem;
+    }
+    
+    .logout-btn {
+      background-color: transparent;
+      color: var(--primary);
+      border: 2px solid var(--primary);
+      padding: 0.6rem 1.5rem;
+      border-radius: 50px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: var(--transition);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.95rem;
+    }
+    
+    .logout-btn:hover {
+      background-color: var(--primary);
+      color: white;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+    
     .header-container {
       display: flex;
       align-items: center;
       justify-content: center;
       gap: 20px;
-      margin-bottom: 20px;
+      margin: 20px 0;
       position: relative;
+      padding: 20px;
+      background-color: white;
+      border-radius: 8px;
+      box-shadow: var(--shadow);
     }
     
     .logo-container {
@@ -116,90 +223,115 @@
     }
 
     select {
-      margin: 10px 10px 10px 0;
-      padding: 10px;
-      width: 250px;
-      border: 1px solid var(--secondary-color);
-      border-radius: 4px;
-      background-color: rgb(226, 149, 4);
-      transition: all 0.3s ease;
+      margin: 0.5rem 0;
+      padding: 0.75rem 1rem;
+      width: 100%;
+      max-width: 300px;
+      border: 2px solid #e0e0e0;
+      border-radius: 8px;
+      background-color: var(--white);
+      font-size: 1rem;
+      color: var(--text);
+      transition: var(--transition);
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%23610000' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14L2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 1rem center;
+      background-size: 12px 12px;
+      padding-right: 2.5rem;
     }
 
     select:focus {
       outline: none;
-      border-color: var(--accent-color);
-      box-shadow: 0 0 5px rgba(247, 179, 45, 0.5);
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(97, 0, 0, 0.1);
     }
 
     .disabled {
-      background-color: #cccccc;
+      background-color: #f5f5f5;
+      color: #999;
       cursor: not-allowed;
+      opacity: 0.7;
     }
 
     #scheduleTable {
       width: 100%;
       border-collapse: separate;
-      border-spacing: 2px;
-      margin-top: 15px;
-      background-color: #f5f5f5;
+      border-spacing: 0;
+      margin: 1.5rem 0;
+      background-color: var(--white);
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: var(--shadow);
       table-layout: fixed;
     }
 
     #scheduleTable th, #scheduleTable td {
-      border: 1px solid #ddd;
-      padding: 0;
+      border: 1px solid #f0f0f0;
+      padding: 1rem;
       text-align: center;
-      vertical-align: top;
+      vertical-align: middle;
       min-width: 150px;
+      transition: var(--transition);
     }
 
     #scheduleTable th {
-      background-color: var(--primary-color);
+      background-color: var(--primary);
       color: white;
-      font-weight: bold;
+      font-weight: 600;
+      text-transform: uppercase;
+      font-size: 0.85rem;
+      letter-spacing: 0.5px;
+      padding: 1rem 0.5rem;
     }
 
     #scheduleTable tr:nth-child(even) {
-      background-color: #f9f9f9;
+      background-color: #fafafa;
     }
 
     #scheduleTable tr:hover {
-      background-color: #f1f1f1;
+      background-color: rgba(97, 0, 0, 0.02);
     }
     
     /* Style for time column */
     #scheduleTable th:first-child,
     #scheduleTable td:first-child {
       width: 100px;
-      background-color: var(--primary-color);
+      background-color: var(--primary);
       color: white;
-      font-weight: bold;
-      padding: 8px;
+      font-weight: 600;
+      padding: 1rem 0.5rem;
+      position: sticky;
+      left: 0;
+      z-index: 1;
     }
     
     /* Ensure time cells have the same style as the time header */
     #scheduleTable td:first-child {
-      background-color: var(--primary-color);
+      background-color: var(--primary);
       color: white;
+      font-weight: 500;
     }
 
     .schedule-entry {
-      padding: 8px;
-      border-radius: 4px;
-      color: #333;
+      padding: 0.75rem;
+      border-radius: 8px;
+      color: var(--text);
       display: block;
       box-sizing: border-box;
-      margin: 2px;
-      background-color: #fff;
-      min-height: 80px;
-      transition: all 0.2s ease;
-      border: 1px solid #ddd;
+      margin: 0.25rem;
+      background-color: var(--white);
+      min-height: 90px;
+      transition: var(--transition);
+      border: 1px solid #eee;
       text-align: left;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
     }
     
     .schedule-entry:hover {
       transform: translateY(-2px);
-      box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+      border-color: var(--accent);
     }
 
     .schedule-entry .subject {
@@ -226,35 +358,37 @@
     }
 
     .student-capacity {
-      padding: 10px;
-      min-width: 120px;
-      border: 1px solid var(--secondary-color);
-      border-radius: 4px;
-      background-color: #f9f9f9;
+      padding: 1rem;
+      min-width: 150px;
+      border: 2px solid var(--secondary);
+      border-radius: 8px;
+      background-color: #fff9e6;
+      margin: 1rem 0;
       text-align: center;
+      font-weight: 500;
+      color: var(--primary);
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
     }
 
     .btn {
-      padding: 10px 20px;
-      background-color: var(--secondary-color);
+      background-color: var(--primary);
       color: white;
       border: none;
-      border-radius: 4px;
+      padding: 0.75rem 1.5rem;
+      border-radius: 50px;
       cursor: pointer;
-      font-size: 16px;
-      transition: background-color 0.3s ease;
+      font-size: 1rem;
+      font-weight: 500;
+      transition: var(--transition);
       display: inline-flex;
       align-items: center;
-      gap: 8px;
+      justify-content: center;
+      gap: 0.5rem;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     }
-    
-    .btn:disabled {
-      background-color: #cccccc;
-      cursor: not-allowed;
-    }
-    
+
     .btn i {
-      font-size: 14px;
+      font-size: 0.9em;
     }
 
     @media (max-width: 768px) {
@@ -268,18 +402,119 @@
         margin: 5px 0;
       }
     }
+    /* Form Group Styling */
+    .form-group {
+      margin-bottom: 1.5rem;
+    }
+    
+    .form-group label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-weight: 500;
+      color: var(--text);
+    }
+    
+    .form-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+    
+    .form-col {
+      flex: 1;
+      min-width: 200px;
+    }
+    
+    /* Loading State */
+    .loading {
+      position: relative;
+      pointer-events: none;
+      opacity: 0.7;
+    }
+    
+    .loading::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 20px;
+      height: 20px;
+      margin: -10px 0 0 -10px;
+      border: 3px solid rgba(255, 255, 255, 0.3);
+      border-radius: 50%;
+      border-top-color: white;
+      animation: spin 1s ease-in-out infinite;
+    }
+    
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    
+    /* Animation for page load */
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .fade-in {
+      animation: fadeIn 0.5s ease-out forwards;
+    }
+    
+    /* Print styles */
+    @media print {
+      .header, .nav-button, .logout-btn {
+        display: none !important;
+      }
+      
+      .container {
+        box-shadow: none;
+        padding: 0;
+        margin: 0;
+      }
+      
+      #scheduleTable {
+        box-shadow: none;
+      }
+      
+      .schedule-entry {
+        box-shadow: none;
+        border: 1px solid #ddd !important;
+        page-break-inside: avoid;
+      }
+    }
   </style>
 </head>
 <body>
-  <div class="nav-buttons">
-    <div class="left-buttons">
-      <a href="home.html" class="nav-button">Home Page</a>
-      <a href="Instructor.html" class="nav-button">Enroll Instructor</a>
+  <!-- Loading Overlay -->
+  <div id="loadingOverlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(255, 255, 255, 0.8); z-index: 2000; display: flex; justify-content: center; align-items: center;">
+    <div style="background-color: var(--primary); color: white; padding: 2rem; border-radius: 8px; display: flex; flex-direction: column; align-items: center; gap: 1rem;">
+      <div class="spinner" style="width: 40px; height: 40px; border: 4px solid rgba(255, 255, 255, 0.3); border-radius: 50%; border-top-color: white; animation: spin 1s ease-in-out infinite;"></div>
+      <p style="margin: 0; font-weight: 500;">Loading...</p>
     </div>
-    <a href="Room.html" class="nav-button">Room Registration</a>
   </div>
+
+  <!-- Header with Navigation -->
+  <header class="header">
+    <div class="logo-container">
+      <img src="https://sms.dhvsu.edu.ph/general/getThemePhoto?tid=1&field=header_logo" alt="DHVSU Logo" class="logo">
+      <span class="logo-text">DHVSU</span>
+    </div>
+    <nav class="main-nav">
+      <a href="home.html" class="nav-button"><i class="fas fa-home"></i> Home</a>
+      <a href="Instructor.html" class="nav-button"><i class="fas fa-user-plus"></i> Enroll Instructor</a>
+      <a href="InstructorList.html" class="nav-button"><i class="fas fa-chalkboard-teacher"></i> Instructors</a>
+      <a href="Room.html" class="nav-button"><i class="fas fa-plus-circle"></i> Add Room</a>
+      <a href="RoomList.html" class="nav-button"><i class="fas fa-door-open"></i> Rooms</a>
+      <a href="bulk-upload-final.html" class="nav-button"><i class="fas fa-file-upload"></i> Bulk Upload</a>
+    </nav>
+    <button class="logout-btn" id="logoutBtn">
+      <i class="fas fa-sign-out-alt"></i>
+      <span>Logout</span>
+    </button>
+  </header>
   
-  <div class="container">
+  <div class="container fade-in">
     <div class="header-container">
       <div class="logo-container left">
         <img src="https://media.assettype.com/sunstar/2025-02-04/7x1wu7dq/DHVSU.jpg?w=1200&h=675&auto=format%2Ccompress&fit=max&enlarge=true" alt="DHVSU Logo" class="logo">
@@ -339,6 +574,33 @@
   </div>
 
   <!-- Firebase and other scripts -->
+  <script>
+    // Show loading overlay when page is loading
+    document.addEventListener('DOMContentLoaded', function() {
+      const loadingOverlay = document.getElementById('loadingOverlay');
+      
+      // Show loading overlay during initial load
+      loadingOverlay.style.display = 'flex';
+      
+      // Hide loading overlay when everything is loaded
+      window.addEventListener('load', function() {
+        setTimeout(() => {
+          loadingOverlay.style.opacity = '0';
+          setTimeout(() => {
+            loadingOverlay.style.display = 'none';
+          }, 300);
+        }, 500);
+      });
+      
+      // Add fade-in animation to elements with data-animate attribute
+      const animateElements = document.querySelectorAll('[data-animate]');
+      animateElements.forEach((el, index) => {
+        el.style.opacity = '0';
+        el.style.animation = `fadeIn 0.5s ease-out ${index * 0.1}s forwards`;
+      });
+    });
+  </script>
+  
   <script type="module">
     // Import the functions you need from the SDKs you need
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
